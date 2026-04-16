@@ -41,6 +41,9 @@ cp config.example.js config.js
    - `INSTAGRAM_HANDLE`
    - `HERO_IMAGE_URL`
    - `FAVICON_URL`
+   - `SITE_NAME`
+   - `SITE_URL`
+   - `DEFAULT_OG_IMAGE`
 
 3. Run quick validation:
 
@@ -84,6 +87,9 @@ In GitHub repo -> Settings -> Secrets and variables -> Actions, add these reposi
 - `INSTAGRAM_HANDLE`
 - `HERO_IMAGE_URL`
 - `FAVICON_URL`
+- `SITE_NAME`
+- `SITE_URL`
+- `DEFAULT_OG_IMAGE`
 
 `deploy.yml` will generate `config.js` during CI from these secrets and deploy the whole static site.
 
@@ -119,6 +125,8 @@ In GitHub repo -> Settings -> Secrets and variables -> Actions, add these reposi
 - anon key in frontend is safe when RLS is configured correctly.
 - never put Supabase service role key in frontend code.
 - all reads/writes are controlled by RLS + Auth policies in `supabase-schema.sql`.
+- SEO files are static: `robots.txt` and `sitemap.xml`.
+- replace `YOUR_GITHUB_USERNAME` in `robots.txt` and `sitemap.xml` with your real username or custom domain.
 
 ## Useful commands
 
@@ -137,6 +145,7 @@ npm run serve
 - `admin/index.html`
 - `assets/css/styles.css`
 - `assets/js/supabase-client.js`
+- `assets/js/seo.js`
 - `assets/js/home.js`
 - `assets/js/portfolio.js`
 - `assets/js/weddings.js`
@@ -145,5 +154,7 @@ npm run serve
 - `assets/js/admin.js`
 - `supabase-schema.sql`
 - `config.example.js`
+- `robots.txt`
+- `sitemap.xml`
 - `.github/workflows/deploy.yml`
 

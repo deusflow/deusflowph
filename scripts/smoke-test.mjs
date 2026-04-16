@@ -11,6 +11,7 @@ const requiredFiles = [
   ".github/workflows/deploy.yml",
   "assets/css/styles.css",
   "assets/js/supabase-client.js",
+  "assets/js/seo.js",
   "assets/js/home.js",
   "assets/js/portfolio.js",
   "assets/js/weddings.js",
@@ -22,7 +23,9 @@ const requiredFiles = [
   "weddings/album/index.html",
   "pricing/index.html",
   "admin/index.html",
-  "README.md"
+  "README.md",
+  "robots.txt",
+  "sitemap.xml"
 ];
 
 const missing = requiredFiles.filter((relativePath) => !fs.existsSync(path.join(root, relativePath)));
@@ -33,11 +36,11 @@ if (missing.length > 0) {
 }
 
 const htmlChecks = [
-  { file: "index.html", includes: ["assets/css/styles.css", "assets/js/home.js"] },
-  { file: "portfolio/index.html", includes: ["../assets/js/portfolio.js"] },
-  { file: "weddings/index.html", includes: ["../assets/js/weddings.js"] },
-  { file: "weddings/album/index.html", includes: ["../../assets/js/wedding-album.js", "id=\"lightbox\""] },
-  { file: "pricing/index.html", includes: ["../assets/js/pricing.js", "Essentials", "Signature", "Luxury"] },
+  { file: "index.html", includes: ["assets/css/styles.css", "assets/js/home.js", "assets/js/seo.js", "<link rel=\"canonical\"", "og:title"] },
+  { file: "portfolio/index.html", includes: ["../assets/js/portfolio.js", "../assets/js/seo.js", "<link rel=\"canonical\""] },
+  { file: "weddings/index.html", includes: ["../assets/js/weddings.js", "../assets/js/seo.js", "<link rel=\"canonical\""] },
+  { file: "weddings/album/index.html", includes: ["../../assets/js/wedding-album.js", "../../assets/js/seo.js", "id=\"lightbox\"", "<link rel=\"canonical\""] },
+  { file: "pricing/index.html", includes: ["../assets/js/pricing.js", "../assets/js/seo.js", "Essentials", "Signature", "Luxury", "<link rel=\"canonical\""] },
   { file: "admin/index.html", includes: ["../assets/js/admin.js", "id=\"login-form\""] }
 ];
 

@@ -37,7 +37,10 @@ jobs:
             CONTACT_EMAIL: "${{ secrets.CONTACT_EMAIL }}",
             INSTAGRAM_HANDLE: "${{ secrets.INSTAGRAM_HANDLE }}",
             HERO_IMAGE_URL: "${{ secrets.HERO_IMAGE_URL }}",
-            FAVICON_URL: "${{ secrets.FAVICON_URL }}"
+            FAVICON_URL: "${{ secrets.FAVICON_URL }}",
+            SITE_NAME: "${{ secrets.SITE_NAME }}",
+            SITE_URL: "${{ secrets.SITE_URL }}",
+            DEFAULT_OG_IMAGE: "${{ secrets.DEFAULT_OG_IMAGE }}"
           };
           EOF
 
