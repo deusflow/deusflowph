@@ -90,6 +90,25 @@ h3,
   text-shadow: 0 0 18px rgba(242, 191, 212, 0.18);
 }
 
+.brand-stack {
+  justify-self: center;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.brand-stack .logo {
+  display: inline-block;
+}
+
+.brand-topline {
+  margin: 0 0 0.35rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 10px;
+  text-shadow: 0 0 10px rgba(10, 10, 10, 0.6);
+}
+
 .menu-link {
   font-size: 12px;
   letter-spacing: 0.2em;
