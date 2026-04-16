@@ -1,0 +1,31 @@
+# Runtime config with public anon key and contact details
+config.js
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Optional local config variants
+config.local.js
+config.*.local.js
+
+# Keys and secret dumps
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies and local tooling artifacts
+node_modules/
+
+# OS/editor
+.DS_Store
+.idea/

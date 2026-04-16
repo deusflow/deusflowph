@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" data-root="..">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | Oleh Ro</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="menu-link" href="../index.html">Public Site</a>
+      <a class="logo" href="../index.html">Oleh Ro</a>
+      <button id="logout-button" class="menu-link" type="button">Logout</button>
+    </div>
+  </header>
+
+  <main class="container admin-wrap">
+    <section id="login-panel" class="panel narrow">
+      <h1>Admin Login</h1>
+      <p>Use your Supabase Auth email and password.</p>
+      <form id="login-form">
+        <div class="form-row">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="email" />
+        </div>
+        <div class="form-row">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" required autocomplete="current-password" />
+        </div>
+        <button class="primary" type="submit">Login</button>
+      </form>
+      <p id="login-error" style="color:#d39e9e;"></p>
+    </section>
+
+    <section id="dashboard-panel" class="hidden">
+      <div class="admin-grid">
+        <article class="panel">
+          <h2>Albums</h2>
+          <p>Create, publish, and open albums.</p>
+          <div id="albums-list" class="album-list"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Create Album</h2>
+          <form id="create-album-form">
+            <div class="form-row">
+              <label for="title">Title</label>
+              <input id="title" name="title" type="text" required />
+            </div>
+
+            <div class="form-row">
+              <label for="slug">Slug (optional)</label>
+              <input id="slug" name="slug" type="text" placeholder="will-be-generated-if-empty" />
+            </div>
+
+            <div class="form-row">
+              <label for="type">Type</label>
+              <select id="type" name="type" required>
+                <option value="wedding">wedding</option>
+                <option value="portfolio">portfolio</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="date">Date</label>
+              <input id="date" name="date" type="date" />
+            </div>
+
+            <div class="form-row">
+              <label for="cover">Cover image (JPEG/WEBP/PNG)</label>
+              <input id="cover" name="cover" type="file" accept="image/*" required />
+            </div>
+
+            <button type="submit" class="primary">Create Album</button>
+          </form>
+        </article>
+      </div>
+
+      <article id="selected-album-panel" class="panel hidden" style="margin-top:1.5rem;">
+        <h3 id="selected-album-name">Album</h3>
+        <p id="selected-album-meta"></p>
+
+        <div class="form-row">
+          <label for="photo-upload-input">Upload photos</label>
+          <input id="photo-upload-input" type="file" accept="image/*" multiple />
+        </div>
+
+        <div id="photo-dropzone" class="dropzone">
+          Drag and drop multiple photos here
+        </div>
+
+        <h3 style="margin-top:1.5rem;">Photos</h3>
+        <div id="photos-list" class="album-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="../assets/js/runtime-config.js"></script>
+  <script type="module" src="../assets/js/admin.js"></script>
+</body>
+</html>
+

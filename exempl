@@ -1,0 +1,145 @@
+import React from 'react';
+import { Menu, ArrowRight, Instagram, Mail } from 'lucide-react';
+
+const App = () => {
+  // Данные ваших проектов (Portfolio projects)
+  const portfolioWorks = [
+    {
+      id: 1,
+      title: "Свадьба на вилле Бальбиано",
+      location: "Озеро Комо, Италия",
+      image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2069&auto=format&fit=crop"
+    },
+    {
+      id: 2,
+      title: "Побег в Париж",
+      location: "Париж, Франция",
+      image: "https://images.unsplash.com/photo-1537633552985-df8429e8048b?q=80&w=2070&auto=format&fit=crop"
+    },
+    {
+      id: 3,
+      title: "Королевская эстетика",
+      location: "Лондон, Великобритания",
+      image: "https://images.unsplash.com/photo-1606800052052-a08af7148866?q=80&w=2070&auto=format&fit=crop"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-[#f4f4f5] font-sans selection:bg-[#C5A880] selection:text-black">
+
+      {/* Header (Навигация) - Шапка сайта */}
+      <header className="fixed top-0 w-full z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-[1400px] mx-auto px-6 py-5 flex justify-between items-center">
+          <button className="flex items-center gap-3 hover:text-[#C5A880] transition-colors">
+            <Menu size={22} strokeWidth={1} />
+            <span className="text-[10px] tracking-[0.2em] uppercase hidden md:block">Меню</span>
+          </button>
+
+          <div className="text-xl md:text-2xl font-serif tracking-[0.15em] uppercase text-center text-[#C5A880]">
+            Elias <span className="text-white font-light">Ross</span>
+          </div>
+
+          <button className="text-[10px] tracking-[0.2em] uppercase hover:text-[#C5A880] transition-colors">
+            Связаться
+          </button>
+        </div>
+      </header>
+
+      {/* Hero Section (Главный экран) - Первое, что видит клиент */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 w-full h-full">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/40 via-transparent to-[#0a0a0a] z-10" />
+          <img
+            src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop"
+            alt="Luxury Wedding"
+            className="w-full h-full object-cover opacity-70"
+          />
+        </div>
+
+        <div className="relative z-20 text-center px-4 w-full max-w-4xl mt-20">
+          <p className="text-[#C5A880] text-[10px] md:text-xs tracking-[0.4em] uppercase mb-6">
+            Fine Art Wedding Photographer
+          </p>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif mb-10 leading-tight">
+            Искусство вашей <br /> любви
+          </h1>
+
+          {/* Call to Action (Призыв к действию) - Кнопка бронирования */}
+          <button className="mx-auto flex items-center gap-4 bg-[#C5A880] text-black px-8 py-4 rounded-full text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#d4ba95] transition-transform hover:scale-105">
+            Забронировать дату
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      </section>
+
+      {/* Philosophy Section (Философия) - Текст о вашем подходе */}
+      <section className="px-6 py-32 max-w-4xl mx-auto text-center">
+        <h2 className="text-2xl md:text-4xl font-serif leading-relaxed text-white/90">
+          "Каждая пара уникальна. Моя цель — создать кинематографичное наследие вашей семьи, уловив искренние чувства и элегантность момента."
+        </h2>
+        <p className="mt-8 text-[#C5A880] text-[10px] tracking-[0.3em] uppercase">
+          — Элиас Росс
+        </p>
+      </section>
+
+      {/* Selected Works (Избранные работы) - Сетка портфолио */}
+      <section className="px-6 pb-32 max-w-[1400px] mx-auto">
+        <div className="flex justify-between items-end mb-16 border-b border-white/10 pb-8">
+          <h2 className="text-3xl font-serif">Избранные истории</h2>
+          <button className="text-[#C5A880] text-[10px] uppercase tracking-[0.2em] hover:text-white transition-colors">
+            Смотреть все
+          </button>
+        </div>
+
+        {/* Grid (Сетка карточек) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          {portfolioWorks.map((work) => (
+            <div key={work.id} className="group cursor-pointer">
+              <div className="relative w-full aspect-[4/5] overflow-hidden mb-6">
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10" />
+                <img
+                  src={work.image}
+                  alt={work.title}
+                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-serif mb-2 group-hover:text-[#C5A880] transition-colors">{work.title}</h3>
+                <p className="text-xs tracking-wider text-white/40 uppercase">{work.location}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer (Подвал) - Контакты внизу сайта */}
+      <footer className="border-t border-white/10 py-20 px-6 bg-[#050505]">
+        <div className="max-w-[1400px] mx-auto flex flex-col items-center text-center">
+          <div className="text-3xl font-serif text-[#C5A880] mb-8">
+            Elias Ross
+          </div>
+          <p className="text-white/50 text-sm max-w-md mb-12">
+            Доступен для съемок по всему миру. Создаю вечные кадры для влюбленных с безупречным вкусом.
+          </p>
+
+          <div className="flex gap-8 mb-16">
+            <a href="#" className="text-white/50 hover:text-[#C5A880] transition-colors">
+              <Instagram size={24} strokeWidth={1.5} />
+            </a>
+            <a href="#" className="text-white/50 hover:text-[#C5A880] transition-colors">
+              <Mail size={24} strokeWidth={1.5} />
+            </a>
+          </div>
+
+          <div className="text-[10px] uppercase tracking-[0.2em] text-white/30">
+            &copy; 2026 Elias Ross Photography. All rights reserved.
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+};
+
+export default App;

@@ -1,57 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-root=".">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elias Ross | Wedding Photography</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        serif: ['"Cormorant Garamond"', 'serif'],
-                    },
-                    colors: {
-                        primary: '#C5A880'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { font-family: 'Cormorant Garamond', serif; }
-        .hero-bg {
-            background-image: url('https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop');
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oleh Ro | Wedding Photographer in Denmark</title>
+  <meta name="description" content="Luxury wedding photography in Denmark by Oleh Ro - editorial frames with soul, softness, and intentional style." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
-<body class="bg-[#050505] text-white selection:bg-white selection:text-black">
-    <!-- Navbar -->
-    <nav class="fixed top-0 w-full z-50 p-6 flex justify-between items-center bg-black/50 backdrop-blur-md border-b border-white/10">
-        <a href="/" class="text-2xl uppercase tracking-[0.2em] font-light">Elias <span class="text-primary font-medium">Ross</span></a>
-        <div class="space-x-8 text-xs uppercase tracking-widest hidden md:flex">
-            <a href="#portfolio" class="hover:text-primary transition-colors">Portfolio</a>
-            <a href="#albums" class="hover:text-primary transition-colors">Albums</a>
-            <a href="#prices" class="hover:text-primary transition-colors">Prices</a>
-            <a href="#contact" class="hover:text-primary transition-colors">Contact</a>
-        </div>
-    </nav>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="menu-link" href="weddings/index.html">Weddings</a>
+      <a class="logo" href="index.html">Oleh Ro</a>
+      <a class="menu-link" href="pricing/index.html">Pricing</a>
+    </div>
+  </header>
 
-    <!-- Hero -->
-    <section class="h-screen bg-cover bg-center bg-no-repeat hero-bg relative flex items-center justify-center text-center">
-        <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black"></div>
-        <div class="relative z-10 w-full px-6 max-w-4xl mx-auto flex flex-col items-center pt-20">
-            <p class="text-primary text-xs md:text-sm uppercase tracking-[0.4em] mb-4">Fine Art Wedding Photographer</p>
-            <h1 class="text-5xl md:text-8xl mb-8 leading-tight font-light">The Art of <br /> Love</h1>
-            <a href="#portfolio" class="mt-8 border border-white/40 hover:border-white px-8 py-3 text-sm uppercase tracking-[0.2em] transition-all hover:bg-white hover:text-black rounded-full">Explore Stories</a>
+  <main>
+    <section class="hero">
+      <div class="hero-media">
+        <img
+          id="hero-image"
+          src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop"
+          alt="Editorial wedding portrait"
+          fetchpriority="high"
+        />
+        <div class="hero-overlay"></div>
+      </div>
+      <div class="hero-content container">
+        <div class="hero-copy">
+          <p class="eyebrow">Wedding Photographer | Aarhus, Denmark</p>
+          <h1>Not loud. But your photos will be.</h1>
+          <p class="signature-chip">I stay quiet so your moments can speak - raw, awkward, real. Like magic.</p>
+          <div class="hero-actions">
+            <a class="cta" href="weddings/index.html">
+              Weddings Series
+              <span aria-hidden="true">&#8594;</span>
+            </a>
+            <a class="cta cta-ghost" href="portfolio/index.html">
+              Portfolio
+              <span aria-hidden="true">&#8594;</span>
+            </a>
+          </div>
         </div>
+      </div>
     </section>
 
-    <!-- Content to be loaded from Supabase -->
-    <main id="app" class="max-w-7xl mx-auto py-24 px-6"></main>
+    <section class="section section-quote container narrow">
+      <h2>
+        "I photograph love as it really feels - refined, tender, and a little unpredictable."
+      </h2>
+      <p>- Oleh Ro</p>
+    </section>
 
-    <script type="module" src="/src/main.js"></script>
+    <section class="section container" id="home-featured">
+      <div class="section-head">
+        <h2>Featured Stories</h2>
+        <a href="weddings/index.html">View Weddings</a>
+      </div>
+      <div id="featured-grid" class="photo-grid cols-3 centered-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-logo">Oleh Ro</div>
+      <p>
+        Wedding photography for modern couples in Denmark and across Europe.
+      </p>
+      <div class="footer-links">
+        <a href="https://instagram.com/deusflow" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a href="mailto:hello@deusflow.com">Email</a>
+      </div>
+      <p class="footer-creator">Site crafted by <span>Deusflow</span></p>
+      <small>&copy; 2026 Oleh Ro Photography. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="assets/js/runtime-config.js"></script>
+  <script>
+    (function () {
+      try {
+        const image = document.getElementById("hero-image");
+        const config = window.APP_CONFIG || {};
+        if (image && config.HERO_IMAGE_URL) {
+          image.src = config.HERO_IMAGE_URL;
+        }
+      } catch (error) {
+        console.warn("Hero image override failed", error);
+      }
+    })();
+  </script>
+  <script type="module" src="assets/js/home.js"></script>
 </body>
 </html>

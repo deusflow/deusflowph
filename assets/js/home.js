@@ -2,6 +2,15 @@ import { getSupabase } from "./supabase-client.js";
 import { observeLazyImages, createStateMessage } from "./ui.js";
 
 const featuredGrid = document.getElementById("featured-grid");
+const heroImage = document.getElementById("hero-image");
+
+function applyHeroImageFromConfig() {
+  if (!heroImage || !window.APP_CONFIG || !window.APP_CONFIG.HERO_IMAGE_URL) {
+    return;
+  }
+
+  heroImage.src = window.APP_CONFIG.HERO_IMAGE_URL;
+}
 
 async function loadFeatured() {
   if (!featuredGrid) {
@@ -13,7 +22,7 @@ async function loadFeatured() {
 
     const { data: albums, error: albumError } = await supabase
       .from("albums")
-      .select("id, title, date")
+      .select("id, slug, title, date")
       .eq("visible", true)
       .eq("type", "wedding")
       .order("date", { ascending: false })
@@ -46,7 +55,7 @@ async function loadFeatured() {
 
       const card = document.createElement("a");
       card.className = "photo-card";
-      card.href = `weddings/album/index.html?slug=${encodeURIComponent(album.title.toLowerCase().replace(/\s+/g, "-"))}`;
+      card.href = `weddings/album/index.html?slug=${encodeURIComponent(album.slug)}`;
       card.innerHTML = `
         <div class="photo-media">
           <img data-src="${photos[0].url}" alt="${album.title}" loading="lazy" />
@@ -67,5 +76,5 @@ async function loadFeatured() {
   }
 }
 
+applyHeroImageFromConfig();
 loadFeatured();
-

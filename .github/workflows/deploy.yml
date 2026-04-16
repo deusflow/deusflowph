@@ -1,0 +1,52 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Ensure config.js exists from secret
+        run: |
+          cat > config.js << 'EOF'
+          window.APP_CONFIG = {
+            SUPABASE_URL: "${{ secrets.SUPABASE_URL }}",
+            SUPABASE_ANON_KEY: "${{ secrets.SUPABASE_ANON_KEY }}",
+            CONTACT_EMAIL: "${{ secrets.CONTACT_EMAIL }}",
+            INSTAGRAM_HANDLE: "${{ secrets.INSTAGRAM_HANDLE }}",
+            HERO_IMAGE_URL: "${{ secrets.HERO_IMAGE_URL }}",
+            FAVICON_URL: "${{ secrets.FAVICON_URL }}"
+          };
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
