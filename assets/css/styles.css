@@ -314,6 +314,10 @@ h3,
   border: 1px solid var(--gold);
 }
 
+#featured-grid .photo-card .photo-media {
+  border: 1px solid var(--gold);
+}
+
 /* Keep subtle personality: tiny imperfect rhythm without breaking luxury composition */
 .centered-grid > :nth-child(odd) {
   transform: rotate(-0.35deg);

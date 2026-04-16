@@ -22,7 +22,7 @@ async function loadFeatured() {
 
     const { data: albums, error: albumError } = await supabase
       .from("albums")
-      .select("id, slug, title, date")
+      .select("id, slug, title, cover_url, date")
       .eq("visible", true)
       .eq("type", "wedding")
       .order("date", { ascending: false })
@@ -38,19 +38,26 @@ async function loadFeatured() {
     }
 
     for (const album of albums) {
-      const { data: photos, error: photosError } = await supabase
-        .from("photos")
-        .select("url")
-        .eq("album_id", album.id)
-        .order("display_order", { ascending: true })
-        .limit(1);
+      let imageUrl = album.cover_url;
 
-      if (photosError) {
-        throw photosError;
-      }
+      // Backward compatibility for albums created before cover_url was set.
+      if (!imageUrl) {
+        const { data: photos, error: photosError } = await supabase
+          .from("photos")
+          .select("url")
+          .eq("album_id", album.id)
+          .order("display_order", { ascending: true })
+          .limit(1);
 
-      if (!photos || photos.length === 0) {
-        continue;
+        if (photosError) {
+          throw photosError;
+        }
+
+        if (!photos || photos.length === 0) {
+          continue;
+        }
+
+        imageUrl = photos[0].url;
       }
 
       const card = document.createElement("a");
@@ -58,7 +65,7 @@ async function loadFeatured() {
       card.href = `weddings/album/index.html?slug=${encodeURIComponent(album.slug)}`;
       card.innerHTML = `
         <div class="photo-media">
-          <img data-src="${photos[0].url}" alt="${album.title}" loading="lazy" />
+          <img data-src="${imageUrl}" alt="${album.title}" loading="lazy" />
         </div>
         <h3 class="photo-title">${album.title}</h3>
       `;
