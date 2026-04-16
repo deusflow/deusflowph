@@ -35,7 +35,13 @@ async function renderAlbum() {
     titleNode.textContent = album.title;
     metaNode.textContent = formatDate(album.date);
     if (descriptionNode) {
-      descriptionNode.textContent = album.description || "";
+      if (album.description && album.description.trim()) {
+        descriptionNode.textContent = album.description;
+        descriptionNode.style.display = "block";
+      } else {
+        descriptionNode.textContent = "";
+        descriptionNode.style.display = "none";
+      }
     }
 
     const { data: photos, error: photosError } = await supabase

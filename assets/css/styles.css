@@ -453,6 +453,10 @@ h3,
   font-size: clamp(2.4rem, 5vw, 4.7rem);
 }
 
+.pricing-title {
+  font-size: clamp(1.95rem, 4vw, 3.2rem) !important;
+}
+
 .page-intro p {
   margin-top: 1rem;
   max-width: 680px;
@@ -481,6 +485,14 @@ h3,
   display: grid;
   gap: 1.5rem;
   align-items: stretch;
+}
+
+.package-note {
+  margin: 1.35rem auto 0;
+  max-width: 920px;
+  text-align: center;
+  color: rgba(232, 226, 217, 0.72);
+  font-size: 0.95rem;
 }
 
 .package {
