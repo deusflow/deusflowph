@@ -310,6 +310,10 @@ h3,
   text-align: center;
 }
 
+#weddings-grid .album-card .photo-media {
+  border: 1px solid var(--gold);
+}
+
 /* Keep subtle personality: tiny imperfect rhythm without breaking luxury composition */
 .centered-grid > :nth-child(odd) {
   transform: rotate(-0.35deg);
