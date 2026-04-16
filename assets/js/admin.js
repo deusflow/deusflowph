@@ -11,7 +11,9 @@ const state = {
   selectedAlbum: null,
   selectedAlbumPhotos: [],
   selectedAlbumMetaBase: "",
-  uploadInProgress: false
+  uploadInProgress: false,
+  reorderInProgress: false,
+  dragSourceIndex: null
 };
 
 const loginPanel = document.getElementById("login-panel");
@@ -62,6 +64,12 @@ function refreshAlbumMeta(photoCount) {
     return;
   }
   selectedAlbumMeta.textContent = `${state.selectedAlbumMetaBase} | photos: ${photoCount}`;
+}
+
+function clearPhotoDropTargets() {
+  photosList.querySelectorAll(".photo-row.drop-target").forEach((node) => {
+    node.classList.remove("drop-target");
+  });
 }
 
 function setAuthView(isLoggedIn) {
@@ -222,10 +230,15 @@ async function deleteAlbum(albumId) {
 }
 
 async function movePhotoByIndex(currentIndex, targetIndex) {
-  if (!state.selectedAlbum || targetIndex < 0 || targetIndex >= state.selectedAlbumPhotos.length) {
+  if (!state.selectedAlbum || state.reorderInProgress || targetIndex < 0 || targetIndex >= state.selectedAlbumPhotos.length) {
     return;
   }
 
+  if (currentIndex === targetIndex) {
+    return;
+  }
+
+  state.reorderInProgress = true;
   const supabase = getSupabase();
   const reordered = [...state.selectedAlbumPhotos];
   const [moved] = reordered.splice(currentIndex, 1);
@@ -235,20 +248,24 @@ async function movePhotoByIndex(currentIndex, targetIndex) {
   const normalized = reordered.map((photo, index) => ({ ...photo, display_order: index + 1 }));
   const changedRows = normalized.filter((photo) => oldOrder.get(photo.id) !== photo.display_order);
 
-  for (const row of changedRows) {
-    const { error } = await supabase
-      .from("photos")
-      .update({ display_order: row.display_order })
-      .eq("id", row.id);
+  try {
+    for (const row of changedRows) {
+      const { error } = await supabase
+        .from("photos")
+        .update({ display_order: row.display_order })
+        .eq("id", row.id);
 
-    if (error) {
-      window.alert(`Could not reorder photos: ${error.message}`);
-      return;
+      if (error) {
+        window.alert(`Could not reorder photos: ${error.message}`);
+        return;
+      }
     }
-  }
 
-  state.selectedAlbumPhotos = normalized;
-  await loadPhotos(state.selectedAlbum.id);
+    state.selectedAlbumPhotos = normalized;
+    await loadPhotos(state.selectedAlbum.id);
+  } finally {
+    state.reorderInProgress = false;
+  }
 }
 
 async function loadPhotos(albumId) {
@@ -277,6 +294,60 @@ async function loadPhotos(albumId) {
   photos.forEach((photo, index) => {
     const row = document.createElement("div");
     row.className = "photo-row";
+    row.draggable = true;
+    row.dataset.index = String(index);
+
+    row.addEventListener("dragstart", (event) => {
+      if (state.reorderInProgress) {
+        event.preventDefault();
+        return;
+      }
+
+      state.dragSourceIndex = index;
+      row.classList.add("dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", String(index));
+      }
+    });
+
+    row.addEventListener("dragend", () => {
+      state.dragSourceIndex = null;
+      row.classList.remove("dragging");
+      clearPhotoDropTargets();
+    });
+
+    row.addEventListener("dragover", (event) => {
+      if (state.reorderInProgress) {
+        return;
+      }
+
+      event.preventDefault();
+      clearPhotoDropTargets();
+      row.classList.add("drop-target");
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+    });
+
+    row.addEventListener("dragleave", () => {
+      row.classList.remove("drop-target");
+    });
+
+    row.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      clearPhotoDropTargets();
+
+      const targetIndex = Number(row.dataset.index);
+      const sourceFromData = event.dataTransfer ? Number(event.dataTransfer.getData("text/plain")) : Number.NaN;
+      const sourceIndex = Number.isInteger(sourceFromData) ? sourceFromData : state.dragSourceIndex;
+
+      if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex)) {
+        return;
+      }
+
+      await movePhotoByIndex(sourceIndex, targetIndex);
+    });
 
     const info = document.createElement("div");
     info.innerHTML = `

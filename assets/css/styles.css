@@ -657,6 +657,17 @@ button.danger {
 .photo-row {
   grid-template-columns: 88px 1fr auto;
   align-items: center;
+  cursor: grab;
+}
+
+.photo-row.dragging {
+  opacity: 0.55;
+  border-color: var(--gold);
+}
+
+.photo-row.drop-target {
+  border-color: var(--gold);
+  background: rgba(197, 168, 128, 0.06);
 }
 
 .photo-row img {
