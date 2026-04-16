@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elias Ross | Wedding Photography</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                    },
+                    colors: {
+                        primary: '#C5A880'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Cormorant Garamond', serif; }
+        .hero-bg {
+            background-image: url('https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop');
+        }
+    </style>
+</head>
+<body class="bg-[#050505] text-white selection:bg-white selection:text-black">
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 p-6 flex justify-between items-center bg-black/50 backdrop-blur-md border-b border-white/10">
+        <a href="/" class="text-2xl uppercase tracking-[0.2em] font-light">Elias <span class="text-primary font-medium">Ross</span></a>
+        <div class="space-x-8 text-xs uppercase tracking-widest hidden md:flex">
+            <a href="#portfolio" class="hover:text-primary transition-colors">Portfolio</a>
+            <a href="#albums" class="hover:text-primary transition-colors">Albums</a>
+            <a href="#prices" class="hover:text-primary transition-colors">Prices</a>
+            <a href="#contact" class="hover:text-primary transition-colors">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="h-screen bg-cover bg-center bg-no-repeat hero-bg relative flex items-center justify-center text-center">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black"></div>
+        <div class="relative z-10 w-full px-6 max-w-4xl mx-auto flex flex-col items-center pt-20">
+            <p class="text-primary text-xs md:text-sm uppercase tracking-[0.4em] mb-4">Fine Art Wedding Photographer</p>
+            <h1 class="text-5xl md:text-8xl mb-8 leading-tight font-light">The Art of <br /> Love</h1>
+            <a href="#portfolio" class="mt-8 border border-white/40 hover:border-white px-8 py-3 text-sm uppercase tracking-[0.2em] transition-all hover:bg-white hover:text-black rounded-full">Explore Stories</a>
+        </div>
+    </section>
+
+    <!-- Content to be loaded from Supabase -->
+    <main id="app" class="max-w-7xl mx-auto py-24 px-6"></main>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
