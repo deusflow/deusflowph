@@ -24,6 +24,11 @@ const logoutButton = document.getElementById("logout-button");
 const selectedAlbumName = document.getElementById("selected-album-name");
 const selectedAlbumMeta = document.getElementById("selected-album-meta");
 const selectedAlbumPanel = document.getElementById("selected-album-panel");
+const editAlbumForm = document.getElementById("edit-album-form");
+const saveAlbumButton = document.getElementById("save-album-button");
+const editTitleInput = document.getElementById("edit-title");
+const editDateInput = document.getElementById("edit-date");
+const editDescriptionInput = document.getElementById("edit-description");
 const photosList = document.getElementById("photos-list");
 const photoUploadInput = document.getElementById("photo-upload-input");
 const dropzone = document.getElementById("photo-dropzone");
@@ -69,6 +74,9 @@ function showAlbumDetails(album) {
   selectedAlbumName.textContent = album.title;
   state.selectedAlbumMetaBase = `${album.type} | ${formatDate(album.date)} | slug: ${album.slug}`;
   selectedAlbumMeta.textContent = state.selectedAlbumMetaBase;
+  editTitleInput.value = album.title || "";
+  editDateInput.value = album.date || "";
+  editDescriptionInput.value = album.description || "";
   selectedAlbumPanel.classList.remove("hidden");
   setUploadStatus("No upload in progress.", 0);
 }
@@ -89,7 +97,7 @@ async function loadAlbums() {
 
   const { data: albums, error } = await supabase
     .from("albums")
-    .select("id, slug, title, date, type, visible")
+    .select("id, slug, title, description, date, type, visible")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -345,6 +353,7 @@ async function createAlbum(event) {
   const title = String(formData.get("title") || "").trim();
   const type = String(formData.get("type") || "wedding").trim();
   const date = String(formData.get("date") || "").trim();
+  const description = String(formData.get("description") || "").trim();
   const slugInput = String(formData.get("slug") || "").trim();
   const coverFile = createAlbumForm.querySelector("input[name='cover']").files[0];
 
@@ -363,6 +372,7 @@ async function createAlbum(event) {
     const { error } = await supabase.from("albums").insert({
       slug,
       title,
+      description: description || null,
       cover_url: coverUrl,
       type,
       date: date || null,
@@ -378,6 +388,56 @@ async function createAlbum(event) {
   } catch (err) {
     window.alert(err.message);
   }
+}
+
+async function saveAlbumDetails(event) {
+  event.preventDefault();
+
+  if (!state.selectedAlbum) {
+    window.alert("Open an album first.");
+    return;
+  }
+
+  const title = editTitleInput.value.trim();
+  const date = editDateInput.value.trim();
+  const description = editDescriptionInput.value.trim();
+
+  if (!title) {
+    window.alert("Album title cannot be empty.");
+    return;
+  }
+
+  saveAlbumButton.disabled = true;
+  saveAlbumButton.textContent = "Saving...";
+
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("albums")
+    .update({
+      title,
+      date: date || null,
+      description: description || null
+    })
+    .eq("id", state.selectedAlbum.id);
+
+  saveAlbumButton.disabled = false;
+  saveAlbumButton.textContent = "Save Album Details";
+
+  if (error) {
+    window.alert(`Could not save album details: ${error.message}`);
+    return;
+  }
+
+  state.selectedAlbum = {
+    ...state.selectedAlbum,
+    title,
+    date: date || null,
+    description: description || null
+  };
+
+  showAlbumDetails(state.selectedAlbum);
+  await loadAlbums();
+  await loadPhotos(state.selectedAlbum.id);
 }
 
 async function uploadPhotos(files) {
@@ -524,6 +584,7 @@ loginForm.addEventListener("submit", async (event) => {
 });
 
 createAlbumForm.addEventListener("submit", createAlbum);
+editAlbumForm.addEventListener("submit", saveAlbumDetails);
 
 logoutButton.addEventListener("click", async () => {
   const supabase = getSupabase();

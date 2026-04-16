@@ -282,6 +282,11 @@ h3,
   justify-items: center;
 }
 
+.photo-grid.centered-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 430px)) !important;
+  justify-content: center;
+}
+
 .photo-grid.cols-2 {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
@@ -366,6 +371,13 @@ h3,
   color: rgba(232, 226, 217, 0.62);
 }
 
+.album-description {
+  margin: 0.6rem auto 0;
+  max-width: 38ch;
+  color: rgba(232, 226, 217, 0.75);
+  font-size: 0.95rem;
+}
+
 .site-footer {
   background: var(--bg-soft);
   border-top: 1px solid var(--border);
@@ -438,6 +450,10 @@ h3,
   max-width: 680px;
   margin-inline: auto;
   color: rgba(232, 226, 217, 0.75);
+}
+
+#album-description {
+  margin-top: 0.5rem;
 }
 
 .state-box {

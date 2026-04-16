@@ -3,6 +3,7 @@ import { observeLazyImages, createStateMessage, setupLightbox } from "./ui.js";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
+const descriptionNode = document.getElementById("album-description");
 const grid = document.getElementById("album-grid");
 
 function getSlugFromURL() {
@@ -22,7 +23,7 @@ async function renderAlbum() {
 
     const { data: album, error: albumError } = await supabase
       .from("albums")
-      .select("id, title, date, visible")
+      .select("id, title, description, date, visible")
       .eq("slug", slug)
       .eq("visible", true)
       .single();
@@ -33,6 +34,9 @@ async function renderAlbum() {
 
     titleNode.textContent = album.title;
     metaNode.textContent = formatDate(album.date);
+    if (descriptionNode) {
+      descriptionNode.textContent = album.description || "";
+    }
 
     const { data: photos, error: photosError } = await supabase
       .from("photos")

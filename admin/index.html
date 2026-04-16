@@ -72,6 +72,11 @@
             </div>
 
             <div class="form-row">
+              <label for="description">Description (optional)</label>
+              <textarea id="description" name="description" rows="3" placeholder="Short story mood, place, or couple vibe..."></textarea>
+            </div>
+
+            <div class="form-row">
               <label for="cover">Cover image (JPEG/WEBP/PNG)</label>
               <input id="cover" name="cover" type="file" accept="image/*" required />
             </div>
@@ -84,6 +89,25 @@
       <article id="selected-album-panel" class="panel hidden" style="margin-top:1.5rem;">
         <h3 id="selected-album-name">Album</h3>
         <p id="selected-album-meta"></p>
+
+        <form id="edit-album-form">
+          <div class="form-row">
+            <label for="edit-title">Album title</label>
+            <input id="edit-title" name="title" type="text" required />
+          </div>
+
+          <div class="form-row">
+            <label for="edit-date">Date</label>
+            <input id="edit-date" name="date" type="date" />
+          </div>
+
+          <div class="form-row">
+            <label for="edit-description">Description</label>
+            <textarea id="edit-description" name="description" rows="3" placeholder="Short wedding story description..."></textarea>
+          </div>
+
+          <button id="save-album-button" type="submit" class="primary">Save Album Details</button>
+        </form>
 
         <div class="form-row">
           <label for="photo-upload-input">Upload photos</label>

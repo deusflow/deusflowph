@@ -26,6 +26,12 @@ Production-ready static website for a wedding photographer based in Denmark.
    - Project URL
    - anon public key
 
+If your project already exists, run this migration once:
+
+```sql
+alter table public.albums add column if not exists description text;
+```
+
 ## 2) Configure local project
 
 1. Copy template config:

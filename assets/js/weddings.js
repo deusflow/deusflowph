@@ -12,7 +12,7 @@ async function renderWeddings() {
     const supabase = getSupabase();
     const { data: albums, error } = await supabase
       .from("albums")
-      .select("slug, title, cover_url, date")
+      .select("slug, title, description, cover_url, date")
       .eq("visible", true)
       .eq("type", "wedding")
       .order("date", { ascending: false });
@@ -37,6 +37,7 @@ async function renderWeddings() {
         </div>
         <h3 class="photo-title">${album.title}</h3>
         <p class="photo-subtitle">${formatDate(album.date)}</p>
+        ${album.description ? `<p class="album-description">${album.description}</p>` : ""}
       `;
       fragment.appendChild(card);
     });

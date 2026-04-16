@@ -8,12 +8,15 @@ create table if not exists public.albums (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
   title text not null,
+  description text,
   cover_url text,
   type text not null check (type in ('wedding', 'portfolio')),
   date date,
   visible boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+alter table public.albums add column if not exists description text;
 
 -- Photos table
 create table if not exists public.photos (
