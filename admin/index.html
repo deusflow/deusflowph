@@ -88,10 +88,18 @@
         <div class="form-row">
           <label for="photo-upload-input">Upload photos</label>
           <input id="photo-upload-input" type="file" accept="image/*" multiple />
+          <small class="upload-note">Photos start uploading automatically after you select or drop files.</small>
         </div>
 
         <div id="photo-dropzone" class="dropzone">
           Drag and drop multiple photos here
+        </div>
+
+        <div id="upload-status" class="upload-status" aria-live="polite">
+          <div id="upload-status-text">No upload in progress.</div>
+          <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="upload-progress-bar" class="upload-progress-bar"></div>
+          </div>
         </div>
 
         <h3 style="margin-top:1.5rem;">Photos</h3>

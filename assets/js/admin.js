@@ -9,7 +9,9 @@ import { createStateMessage } from "./ui.js";
 
 const state = {
   selectedAlbum: null,
-  selectedAlbumPhotos: []
+  selectedAlbumPhotos: [],
+  selectedAlbumMetaBase: "",
+  uploadInProgress: false
 };
 
 const loginPanel = document.getElementById("login-panel");
@@ -25,6 +27,37 @@ const selectedAlbumPanel = document.getElementById("selected-album-panel");
 const photosList = document.getElementById("photos-list");
 const photoUploadInput = document.getElementById("photo-upload-input");
 const dropzone = document.getElementById("photo-dropzone");
+const uploadStatusText = document.getElementById("upload-status-text");
+const uploadProgressBar = document.getElementById("upload-progress-bar");
+const uploadProgressTrack = document.querySelector(".upload-progress-track");
+
+function setUploadStatus(message, percent = 0, tone = "default") {
+  if (uploadStatusText) {
+    uploadStatusText.textContent = message;
+    uploadStatusText.style.color = tone === "error" ? "#d39e9e" : "rgba(232, 226, 217, 0.82)";
+  }
+
+  if (uploadProgressBar) {
+    uploadProgressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  }
+
+  if (uploadProgressTrack) {
+    uploadProgressTrack.setAttribute("aria-valuenow", String(Math.round(percent)));
+  }
+}
+
+function setUploadBusy(isBusy) {
+  state.uploadInProgress = isBusy;
+  photoUploadInput.disabled = isBusy;
+  dropzone.style.opacity = isBusy ? "0.65" : "1";
+}
+
+function refreshAlbumMeta(photoCount) {
+  if (!state.selectedAlbumMetaBase) {
+    return;
+  }
+  selectedAlbumMeta.textContent = `${state.selectedAlbumMetaBase} | photos: ${photoCount}`;
+}
 
 function setAuthView(isLoggedIn) {
   loginPanel.classList.toggle("hidden", isLoggedIn);
@@ -34,8 +67,10 @@ function setAuthView(isLoggedIn) {
 function showAlbumDetails(album) {
   state.selectedAlbum = album;
   selectedAlbumName.textContent = album.title;
-  selectedAlbumMeta.textContent = `${album.type} | ${formatDate(album.date)} | slug: ${album.slug}`;
+  state.selectedAlbumMetaBase = `${album.type} | ${formatDate(album.date)} | slug: ${album.slug}`;
+  selectedAlbumMeta.textContent = state.selectedAlbumMetaBase;
   selectedAlbumPanel.classList.remove("hidden");
+  setUploadStatus("No upload in progress.", 0);
 }
 
 async function requireSession() {
@@ -178,6 +213,36 @@ async function deleteAlbum(albumId) {
   }
 }
 
+async function movePhotoByIndex(currentIndex, targetIndex) {
+  if (!state.selectedAlbum || targetIndex < 0 || targetIndex >= state.selectedAlbumPhotos.length) {
+    return;
+  }
+
+  const supabase = getSupabase();
+  const reordered = [...state.selectedAlbumPhotos];
+  const [moved] = reordered.splice(currentIndex, 1);
+  reordered.splice(targetIndex, 0, moved);
+
+  const oldOrder = new Map(state.selectedAlbumPhotos.map((photo) => [photo.id, photo.display_order]));
+  const normalized = reordered.map((photo, index) => ({ ...photo, display_order: index + 1 }));
+  const changedRows = normalized.filter((photo) => oldOrder.get(photo.id) !== photo.display_order);
+
+  for (const row of changedRows) {
+    const { error } = await supabase
+      .from("photos")
+      .update({ display_order: row.display_order })
+      .eq("id", row.id);
+
+    if (error) {
+      window.alert(`Could not reorder photos: ${error.message}`);
+      return;
+    }
+  }
+
+  state.selectedAlbumPhotos = normalized;
+  await loadPhotos(state.selectedAlbum.id);
+}
+
 async function loadPhotos(albumId) {
   const supabase = getSupabase();
   photosList.innerHTML = "";
@@ -194,22 +259,39 @@ async function loadPhotos(albumId) {
   }
 
   state.selectedAlbumPhotos = photos || [];
+  refreshAlbumMeta(state.selectedAlbumPhotos.length);
 
   if (!photos || photos.length === 0) {
     photosList.appendChild(createStateMessage("No photos in this album yet."));
     return;
   }
 
-  photos.forEach((photo) => {
+  photos.forEach((photo, index) => {
     const row = document.createElement("div");
     row.className = "photo-row";
-    row.innerHTML = `
-      <img src="${photo.url}" alt="Album photo" loading="lazy" />
-      <div>
-        <strong>Order: ${photo.display_order}</strong><br />
-        <span class="photo-subtitle">${photo.id}</span>
-      </div>
+
+    const info = document.createElement("div");
+    info.innerHTML = `
+      <strong>Order: ${photo.display_order}</strong><br />
+      <span class="photo-subtitle">${photo.id}</span>
     `;
+
+    const actions = document.createElement("div");
+    actions.className = "photo-actions";
+
+    const upButton = document.createElement("button");
+    upButton.type = "button";
+    upButton.className = "ghost";
+    upButton.textContent = "Up";
+    upButton.disabled = index === 0;
+    upButton.addEventListener("click", () => movePhotoByIndex(index, index - 1));
+
+    const downButton = document.createElement("button");
+    downButton.type = "button";
+    downButton.className = "ghost";
+    downButton.textContent = "Down";
+    downButton.disabled = index === photos.length - 1;
+    downButton.addEventListener("click", () => movePhotoByIndex(index, index + 1));
 
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
@@ -239,7 +321,18 @@ async function loadPhotos(albumId) {
       await loadPhotos(albumId);
     });
 
-    row.appendChild(deleteButton);
+    actions.appendChild(upButton);
+    actions.appendChild(downButton);
+    actions.appendChild(deleteButton);
+
+    const thumb = document.createElement("img");
+    thumb.src = photo.url;
+    thumb.alt = "Album photo";
+    thumb.loading = "lazy";
+
+    row.appendChild(thumb);
+    row.appendChild(info);
+    row.appendChild(actions);
     photosList.appendChild(row);
   });
 }
@@ -289,19 +382,40 @@ async function createAlbum(event) {
 
 async function uploadPhotos(files) {
   if (!state.selectedAlbum) {
-    window.alert("Open an album first.");
+    setUploadStatus("Open an album first.", 0, "error");
+    return;
+  }
+
+  if (state.uploadInProgress) {
+    setUploadStatus("Upload already in progress. Please wait.", 0, "error");
+    return;
+  }
+
+  const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+  if (!imageFiles.length) {
+    setUploadStatus("No image files detected in this batch.", 0, "error");
     return;
   }
 
   const supabase = getSupabase();
+  const total = imageFiles.length;
+  let uploaded = 0;
+  let failed = 0;
+
   const startOrder =
     state.selectedAlbumPhotos.length > 0
       ? Math.max(...state.selectedAlbumPhotos.map((photo) => photo.display_order || 0)) + 1
       : 1;
 
   let order = startOrder;
+  setUploadBusy(true);
+  setUploadStatus(`Uploading 0/${total} photos...`, 0);
 
-  for (const file of files) {
+  for (const file of imageFiles) {
+    const completed = uploaded + failed;
+    const startedPercent = total > 0 ? (completed / total) * 100 : 0;
+    setUploadStatus(`Uploading ${completed + 1}/${total}: ${file.name}`, startedPercent);
+
     const extension = file.name.split(".").pop() || "jpg";
     const path = `albums/${state.selectedAlbum.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
 
@@ -319,20 +433,34 @@ async function uploadPhotos(files) {
         throw error;
       }
 
+      uploaded += 1;
       order += 1;
     } catch (err) {
-      window.alert(`Upload failed for ${file.name}: ${err.message}`);
-      return;
+      failed += 1;
+      console.error(`Upload failed for ${file.name}:`, err);
     }
+
+    const done = uploaded + failed;
+    const percent = total > 0 ? (done / total) * 100 : 100;
+    setUploadStatus(`Uploaded ${uploaded}/${total}${failed ? `, failed ${failed}` : ""}`, percent, failed ? "error" : "default");
   }
 
   await loadPhotos(state.selectedAlbum.id);
+  setUploadBusy(false);
+
+  if (failed === 0) {
+    setUploadStatus(`Upload complete. ${uploaded}/${total} photos uploaded.`, 100);
+  } else {
+    setUploadStatus(`Upload finished with issues: ${uploaded} uploaded, ${failed} failed.`, 100, "error");
+  }
 }
 
 function setupDropzone() {
   dropzone.addEventListener("dragover", (event) => {
     event.preventDefault();
-    dropzone.classList.add("is-over");
+    if (!state.uploadInProgress) {
+      dropzone.classList.add("is-over");
+    }
   });
 
   dropzone.addEventListener("dragleave", () => {
@@ -406,5 +534,5 @@ logoutButton.addEventListener("click", async () => {
 });
 
 setupDropzone();
+setUploadStatus("No upload in progress.", 0);
 boot();
-

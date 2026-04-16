@@ -646,6 +646,18 @@ button.danger {
   border: 1px solid var(--border);
 }
 
+.photo-actions {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.photo-actions button {
+  min-width: 54px;
+  width: auto;
+  padding: 0.5rem 0.6rem;
+}
+
 .visibility-toggle {
   display: flex;
   align-items: center;
@@ -667,6 +679,38 @@ button.danger {
 .dropzone.is-over {
   border-color: var(--gold);
   color: var(--gold);
+}
+
+.upload-note {
+  color: rgba(232, 226, 217, 0.62);
+  font-size: 0.85rem;
+}
+
+.upload-status {
+  margin-top: 0.8rem;
+  border: 1px solid var(--border);
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+#upload-status-text {
+  font-size: 0.9rem;
+  color: rgba(232, 226, 217, 0.82);
+  margin-bottom: 0.55rem;
+}
+
+.upload-progress-track {
+  width: 100%;
+  height: 8px;
+  background: #141414;
+  border: 1px solid var(--border);
+}
+
+.upload-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--blush) 100%);
+  transition: width 0.2s ease;
 }
 
 .hidden {
@@ -724,6 +768,20 @@ button.danger {
   .footer-links {
     flex-wrap: wrap;
     gap: 1.2rem 1.8rem;
+  }
+
+  .photo-row {
+    grid-template-columns: 72px 1fr;
+  }
+
+  .photo-row img {
+    width: 72px;
+    height: 72px;
+  }
+
+  .photo-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
   }
 }
 
