@@ -374,10 +374,31 @@ h3,
   transition: transform 0.7s ease;
 }
 
-/* Gallery pages should keep the original image ratio without forced vertical crops. */
+/* Gallery pages should keep original ratios and stack tightly like masonry. */
+#portfolio-grid {
+  display: block;
+  column-count: 1;
+  column-gap: 1rem;
+}
+
+#portfolio-grid .photo-card {
+  max-width: none;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+#portfolio-grid.centered-grid > :nth-child(odd),
+#portfolio-grid.centered-grid > :nth-child(even),
+#portfolio-grid.centered-grid > *:hover {
+  transform: none;
+}
+
 #portfolio-grid .photo-media {
   aspect-ratio: auto;
   background: transparent;
+  margin-bottom: 0;
 }
 
 #portfolio-grid .photo-media img {
@@ -568,16 +589,17 @@ h3,
 }
 
 .masonry {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 1rem;
-  align-items: start;
+  column-count: 1;
+  column-gap: 1rem;
 }
 
 .masonry-item {
   border: 1px solid var(--border);
   background: transparent;
-  align-self: start;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin-bottom: 1rem;
 }
 
 .masonry-item img {
@@ -924,6 +946,11 @@ button.danger {
     column-count: 2;
     column-gap: 1.5rem;
   }
+
+  #portfolio-grid {
+    column-count: 2;
+    column-gap: 1.5rem;
+  }
 }
 
 @media (max-width: 759px) {
@@ -985,7 +1012,11 @@ button.danger {
   }
 
   .masonry {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-count: 3;
+  }
+
+  #portfolio-grid {
+    column-count: 3;
   }
 
   #photos-list.compact-photo-grid {
