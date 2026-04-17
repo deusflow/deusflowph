@@ -56,6 +56,47 @@ export function createPhotoCard({ title, subtitle, imageUrl, href = "#" }) {
   return card;
 }
 
+function getResponsiveColumnCount() {
+  if (window.matchMedia("(min-width: 1024px)").matches) {
+    return 3;
+  }
+  if (window.matchMedia("(min-width: 760px)").matches) {
+    return 2;
+  }
+  return 1;
+}
+
+export function renderOrderedMasonry(container, items) {
+  if (!container) {
+    return;
+  }
+
+  const nodes = Array.isArray(items) ? items.filter(Boolean) : [];
+  const desiredColumns = getResponsiveColumnCount();
+
+  const currentColumns = Number(container.dataset.masonryColumns || "0");
+  const sameLayout = currentColumns === desiredColumns;
+  if (sameLayout) {
+    return;
+  }
+
+  container.innerHTML = "";
+  container.classList.add("is-ordered-masonry");
+  container.dataset.masonryColumns = String(desiredColumns);
+
+  const columns = Array.from({ length: desiredColumns }, () => {
+    const column = document.createElement("div");
+    column.className = "masonry-column";
+    container.appendChild(column);
+    return column;
+  });
+
+  nodes.forEach((node, index) => {
+    const columnIndex = index % desiredColumns;
+    columns[columnIndex].appendChild(node);
+  });
+}
+
 export function setupLightbox() {
   const lightbox = document.getElementById("lightbox");
   if (!lightbox) {

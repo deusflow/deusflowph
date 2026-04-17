@@ -1,7 +1,16 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage } from "./ui.js";
+import { observeLazyImages, createStateMessage, renderOrderedMasonry } from "./ui.js";
 
 const grid = document.getElementById("portfolio-grid");
+let portfolioItems = [];
+let masonryResizeTimer = null;
+
+function applyPortfolioMasonry() {
+  if (!grid || !portfolioItems.length) {
+    return;
+  }
+  renderOrderedMasonry(grid, portfolioItems);
+}
 
 async function renderPortfolio() {
   if (!grid) {
@@ -46,8 +55,7 @@ async function renderPortfolio() {
       return;
     }
 
-    const fragment = document.createDocumentFragment();
-    photos.forEach((photo, index) => {
+    portfolioItems = photos.map((photo, index) => {
       const item = document.createElement("article");
       item.className = "photo-card";
       item.innerHTML = `
@@ -55,11 +63,16 @@ async function renderPortfolio() {
           <img data-src="${photo.url}" alt="Portfolio photo ${index + 1}" loading="lazy" />
         </div>
       `;
-      fragment.appendChild(item);
+      return item;
     });
 
-    grid.appendChild(fragment);
+    applyPortfolioMasonry();
     observeLazyImages();
+
+    window.addEventListener("resize", () => {
+      clearTimeout(masonryResizeTimer);
+      masonryResizeTimer = setTimeout(applyPortfolioMasonry, 120);
+    });
   } catch (error) {
     grid.innerHTML = "";
     grid.appendChild(createStateMessage(`Could not load portfolio. ${error.message}`));
