@@ -682,6 +682,18 @@ button.danger {
   margin-bottom: 0.75rem;
 }
 
+.photo-order-controls {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.photo-order-controls button {
+  width: auto;
+  min-width: 0;
+  padding: 0.45rem 0.7rem;
+}
+
 .photo-view-controls button {
   width: auto;
   min-width: 0;
@@ -747,6 +759,11 @@ button.danger {
   min-width: 58px;
   padding: 0.35rem 0.45rem;
   font-size: 0.82rem;
+}
+
+.move-to-input.is-staged {
+  border-color: var(--gold);
+  color: var(--gold);
 }
 
 .move-to-wrap button {
@@ -938,6 +955,10 @@ button.danger {
   .photo-actions {
     grid-column: 1 / -1;
     justify-content: flex-end;
+  }
+
+  .photo-order-controls {
+    flex-wrap: wrap;
   }
 }
 

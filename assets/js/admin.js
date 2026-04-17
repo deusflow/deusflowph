@@ -14,7 +14,9 @@ const state = {
   uploadInProgress: false,
   reorderInProgress: false,
   dragSourceIndex: null,
-  photoViewMode: "compact"
+  photoViewMode: "compact",
+  pendingMoves: new Map(),
+  moveSequence: 0
 };
 
 const loginPanel = document.getElementById("login-panel");
@@ -40,6 +42,8 @@ const uploadProgressBar = document.getElementById("upload-progress-bar");
 const uploadProgressTrack = document.querySelector(".upload-progress-track");
 const compactViewButton = document.getElementById("compact-view-button");
 const detailedViewButton = document.getElementById("detailed-view-button");
+const applyOrderButton = document.getElementById("apply-order-button");
+const clearOrderButton = document.getElementById("clear-order-button");
 
 function setUploadStatus(message, percent = 0, tone = "default") {
   if (uploadStatusText) {
@@ -73,6 +77,23 @@ function clearPhotoDropTargets() {
   photosList.querySelectorAll(".photo-row.drop-target").forEach((node) => {
     node.classList.remove("drop-target");
   });
+}
+
+function clearPendingMoves() {
+  state.pendingMoves.clear();
+  photosList.querySelectorAll(".move-to-input").forEach((input) => {
+    input.value = "";
+    input.classList.remove("is-staged");
+  });
+  updateOrderControlsState();
+}
+
+function updateOrderControlsState() {
+  const pendingCount = state.pendingMoves.size;
+  const hasPending = pendingCount > 0;
+  applyOrderButton.disabled = !hasPending || state.reorderInProgress;
+  clearOrderButton.disabled = !hasPending || state.reorderInProgress;
+  applyOrderButton.textContent = hasPending ? `Save order changes (${pendingCount})` : "Save order changes";
 }
 
 function applyPhotoViewMode() {
@@ -274,34 +295,87 @@ async function movePhotoByIndex(currentIndex, targetIndex) {
   const [moved] = reordered.splice(currentIndex, 1);
   reordered.splice(targetIndex, 0, moved);
 
-  const oldOrder = new Map(state.selectedAlbumPhotos.map((photo) => [photo.id, photo.display_order]));
-  const normalized = reordered.map((photo, index) => ({ ...photo, display_order: index + 1 }));
-  const changedRows = normalized.filter((photo) => oldOrder.get(photo.id) !== photo.display_order);
-
   try {
-    for (const row of changedRows) {
-      const { error } = await supabase
-        .from("photos")
-        .update({ display_order: row.display_order })
-        .eq("id", row.id);
-
-      if (error) {
-        window.alert(`Could not reorder photos: ${error.message}`);
-        return;
-      }
+    const success = await persistPhotoOrder(reordered, supabase);
+    if (!success) {
+      return;
     }
 
-    state.selectedAlbumPhotos = normalized;
     await loadPhotos(state.selectedAlbum.id);
   } finally {
     state.reorderInProgress = false;
+    updateOrderControlsState();
   }
+}
+
+async function persistPhotoOrder(reorderedPhotos, supabaseClient = null) {
+  const supabase = supabaseClient || getSupabase();
+  const oldOrder = new Map(state.selectedAlbumPhotos.map((photo) => [photo.id, photo.display_order]));
+  const normalized = reorderedPhotos.map((photo, index) => ({ ...photo, display_order: index + 1 }));
+  const changedRows = normalized.filter((photo) => oldOrder.get(photo.id) !== photo.display_order);
+
+  for (const row of changedRows) {
+    const { error } = await supabase
+      .from("photos")
+      .update({ display_order: row.display_order })
+      .eq("id", row.id);
+
+    if (error) {
+      window.alert(`Could not reorder photos: ${error.message}`);
+      return false;
+    }
+  }
+
+  state.selectedAlbumPhotos = normalized;
+  return true;
+}
+
+async function applyPendingOrderChanges() {
+  if (!state.selectedAlbum || state.pendingMoves.size === 0 || state.reorderInProgress) {
+    return;
+  }
+
+  state.reorderInProgress = true;
+  updateOrderControlsState();
+
+  const working = [...state.selectedAlbumPhotos];
+  const moves = Array.from(state.pendingMoves.entries())
+    .map(([photoId, payload]) => ({ photoId, targetIndex: payload.targetIndex, sequence: payload.sequence }))
+    .sort((a, b) => a.sequence - b.sequence);
+
+  for (const move of moves) {
+    const currentIndex = working.findIndex((photo) => photo.id === move.photoId);
+    if (currentIndex === -1) {
+      continue;
+    }
+
+    const targetIndex = Math.max(0, Math.min(working.length - 1, move.targetIndex));
+    if (currentIndex === targetIndex) {
+      continue;
+    }
+
+    const [moved] = working.splice(currentIndex, 1);
+    working.splice(targetIndex, 0, moved);
+  }
+
+  const success = await persistPhotoOrder(working);
+  state.reorderInProgress = false;
+
+  if (!success) {
+    updateOrderControlsState();
+    return;
+  }
+
+  await loadPhotos(state.selectedAlbum.id);
+  clearPendingMoves();
+  setUploadStatus("Order changes saved.", 100);
 }
 
 async function loadPhotos(albumId) {
   const supabase = getSupabase();
   photosList.innerHTML = "";
   applyPhotoViewMode();
+  clearPendingMoves();
 
   const { data: photos, error } = await supabase
     .from("photos")
@@ -432,23 +506,26 @@ async function loadPhotos(albumId) {
     const moveToButton = document.createElement("button");
     moveToButton.type = "button";
     moveToButton.className = "ghost";
-    moveToButton.textContent = "Move";
+    moveToButton.textContent = "Set";
 
-    const handleMoveToPosition = async () => {
+    const stageMoveToPosition = () => {
       const targetIndex = parseTargetPosition(moveToInput.value, photos.length);
       if (targetIndex === null) {
         window.alert(`Enter a position from 1 to ${photos.length}.`);
         return;
       }
 
-      await movePhotoByIndex(index, targetIndex);
+      state.moveSequence += 1;
+      state.pendingMoves.set(photo.id, { targetIndex, sequence: state.moveSequence });
+      moveToInput.classList.add("is-staged");
+      updateOrderControlsState();
     };
 
-    moveToButton.addEventListener("click", handleMoveToPosition);
-    moveToInput.addEventListener("keydown", async (event) => {
+    moveToButton.addEventListener("click", stageMoveToPosition);
+    moveToInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
-        await handleMoveToPosition();
+        stageMoveToPosition();
       }
     });
 
@@ -761,5 +838,11 @@ detailedViewButton.addEventListener("click", () => {
   state.photoViewMode = "detailed";
   applyPhotoViewMode();
 });
+applyOrderButton.addEventListener("click", applyPendingOrderChanges);
+clearOrderButton.addEventListener("click", () => {
+  clearPendingMoves();
+  setUploadStatus("Staged order changes cleared.", 0);
+});
 applyPhotoViewMode();
+updateOrderControlsState();
 boot();
