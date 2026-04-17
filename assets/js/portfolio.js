@@ -25,7 +25,7 @@ async function renderPortfolio() {
       .select("id, title")
       .eq("visible", true)
       .eq("type", "portfolio")
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(1);
 
     if (albumsError) {
@@ -43,8 +43,7 @@ async function renderPortfolio() {
       .from("photos")
       .select("url")
       .eq("album_id", albumId)
-      .order("display_order", { ascending: true })
-      .limit(30);
+      .order("display_order", { ascending: true });
 
     if (photosError) {
       throw photosError;
