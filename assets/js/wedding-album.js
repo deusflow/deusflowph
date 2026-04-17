@@ -46,9 +46,10 @@ async function renderAlbum() {
 
     const { data: photos, error: photosError } = await supabase
       .from("photos")
-      .select("url")
+      .select("url, display_order, created_at")
       .eq("album_id", album.id)
-      .order("display_order", { ascending: true });
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: true });
 
     if (photosError) {
       throw photosError;

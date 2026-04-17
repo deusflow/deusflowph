@@ -338,24 +338,51 @@ async function applyPendingOrderChanges() {
   state.reorderInProgress = true;
   updateOrderControlsState();
 
-  const working = [...state.selectedAlbumPhotos];
+  const baseOrder = [...state.selectedAlbumPhotos];
+  const working = new Array(baseOrder.length).fill(null);
+  const remaining = [...baseOrder];
   const moves = Array.from(state.pendingMoves.entries())
     .map(([photoId, payload]) => ({ photoId, targetIndex: payload.targetIndex, sequence: payload.sequence }))
-    .sort((a, b) => a.sequence - b.sequence);
+    .sort((a, b) => {
+      if (a.targetIndex !== b.targetIndex) {
+        return a.targetIndex - b.targetIndex;
+      }
+      return a.sequence - b.sequence;
+    });
 
+  // Place staged photos into requested slots first.
   for (const move of moves) {
-    const currentIndex = working.findIndex((photo) => photo.id === move.photoId);
-    if (currentIndex === -1) {
+    const photoIndex = remaining.findIndex((photo) => photo.id === move.photoId);
+    if (photoIndex === -1) {
       continue;
     }
 
-    const targetIndex = Math.max(0, Math.min(working.length - 1, move.targetIndex));
-    if (currentIndex === targetIndex) {
-      continue;
+    const [photo] = remaining.splice(photoIndex, 1);
+    let target = Math.max(0, Math.min(working.length - 1, move.targetIndex));
+
+    while (target < working.length && working[target] !== null) {
+      target += 1;
     }
 
-    const [moved] = working.splice(currentIndex, 1);
-    working.splice(targetIndex, 0, moved);
+    if (target >= working.length) {
+      target = move.targetIndex;
+      while (target >= 0 && working[target] !== null) {
+        target -= 1;
+      }
+    }
+
+    if (target >= 0) {
+      working[target] = photo;
+    }
+  }
+
+  // Fill empty slots with non-staged photos while preserving their original order.
+  let fillCursor = 0;
+  for (let i = 0; i < working.length; i += 1) {
+    if (working[i] === null) {
+      working[i] = remaining[fillCursor];
+      fillCursor += 1;
+    }
   }
 
   const success = await persistPhotoOrder(working);
@@ -519,6 +546,7 @@ async function loadPhotos(albumId) {
       state.pendingMoves.set(photo.id, { targetIndex, sequence: state.moveSequence });
       moveToInput.classList.add("is-staged");
       updateOrderControlsState();
+      setUploadStatus(`Staged ${state.pendingMoves.size} order change(s). Click Save order changes to apply.`, 0);
     };
 
     moveToButton.addEventListener("click", stageMoveToPosition);
