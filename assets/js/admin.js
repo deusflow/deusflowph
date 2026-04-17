@@ -47,6 +47,65 @@ const applyOrderButton = document.getElementById("apply-order-button");
 const clearOrderButton = document.getElementById("clear-order-button");
 const openPortfolioManagerButton = document.getElementById("open-portfolio-manager-button");
 const portfolioQuickNote = document.getElementById("portfolio-quick-note");
+const typeInput = document.getElementById("type");
+const titleInput = document.getElementById("title");
+const slugInput = document.getElementById("slug");
+
+function guideToCreatePortfolioAlbum() {
+  if (typeInput) {
+    typeInput.value = "portfolio";
+  }
+  if (titleInput && !titleInput.value.trim()) {
+    titleInput.value = "Main Portfolio";
+  }
+  if (slugInput && !slugInput.value.trim()) {
+    slugInput.value = "portfolio";
+  }
+
+  createAlbumForm.scrollIntoView({ behavior: "smooth", block: "center" });
+  titleInput?.focus();
+  setUploadStatus("Portfolio album setup is ready below. You can also use Open Portfolio Manager for auto-create.", 0);
+}
+
+async function ensurePortfolioAlbum() {
+  const existing = getPreferredPortfolioAlbum();
+  if (existing) {
+    return existing;
+  }
+
+  const supabase = getSupabase();
+  const baseSlug = "portfolio-main";
+  let slugCandidate = baseSlug;
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const { data, error } = await supabase
+      .from("albums")
+      .insert({
+        slug: slugCandidate,
+        title: "Main Portfolio",
+        description: "Curated signature work.",
+        cover_url: null,
+        type: "portfolio",
+        date: null,
+        visible: false
+      })
+      .select("id, slug, title, description, date, type, visible")
+      .single();
+
+    if (!error && data) {
+      await loadAlbums();
+      return data;
+    }
+
+    if (!error || !String(error.message || "").toLowerCase().includes("duplicate")) {
+      throw error;
+    }
+
+    slugCandidate = `${baseSlug}-${Date.now()}`;
+  }
+
+  throw new Error("Could not create default portfolio album.");
+}
 
 function getPreferredPortfolioAlbum() {
   const portfolioAlbums = state.albums.filter((album) => album.type === "portfolio");
@@ -59,28 +118,26 @@ function getPreferredPortfolioAlbum() {
 }
 
 async function openPortfolioManager() {
-  const portfolioAlbum = getPreferredPortfolioAlbum();
-  if (!portfolioAlbum) {
-    window.alert("No portfolio album found yet. Create one with type 'portfolio', then open it here.");
-    return;
+  try {
+    const portfolioAlbum = await ensurePortfolioAlbum();
+    showAlbumDetails(portfolioAlbum);
+    await loadPhotos(portfolioAlbum.id);
+    setUploadStatus("Portfolio manager is open. Upload or sort your best photos here.", 0);
+  } catch (error) {
+    window.alert(`Could not open portfolio manager: ${error.message}`);
+    guideToCreatePortfolioAlbum();
   }
-
-  showAlbumDetails(portfolioAlbum);
-  await loadPhotos(portfolioAlbum.id);
 }
 
 function updatePortfolioQuickAccessState() {
   const album = getPreferredPortfolioAlbum();
-  if (openPortfolioManagerButton) {
-    openPortfolioManagerButton.disabled = !album;
-  }
 
   if (!portfolioQuickNote) {
     return;
   }
 
   if (!album) {
-    portfolioQuickNote.textContent = "No portfolio album found yet. Create one with type 'portfolio'.";
+    portfolioQuickNote.textContent = "No portfolio album yet. Click Open Portfolio Manager to auto-create it.";
     return;
   }
 
@@ -665,7 +722,7 @@ async function createAlbum(event) {
   const type = String(formData.get("type") || "wedding").trim();
   const date = String(formData.get("date") || "").trim();
   const description = String(formData.get("description") || "").trim();
-  const slugInput = String(formData.get("slug") || "").trim();
+  const slugInputValue = String(formData.get("slug") || "").trim();
   const coverFile = createAlbumForm.querySelector("input[name='cover']").files[0];
 
   if (!title || !coverFile) {
@@ -673,22 +730,26 @@ async function createAlbum(event) {
     return;
   }
 
-  const slug = slugInput ? slugify(slugInput) : slugify(`${title}-${Date.now()}`);
+  const slug = slugInputValue ? slugify(slugInputValue) : slugify(`${title}-${Date.now()}`);
   const extension = coverFile.name.split(".").pop() || "jpg";
   const coverPath = `covers/${slug}-${Date.now()}.${extension}`;
 
   try {
     const coverUrl = await uploadToPhotosBucket(coverFile, coverPath);
 
-    const { error } = await supabase.from("albums").insert({
-      slug,
-      title,
-      description: description || null,
-      cover_url: coverUrl,
-      type,
-      date: date || null,
-      visible: false
-    });
+    const { data: createdAlbum, error } = await supabase
+      .from("albums")
+      .insert({
+        slug,
+        title,
+        description: description || null,
+        cover_url: coverUrl,
+        type,
+        date: date || null,
+        visible: false
+      })
+      .select("id, slug, title, description, date, type, visible")
+      .single();
 
     if (error) {
       throw error;
@@ -696,6 +757,12 @@ async function createAlbum(event) {
 
     createAlbumForm.reset();
     await loadAlbums();
+
+    if (createdAlbum && createdAlbum.type === "portfolio") {
+      showAlbumDetails(createdAlbum);
+      await loadPhotos(createdAlbum.id);
+      setUploadStatus("Portfolio album created. You can upload and sort photos now.", 0);
+    }
   } catch (err) {
     window.alert(err.message);
   }
