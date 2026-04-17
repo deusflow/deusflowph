@@ -374,6 +374,21 @@ h3,
   transition: transform 0.7s ease;
 }
 
+/* Gallery pages should keep the original image ratio without forced vertical crops. */
+#portfolio-grid .photo-media {
+  aspect-ratio: auto;
+  background: transparent;
+}
+
+#portfolio-grid .photo-media img {
+  height: auto;
+  object-fit: contain;
+}
+
+#album-grid .masonry-item {
+  background: transparent;
+}
+
 .photo-card:hover .photo-media img,
 .album-card:hover .photo-media img {
   transform: scale(1.05);
