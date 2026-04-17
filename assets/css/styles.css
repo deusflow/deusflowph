@@ -571,11 +571,13 @@ h3,
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 1rem;
+  align-items: start;
 }
 
 .masonry-item {
   border: 1px solid var(--border);
-  background: #111;
+  background: transparent;
+  align-self: start;
 }
 
 .masonry-item img {
@@ -583,6 +585,7 @@ h3,
   height: auto;
   display: block;
   cursor: zoom-in;
+  object-fit: contain;
 }
 
 .lightbox {
