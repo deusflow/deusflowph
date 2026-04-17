@@ -9,6 +9,7 @@ import { createStateMessage } from "./ui.js";
 
 const state = {
   selectedAlbum: null,
+  albums: [],
   selectedAlbumPhotos: [],
   selectedAlbumMetaBase: "",
   uploadInProgress: false,
@@ -44,6 +45,47 @@ const compactViewButton = document.getElementById("compact-view-button");
 const detailedViewButton = document.getElementById("detailed-view-button");
 const applyOrderButton = document.getElementById("apply-order-button");
 const clearOrderButton = document.getElementById("clear-order-button");
+const openPortfolioManagerButton = document.getElementById("open-portfolio-manager-button");
+const portfolioQuickNote = document.getElementById("portfolio-quick-note");
+
+function getPreferredPortfolioAlbum() {
+  const portfolioAlbums = state.albums.filter((album) => album.type === "portfolio");
+  if (!portfolioAlbums.length) {
+    return null;
+  }
+
+  const published = portfolioAlbums.find((album) => album.visible);
+  return published || portfolioAlbums[0];
+}
+
+async function openPortfolioManager() {
+  const portfolioAlbum = getPreferredPortfolioAlbum();
+  if (!portfolioAlbum) {
+    window.alert("No portfolio album found yet. Create one with type 'portfolio', then open it here.");
+    return;
+  }
+
+  showAlbumDetails(portfolioAlbum);
+  await loadPhotos(portfolioAlbum.id);
+}
+
+function updatePortfolioQuickAccessState() {
+  const album = getPreferredPortfolioAlbum();
+  if (openPortfolioManagerButton) {
+    openPortfolioManagerButton.disabled = !album;
+  }
+
+  if (!portfolioQuickNote) {
+    return;
+  }
+
+  if (!album) {
+    portfolioQuickNote.textContent = "No portfolio album found yet. Create one with type 'portfolio'.";
+    return;
+  }
+
+  portfolioQuickNote.textContent = `Current portfolio manager target: ${album.title} (${album.visible ? "published" : "draft"}).`;
+}
 
 function setUploadStatus(message, percent = 0, tone = "default") {
   if (uploadStatusText) {
@@ -160,14 +202,21 @@ async function loadAlbums() {
     .order("created_at", { ascending: false });
 
   if (error) {
+    state.albums = [];
+    updatePortfolioQuickAccessState();
     albumsList.appendChild(createStateMessage(`Could not load albums: ${error.message}`));
     return;
   }
 
   if (!albums || albums.length === 0) {
+    state.albums = [];
+    updatePortfolioQuickAccessState();
     albumsList.appendChild(createStateMessage("No albums yet. Create your first one."));
     return;
   }
+
+  state.albums = albums;
+  updatePortfolioQuickAccessState();
 
   albums.forEach((album) => {
     const row = document.createElement("div");
@@ -871,6 +920,13 @@ clearOrderButton.addEventListener("click", () => {
   clearPendingMoves();
   setUploadStatus("Staged order changes cleared.", 0);
 });
+
+if (openPortfolioManagerButton) {
+  openPortfolioManagerButton.addEventListener("click", async () => {
+    await openPortfolioManager();
+  });
+}
+
 applyPhotoViewMode();
 updateOrderControlsState();
 boot();
