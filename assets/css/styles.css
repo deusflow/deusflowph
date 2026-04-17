@@ -375,22 +375,30 @@ h3,
 }
 
 /* Gallery pages should keep original ratios and stack tightly like masonry. */
-#portfolio-grid.is-ordered-masonry,
 .masonry.is-ordered-masonry {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
 }
 
-#portfolio-grid.is-ordered-masonry .masonry-column,
 .masonry.is-ordered-masonry .masonry-column {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
+#portfolio-grid {
+  display: block;
+  column-count: 1;
+  column-gap: 1rem;
+}
+
 #portfolio-grid .photo-card {
   max-width: none;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin-bottom: 1rem;
 }
 
 #portfolio-grid.centered-grid > :nth-child(odd),
@@ -402,7 +410,6 @@ h3,
 #portfolio-grid .photo-media {
   aspect-ratio: auto;
   background: transparent;
-  margin-bottom: 0;
 }
 
 #portfolio-grid .photo-media img {
@@ -983,10 +990,14 @@ button.danger {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  #portfolio-grid.is-ordered-masonry,
   .masonry.is-ordered-masonry {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.5rem;
+  }
+
+  #portfolio-grid {
+    column-count: 2;
+    column-gap: 1.5rem;
   }
 }
 
@@ -1048,9 +1059,12 @@ button.danger {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  #portfolio-grid.is-ordered-masonry,
   .masonry.is-ordered-masonry {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #portfolio-grid {
+    column-count: 3;
   }
 
   #photos-list.compact-photo-grid {
