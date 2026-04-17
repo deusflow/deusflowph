@@ -13,7 +13,8 @@ const state = {
   selectedAlbumMetaBase: "",
   uploadInProgress: false,
   reorderInProgress: false,
-  dragSourceIndex: null
+  dragSourceIndex: null,
+  photoViewMode: "compact"
 };
 
 const loginPanel = document.getElementById("login-panel");
@@ -37,6 +38,8 @@ const dropzone = document.getElementById("photo-dropzone");
 const uploadStatusText = document.getElementById("upload-status-text");
 const uploadProgressBar = document.getElementById("upload-progress-bar");
 const uploadProgressTrack = document.querySelector(".upload-progress-track");
+const compactViewButton = document.getElementById("compact-view-button");
+const detailedViewButton = document.getElementById("detailed-view-button");
 
 function setUploadStatus(message, percent = 0, tone = "default") {
   if (uploadStatusText) {
@@ -70,6 +73,33 @@ function clearPhotoDropTargets() {
   photosList.querySelectorAll(".photo-row.drop-target").forEach((node) => {
     node.classList.remove("drop-target");
   });
+}
+
+function applyPhotoViewMode() {
+  photosList.classList.toggle("compact-photo-grid", state.photoViewMode === "compact");
+  compactViewButton.classList.toggle("is-active", state.photoViewMode === "compact");
+  detailedViewButton.classList.toggle("is-active", state.photoViewMode === "detailed");
+}
+
+function handleDragAutoScroll(event) {
+  const edge = 80;
+  const step = 18;
+  if (event.clientY < edge) {
+    window.scrollBy(0, -step);
+  } else if (window.innerHeight - event.clientY < edge) {
+    window.scrollBy(0, step);
+  }
+}
+
+function parseTargetPosition(rawValue, max) {
+  const value = Number.parseInt(String(rawValue || "").trim(), 10);
+  if (!Number.isInteger(value)) {
+    return null;
+  }
+  if (value < 1 || value > max) {
+    return null;
+  }
+  return value - 1;
 }
 
 function setAuthView(isLoggedIn) {
@@ -271,6 +301,7 @@ async function movePhotoByIndex(currentIndex, targetIndex) {
 async function loadPhotos(albumId) {
   const supabase = getSupabase();
   photosList.innerHTML = "";
+  applyPhotoViewMode();
 
   const { data: photos, error } = await supabase
     .from("photos")
@@ -325,6 +356,7 @@ async function loadPhotos(albumId) {
       event.preventDefault();
       clearPhotoDropTargets();
       row.classList.add("drop-target");
+      handleDragAutoScroll(event);
       if (event.dataTransfer) {
         event.dataTransfer.dropEffect = "move";
       }
@@ -372,6 +404,57 @@ async function loadPhotos(albumId) {
     downButton.disabled = index === photos.length - 1;
     downButton.addEventListener("click", () => movePhotoByIndex(index, index + 1));
 
+    const topButton = document.createElement("button");
+    topButton.type = "button";
+    topButton.className = "ghost";
+    topButton.textContent = "Top";
+    topButton.disabled = index === 0;
+    topButton.addEventListener("click", () => movePhotoByIndex(index, 0));
+
+    const bottomButton = document.createElement("button");
+    bottomButton.type = "button";
+    bottomButton.className = "ghost";
+    bottomButton.textContent = "Bottom";
+    bottomButton.disabled = index === photos.length - 1;
+    bottomButton.addEventListener("click", () => movePhotoByIndex(index, photos.length - 1));
+
+    const moveToWrap = document.createElement("div");
+    moveToWrap.className = "move-to-wrap";
+
+    const moveToInput = document.createElement("input");
+    moveToInput.type = "number";
+    moveToInput.className = "move-to-input";
+    moveToInput.min = "1";
+    moveToInput.max = String(photos.length);
+    moveToInput.placeholder = "#";
+    moveToInput.title = `Move photo to position 1-${photos.length}`;
+
+    const moveToButton = document.createElement("button");
+    moveToButton.type = "button";
+    moveToButton.className = "ghost";
+    moveToButton.textContent = "Move";
+
+    const handleMoveToPosition = async () => {
+      const targetIndex = parseTargetPosition(moveToInput.value, photos.length);
+      if (targetIndex === null) {
+        window.alert(`Enter a position from 1 to ${photos.length}.`);
+        return;
+      }
+
+      await movePhotoByIndex(index, targetIndex);
+    };
+
+    moveToButton.addEventListener("click", handleMoveToPosition);
+    moveToInput.addEventListener("keydown", async (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        await handleMoveToPosition();
+      }
+    });
+
+    moveToWrap.appendChild(moveToInput);
+    moveToWrap.appendChild(moveToButton);
+
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "danger";
@@ -402,6 +485,9 @@ async function loadPhotos(albumId) {
 
     actions.appendChild(upButton);
     actions.appendChild(downButton);
+    actions.appendChild(topButton);
+    actions.appendChild(bottomButton);
+    actions.appendChild(moveToWrap);
     actions.appendChild(deleteButton);
 
     const thumb = document.createElement("img");
@@ -667,4 +753,13 @@ logoutButton.addEventListener("click", async () => {
 
 setupDropzone();
 setUploadStatus("No upload in progress.", 0);
+compactViewButton.addEventListener("click", () => {
+  state.photoViewMode = "compact";
+  applyPhotoViewMode();
+});
+detailedViewButton.addEventListener("click", () => {
+  state.photoViewMode = "detailed";
+  applyPhotoViewMode();
+});
+applyPhotoViewMode();
 boot();
