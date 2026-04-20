@@ -30,6 +30,7 @@ If your project already exists, run this migration once:
 
 ```sql
 alter table public.albums add column if not exists description text;
+alter table public.albums add column if not exists display_order integer not null default 1;
 ```
 
 ## 2) Configure local project
@@ -124,6 +125,14 @@ In GitHub repo -> Settings -> Secrets and variables -> Actions, add these reposi
 5. Repeat for 2-4 weddings.
 6. Create one **portfolio** album (type `portfolio`) and upload at least 30 photos.
 7. Publish it to show selected portfolio grid on `/portfolio`.
+
+## 8) Reorder wedding albums
+
+1. Open `/admin` and login.
+2. In **Albums**, use `Up`, `Down`, or enter a number in `#` and click `Set`.
+3. Stage multiple changes if needed.
+4. Click `Save album order` once.
+5. Verify on `/weddings` and on the home `Featured Stories` section.
 
 ## Operational notes
 

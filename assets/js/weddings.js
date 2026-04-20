@@ -10,12 +10,25 @@ async function renderWeddings() {
 
   try {
     const supabase = getSupabase();
-    const { data: albums, error } = await supabase
+    let { data: albums, error } = await supabase
       .from("albums")
-      .select("slug, title, description, cover_url, date")
+      .select("slug, title, description, cover_url, date, display_order, created_at")
       .eq("visible", true)
       .eq("type", "wedding")
-      .order("date", { ascending: false });
+      .order("display_order", { ascending: true, nullsFirst: false })
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (error && String(error.message || "").includes("display_order")) {
+      const fallback = await supabase
+        .from("albums")
+        .select("slug, title, description, cover_url, date")
+        .eq("visible", true)
+        .eq("type", "wedding")
+        .order("date", { ascending: false });
+      albums = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) {
       throw error;

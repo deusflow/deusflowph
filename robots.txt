@@ -2,5 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://YOUR_GITHUB_USERNAME.github.io/deusflowph/sitemap.xml
+Sitemap: https://deusflow.github.io/deusflowph/sitemap.xml
 

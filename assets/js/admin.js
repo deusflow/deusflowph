@@ -17,6 +17,8 @@ const state = {
   dragSourceIndex: null,
   photoViewMode: "compact",
   pendingMoves: new Map(),
+  pendingAlbumMoves: new Map(),
+  albumReorderInProgress: false,
   moveSequence: 0
 };
 
@@ -45,6 +47,8 @@ const compactViewButton = document.getElementById("compact-view-button");
 const detailedViewButton = document.getElementById("detailed-view-button");
 const applyOrderButton = document.getElementById("apply-order-button");
 const clearOrderButton = document.getElementById("clear-order-button");
+const applyAlbumOrderButton = document.getElementById("apply-album-order-button");
+const clearAlbumOrderButton = document.getElementById("clear-album-order-button");
 const openPortfolioManagerButton = document.getElementById("open-portfolio-manager-button");
 const portfolioQuickNote = document.getElementById("portfolio-quick-note");
 const typeInput = document.getElementById("type");
@@ -195,6 +199,162 @@ function updateOrderControlsState() {
   applyOrderButton.textContent = hasPending ? `Save order changes (${pendingCount})` : "Save order changes";
 }
 
+function getDisplayOrderValue(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : Number.MAX_SAFE_INTEGER;
+}
+
+function getWeddingAlbumsSorted(albums = state.albums) {
+  return albums
+    .filter((album) => album.type === "wedding")
+    .slice()
+    .sort((a, b) => {
+      const byOrder = getDisplayOrderValue(a.display_order) - getDisplayOrderValue(b.display_order);
+      if (byOrder !== 0) {
+        return byOrder;
+      }
+
+      const byDate = String(b.date || "").localeCompare(String(a.date || ""));
+      if (byDate !== 0) {
+        return byDate;
+      }
+
+      return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+    });
+}
+
+function clearPendingAlbumMoves() {
+  state.pendingAlbumMoves.clear();
+  albumsList.querySelectorAll(".album-move-input").forEach((input) => {
+    input.value = "";
+    input.classList.remove("is-staged");
+  });
+  updateAlbumOrderControlsState();
+}
+
+function updateAlbumOrderControlsState() {
+  if (!applyAlbumOrderButton || !clearAlbumOrderButton) {
+    return;
+  }
+
+  const pendingCount = state.pendingAlbumMoves.size;
+  const hasPending = pendingCount > 0;
+  applyAlbumOrderButton.disabled = !hasPending || state.albumReorderInProgress;
+  clearAlbumOrderButton.disabled = !hasPending || state.albumReorderInProgress;
+  applyAlbumOrderButton.textContent = hasPending ? `Save album order (${pendingCount})` : "Save album order";
+}
+
+function stageAlbumMove(albumId, rawValue, max, inputNode = null) {
+  const targetIndex = parseTargetPosition(rawValue, max);
+  if (targetIndex === null) {
+    window.alert(`Enter an album position from 1 to ${max}.`);
+    return false;
+  }
+
+  state.moveSequence += 1;
+  state.pendingAlbumMoves.set(albumId, { targetIndex, sequence: state.moveSequence });
+  if (inputNode) {
+    inputNode.classList.add("is-staged");
+  }
+  updateAlbumOrderControlsState();
+  setUploadStatus(`Staged ${state.pendingAlbumMoves.size} album move(s). Click Save album order.`, 0);
+  return true;
+}
+
+async function persistWeddingAlbumOrder(reorderedAlbums, supabaseClient = null) {
+  const supabase = supabaseClient || getSupabase();
+  const oldOrder = new Map(getWeddingAlbumsSorted().map((album) => [album.id, getDisplayOrderValue(album.display_order)]));
+
+  for (let index = 0; index < reorderedAlbums.length; index += 1) {
+    const album = reorderedAlbums[index];
+    const nextOrder = index + 1;
+    if (oldOrder.get(album.id) === nextOrder) {
+      continue;
+    }
+
+    const { error } = await supabase
+      .from("albums")
+      .update({ display_order: nextOrder })
+      .eq("id", album.id);
+
+    if (error) {
+      window.alert(`Could not reorder albums: ${error.message}`);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+async function applyPendingAlbumOrderChanges() {
+  if (state.pendingAlbumMoves.size === 0 || state.albumReorderInProgress) {
+    return;
+  }
+
+  const weddingAlbums = getWeddingAlbumsSorted();
+  if (!weddingAlbums.length) {
+    return;
+  }
+
+  state.albumReorderInProgress = true;
+  updateAlbumOrderControlsState();
+
+  const working = new Array(weddingAlbums.length).fill(null);
+  const remaining = [...weddingAlbums];
+  const moves = Array.from(state.pendingAlbumMoves.entries())
+    .map(([albumId, payload]) => ({ albumId, targetIndex: payload.targetIndex, sequence: payload.sequence }))
+    .sort((a, b) => {
+      if (a.targetIndex !== b.targetIndex) {
+        return a.targetIndex - b.targetIndex;
+      }
+      return a.sequence - b.sequence;
+    });
+
+  for (const move of moves) {
+    const albumIndex = remaining.findIndex((album) => album.id === move.albumId);
+    if (albumIndex === -1) {
+      continue;
+    }
+
+    const [album] = remaining.splice(albumIndex, 1);
+    let target = Math.max(0, Math.min(working.length - 1, move.targetIndex));
+
+    while (target < working.length && working[target] !== null) {
+      target += 1;
+    }
+
+    if (target >= working.length) {
+      target = move.targetIndex;
+      while (target >= 0 && working[target] !== null) {
+        target -= 1;
+      }
+    }
+
+    if (target >= 0) {
+      working[target] = album;
+    }
+  }
+
+  let fillCursor = 0;
+  for (let i = 0; i < working.length; i += 1) {
+    if (working[i] === null) {
+      working[i] = remaining[fillCursor];
+      fillCursor += 1;
+    }
+  }
+
+  const success = await persistWeddingAlbumOrder(working);
+  state.albumReorderInProgress = false;
+  if (!success) {
+    updateAlbumOrderControlsState();
+    return;
+  }
+
+  clearPendingAlbumMoves();
+  await loadAlbums();
+  setUploadStatus("Album order saved.", 100);
+}
+
 function applyPhotoViewMode() {
   photosList.classList.toggle("compact-photo-grid", state.photoViewMode === "compact");
   compactViewButton.classList.toggle("is-active", state.photoViewMode === "compact");
@@ -253,10 +413,20 @@ async function loadAlbums() {
   const supabase = getSupabase();
   albumsList.innerHTML = "";
 
-  const { data: albums, error } = await supabase
+  let { data: albums, error } = await supabase
     .from("albums")
-    .select("id, slug, title, description, date, type, visible")
+    .select("id, slug, title, description, date, type, visible, display_order, created_at")
     .order("created_at", { ascending: false });
+
+  if (error && String(error.message || "").includes("display_order")) {
+    const fallback = await supabase
+      .from("albums")
+      .select("id, slug, title, description, date, type, visible, created_at")
+      .order("created_at", { ascending: false });
+    albums = (fallback.data || []).map((album) => ({ ...album, display_order: null }));
+    error = fallback.error;
+    setUploadStatus("Tip: run display_order migration in Supabase SQL editor to enable album sorting.", 0);
+  }
 
   if (error) {
     state.albums = [];
@@ -267,22 +437,49 @@ async function loadAlbums() {
 
   if (!albums || albums.length === 0) {
     state.albums = [];
+    clearPendingAlbumMoves();
     updatePortfolioQuickAccessState();
     albumsList.appendChild(createStateMessage("No albums yet. Create your first one."));
     return;
   }
 
-  state.albums = albums;
-  updatePortfolioQuickAccessState();
+  const weddingAlbums = albums
+    .filter((album) => album.type === "wedding")
+    .sort((a, b) => {
+      const byOrder = getDisplayOrderValue(a.display_order) - getDisplayOrderValue(b.display_order);
+      if (byOrder !== 0) {
+        return byOrder;
+      }
 
-  albums.forEach((album) => {
+      const byDate = String(b.date || "").localeCompare(String(a.date || ""));
+      if (byDate !== 0) {
+        return byDate;
+      }
+
+      return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+    });
+
+  const portfolioAlbums = albums
+    .filter((album) => album.type === "portfolio")
+    .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+
+  state.albums = [...weddingAlbums, ...portfolioAlbums];
+  clearPendingAlbumMoves();
+  updatePortfolioQuickAccessState();
+  updateAlbumOrderControlsState();
+
+  state.albums.forEach((album, index) => {
     const row = document.createElement("div");
     row.className = "album-row";
 
+    const weddingAlbumsCurrent = getWeddingAlbumsSorted();
+    const weddingIndex = album.type === "wedding" ? weddingAlbumsCurrent.findIndex((item) => item.id === album.id) : -1;
+
     const info = document.createElement("div");
+    const orderText = album.type === "wedding" && weddingIndex >= 0 ? ` | order: ${weddingIndex + 1}` : "";
     info.innerHTML = `
       <strong>${album.title}</strong><br />
-      <span class="photo-subtitle">${album.type.toUpperCase()} | ${formatDate(album.date)} | ${album.slug}</span>
+      <span class="photo-subtitle">${album.type.toUpperCase()} | ${formatDate(album.date)} | ${album.slug}${orderText}</span>
     `;
 
     const visibility = document.createElement("label");
@@ -304,6 +501,7 @@ async function loadAlbums() {
     const actions = document.createElement("div");
     actions.style.display = "flex";
     actions.style.gap = "0.5rem";
+    actions.style.flexWrap = "wrap";
 
     const openButton = document.createElement("button");
     openButton.type = "button";
@@ -332,6 +530,59 @@ async function loadAlbums() {
     });
 
     actions.appendChild(openButton);
+
+    if (album.type === "wedding" && weddingIndex >= 0) {
+      const upButton = document.createElement("button");
+      upButton.type = "button";
+      upButton.className = "ghost";
+      upButton.textContent = "Up";
+      upButton.disabled = weddingIndex === 0;
+      upButton.addEventListener("click", () => {
+        stageAlbumMove(album.id, String(Math.max(1, weddingIndex)), weddingAlbumsCurrent.length);
+      });
+
+      const downButton = document.createElement("button");
+      downButton.type = "button";
+      downButton.className = "ghost";
+      downButton.textContent = "Down";
+      downButton.disabled = weddingIndex === weddingAlbumsCurrent.length - 1;
+      downButton.addEventListener("click", () => {
+        stageAlbumMove(album.id, String(Math.min(weddingAlbumsCurrent.length, weddingIndex + 2)), weddingAlbumsCurrent.length);
+      });
+
+      const moveWrap = document.createElement("div");
+      moveWrap.className = "move-to-wrap";
+
+      const moveInput = document.createElement("input");
+      moveInput.type = "number";
+      moveInput.className = "move-to-input album-move-input";
+      moveInput.min = "1";
+      moveInput.max = String(weddingAlbumsCurrent.length);
+      moveInput.placeholder = "#";
+      moveInput.title = `Move album to position 1-${weddingAlbumsCurrent.length}`;
+
+      const moveButton = document.createElement("button");
+      moveButton.type = "button";
+      moveButton.className = "ghost";
+      moveButton.textContent = "Set";
+      moveButton.addEventListener("click", () => {
+        stageAlbumMove(album.id, moveInput.value, weddingAlbumsCurrent.length, moveInput);
+      });
+      moveInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          stageAlbumMove(album.id, moveInput.value, weddingAlbumsCurrent.length, moveInput);
+        }
+      });
+
+      moveWrap.appendChild(moveInput);
+      moveWrap.appendChild(moveButton);
+
+      actions.appendChild(upButton);
+      actions.appendChild(downButton);
+      actions.appendChild(moveWrap);
+    }
+
     actions.appendChild(deleteButton);
 
     row.appendChild(info);
@@ -731,25 +982,42 @@ async function createAlbum(event) {
   }
 
   const slug = slugInputValue ? slugify(slugInputValue) : slugify(`${title}-${Date.now()}`);
+  const displayOrder = type === "wedding" ? getWeddingAlbumsSorted().length + 1 : 1;
   const extension = coverFile.name.split(".").pop() || "jpg";
   const coverPath = `covers/${slug}-${Date.now()}.${extension}`;
 
   try {
     const coverUrl = await uploadToPhotosBucket(coverFile, coverPath);
 
-    const { data: createdAlbum, error } = await supabase
+    const payload = {
+      slug,
+      title,
+      description: description || null,
+      cover_url: coverUrl,
+      type,
+      date: date || null,
+      display_order: displayOrder,
+      visible: false
+    };
+
+    let insertQuery = supabase
       .from("albums")
-      .insert({
-        slug,
-        title,
-        description: description || null,
-        cover_url: coverUrl,
-        type,
-        date: date || null,
-        visible: false
-      })
+      .insert(payload)
       .select("id, slug, title, description, date, type, visible")
       .single();
+
+    let { data: createdAlbum, error } = await insertQuery;
+    if (error && String(error.message || "").includes("display_order")) {
+      const fallbackPayload = { ...payload };
+      delete fallbackPayload.display_order;
+      const fallbackInsert = await supabase
+        .from("albums")
+        .insert(fallbackPayload)
+        .select("id, slug, title, description, date, type, visible")
+        .single();
+      createdAlbum = fallbackInsert.data;
+      error = fallbackInsert.error;
+    }
 
     if (error) {
       throw error;
@@ -988,6 +1256,17 @@ clearOrderButton.addEventListener("click", () => {
   setUploadStatus("Staged order changes cleared.", 0);
 });
 
+if (applyAlbumOrderButton) {
+  applyAlbumOrderButton.addEventListener("click", applyPendingAlbumOrderChanges);
+}
+
+if (clearAlbumOrderButton) {
+  clearAlbumOrderButton.addEventListener("click", () => {
+    clearPendingAlbumMoves();
+    setUploadStatus("Staged album moves cleared.", 0);
+  });
+}
+
 if (openPortfolioManagerButton) {
   openPortfolioManagerButton.addEventListener("click", async () => {
     await openPortfolioManager();
@@ -996,4 +1275,5 @@ if (openPortfolioManagerButton) {
 
 applyPhotoViewMode();
 updateOrderControlsState();
+updateAlbumOrderControlsState();
 boot();

@@ -20,13 +20,27 @@ async function loadFeatured() {
   try {
     const supabase = getSupabase();
 
-    const { data: albums, error: albumError } = await supabase
+    let { data: albums, error: albumError } = await supabase
       .from("albums")
-      .select("id, slug, title, cover_url, date")
+      .select("id, slug, title, cover_url, date, display_order, created_at")
       .eq("visible", true)
       .eq("type", "wedding")
+      .order("display_order", { ascending: true, nullsFirst: false })
       .order("date", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(3);
+
+    if (albumError && String(albumError.message || "").includes("display_order")) {
+      const fallback = await supabase
+        .from("albums")
+        .select("id, slug, title, cover_url, date")
+        .eq("visible", true)
+        .eq("type", "wedding")
+        .order("date", { ascending: false })
+        .limit(3);
+      albums = fallback.data;
+      albumError = fallback.error;
+    }
 
     if (albumError) {
       throw albumError;

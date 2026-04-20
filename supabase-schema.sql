@@ -13,10 +13,13 @@ create table if not exists public.albums (
   type text not null check (type in ('wedding', 'portfolio')),
   date date,
   visible boolean not null default false,
+  display_order integer not null default 1,
   created_at timestamptz not null default now()
 );
 
 alter table public.albums add column if not exists description text;
+alter table public.albums add column if not exists display_order integer not null default 1;
+
 
 -- Photos table
 create table if not exists public.photos (
@@ -31,6 +34,7 @@ create table if not exists public.photos (
 
 create index if not exists idx_albums_type_visible on public.albums(type, visible);
 create index if not exists idx_albums_slug on public.albums(slug);
+create index if not exists idx_albums_type_order on public.albums(type, display_order, date desc, created_at desc);
 create index if not exists idx_photos_album_order on public.photos(album_id, display_order);
 
 alter table public.albums enable row level security;
