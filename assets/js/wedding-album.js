@@ -5,8 +5,56 @@ const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
 const descriptionNode = document.getElementById("album-description");
 const grid = document.getElementById("album-grid");
+const storyNav = document.getElementById("album-story-nav");
 let albumItems = [];
 let albumResizeTimer = null;
+
+function getDisplayOrderValue(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : Number.MAX_SAFE_INTEGER;
+}
+
+function renderStoryNavigation(currentSlug, albums) {
+  if (!storyNav || !albums || albums.length < 2) {
+    return;
+  }
+
+  const currentIndex = albums.findIndex((item) => item.slug === currentSlug);
+  if (currentIndex === -1) {
+    return;
+  }
+
+  const prevAlbum = albums[currentIndex - 1] || null;
+  const nextAlbum = albums[currentIndex + 1] || null;
+  if (!prevAlbum && !nextAlbum) {
+    return;
+  }
+
+  storyNav.classList.remove("hidden");
+  storyNav.innerHTML = "";
+
+  if (prevAlbum) {
+    const prevLink = document.createElement("a");
+    prevLink.className = "story-nav-link";
+    prevLink.href = `index.html?slug=${encodeURIComponent(prevAlbum.slug)}`;
+    prevLink.innerHTML = `
+      <span class="story-nav-label">Previous story</span>
+      <span class="story-nav-title">${prevAlbum.title}</span>
+    `;
+    storyNav.appendChild(prevLink);
+  }
+
+  if (nextAlbum) {
+    const nextLink = document.createElement("a");
+    nextLink.className = "story-nav-link";
+    nextLink.href = `index.html?slug=${encodeURIComponent(nextAlbum.slug)}`;
+    nextLink.innerHTML = `
+      <span class="story-nav-label">Next story</span>
+      <span class="story-nav-title">${nextAlbum.title}</span>
+    `;
+    storyNav.appendChild(nextLink);
+  }
+}
 
 function applyAlbumMasonry() {
   if (!grid || !albumItems.length) {
@@ -32,7 +80,7 @@ async function renderAlbum() {
 
     const { data: album, error: albumError } = await supabase
       .from("albums")
-      .select("id, title, description, date, visible")
+      .select("id, slug, title, description, date, visible")
       .eq("slug", slug)
       .eq("visible", true)
       .single();
@@ -67,6 +115,42 @@ async function renderAlbum() {
     if (!photos || photos.length === 0) {
       grid.appendChild(createStateMessage("This album has no photos yet."));
       return;
+    }
+
+    let { data: visibleAlbums, error: listError } = await supabase
+      .from("albums")
+      .select("slug, title, date, display_order, created_at")
+      .eq("visible", true)
+      .eq("type", "wedding")
+      .order("display_order", { ascending: true, nullsFirst: false })
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (listError && String(listError.message || "").includes("display_order")) {
+      const fallback = await supabase
+        .from("albums")
+        .select("slug, title, date, created_at")
+        .eq("visible", true)
+        .eq("type", "wedding")
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false });
+      visibleAlbums = fallback.data;
+      listError = fallback.error;
+    }
+
+    if (!listError && Array.isArray(visibleAlbums)) {
+      const normalized = visibleAlbums.slice().sort((a, b) => {
+        const byOrder = getDisplayOrderValue(a.display_order) - getDisplayOrderValue(b.display_order);
+        if (byOrder !== 0) {
+          return byOrder;
+        }
+        const byDate = String(b.date || "").localeCompare(String(a.date || ""));
+        if (byDate !== 0) {
+          return byDate;
+        }
+        return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+      });
+      renderStoryNavigation(album.slug, normalized);
     }
 
     albumItems = photos.map((photo, index) => {

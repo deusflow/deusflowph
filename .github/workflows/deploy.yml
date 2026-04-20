@@ -40,7 +40,9 @@ jobs:
             FAVICON_URL: "${{ secrets.FAVICON_URL }}",
             SITE_NAME: "${{ secrets.SITE_NAME }}",
             SITE_URL: "${{ secrets.SITE_URL }}",
-            DEFAULT_OG_IMAGE: "${{ secrets.DEFAULT_OG_IMAGE }}"
+            DEFAULT_OG_IMAGE: "${{ secrets.DEFAULT_OG_IMAGE }}",
+            CTA_LABEL: "${{ secrets.CTA_LABEL }}",
+            AVAILABILITY_NOTE: "${{ secrets.AVAILABILITY_NOTE }}"
           };
           EOF
 

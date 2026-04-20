@@ -298,6 +298,7 @@ async function applyPendingAlbumOrderChanges() {
 
   state.albumReorderInProgress = true;
   updateAlbumOrderControlsState();
+  setUploadStatus("Saving album order...", 25);
 
   const working = new Array(weddingAlbums.length).fill(null);
   const remaining = [...weddingAlbums];
@@ -346,6 +347,7 @@ async function applyPendingAlbumOrderChanges() {
   const success = await persistWeddingAlbumOrder(working);
   state.albumReorderInProgress = false;
   if (!success) {
+    setUploadStatus("Album order save failed. Please retry.", 0, "error");
     updateAlbumOrderControlsState();
     return;
   }
@@ -522,11 +524,18 @@ async function loadAlbums() {
         return;
       }
 
-      await deleteAlbum(album.id);
-      if (state.selectedAlbum && state.selectedAlbum.id === album.id) {
-        selectedAlbumPanel.classList.add("hidden");
+      setUploadStatus(`Deleting album \"${album.title}\"...`, 20);
+      try {
+        await deleteAlbum(album.id);
+        if (state.selectedAlbum && state.selectedAlbum.id === album.id) {
+          selectedAlbumPanel.classList.add("hidden");
+        }
+        await loadAlbums();
+        setUploadStatus("Album deleted.", 100);
+      } catch (deleteError) {
+        setUploadStatus(`Could not delete album: ${deleteError.message}`, 0, "error");
+        window.alert(deleteError.message);
       }
-      await loadAlbums();
     });
 
     actions.appendChild(openButton);
@@ -647,6 +656,7 @@ async function movePhotoByIndex(currentIndex, targetIndex) {
   }
 
   state.reorderInProgress = true;
+  setUploadStatus("Saving photo order...", 25);
   const supabase = getSupabase();
   const reordered = [...state.selectedAlbumPhotos];
   const [moved] = reordered.splice(currentIndex, 1);
@@ -655,10 +665,12 @@ async function movePhotoByIndex(currentIndex, targetIndex) {
   try {
     const success = await persistPhotoOrder(reordered, supabase);
     if (!success) {
+      setUploadStatus("Photo order save failed. Please retry.", 0, "error");
       return;
     }
 
     await loadPhotos(state.selectedAlbum.id);
+    setUploadStatus("Photo order saved.", 100);
   } finally {
     state.reorderInProgress = false;
     updateOrderControlsState();
@@ -678,7 +690,7 @@ async function persistPhotoOrder(reorderedPhotos, supabaseClient = null) {
       .eq("id", row.id);
 
     if (error) {
-      window.alert(`Could not reorder photos: ${error.message}`);
+      setUploadStatus(`Could not reorder photos: ${error.message}`, 0, "error");
       return false;
     }
   }
@@ -927,10 +939,13 @@ async function loadPhotos(albumId) {
         return;
       }
 
+      setUploadStatus("Deleting photo...", 20);
+
       const path = storagePathFromPublicUrl(photo.url);
       if (path) {
         const { error: storageError } = await supabase.storage.from("photos").remove([path]);
         if (storageError) {
+          setUploadStatus(storageError.message, 0, "error");
           window.alert(storageError.message);
           return;
         }
@@ -938,11 +953,13 @@ async function loadPhotos(albumId) {
 
       const { error: deleteError } = await supabase.from("photos").delete().eq("id", photo.id);
       if (deleteError) {
+        setUploadStatus(deleteError.message, 0, "error");
         window.alert(deleteError.message);
         return;
       }
 
       await loadPhotos(albumId);
+      setUploadStatus("Photo deleted.", 100);
     });
 
     actions.appendChild(upButton);
@@ -980,6 +997,8 @@ async function createAlbum(event) {
     window.alert("Title and cover image are required.");
     return;
   }
+
+  setUploadStatus("Creating album...", 20);
 
   const slug = slugInputValue ? slugify(slugInputValue) : slugify(`${title}-${Date.now()}`);
   const displayOrder = type === "wedding" ? getWeddingAlbumsSorted().length + 1 : 1;
@@ -1025,6 +1044,7 @@ async function createAlbum(event) {
 
     createAlbumForm.reset();
     await loadAlbums();
+    setUploadStatus("Album created successfully.", 100);
 
     if (createdAlbum && createdAlbum.type === "portfolio") {
       showAlbumDetails(createdAlbum);
@@ -1032,6 +1052,7 @@ async function createAlbum(event) {
       setUploadStatus("Portfolio album created. You can upload and sort photos now.", 0);
     }
   } catch (err) {
+    setUploadStatus(`Could not create album: ${err.message}`, 0, "error");
     window.alert(err.message);
   }
 }
@@ -1055,6 +1076,7 @@ async function saveAlbumDetails(event) {
 
   saveAlbumButton.disabled = true;
   saveAlbumButton.textContent = "Saving...";
+  setUploadStatus("Saving album details...", 30);
 
   const supabase = getSupabase();
   const { error } = await supabase
@@ -1070,6 +1092,7 @@ async function saveAlbumDetails(event) {
   saveAlbumButton.textContent = "Save Album Details";
 
   if (error) {
+    setUploadStatus(`Could not save album details: ${error.message}`, 0, "error");
     window.alert(`Could not save album details: ${error.message}`);
     return;
   }
@@ -1084,6 +1107,7 @@ async function saveAlbumDetails(event) {
   showAlbumDetails(state.selectedAlbum);
   await loadAlbums();
   await loadPhotos(state.selectedAlbum.id);
+  setUploadStatus("Album details saved.", 100);
 }
 
 async function uploadPhotos(files) {

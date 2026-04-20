@@ -7,5 +7,7 @@ window.APP_CONFIG = {
   FAVICON_URL: "https://your-public-favicon-url.png",
   SITE_NAME: "Oleh Ro Photography",
   SITE_URL: "https://YOUR_GITHUB_USERNAME.github.io/deusflowph",
-  DEFAULT_OG_IMAGE: "https://your-public-og-image-url.jpg"
+  DEFAULT_OG_IMAGE: "https://your-public-og-image-url.jpg",
+  CTA_LABEL: "Check availability",
+  AVAILABILITY_NOTE: "Calendar open for 2026-2027 weddings"
 };
