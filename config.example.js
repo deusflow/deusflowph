@@ -9,5 +9,7 @@ window.APP_CONFIG = {
   SITE_URL: "https://YOUR_GITHUB_USERNAME.github.io/deusflowph",
   DEFAULT_OG_IMAGE: "https://your-public-og-image-url.jpg",
   CTA_LABEL: "Check availability",
-  AVAILABILITY_NOTE: "Calendar open for 2026-2027 weddings"
+  AVAILABILITY_NOTE: "Calendar open for 2026-2027 weddings",
+  INSTAGRAM_DM_URL: "https://ig.me/m/deusflow",
+  WHATSAPP_URL: "https://wa.me/4512345678"
 };

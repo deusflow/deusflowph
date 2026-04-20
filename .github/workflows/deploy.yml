@@ -42,7 +42,9 @@ jobs:
             SITE_URL: "${{ secrets.SITE_URL }}",
             DEFAULT_OG_IMAGE: "${{ secrets.DEFAULT_OG_IMAGE }}",
             CTA_LABEL: "${{ secrets.CTA_LABEL }}",
-            AVAILABILITY_NOTE: "${{ secrets.AVAILABILITY_NOTE }}"
+            AVAILABILITY_NOTE: "${{ secrets.AVAILABILITY_NOTE }}",
+            INSTAGRAM_DM_URL: "${{ secrets.INSTAGRAM_DM_URL }}",
+            WHATSAPP_URL: "${{ secrets.WHATSAPP_URL }}"
           };
           EOF
 
