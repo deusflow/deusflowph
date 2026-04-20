@@ -22,14 +22,14 @@
     }
 
     const encodedBrief = encodeURIComponent(briefTemplate);
-    const primaryHref = whatsappUrl ? buildWhatsAppWithText(whatsappUrl, encodedBrief) : instagramDmUrl;
-    const primaryLabel = whatsappUrl ? `${ctaLabel} via WhatsApp` : `${ctaLabel} via Instagram`;
+    const primaryHref = instagramDmUrl;
+    const primaryLabel = `${ctaLabel} via Instagram`;
 
     const wrap = document.createElement("div");
     wrap.className = "floating-cta";
     wrap.innerHTML = `
       <a class="floating-cta-button" id="global-chat-cta" href="${primaryHref}" target="_blank" rel="noopener noreferrer">${primaryLabel}</a>
-      <p class="floating-cta-note" id="global-chat-note">${availabilityNote} · ${telegramUrl ? `<a class="text-hover-gold" href="${telegramUrl}" target="_blank" rel="noopener noreferrer">Telegram</a> · ` : ""}DM on Instagram ${handle}${whatsappUrl ? ` · <a class="text-hover-gold" href="${buildWhatsAppWithText(whatsappUrl, encodedBrief)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>` : ""}</p>
+      <p class="floating-cta-note" id="global-chat-note">${availabilityNote} · DM on Instagram ${handle}${telegramUrl ? ` · <a class="text-hover-gold" href="${telegramUrl}" target="_blank" rel="noopener noreferrer">Telegram</a>` : ""}${whatsappUrl ? ` · <a class="text-hover-gold" href="${buildWhatsAppWithText(whatsappUrl, encodedBrief)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>` : ""}</p>
     `;
 
     document.body.appendChild(wrap);
@@ -46,20 +46,18 @@
     `;
     document.body.appendChild(mobileBar);
 
-    if (!whatsappUrl) {
-      const ctaNode = document.getElementById("global-chat-cta");
-      const noteNode = document.getElementById("global-chat-note");
-      ctaNode?.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(briefTemplate);
-          if (noteNode) {
-            noteNode.textContent = "Brief template copied. Paste it in Instagram DM.";
-          }
-        } catch (_error) {
-          // Clipboard access can be blocked by browser permissions.
+    const ctaNode = document.getElementById("global-chat-cta");
+    const noteNode = document.getElementById("global-chat-note");
+    ctaNode?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(briefTemplate);
+        if (noteNode) {
+          noteNode.textContent = "Brief template copied. Paste it in Instagram DM.";
         }
-      });
-    }
+      } catch (_error) {
+        // Clipboard access can be blocked by browser permissions.
+      }
+    });
   } catch (error) {
     console.warn("Global CTA init failed", error);
   }
