@@ -13,6 +13,26 @@
     }
 
     favicon.href = config.FAVICON_URL;
+
+    const linkBindings = [
+      { key: "TELEGRAM_URL", selector: "[data-runtime-link='telegram']" },
+      { key: "WHATSAPP_URL", selector: "[data-runtime-link='whatsapp']" }
+    ];
+
+    linkBindings.forEach(({ key, selector }) => {
+      const node = document.querySelector(selector);
+      if (!node) {
+        return;
+      }
+
+      const target = config[key];
+      if (!target) {
+        node.style.display = "none";
+        return;
+      }
+
+      node.href = target;
+    });
   } catch (error) {
     console.warn("Runtime config apply failed", error);
   }

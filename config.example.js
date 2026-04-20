@@ -11,5 +11,6 @@ window.APP_CONFIG = {
   CTA_LABEL: "Check availability",
   AVAILABILITY_NOTE: "Calendar open for 2026-2027 weddings",
   INSTAGRAM_DM_URL: "https://ig.me/m/deusflow",
+  TELEGRAM_URL: "https://t.me/OflowPhotography",
   WHATSAPP_URL: "https://wa.me/4512345678"
 };

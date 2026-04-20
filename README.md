@@ -56,6 +56,7 @@ cp config.example.js config.js
    - `CTA_LABEL` (optional)
    - `AVAILABILITY_NOTE` (optional)
    - `INSTAGRAM_DM_URL` (optional)
+   - `TELEGRAM_URL` (optional)
    - `WHATSAPP_URL` (optional)
 
 3. Run quick validation:
@@ -106,6 +107,7 @@ In GitHub repo -> Settings -> Secrets and variables -> Actions, add these reposi
 - `CTA_LABEL` (optional)
 - `AVAILABILITY_NOTE` (optional)
 - `INSTAGRAM_DM_URL` (optional)
+- `TELEGRAM_URL` (optional)
 - `WHATSAPP_URL` (optional)
 
 `deploy.yml` will generate `config.js` during CI from these secrets and deploy the whole static site.

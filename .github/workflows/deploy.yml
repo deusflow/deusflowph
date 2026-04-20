@@ -44,6 +44,7 @@ jobs:
             CTA_LABEL: "${{ secrets.CTA_LABEL }}",
             AVAILABILITY_NOTE: "${{ secrets.AVAILABILITY_NOTE }}",
             INSTAGRAM_DM_URL: "${{ secrets.INSTAGRAM_DM_URL }}",
+            TELEGRAM_URL: "${{ secrets.TELEGRAM_URL }}",
             WHATSAPP_URL: "${{ secrets.WHATSAPP_URL }}"
           };
           EOF
