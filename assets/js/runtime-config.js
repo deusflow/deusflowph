@@ -20,18 +20,20 @@
     ];
 
     linkBindings.forEach(({ key, selector }) => {
-      const node = document.querySelector(selector);
-      if (!node) {
+      const nodes = Array.from(document.querySelectorAll(selector));
+      if (!nodes.length) {
         return;
       }
 
       const target = config[key];
-      if (!target) {
-        node.style.display = "none";
-        return;
-      }
+      nodes.forEach((node) => {
+        if (!target) {
+          node.style.display = "none";
+          return;
+        }
 
-      node.href = target;
+        node.href = target;
+      });
     });
   } catch (error) {
     console.warn("Runtime config apply failed", error);

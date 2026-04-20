@@ -45,7 +45,8 @@ jobs:
             AVAILABILITY_NOTE: "${{ secrets.AVAILABILITY_NOTE }}",
             INSTAGRAM_DM_URL: "${{ secrets.INSTAGRAM_DM_URL }}",
             TELEGRAM_URL: "${{ secrets.TELEGRAM_URL }}",
-            WHATSAPP_URL: "${{ secrets.WHATSAPP_URL }}"
+            WHATSAPP_URL: "${{ secrets.WHATSAPP_URL }}",
+            BRIEF_TEMPLATE: "${{ secrets.BRIEF_TEMPLATE }}"
           };
           EOF
 

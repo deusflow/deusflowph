@@ -591,6 +591,10 @@ h3,
   text-underline-offset: 2px;
 }
 
+.mobile-sticky-cta {
+  display: none;
+}
+
 .story-nav {
   display: grid;
   grid-template-columns: 1fr;
@@ -1257,7 +1261,7 @@ button.danger {
   }
 
   .page-intro {
-    padding-top: 132px;
+    padding-top: 176px;
     padding-bottom: 2.2rem;
   }
 
@@ -1296,13 +1300,43 @@ button.danger {
   }
 
   .floating-cta {
-    right: 0.7rem;
-    bottom: 0.7rem;
-    max-width: calc(100% - 1.4rem);
+    display: none;
+  }
+
+  .mobile-sticky-cta {
+    display: block;
+    position: fixed;
+    top: 86px;
+    left: 0;
+    width: 100%;
+    z-index: 65;
+    padding: 0.45rem 0.7rem;
+    background: rgba(10, 10, 10, 0.92);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobile-sticky-cta-button {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(90deg, #d4ba95 0%, #e5cfd9 100%);
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 10px;
+    padding: 0.62rem 0.72rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+  }
+
+  .mobile-sticky-cta-button:active {
+    transform: translateY(1px);
   }
 
   .floating-cta-button,
-  .floating-cta-note {
+  .floating-cta-note,
+  .mobile-sticky-cta-button {
     width: 100%;
     text-align: center;
     justify-content: center;

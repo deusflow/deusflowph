@@ -16,6 +16,9 @@ Production-ready static website for a wedding photographer based in Denmark.
 - `/pricing` package pricing (DKK)
 - `/locations/aarhus` local landing page
 - `/locations/copenhagen` local landing page
+- `/locations/odense` local landing page
+- `/locations/aalborg` local landing page
+- `/legal` short terms and privacy page
 - `/admin` protected admin panel (Supabase Auth)
 
 ## 1) Supabase setup
@@ -58,6 +61,7 @@ cp config.example.js config.js
    - `INSTAGRAM_DM_URL` (optional)
    - `TELEGRAM_URL` (optional)
    - `WHATSAPP_URL` (optional)
+   - `BRIEF_TEMPLATE` (optional)
 
 3. Run quick validation:
 
@@ -109,6 +113,7 @@ In GitHub repo -> Settings -> Secrets and variables -> Actions, add these reposi
 - `INSTAGRAM_DM_URL` (optional)
 - `TELEGRAM_URL` (optional)
 - `WHATSAPP_URL` (optional)
+- `BRIEF_TEMPLATE` (optional)
 
 `deploy.yml` will generate `config.js` during CI from these secrets and deploy the whole static site.
 

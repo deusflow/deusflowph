@@ -25,6 +25,9 @@ const requiredFiles = [
   "pricing/index.html",
   "locations/aarhus/index.html",
   "locations/copenhagen/index.html",
+  "locations/odense/index.html",
+  "locations/aalborg/index.html",
+  "legal/index.html",
   "admin/index.html",
   "README.md",
   "robots.txt",
@@ -46,6 +49,9 @@ const htmlChecks = [
   { file: "pricing/index.html", includes: ["../assets/js/pricing.js", "../assets/js/seo.js", "../assets/js/cta.js", "Essentials", "Signature", "Luxury", "<link rel=\"canonical\""] },
   { file: "locations/aarhus/index.html", includes: ["../../assets/js/seo.js", "../../assets/js/cta.js", "Aarhus"] },
   { file: "locations/copenhagen/index.html", includes: ["../../assets/js/seo.js", "../../assets/js/cta.js", "Copenhagen"] },
+  { file: "locations/odense/index.html", includes: ["../../assets/js/seo.js", "../../assets/js/cta.js", "Odense"] },
+  { file: "locations/aalborg/index.html", includes: ["../../assets/js/seo.js", "../../assets/js/cta.js", "Aalborg"] },
+  { file: "legal/index.html", includes: ["../assets/js/seo.js", "../assets/js/cta.js", "Terms and Privacy"] },
   { file: "admin/index.html", includes: ["../assets/js/admin.js", "id=\"login-form\""] }
 ];
 
