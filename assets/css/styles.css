@@ -631,6 +631,10 @@ h3,
   margin-inline: auto;
 }
 
+.story-nav.story-nav-single .story-nav-link {
+  text-align: center;
+}
+
 .story-nav-link {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.01);
