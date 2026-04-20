@@ -11,20 +11,32 @@ async function renderPortfolio() {
   try {
     const supabase = getSupabase();
 
-    const { data: albums, error: albumsError } = await supabase
+    let { data: albums, error: albumsError } = await supabase
       .from("albums")
       .select("id, title")
+      .eq("slug", "portfolio-main")
       .eq("visible", true)
       .eq("type", "portfolio")
-      .order("created_at", { ascending: false })
       .limit(1);
+
+    if (!albumsError && (!albums || albums.length === 0)) {
+      const fallback = await supabase
+        .from("albums")
+        .select("id, title")
+        .eq("visible", true)
+        .eq("type", "portfolio")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      albums = fallback.data;
+      albumsError = fallback.error;
+    }
 
     if (albumsError) {
       throw albumsError;
     }
 
     if (!albums || albums.length === 0) {
-      grid.appendChild(createStateMessage("No public portfolio album found. Create one from /admin."));
+      grid.appendChild(createStateMessage("No public portfolio album found. Open /admin and create/publish portfolio-main."));
       return;
     }
 

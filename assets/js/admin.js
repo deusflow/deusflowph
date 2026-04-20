@@ -76,14 +76,11 @@ function focusAlbumWorkflowSection(step = "edit") {
 }
 
 function guideToCreatePortfolioAlbum() {
-  if (typeInput) {
-    typeInput.value = "portfolio";
-  }
   if (titleInput && !titleInput.value.trim()) {
     titleInput.value = "Main Portfolio";
   }
   if (slugInput && !slugInput.value.trim()) {
-    slugInput.value = "portfolio";
+    slugInput.value = "portfolio-main";
   }
 
   createAlbumForm.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -100,43 +97,50 @@ async function ensurePortfolioAlbum() {
   }
 
   const supabase = getSupabase();
-  const baseSlug = "portfolio-main";
-  let slugCandidate = baseSlug;
+  const { data, error } = await supabase
+    .from("albums")
+    .insert({
+      slug: "portfolio-main",
+      title: "Main Portfolio",
+      description: "Curated signature work.",
+      cover_url: null,
+      type: "portfolio",
+      date: null,
+      visible: false
+    })
+    .select("id, slug, title, description, date, type, visible, cover_url")
+    .single();
 
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const { data, error } = await supabase
-      .from("albums")
-      .insert({
-        slug: slugCandidate,
-        title: "Main Portfolio",
-        description: "Curated signature work.",
-        cover_url: null,
-        type: "portfolio",
-        date: null,
-        visible: false
-      })
-      .select("id, slug, title, description, date, type, visible, cover_url")
-      .single();
-
-    if (!error && data) {
-      await loadAlbums();
-      return data;
-    }
-
-    if (!error || !String(error.message || "").toLowerCase().includes("duplicate")) {
-      throw error;
-    }
-
-    slugCandidate = `${baseSlug}-${Date.now()}`;
+  if (!error && data) {
+    await loadAlbums();
+    return data;
   }
 
-  throw new Error("Could not create default portfolio album.");
+  if (error && String(error.message || "").toLowerCase().includes("duplicate")) {
+    const { data: existingMain, error: existingError } = await supabase
+      .from("albums")
+      .select("id, slug, title, description, date, type, visible, cover_url")
+      .eq("slug", "portfolio-main")
+      .single();
+    if (existingError) {
+      throw existingError;
+    }
+    await loadAlbums();
+    return existingMain;
+  }
+
+  throw error || new Error("Could not create default portfolio album.");
 }
 
 function getPreferredPortfolioAlbum() {
   const portfolioAlbums = state.albums.filter((album) => album.type === "portfolio");
   if (!portfolioAlbums.length) {
     return null;
+  }
+
+  const strictMain = portfolioAlbums.find((album) => album.slug === "portfolio-main");
+  if (strictMain) {
+    return strictMain;
   }
 
   const published = portfolioAlbums.find((album) => album.visible);
@@ -151,7 +155,7 @@ async function openPortfolioManager() {
     focusAlbumWorkflowSection("upload");
     setUploadStatus("Portfolio manager is open. Upload or sort your best photos here.", 0);
   } catch (error) {
-    window.alert(`Could not open portfolio manager: ${error.message}`);
+    setUploadStatus(`Could not open portfolio manager: ${error.message}`, 0, "error");
     guideToCreatePortfolioAlbum();
   }
 }
@@ -168,7 +172,8 @@ function updatePortfolioQuickAccessState() {
     return;
   }
 
-  portfolioQuickNote.textContent = `Current portfolio manager target: ${album.title} (${album.visible ? "published" : "draft"}).`;
+  const governanceNote = album.slug === "portfolio-main" ? "portfolio-main" : `fallback: ${album.slug}`;
+  portfolioQuickNote.textContent = `Current portfolio manager target: ${album.title} (${album.visible ? "published" : "draft"}, ${governanceNote}).`;
 }
 
 function setUploadStatus(message, percent = 0, tone = "default") {
@@ -270,7 +275,7 @@ function updateAlbumOrderControlsState() {
 function stageAlbumMove(albumId, rawValue, max, inputNode = null) {
   const targetIndex = parseTargetPosition(rawValue, max);
   if (targetIndex === null) {
-    window.alert(`Enter an album position from 1 to ${max}.`);
+    setUploadStatus(`Enter an album position from 1 to ${max}.`, 0, "error");
     return false;
   }
 
@@ -301,7 +306,7 @@ async function persistWeddingAlbumOrder(reorderedAlbums, supabaseClient = null) 
       .eq("id", album.id);
 
     if (error) {
-      window.alert(`Could not reorder albums: ${error.message}`);
+      setUploadStatus(`Could not reorder albums: ${error.message}`, 0, "error");
       return false;
     }
   }
@@ -534,7 +539,7 @@ async function loadAlbums() {
 
       if (updateError) {
         checkbox.checked = !checkbox.checked;
-        window.alert(updateError.message);
+        setUploadStatus(updateError.message, 0, "error");
       }
     });
 
@@ -572,7 +577,6 @@ async function loadAlbums() {
         setUploadStatus("Album deleted.", 100);
       } catch (deleteError) {
         setUploadStatus(`Could not delete album: ${deleteError.message}`, 0, "error");
-        window.alert(deleteError.message);
       }
     });
 
@@ -948,7 +952,7 @@ async function loadPhotos(albumId) {
     const stageMoveToPosition = () => {
       const targetIndex = parseTargetPosition(moveToInput.value, photos.length);
       if (targetIndex === null) {
-        window.alert(`Enter a position from 1 to ${photos.length}.`);
+        setUploadStatus(`Enter a position from 1 to ${photos.length}.`, 0, "error");
         return;
       }
 
@@ -987,7 +991,6 @@ async function loadPhotos(albumId) {
         const { error: storageError } = await supabase.storage.from("photos").remove([path]);
         if (storageError) {
           setUploadStatus(storageError.message, 0, "error");
-          window.alert(storageError.message);
           return;
         }
       }
@@ -995,7 +998,6 @@ async function loadPhotos(albumId) {
       const { error: deleteError } = await supabase.from("photos").delete().eq("id", photo.id);
       if (deleteError) {
         setUploadStatus(deleteError.message, 0, "error");
-        window.alert(deleteError.message);
         return;
       }
 
@@ -1034,8 +1036,14 @@ async function createAlbum(event) {
   const slugInputValue = String(formData.get("slug") || "").trim();
   const coverFile = createAlbumForm.querySelector("input[name='cover']").files[0];
 
+  if (type === "portfolio") {
+    setUploadStatus("Use Portfolio Quick Access to manage the single portfolio-main album.", 0, "error");
+    await openPortfolioManager();
+    return;
+  }
+
   if (!title || !coverFile) {
-    window.alert("Title and cover image are required.");
+    setUploadStatus("Title and cover image are required.", 0, "error");
     return;
   }
 
@@ -1096,7 +1104,6 @@ async function createAlbum(event) {
     }
   } catch (err) {
     setUploadStatus(`Could not create album: ${err.message}`, 0, "error");
-    window.alert(err.message);
   }
 }
 
@@ -1104,7 +1111,7 @@ async function saveAlbumDetails(event) {
   event.preventDefault();
 
   if (!state.selectedAlbum) {
-    window.alert("Open an album first.");
+    setUploadStatus("Open an album first.", 0, "error");
     return;
   }
 
@@ -1114,7 +1121,7 @@ async function saveAlbumDetails(event) {
   const nextCoverFile = editCoverInput?.files?.[0] || null;
 
   if (!title) {
-    window.alert("Album title cannot be empty.");
+    setUploadStatus("Album title cannot be empty.", 0, "error");
     return;
   }
 
@@ -1140,7 +1147,6 @@ async function saveAlbumDetails(event) {
       saveAlbumButton.disabled = false;
       saveAlbumButton.textContent = "Save Album Details";
       setUploadStatus(`Could not upload cover: ${uploadError.message}`, 0, "error");
-      window.alert(`Could not upload cover: ${uploadError.message}`);
       return;
     }
   }
@@ -1160,7 +1166,6 @@ async function saveAlbumDetails(event) {
 
   if (error) {
     setUploadStatus(`Could not save album details: ${error.message}`, 0, "error");
-    window.alert(`Could not save album details: ${error.message}`);
     return;
   }
 

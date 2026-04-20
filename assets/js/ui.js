@@ -104,7 +104,51 @@ export function setupLightbox() {
   }
 
   const image = lightbox.querySelector("img");
-  const close = lightbox.querySelector("button");
+  const close = lightbox.querySelector("button:not([data-lightbox-prev]):not([data-lightbox-next])");
+  const prevButton = lightbox.querySelector("[data-lightbox-prev]");
+  const nextButton = lightbox.querySelector("[data-lightbox-next]");
+  const counter = lightbox.querySelector(".lightbox-counter");
+  let currentIndex = -1;
+  let touchStartX = 0;
+
+  function getLightboxItems() {
+    return Array.from(document.querySelectorAll("[data-lightbox-src]"));
+  }
+
+  function renderCurrent(items) {
+    if (!items.length || currentIndex < 0 || currentIndex >= items.length) {
+      return;
+    }
+
+    const trigger = items[currentIndex];
+    const src = trigger.getAttribute("data-lightbox-src");
+    if (!src) {
+      return;
+    }
+
+    image.src = src;
+    if (counter) {
+      counter.textContent = `${currentIndex + 1} / ${items.length}`;
+    }
+
+    const hasMultiple = items.length > 1;
+    if (prevButton) {
+      prevButton.style.display = hasMultiple ? "inline-block" : "none";
+    }
+    if (nextButton) {
+      nextButton.style.display = hasMultiple ? "inline-block" : "none";
+    }
+  }
+
+  function shift(delta) {
+    const items = getLightboxItems();
+    if (!items.length) {
+      return;
+    }
+
+    currentIndex = (currentIndex + delta + items.length) % items.length;
+    renderCurrent(items);
+  }
 
   document.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-lightbox-src]");
@@ -112,12 +156,14 @@ export function setupLightbox() {
       return;
     }
 
-    const src = trigger.getAttribute("data-lightbox-src");
-    if (!src) {
+    const items = getLightboxItems();
+    const index = items.indexOf(trigger);
+    if (index === -1) {
       return;
     }
 
-    image.src = src;
+    currentIndex = index;
+    renderCurrent(items);
     lightbox.classList.add("is-open");
     document.body.style.overflow = "hidden";
   });
@@ -125,6 +171,10 @@ export function setupLightbox() {
   const closeLightbox = () => {
     lightbox.classList.remove("is-open");
     image.src = "";
+    if (counter) {
+      counter.textContent = "";
+    }
+    currentIndex = -1;
     document.body.style.overflow = "";
   };
 
@@ -134,9 +184,36 @@ export function setupLightbox() {
       closeLightbox();
     }
   });
+  prevButton?.addEventListener("click", () => shift(-1));
+  nextButton?.addEventListener("click", () => shift(1));
+
+  lightbox.addEventListener("touchstart", (event) => {
+    touchStartX = event.touches[0]?.clientX || 0;
+  });
+
+  lightbox.addEventListener("touchend", (event) => {
+    const endX = event.changedTouches[0]?.clientX || 0;
+    const delta = endX - touchStartX;
+    if (Math.abs(delta) < 40) {
+      return;
+    }
+    if (delta > 0) {
+      shift(-1);
+    } else {
+      shift(1);
+    }
+  });
+
   document.addEventListener("keydown", (event) => {
+    if (!lightbox.classList.contains("is-open")) {
+      return;
+    }
     if (event.key === "Escape") {
       closeLightbox();
+    } else if (event.key === "ArrowLeft") {
+      shift(-1);
+    } else if (event.key === "ArrowRight") {
+      shift(1);
     }
   });
 }

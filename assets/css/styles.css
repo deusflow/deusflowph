@@ -12,6 +12,11 @@
   --motion-slow: 0.7s;
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --section-space: clamp(4.6rem, 7vw, 7rem);
+  --type-body: clamp(1rem, 0.35vw + 0.94rem, 1.08rem);
+  --type-h1: clamp(2.4rem, 5vw, 4.9rem);
+  --type-h2: clamp(1.85rem, 3.6vw, 3rem);
+  --type-h3: clamp(1.2rem, 2vw, 1.6rem);
+  --type-caption: 11px;
 }
 
 * {
@@ -44,9 +49,24 @@ a {
 body {
   font-family: "Montserrat", Arial, sans-serif;
   font-weight: 300;
-  font-size: 1.04rem;
+  font-size: var(--type-body);
   line-height: 1.62;
   background-image: radial-gradient(circle at 80% 8%, rgba(242, 191, 212, 0.07), transparent 32%);
+}
+
+h1 {
+  font-size: var(--type-h1);
+  line-height: 1.03;
+}
+
+h2 {
+  font-size: var(--type-h2);
+  line-height: 1.12;
+}
+
+h3 {
+  font-size: var(--type-h3);
+  line-height: 1.2;
 }
 
 h1,
@@ -444,7 +464,7 @@ h3,
 
 .photo-subtitle {
   margin-top: 0.25rem;
-  font-size: 12px;
+  font-size: var(--type-caption);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(232, 226, 217, 0.62);
@@ -589,6 +609,11 @@ h3,
 .floating-cta-note a {
   text-decoration: underline;
   text-underline-offset: 2px;
+  color: rgba(232, 226, 217, 0.8);
+}
+
+.floating-cta-note a:hover {
+  color: var(--gold);
 }
 
 .mobile-sticky-cta {
@@ -716,6 +741,7 @@ h3,
 
 .content-panel {
   text-align: center;
+  padding: 1.4rem;
 }
 
 .content-title {
@@ -728,12 +754,12 @@ h3,
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
 .process-steps li {
   border: 1px solid var(--border);
-  padding: 1rem;
+  padding: 1.15rem;
   background: rgba(255, 255, 255, 0.01);
 }
 
@@ -750,13 +776,13 @@ h3,
 
 .faq-list {
   display: grid;
-  gap: 0.7rem;
+  gap: 0.9rem;
   text-align: left;
 }
 
 .faq-list details {
   border: 1px solid var(--border);
-  padding: 0.95rem 1rem;
+  padding: 1.05rem 1.05rem;
   background: rgba(255, 255, 255, 0.01);
 }
 
@@ -840,6 +866,33 @@ h3,
   letter-spacing: 0.2em;
   font-size: 10px;
   cursor: pointer;
+}
+
+.lightbox [data-lightbox-prev] {
+  left: 16px;
+  right: auto;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lightbox [data-lightbox-next] {
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lightbox-counter {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  border: 1px solid var(--border);
+  background: rgba(10, 10, 10, 0.75);
+  color: var(--text);
+  padding: 0.35rem 0.6rem;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  text-transform: uppercase;
 }
 
 .admin-wrap {
@@ -1262,7 +1315,20 @@ button.danger {
 
   .page-intro {
     padding-top: 176px;
-    padding-bottom: 2.2rem;
+    padding-bottom: 2.6rem;
+  }
+
+  .content-panel {
+    padding: 1.1rem;
+  }
+
+  .process-steps {
+    gap: 1.1rem;
+  }
+
+  .process-steps li,
+  .faq-list details {
+    padding: 1.05rem 0.9rem;
   }
 
   .section-head {
