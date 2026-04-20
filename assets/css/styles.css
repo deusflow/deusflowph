@@ -831,17 +831,14 @@ h3,
 }
 
 #album-grid {
-  column-count: 1;
-  column-gap: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
 .masonry-item {
   border: 1px solid var(--border);
   background: transparent;
-  -webkit-column-break-inside: avoid;
-  page-break-inside: avoid;
-  break-inside: avoid;
-  margin-bottom: 1rem;
 }
 
 .masonry-item img {
@@ -1300,8 +1297,8 @@ button.danger {
   }
 
   #album-grid {
-    column-count: 2;
-    column-gap: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
   }
 
   #photos-list.compact-photo-grid {
@@ -1459,7 +1456,7 @@ button.danger {
   }
 
   #album-grid {
-    column-count: 3;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   #photos-list.compact-photo-grid {
