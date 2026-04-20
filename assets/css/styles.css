@@ -626,6 +626,11 @@ h3,
   gap: 0.7rem;
 }
 
+.story-nav.story-nav-single {
+  max-width: 760px;
+  margin-inline: auto;
+}
+
 .story-nav-link {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.01);
@@ -820,9 +825,18 @@ h3,
   display: block;
 }
 
+#album-grid {
+  column-count: 1;
+  column-gap: 1rem;
+}
+
 .masonry-item {
   border: 1px solid var(--border);
   background: transparent;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin-bottom: 1rem;
 }
 
 .masonry-item img {
@@ -1276,6 +1290,15 @@ button.danger {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .story-nav.story-nav-single {
+    grid-template-columns: 1fr;
+  }
+
+  #album-grid {
+    column-count: 2;
+    column-gap: 1.5rem;
+  }
+
   #photos-list.compact-photo-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -1427,6 +1450,10 @@ button.danger {
   }
 
   #portfolio-grid {
+    column-count: 3;
+  }
+
+  #album-grid {
     column-count: 3;
   }
 

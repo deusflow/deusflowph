@@ -1,13 +1,11 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry } from "./ui.js";
+import { observeLazyImages, createStateMessage, setupLightbox } from "./ui.js";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
 const descriptionNode = document.getElementById("album-description");
 const grid = document.getElementById("album-grid");
 const storyNav = document.getElementById("album-story-nav");
-let albumItems = [];
-let albumResizeTimer = null;
 
 function getDisplayOrderValue(value) {
   const parsed = Number(value);
@@ -31,6 +29,7 @@ function renderStoryNavigation(currentSlug, albums) {
   }
 
   storyNav.classList.remove("hidden");
+  storyNav.classList.toggle("story-nav-single", Boolean(prevAlbum) !== Boolean(nextAlbum));
   storyNav.innerHTML = "";
 
   if (prevAlbum) {
@@ -56,12 +55,6 @@ function renderStoryNavigation(currentSlug, albums) {
   }
 }
 
-function applyAlbumMasonry() {
-  if (!grid || !albumItems.length) {
-    return;
-  }
-  renderOrderedMasonry(grid, albumItems);
-}
 
 function getSlugFromURL() {
   const params = new URLSearchParams(window.location.search);
@@ -153,20 +146,17 @@ async function renderAlbum() {
       renderStoryNavigation(album.slug, normalized);
     }
 
-    albumItems = photos.map((photo, index) => {
+    const fragment = document.createDocumentFragment();
+    photos.forEach((photo, index) => {
       const item = document.createElement("article");
       item.className = "masonry-item";
       item.innerHTML = `<img data-src="${photo.url}" data-lightbox-src="${photo.url}" alt="${album.title} photo ${index + 1}" loading="lazy" />`;
-      return item;
+      fragment.appendChild(item);
     });
 
-    applyAlbumMasonry();
+    grid.innerHTML = "";
+    grid.appendChild(fragment);
     observeLazyImages();
-
-    window.addEventListener("resize", () => {
-      clearTimeout(albumResizeTimer);
-      albumResizeTimer = setTimeout(applyAlbumMasonry, 120);
-    });
   } catch (error) {
     grid.innerHTML = "";
     grid.appendChild(createStateMessage(`Could not load album. ${error.message}`));
