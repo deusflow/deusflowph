@@ -855,6 +855,46 @@ h3,
   margin-top: 0;
 }
 
+.admin-section {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.01);
+  margin-bottom: 0.8rem;
+}
+
+.admin-section > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.85rem 0.95rem;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.35rem;
+  color: var(--text);
+  border-bottom: 1px solid transparent;
+}
+
+.admin-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-section > summary::after {
+  content: "+";
+  float: right;
+  color: var(--gold);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 0.9rem;
+}
+
+.admin-section[open] > summary {
+  border-bottom-color: var(--border);
+}
+
+.admin-section[open] > summary::after {
+  content: "-";
+}
+
+.admin-section-body {
+  padding: 0.95rem;
+}
+
 .form-row {
   display: grid;
   gap: 0.8rem;
@@ -1116,6 +1156,14 @@ button.danger {
 .upload-note {
   color: rgba(232, 226, 217, 0.62);
   font-size: 0.85rem;
+}
+
+.admin-cover-preview {
+  width: min(240px, 100%);
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: #111;
 }
 
 .upload-status {

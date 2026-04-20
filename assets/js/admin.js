@@ -37,6 +37,8 @@ const saveAlbumButton = document.getElementById("save-album-button");
 const editTitleInput = document.getElementById("edit-title");
 const editDateInput = document.getElementById("edit-date");
 const editDescriptionInput = document.getElementById("edit-description");
+const editCoverInput = document.getElementById("edit-cover");
+const editCoverPreview = document.getElementById("edit-cover-preview");
 const photosList = document.getElementById("photos-list");
 const photoUploadInput = document.getElementById("photo-upload-input");
 const dropzone = document.getElementById("photo-dropzone");
@@ -54,6 +56,24 @@ const portfolioQuickNote = document.getElementById("portfolio-quick-note");
 const typeInput = document.getElementById("type");
 const titleInput = document.getElementById("title");
 const slugInput = document.getElementById("slug");
+const albumsSection = document.getElementById("albums-section");
+const createAlbumSection = document.getElementById("create-album-section");
+const albumEditSection = document.getElementById("album-edit-section");
+const albumUploadSection = document.getElementById("album-upload-section");
+const albumSortSection = document.getElementById("album-sort-section");
+
+function setSectionOpen(section, isOpen) {
+  if (!section) {
+    return;
+  }
+  section.open = Boolean(isOpen);
+}
+
+function focusAlbumWorkflowSection(step = "edit") {
+  setSectionOpen(albumEditSection, step === "edit");
+  setSectionOpen(albumUploadSection, step === "upload");
+  setSectionOpen(albumSortSection, step === "sort");
+}
 
 function guideToCreatePortfolioAlbum() {
   if (typeInput) {
@@ -67,6 +87,8 @@ function guideToCreatePortfolioAlbum() {
   }
 
   createAlbumForm.scrollIntoView({ behavior: "smooth", block: "center" });
+  setSectionOpen(createAlbumSection, true);
+  setSectionOpen(albumsSection, false);
   titleInput?.focus();
   setUploadStatus("Portfolio album setup is ready below. You can also use Open Portfolio Manager for auto-create.", 0);
 }
@@ -93,7 +115,7 @@ async function ensurePortfolioAlbum() {
         date: null,
         visible: false
       })
-      .select("id, slug, title, description, date, type, visible")
+      .select("id, slug, title, description, date, type, visible, cover_url")
       .single();
 
     if (!error && data) {
@@ -126,6 +148,7 @@ async function openPortfolioManager() {
     const portfolioAlbum = await ensurePortfolioAlbum();
     showAlbumDetails(portfolioAlbum);
     await loadPhotos(portfolioAlbum.id);
+    focusAlbumWorkflowSection("upload");
     setUploadStatus("Portfolio manager is open. Upload or sort your best photos here.", 0);
   } catch (error) {
     window.alert(`Could not open portfolio manager: ${error.message}`);
@@ -397,7 +420,22 @@ function showAlbumDetails(album) {
   editTitleInput.value = album.title || "";
   editDateInput.value = album.date || "";
   editDescriptionInput.value = album.description || "";
+  if (editCoverPreview) {
+    if (album.cover_url) {
+      editCoverPreview.src = album.cover_url;
+      editCoverPreview.classList.remove("hidden");
+    } else {
+      editCoverPreview.src = "";
+      editCoverPreview.classList.add("hidden");
+    }
+  }
+  if (editCoverInput) {
+    editCoverInput.value = "";
+  }
   selectedAlbumPanel.classList.remove("hidden");
+  focusAlbumWorkflowSection("edit");
+  setSectionOpen(albumsSection, true);
+  setSectionOpen(createAlbumSection, false);
   setUploadStatus("No upload in progress.", 0);
 }
 
@@ -417,13 +455,13 @@ async function loadAlbums() {
 
   let { data: albums, error } = await supabase
     .from("albums")
-    .select("id, slug, title, description, date, type, visible, display_order, created_at")
+    .select("id, slug, title, description, date, type, visible, cover_url, display_order, created_at")
     .order("created_at", { ascending: false });
 
   if (error && String(error.message || "").includes("display_order")) {
     const fallback = await supabase
       .from("albums")
-      .select("id, slug, title, description, date, type, visible, created_at")
+      .select("id, slug, title, description, date, type, visible, cover_url, created_at")
       .order("created_at", { ascending: false });
     albums = (fallback.data || []).map((album) => ({ ...album, display_order: null }));
     error = fallback.error;
@@ -789,8 +827,11 @@ async function loadPhotos(albumId) {
 
   if (!photos || photos.length === 0) {
     photosList.appendChild(createStateMessage("No photos in this album yet."));
+    focusAlbumWorkflowSection("upload");
     return;
   }
+
+  focusAlbumWorkflowSection("sort");
 
   photos.forEach((photo, index) => {
     const row = document.createElement("div");
@@ -1022,7 +1063,7 @@ async function createAlbum(event) {
     let insertQuery = supabase
       .from("albums")
       .insert(payload)
-      .select("id, slug, title, description, date, type, visible")
+      .select("id, slug, title, description, date, type, visible, cover_url")
       .single();
 
     let { data: createdAlbum, error } = await insertQuery;
@@ -1032,7 +1073,7 @@ async function createAlbum(event) {
       const fallbackInsert = await supabase
         .from("albums")
         .insert(fallbackPayload)
-        .select("id, slug, title, description, date, type, visible")
+        .select("id, slug, title, description, date, type, visible, cover_url")
         .single();
       createdAlbum = fallbackInsert.data;
       error = fallbackInsert.error;
@@ -1044,6 +1085,8 @@ async function createAlbum(event) {
 
     createAlbumForm.reset();
     await loadAlbums();
+    setSectionOpen(createAlbumSection, false);
+    setSectionOpen(albumsSection, true);
     setUploadStatus("Album created successfully.", 100);
 
     if (createdAlbum && createdAlbum.type === "portfolio") {
@@ -1068,6 +1111,7 @@ async function saveAlbumDetails(event) {
   const title = editTitleInput.value.trim();
   const date = editDateInput.value.trim();
   const description = editDescriptionInput.value.trim();
+  const nextCoverFile = editCoverInput?.files?.[0] || null;
 
   if (!title) {
     window.alert("Album title cannot be empty.");
@@ -1079,12 +1123,35 @@ async function saveAlbumDetails(event) {
   setUploadStatus("Saving album details...", 30);
 
   const supabase = getSupabase();
+  const previousCoverUrl = state.selectedAlbum.cover_url || null;
+  let nextCoverUrl = previousCoverUrl;
+
+  if (nextCoverFile) {
+    const extension = nextCoverFile.name.split(".").pop() || "jpg";
+    const coverPath = `covers/${state.selectedAlbum.slug}-${Date.now()}.${extension}`;
+    try {
+      setUploadStatus("Uploading new cover...", 55);
+      nextCoverUrl = await uploadToPhotosBucket(nextCoverFile, coverPath);
+      if (editCoverPreview) {
+        editCoverPreview.src = nextCoverUrl;
+        editCoverPreview.classList.remove("hidden");
+      }
+    } catch (uploadError) {
+      saveAlbumButton.disabled = false;
+      saveAlbumButton.textContent = "Save Album Details";
+      setUploadStatus(`Could not upload cover: ${uploadError.message}`, 0, "error");
+      window.alert(`Could not upload cover: ${uploadError.message}`);
+      return;
+    }
+  }
+
   const { error } = await supabase
     .from("albums")
     .update({
       title,
       date: date || null,
-      description: description || null
+      description: description || null,
+      cover_url: nextCoverUrl
     })
     .eq("id", state.selectedAlbum.id);
 
@@ -1097,11 +1164,22 @@ async function saveAlbumDetails(event) {
     return;
   }
 
+  if (nextCoverFile && previousCoverUrl && previousCoverUrl !== nextCoverUrl) {
+    const previousPath = storagePathFromPublicUrl(previousCoverUrl);
+    if (previousPath) {
+      const { error: removeError } = await supabase.storage.from("photos").remove([previousPath]);
+      if (removeError) {
+        console.warn("Old cover cleanup failed", removeError.message);
+      }
+    }
+  }
+
   state.selectedAlbum = {
     ...state.selectedAlbum,
     title,
     date: date || null,
-    description: description || null
+    description: description || null,
+    cover_url: nextCoverUrl
   };
 
   showAlbumDetails(state.selectedAlbum);

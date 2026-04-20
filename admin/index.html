@@ -40,27 +40,37 @@
     <section id="dashboard-panel" class="hidden">
       <div class="admin-grid">
         <article class="panel">
-          <h2>Portfolio Quick Access</h2>
-          <p>Open your main portfolio manager to upload and sort signature photos. If missing, it is created automatically.</p>
-          <div class="admin-quick-actions">
-            <button id="open-portfolio-manager-button" type="button" class="primary">Open Portfolio Manager</button>
-            <a class="ghost admin-link-button" href="../portfolio/index.html" target="_blank" rel="noopener noreferrer">Open Public Portfolio Page</a>
-          </div>
-          <p id="portfolio-quick-note" class="upload-note" style="margin-top:0.7rem;"></p>
+          <details class="admin-section" open>
+            <summary>Portfolio Quick Access</summary>
+            <div class="admin-section-body">
+              <p>Open your main portfolio manager to upload and sort signature photos. If missing, it is created automatically.</p>
+              <div class="admin-quick-actions">
+                <button id="open-portfolio-manager-button" type="button" class="primary">Open Portfolio Manager</button>
+                <a class="ghost admin-link-button" href="../portfolio/index.html" target="_blank" rel="noopener noreferrer">Open Public Portfolio Page</a>
+              </div>
+              <p id="portfolio-quick-note" class="upload-note" style="margin-top:0.7rem;"></p>
+            </div>
+          </details>
 
-          <h2>Albums</h2>
-          <p>Create, publish, open, and reorder wedding albums.</p>
-          <div class="album-order-controls">
-            <button id="apply-album-order-button" type="button" class="primary" disabled>Save album order</button>
-            <button id="clear-album-order-button" type="button" class="ghost" disabled>Clear staged album moves</button>
-          </div>
-          <p class="upload-note">Album order affects `/weddings` and home Featured Stories.</p>
-          <div id="albums-list" class="album-list"></div>
+          <details id="albums-section" class="admin-section" open>
+            <summary>Albums</summary>
+            <div class="admin-section-body">
+              <p>Create, publish, open, and reorder wedding albums.</p>
+              <div class="album-order-controls">
+                <button id="apply-album-order-button" type="button" class="primary" disabled>Save album order</button>
+                <button id="clear-album-order-button" type="button" class="ghost" disabled>Clear staged album moves</button>
+              </div>
+              <p class="upload-note">Album order affects `/weddings` and home Featured Stories.</p>
+              <div id="albums-list" class="album-list"></div>
+            </div>
+          </details>
         </article>
 
         <article class="panel">
-          <h2>Create Album</h2>
-          <form id="create-album-form">
+          <details id="create-album-section" class="admin-section">
+            <summary>Create Album</summary>
+            <div class="admin-section-body">
+              <form id="create-album-form">
             <div class="form-row">
               <label for="title">Title</label>
               <input id="title" name="title" type="text" required />
@@ -95,7 +105,9 @@
             </div>
 
             <button type="submit" class="primary">Create Album</button>
-          </form>
+              </form>
+            </div>
+          </details>
         </article>
       </div>
 
@@ -103,7 +115,10 @@
         <h3 id="selected-album-name">Album</h3>
         <p id="selected-album-meta"></p>
 
-        <form id="edit-album-form">
+        <details id="album-edit-section" class="admin-section" open>
+          <summary>Edit Album</summary>
+          <div class="admin-section-body">
+            <form id="edit-album-form">
           <div class="form-row">
             <label for="edit-title">Album title</label>
             <input id="edit-title" name="title" type="text" required />
@@ -119,37 +134,59 @@
             <textarea id="edit-description" name="description" rows="3" placeholder="Short wedding story description..."></textarea>
           </div>
 
-          <button id="save-album-button" type="submit" class="primary">Save Album Details</button>
-        </form>
-
-        <div class="form-row">
-          <label for="photo-upload-input">Upload photos</label>
-          <input id="photo-upload-input" type="file" accept="image/*" multiple />
-          <small class="upload-note">Photos start uploading automatically after you select or drop files.</small>
-        </div>
-
-        <div id="photo-dropzone" class="dropzone">
-          Drag and drop multiple photos here
-        </div>
-
-        <div id="upload-status" class="upload-status" aria-live="polite">
-          <div id="upload-status-text">No upload in progress.</div>
-          <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-            <div id="upload-progress-bar" class="upload-progress-bar"></div>
+          <div class="form-row">
+            <label>Current cover</label>
+            <img id="edit-cover-preview" class="admin-cover-preview hidden" src="" alt="Album cover preview" />
+            <small class="upload-note">Upload a new file below to replace the current album cover.</small>
           </div>
-        </div>
 
-        <h3 style="margin-top:1.5rem;">Photos</h3>
-        <p class="upload-note">Tip: set multiple target positions first, then click Save order changes once.</p>
-        <div class="photo-view-controls">
-          <button id="compact-view-button" type="button" class="ghost">Compact Sort View</button>
-          <button id="detailed-view-button" type="button" class="ghost">Detailed View</button>
-        </div>
-        <div class="photo-order-controls">
-          <button id="apply-order-button" type="button" class="primary" disabled>Save order changes</button>
-          <button id="clear-order-button" type="button" class="ghost" disabled>Clear staged changes</button>
-        </div>
-        <div id="photos-list" class="album-list"></div>
+          <div class="form-row">
+            <label for="edit-cover">Replace cover image (optional)</label>
+            <input id="edit-cover" name="cover" type="file" accept="image/*" />
+          </div>
+
+          <button id="save-album-button" type="submit" class="primary">Save Album Details</button>
+            </form>
+          </div>
+        </details>
+
+        <details id="album-upload-section" class="admin-section">
+          <summary>Upload Photos</summary>
+          <div class="admin-section-body">
+            <div class="form-row">
+              <label for="photo-upload-input">Upload photos</label>
+              <input id="photo-upload-input" type="file" accept="image/*" multiple />
+              <small class="upload-note">Photos start uploading automatically after you select or drop files.</small>
+            </div>
+
+            <div id="photo-dropzone" class="dropzone">
+              Drag and drop multiple photos here
+            </div>
+
+            <div id="upload-status" class="upload-status" aria-live="polite">
+              <div id="upload-status-text">No upload in progress.</div>
+              <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="upload-progress-bar" class="upload-progress-bar"></div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details id="album-sort-section" class="admin-section">
+          <summary>Sort and Manage Photos</summary>
+          <div class="admin-section-body">
+            <p class="upload-note">Tip: set multiple target positions first, then click Save order changes once.</p>
+            <div class="photo-view-controls">
+              <button id="compact-view-button" type="button" class="ghost">Compact Sort View</button>
+              <button id="detailed-view-button" type="button" class="ghost">Detailed View</button>
+            </div>
+            <div class="photo-order-controls">
+              <button id="apply-order-button" type="button" class="primary" disabled>Save order changes</button>
+              <button id="clear-order-button" type="button" class="ghost" disabled>Clear staged changes</button>
+            </div>
+            <div id="photos-list" class="album-list"></div>
+          </div>
+        </details>
       </article>
     </section>
   </main>
