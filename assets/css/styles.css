@@ -217,6 +217,11 @@ h3,
   flex-wrap: wrap;
 }
 
+.hero-actions .cta {
+  min-width: 220px;
+  justify-content: center;
+}
+
 .cta {
   display: inline-flex;
   align-items: center;
