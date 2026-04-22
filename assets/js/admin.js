@@ -9,6 +9,7 @@ import { createStateMessage } from "./ui.js";
 
 const state = {
   selectedAlbum: null,
+  aboutContent: null,
   albums: [],
   selectedAlbumPhotos: [],
   selectedAlbumMetaBase: "",
@@ -61,6 +62,237 @@ const createAlbumSection = document.getElementById("create-album-section");
 const albumEditSection = document.getElementById("album-edit-section");
 const albumUploadSection = document.getElementById("album-upload-section");
 const albumSortSection = document.getElementById("album-sort-section");
+const aboutCmsSection = document.getElementById("about-cms-section");
+const aboutForm = document.getElementById("about-form");
+const saveAboutButton = document.getElementById("save-about-button");
+const aboutPhotoPreview = document.getElementById("about-photo-preview");
+const aboutPhotoInput = document.getElementById("about-photo");
+const aboutStoryInput = document.getElementById("about-story");
+const aboutValuesInput = document.getElementById("about-values");
+const aboutPersonalInput = document.getElementById("about-personal");
+
+const testimonialFields = [
+  {
+    name: document.getElementById("testimonial-1-name"),
+    quote: document.getElementById("testimonial-1-quote")
+  },
+  {
+    name: document.getElementById("testimonial-2-name"),
+    quote: document.getElementById("testimonial-2-quote")
+  },
+  {
+    name: document.getElementById("testimonial-3-name"),
+    quote: document.getElementById("testimonial-3-quote")
+  },
+  {
+    name: document.getElementById("testimonial-4-name"),
+    quote: document.getElementById("testimonial-4-quote")
+  }
+];
+
+function getDefaultAboutPayload() {
+  return {
+    id: 1,
+    photo_url: null,
+    story:
+      "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me.\n\nHonestly, people started noticing things in my photos that I did not even see myself - raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in perfect poses. You want to see the real story of your day in these photos. And I handle that perfectly... or so they tell me.\n\nSome say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just us.\n\nYour wedding day? Trust me, I've got this.",
+    values_text:
+      "I work quietly, observe honestly, and guide only when it helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.",
+    personal_text:
+      "Originally from Ukraine, now based near Aarhus. I work across Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.",
+    testimonials: [
+      {
+        name: "Volodymyr Ostapchuk (TV Presenter)",
+        quote: "Oleh has an incredible talent for capturing genuine emotions. Our wedding photos tell the perfect story of our day. Highly recommended!"
+      },
+      {
+        name: "Jerry Heil (Singer & Songwriter)",
+        quote: "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."
+      },
+      {
+        name: "Oleksandr Popov (Actor)",
+        quote: "I worked with Oleh on a shoot for my TV series. He is an absolute professional with a great eye for cinematic detail."
+      },
+      {
+        name: "Amalie Frank",
+        quote:
+          "Wow, hvor ser det godt ud! Tusind tusind tak for det - kaempe anbefaling! Der har virkelig vaeret stor ros for alle billederne fra alle gaester og slottet ogsaa. Det har vaeret fantastisk at have arbejdet med jer."
+      }
+    ]
+  };
+}
+
+function normalizeTestimonials(raw) {
+  const source = Array.isArray(raw) ? raw : [];
+  const normalized = source
+    .map((item) => ({
+      name: String(item?.name || "").trim(),
+      quote: String(item?.quote || "").trim()
+    }))
+    .filter((item) => item.name && item.quote);
+
+  return normalized.length > 0 ? normalized : getDefaultAboutPayload().testimonials;
+}
+
+function fillAboutForm(content) {
+  if (!aboutForm) {
+    return;
+  }
+
+  aboutStoryInput.value = content.story || "";
+  aboutValuesInput.value = content.values_text || "";
+  aboutPersonalInput.value = content.personal_text || "";
+
+  if (aboutPhotoPreview) {
+    if (content.photo_url) {
+      aboutPhotoPreview.src = content.photo_url;
+      aboutPhotoPreview.classList.remove("hidden");
+    } else {
+      aboutPhotoPreview.src = "";
+      aboutPhotoPreview.classList.add("hidden");
+    }
+  }
+
+  const testimonials = normalizeTestimonials(content.testimonials);
+  testimonialFields.forEach((field, index) => {
+    const item = testimonials[index] || { name: "", quote: "" };
+    if (field.name) {
+      field.name.value = item.name;
+    }
+    if (field.quote) {
+      field.quote.value = item.quote;
+    }
+  });
+}
+
+function collectTestimonialsFromForm() {
+  return testimonialFields
+    .map((field) => ({
+      name: String(field.name?.value || "").trim(),
+      quote: String(field.quote?.value || "").trim()
+    }))
+    .filter((item) => item.name && item.quote);
+}
+
+async function loadAboutContent() {
+  if (!aboutForm) {
+    return;
+  }
+
+  const supabase = getSupabase();
+  const defaults = getDefaultAboutPayload();
+  const { data, error } = await supabase.from("about_content").select("*").eq("id", 1).maybeSingle();
+
+  if (error) {
+    setUploadStatus(`Could not load About content: ${error.message}`, 0, "error");
+    fillAboutForm(defaults);
+    return;
+  }
+
+  let resolved = data;
+  if (!resolved) {
+    const insert = await supabase
+      .from("about_content")
+      .insert(defaults)
+      .select("*")
+      .single();
+
+    if (insert.error) {
+      setUploadStatus(`About content setup failed: ${insert.error.message}`, 0, "error");
+      fillAboutForm(defaults);
+      return;
+    }
+    resolved = insert.data;
+  }
+
+  state.aboutContent = resolved;
+  fillAboutForm({ ...defaults, ...resolved, testimonials: normalizeTestimonials(resolved.testimonials) });
+}
+
+async function saveAboutContent(event) {
+  event.preventDefault();
+  if (!aboutForm || !saveAboutButton) {
+    return;
+  }
+
+  const story = String(aboutStoryInput?.value || "").trim();
+  if (!story) {
+    setUploadStatus("About story cannot be empty.", 0, "error");
+    return;
+  }
+
+  const valuesText = String(aboutValuesInput?.value || "").trim();
+  const personalText = String(aboutPersonalInput?.value || "").trim();
+  const testimonials = collectTestimonialsFromForm();
+
+  saveAboutButton.disabled = true;
+  saveAboutButton.textContent = "Saving...";
+  setUploadStatus("Saving About page...", 30);
+
+  const supabase = getSupabase();
+  const previousPhotoUrl = state.aboutContent?.photo_url || null;
+  let nextPhotoUrl = previousPhotoUrl;
+  const nextPhotoFile = aboutPhotoInput?.files?.[0] || null;
+
+  if (nextPhotoFile) {
+    const extension = nextPhotoFile.name.split(".").pop() || "jpg";
+    const path = `about/portrait-${Date.now()}.${extension}`;
+
+    try {
+      setUploadStatus("Uploading About portrait...", 55);
+      nextPhotoUrl = await uploadToPhotosBucket(nextPhotoFile, path);
+    } catch (uploadError) {
+      saveAboutButton.disabled = false;
+      saveAboutButton.textContent = "Save About Page";
+      setUploadStatus(`Could not upload portrait: ${uploadError.message}`, 0, "error");
+      return;
+    }
+  }
+
+  const payload = {
+    id: 1,
+    photo_url: nextPhotoUrl,
+    story,
+    values_text: valuesText || null,
+    personal_text: personalText || null,
+    testimonials,
+    updated_at: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase
+    .from("about_content")
+    .upsert(payload, { onConflict: "id" })
+    .select("*")
+    .single();
+
+  saveAboutButton.disabled = false;
+  saveAboutButton.textContent = "Save About Page";
+
+  if (error) {
+    setUploadStatus(`Could not save About page: ${error.message}`, 0, "error");
+    return;
+  }
+
+  if (nextPhotoFile && previousPhotoUrl && previousPhotoUrl !== nextPhotoUrl) {
+    const previousPath = storagePathFromPublicUrl(previousPhotoUrl);
+    if (previousPath) {
+      const cleanup = await supabase.storage.from("photos").remove([previousPath]);
+      if (cleanup.error) {
+        console.warn("About portrait cleanup failed", cleanup.error.message);
+      }
+    }
+  }
+
+  state.aboutContent = data;
+  fillAboutForm({ ...getDefaultAboutPayload(), ...data, testimonials: normalizeTestimonials(data.testimonials) });
+  if (aboutPhotoInput) {
+    aboutPhotoInput.value = "";
+  }
+  if (aboutCmsSection) {
+    aboutCmsSection.open = true;
+  }
+  setUploadStatus("About page saved.", 100);
+}
 
 function setSectionOpen(section, isOpen) {
   if (!section) {
@@ -1311,6 +1543,7 @@ async function boot() {
     }
 
     await loadAlbums();
+    await loadAboutContent();
   } catch (error) {
     loginError.textContent = error.message;
     setAuthView(false);
@@ -1378,6 +1611,10 @@ if (openPortfolioManagerButton) {
   openPortfolioManagerButton.addEventListener("click", async () => {
     await openPortfolioManager();
   });
+}
+
+if (aboutForm) {
+  aboutForm.addEventListener("submit", saveAboutContent);
 }
 
 applyPhotoViewMode();

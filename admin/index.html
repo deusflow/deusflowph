@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/styles.css?v=20260420" />
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20260422" />
 </head>
 <body>
   <header class="site-header">
@@ -185,6 +185,72 @@
               <button id="clear-order-button" type="button" class="ghost" disabled>Clear staged changes</button>
             </div>
             <div id="photos-list" class="album-list"></div>
+          </div>
+        </details>
+      </article>
+
+      <article class="panel" style="margin-top:1.5rem;">
+        <details id="about-cms-section" class="admin-section">
+          <summary>About Page CMS</summary>
+          <div class="admin-section-body">
+            <p>Edit your About page story and testimonials. Layout on public page: photo on the left, story on the right.</p>
+            <form id="about-form">
+              <div class="form-row">
+                <label>Current portrait</label>
+                <img id="about-photo-preview" class="admin-cover-preview hidden" src="" alt="About portrait preview" />
+              </div>
+
+              <div class="form-row">
+                <label for="about-photo">Replace portrait photo (optional)</label>
+                <input id="about-photo" name="about-photo" type="file" accept="image/*" />
+              </div>
+
+              <div class="form-row">
+                <label for="about-story">Main story</label>
+                <textarea id="about-story" name="about-story" rows="10" required></textarea>
+              </div>
+
+              <div class="form-row">
+                <label for="about-values">Values and approach</label>
+                <textarea id="about-values" name="about-values" rows="4"></textarea>
+              </div>
+
+              <div class="form-row">
+                <label for="about-personal">Personal note</label>
+                <textarea id="about-personal" name="about-personal" rows="4"></textarea>
+              </div>
+
+              <div class="form-row">
+                <label for="testimonial-1-name">Testimonial 1 - Name</label>
+                <input id="testimonial-1-name" type="text" />
+                <label for="testimonial-1-quote">Testimonial 1 - Quote</label>
+                <textarea id="testimonial-1-quote" rows="3"></textarea>
+              </div>
+
+              <div class="form-row">
+                <label for="testimonial-2-name">Testimonial 2 - Name</label>
+                <input id="testimonial-2-name" type="text" />
+                <label for="testimonial-2-quote">Testimonial 2 - Quote</label>
+                <textarea id="testimonial-2-quote" rows="3"></textarea>
+              </div>
+
+              <div class="form-row">
+                <label for="testimonial-3-name">Testimonial 3 - Name</label>
+                <input id="testimonial-3-name" type="text" />
+                <label for="testimonial-3-quote">Testimonial 3 - Quote</label>
+                <textarea id="testimonial-3-quote" rows="3"></textarea>
+              </div>
+
+              <div class="form-row">
+                <label for="testimonial-4-name">Testimonial 4 - Name</label>
+                <input id="testimonial-4-name" type="text" />
+                <label for="testimonial-4-quote">Testimonial 4 - Quote</label>
+                <textarea id="testimonial-4-quote" rows="3"></textarea>
+              </div>
+
+              <button id="save-about-button" type="submit" class="primary">Save About Page</button>
+              <a class="ghost admin-link-button" href="../about/index.html" target="_blank" rel="noopener noreferrer">Open Public About Page</a>
+            </form>
           </div>
         </details>
       </article>

@@ -11,6 +11,7 @@ Production-ready static website for a wedding photographer based in Denmark.
 
 - `/` Home
 - `/portfolio` 30-photo selected portfolio
+- `/about` photographer story and testimonials
 - `/weddings` list of wedding albums
 - `/weddings/album?slug=<album-slug>` individual wedding album page
 - `/pricing` package pricing (DKK)
@@ -140,8 +141,9 @@ In GitHub repo -> Settings -> Secrets and variables -> Actions, add these reposi
 3. Open that album and upload multiple photos (input or drag & drop).
 4. Toggle album visibility to **Published**.
 5. Repeat for 2-4 weddings.
-6. Create one **portfolio** album (type `portfolio`) and upload at least 30 photos.
+6. Open **Portfolio Quick Access** to manage `portfolio-main` and upload best photos.
 7. Publish it to show selected portfolio grid on `/portfolio`.
+8. Open **About Page CMS** in `/admin` to edit portrait, story, values, and testimonials.
 
 ## 8) Reorder wedding albums
 
@@ -171,6 +173,7 @@ npm run serve
 
 - `index.html`
 - `portfolio/index.html`
+- `about/index.html`
 - `weddings/index.html`
 - `weddings/album/index.html`
 - `pricing/index.html`
@@ -179,6 +182,7 @@ npm run serve
 - `assets/js/supabase-client.js`
 - `assets/js/seo.js`
 - `assets/js/home.js`
+- `assets/js/about.js`
 - `assets/js/portfolio.js`
 - `assets/js/weddings.js`
 - `assets/js/wedding-album.js`

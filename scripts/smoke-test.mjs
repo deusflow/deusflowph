@@ -14,12 +14,14 @@ const requiredFiles = [
   "assets/js/seo.js",
   "assets/js/cta.js",
   "assets/js/home.js",
+  "assets/js/about.js",
   "assets/js/portfolio.js",
   "assets/js/weddings.js",
   "assets/js/wedding-album.js",
   "assets/js/pricing.js",
   "assets/js/admin.js",
   "portfolio/index.html",
+  "about/index.html",
   "weddings/index.html",
   "weddings/album/index.html",
   "pricing/index.html",
@@ -43,6 +45,7 @@ if (missing.length > 0) {
 
 const htmlChecks = [
   { file: "index.html", includes: ["assets/css/styles.css", "assets/js/home.js", "assets/js/seo.js", "assets/js/cta.js", "<link rel=\"canonical\"", "og:title"] },
+  { file: "about/index.html", includes: ["../assets/js/about.js", "../assets/js/seo.js", "../assets/js/cta.js", "Testimonials", "<link rel=\"canonical\""] },
   { file: "portfolio/index.html", includes: ["../assets/js/portfolio.js", "../assets/js/seo.js", "../assets/js/cta.js", "<link rel=\"canonical\""] },
   { file: "weddings/index.html", includes: ["../assets/js/weddings.js", "../assets/js/seo.js", "../assets/js/cta.js", "<link rel=\"canonical\""] },
   { file: "weddings/album/index.html", includes: ["../../assets/js/wedding-album.js", "../../assets/js/seo.js", "../../assets/js/cta.js", "id=\"lightbox\"", "<link rel=\"canonical\""] },
@@ -67,7 +70,7 @@ for (const check of htmlChecks) {
 }
 
 const schema = fs.readFileSync(path.join(root, "supabase-schema.sql"), "utf8");
-for (const token of ["create table if not exists public.albums", "create table if not exists public.photos", "enable row level security", "storage.buckets"]) {
+for (const token of ["create table if not exists public.albums", "create table if not exists public.photos", "create table if not exists public.about_content", "enable row level security", "storage.buckets"]) {
   if (!schema.includes(token)) {
     console.error(`Schema check failed: missing '${token}'`);
     process.exit(1);
