@@ -220,28 +220,44 @@
                 <textarea id="about-personal" name="about-personal" rows="4"></textarea>
               </div>
 
-              <div class="form-row">
+              <div class="form-row" data-testimonial-index="0">
+                <div class="testimonial-move-controls">
+                  <button id="testimonial-1-up" type="button" class="ghost">Move Up</button>
+                  <button id="testimonial-1-down" type="button" class="ghost">Move Down</button>
+                </div>
                 <label for="testimonial-1-name">Testimonial 1 - Name</label>
                 <input id="testimonial-1-name" type="text" />
                 <label for="testimonial-1-quote">Testimonial 1 - Quote</label>
                 <textarea id="testimonial-1-quote" rows="3"></textarea>
               </div>
 
-              <div class="form-row">
+              <div class="form-row" data-testimonial-index="1">
+                <div class="testimonial-move-controls">
+                  <button id="testimonial-2-up" type="button" class="ghost">Move Up</button>
+                  <button id="testimonial-2-down" type="button" class="ghost">Move Down</button>
+                </div>
                 <label for="testimonial-2-name">Testimonial 2 - Name</label>
                 <input id="testimonial-2-name" type="text" />
                 <label for="testimonial-2-quote">Testimonial 2 - Quote</label>
                 <textarea id="testimonial-2-quote" rows="3"></textarea>
               </div>
 
-              <div class="form-row">
+              <div class="form-row" data-testimonial-index="2">
+                <div class="testimonial-move-controls">
+                  <button id="testimonial-3-up" type="button" class="ghost">Move Up</button>
+                  <button id="testimonial-3-down" type="button" class="ghost">Move Down</button>
+                </div>
                 <label for="testimonial-3-name">Testimonial 3 - Name</label>
                 <input id="testimonial-3-name" type="text" />
                 <label for="testimonial-3-quote">Testimonial 3 - Quote</label>
                 <textarea id="testimonial-3-quote" rows="3"></textarea>
               </div>
 
-              <div class="form-row">
+              <div class="form-row" data-testimonial-index="3">
+                <div class="testimonial-move-controls">
+                  <button id="testimonial-4-up" type="button" class="ghost">Move Up</button>
+                  <button id="testimonial-4-down" type="button" class="ghost">Move Down</button>
+                </div>
                 <label for="testimonial-4-name">Testimonial 4 - Name</label>
                 <input id="testimonial-4-name" type="text" />
                 <label for="testimonial-4-quote">Testimonial 4 - Quote</label>
@@ -250,6 +266,7 @@
 
               <button id="save-about-button" type="submit" class="primary">Save About Page</button>
               <a class="ghost admin-link-button" href="../about/index.html" target="_blank" rel="noopener noreferrer">Open Public About Page</a>
+              <p id="about-status-text" class="upload-note" style="margin-top:0.7rem;"></p>
             </form>
           </div>
         </details>

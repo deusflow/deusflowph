@@ -852,6 +852,26 @@ h3,
   text-align: left;
 }
 
+.about-story-shell {
+  position: relative;
+  padding: 1.2rem 0.6rem 0.6rem;
+}
+
+.about-story-shell::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 120px;
+  border-top: 1px solid rgba(197, 168, 128, 0.75);
+}
+
+.about-story-shell .content-title {
+  margin-bottom: 1.1rem;
+  font-size: clamp(2.2rem, 3.6vw, 3.3rem);
+  line-height: 0.98;
+}
+
 .about-rich-text {
   display: grid;
   gap: 0.85rem;
@@ -859,7 +879,9 @@ h3,
 
 .about-rich-text p {
   margin: 0;
-  color: rgba(232, 226, 217, 0.86);
+  color: rgba(232, 226, 217, 0.88);
+  line-height: 1.78;
+  max-width: 62ch;
 }
 
 .about-meta-grid {
@@ -1294,6 +1316,18 @@ button.danger {
 .upload-note {
   color: rgba(232, 226, 217, 0.62);
   font-size: 0.85rem;
+}
+
+.testimonial-move-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.testimonial-move-controls button {
+  width: auto;
+  min-width: 0;
+  padding: 0.45rem 0.65rem;
 }
 
 .admin-cover-preview {

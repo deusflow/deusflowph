@@ -70,30 +70,95 @@ const aboutPhotoInput = document.getElementById("about-photo");
 const aboutStoryInput = document.getElementById("about-story");
 const aboutValuesInput = document.getElementById("about-values");
 const aboutPersonalInput = document.getElementById("about-personal");
+const aboutStatusText = document.getElementById("about-status-text");
 
 const testimonialFields = [
   {
     name: document.getElementById("testimonial-1-name"),
-    quote: document.getElementById("testimonial-1-quote")
+    quote: document.getElementById("testimonial-1-quote"),
+    up: document.getElementById("testimonial-1-up"),
+    down: document.getElementById("testimonial-1-down")
   },
   {
     name: document.getElementById("testimonial-2-name"),
-    quote: document.getElementById("testimonial-2-quote")
+    quote: document.getElementById("testimonial-2-quote"),
+    up: document.getElementById("testimonial-2-up"),
+    down: document.getElementById("testimonial-2-down")
   },
   {
     name: document.getElementById("testimonial-3-name"),
-    quote: document.getElementById("testimonial-3-quote")
+    quote: document.getElementById("testimonial-3-quote"),
+    up: document.getElementById("testimonial-3-up"),
+    down: document.getElementById("testimonial-3-down")
   },
   {
     name: document.getElementById("testimonial-4-name"),
-    quote: document.getElementById("testimonial-4-quote")
+    quote: document.getElementById("testimonial-4-quote"),
+    up: document.getElementById("testimonial-4-up"),
+    down: document.getElementById("testimonial-4-down")
   }
 ];
+
+function updateTestimonialMoveButtons() {
+  testimonialFields.forEach((field, index) => {
+    if (field.up) {
+      field.up.disabled = index === 0;
+    }
+    if (field.down) {
+      field.down.disabled = index === testimonialFields.length - 1;
+    }
+  });
+}
+
+function swapTestimonialValues(currentIndex, targetIndex) {
+  if (
+    targetIndex < 0
+    || targetIndex >= testimonialFields.length
+    || !testimonialFields[currentIndex]
+    || !testimonialFields[targetIndex]
+  ) {
+    return;
+  }
+
+  const current = testimonialFields[currentIndex];
+  const target = testimonialFields[targetIndex];
+  const currentName = current.name?.value || "";
+  const currentQuote = current.quote?.value || "";
+
+  if (current.name && target.name) {
+    current.name.value = target.name.value;
+    target.name.value = currentName;
+  }
+
+  if (current.quote && target.quote) {
+    current.quote.value = target.quote.value;
+    target.quote.value = currentQuote;
+  }
+
+  setUploadStatus("Testimonial order updated in form. Click Save About Page to publish.", 0);
+  setAboutStatus("Testimonial order updated. Click Save About Page to publish.");
+}
+
+function setupTestimonialReorder() {
+  testimonialFields.forEach((field, index) => {
+    field.up?.addEventListener("click", () => swapTestimonialValues(index, index - 1));
+    field.down?.addEventListener("click", () => swapTestimonialValues(index, index + 1));
+  });
+  updateTestimonialMoveButtons();
+}
 
 function normalizeMultilineText(value) {
   return String(value || "")
     .replace(/\\r\\n/g, "\n")
     .replace(/\\n/g, "\n");
+}
+
+function setAboutStatus(message, tone = "default") {
+  if (!aboutStatusText) {
+    return;
+  }
+  aboutStatusText.textContent = message;
+  aboutStatusText.style.color = tone === "error" ? "#d39e9e" : "rgba(232, 226, 217, 0.72)";
 }
 
 function getDefaultAboutPayload() {
@@ -191,6 +256,7 @@ async function loadAboutContent() {
 
   if (error) {
     setUploadStatus(`Could not load About content: ${error.message}`, 0, "error");
+    setAboutStatus(`Could not load About content: ${error.message}`, "error");
     fillAboutForm(defaults);
     return;
   }
@@ -205,6 +271,7 @@ async function loadAboutContent() {
 
     if (insert.error) {
       setUploadStatus(`About content setup failed: ${insert.error.message}`, 0, "error");
+      setAboutStatus(`About content setup failed: ${insert.error.message}`, "error");
       fillAboutForm(defaults);
       return;
     }
@@ -213,6 +280,7 @@ async function loadAboutContent() {
 
   state.aboutContent = resolved;
   fillAboutForm({ ...defaults, ...resolved, testimonials: normalizeTestimonials(resolved.testimonials) });
+  setAboutStatus("About content loaded.");
 }
 
 async function saveAboutContent(event) {
@@ -224,6 +292,7 @@ async function saveAboutContent(event) {
   const story = String(aboutStoryInput?.value || "").trim();
   if (!story) {
     setUploadStatus("About story cannot be empty.", 0, "error");
+    setAboutStatus("About story cannot be empty.", "error");
     return;
   }
 
@@ -234,70 +303,82 @@ async function saveAboutContent(event) {
   saveAboutButton.disabled = true;
   saveAboutButton.textContent = "Saving...";
   setUploadStatus("Saving About page...", 30);
+  setAboutStatus("Saving About page...");
 
   const supabase = getSupabase();
   const previousPhotoUrl = state.aboutContent?.photo_url || null;
   let nextPhotoUrl = previousPhotoUrl;
   const nextPhotoFile = aboutPhotoInput?.files?.[0] || null;
 
-  if (nextPhotoFile) {
-    const extension = nextPhotoFile.name.split(".").pop() || "jpg";
-    const path = `about/portrait-${Date.now()}.${extension}`;
-
-    try {
+  try {
+    if (nextPhotoFile) {
+      const extension = nextPhotoFile.name.split(".").pop() || "jpg";
+      const path = `about/portrait-${Date.now()}.${extension}`;
       setUploadStatus("Uploading About portrait...", 55);
+      setAboutStatus("Uploading About portrait...");
       nextPhotoUrl = await uploadToPhotosBucket(nextPhotoFile, path);
-    } catch (uploadError) {
-      saveAboutButton.disabled = false;
-      saveAboutButton.textContent = "Save About Page";
-      setUploadStatus(`Could not upload portrait: ${uploadError.message}`, 0, "error");
-      return;
     }
-  }
 
-  const payload = {
-    id: 1,
-    photo_url: nextPhotoUrl,
-    story,
-    values_text: valuesText || null,
-    personal_text: personalText || null,
-    testimonials,
-    updated_at: new Date().toISOString()
-  };
+    const payload = {
+      photo_url: nextPhotoUrl,
+      story,
+      values_text: valuesText || null,
+      personal_text: personalText || null,
+      testimonials,
+      updated_at: new Date().toISOString()
+    };
 
-  const { data, error } = await supabase
-    .from("about_content")
-    .upsert(payload, { onConflict: "id" })
-    .select("*")
-    .single();
+    let result = await supabase
+      .from("about_content")
+      .update(payload)
+      .eq("id", 1)
+      .select("*")
+      .maybeSingle();
 
-  saveAboutButton.disabled = false;
-  saveAboutButton.textContent = "Save About Page";
+    if (result.error) {
+      throw result.error;
+    }
 
-  if (error) {
-    setUploadStatus(`Could not save About page: ${error.message}`, 0, "error");
-    return;
-  }
-
-  if (nextPhotoFile && previousPhotoUrl && previousPhotoUrl !== nextPhotoUrl) {
-    const previousPath = storagePathFromPublicUrl(previousPhotoUrl);
-    if (previousPath) {
-      const cleanup = await supabase.storage.from("photos").remove([previousPath]);
-      if (cleanup.error) {
-        console.warn("About portrait cleanup failed", cleanup.error.message);
+    if (!result.data) {
+      result = await supabase
+        .from("about_content")
+        .insert({ id: 1, ...payload })
+        .select("*")
+        .single();
+      if (result.error) {
+        throw result.error;
       }
     }
-  }
 
-  state.aboutContent = data;
-  fillAboutForm({ ...getDefaultAboutPayload(), ...data, testimonials: normalizeTestimonials(data.testimonials) });
-  if (aboutPhotoInput) {
-    aboutPhotoInput.value = "";
+    const data = result.data;
+
+    if (nextPhotoFile && previousPhotoUrl && previousPhotoUrl !== nextPhotoUrl) {
+      const previousPath = storagePathFromPublicUrl(previousPhotoUrl);
+      if (previousPath) {
+        const cleanup = await supabase.storage.from("photos").remove([previousPath]);
+        if (cleanup.error) {
+          console.warn("About portrait cleanup failed", cleanup.error.message);
+        }
+      }
+    }
+
+    state.aboutContent = data;
+    fillAboutForm({ ...getDefaultAboutPayload(), ...data, testimonials: normalizeTestimonials(data.testimonials) });
+    if (aboutPhotoInput) {
+      aboutPhotoInput.value = "";
+    }
+    if (aboutCmsSection) {
+      aboutCmsSection.open = true;
+    }
+    setUploadStatus("About page saved.", 100);
+    setAboutStatus("About page saved.");
+  } catch (error) {
+    setUploadStatus(`Could not save About page: ${error.message}`, 0, "error");
+    setAboutStatus(`Could not save About page: ${error.message}`, "error");
+  } finally {
+    saveAboutButton.disabled = false;
+    saveAboutButton.textContent = "Save About Page";
   }
-  if (aboutCmsSection) {
-    aboutCmsSection.open = true;
-  }
-  setUploadStatus("About page saved.", 100);
 }
 
 function setSectionOpen(section, isOpen) {
@@ -1622,6 +1703,8 @@ if (openPortfolioManagerButton) {
 if (aboutForm) {
   aboutForm.addEventListener("submit", saveAboutContent);
 }
+
+setupTestimonialReorder();
 
 applyPhotoViewMode();
 updateOrderControlsState();
