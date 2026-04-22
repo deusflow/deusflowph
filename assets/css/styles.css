@@ -450,17 +450,14 @@ h3,
 }
 
 #portfolio-grid {
-  display: block;
-  column-count: 1;
-  column-gap: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
 #portfolio-grid .photo-card {
   max-width: none;
-  -webkit-column-break-inside: avoid;
-  page-break-inside: avoid;
-  break-inside: avoid;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
 #portfolio-grid.centered-grid > :nth-child(odd),
@@ -1502,8 +1499,8 @@ button.danger {
   }
 
   #portfolio-grid {
-    column-count: 2;
-    column-gap: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
   }
 }
 
@@ -1653,7 +1650,7 @@ button.danger {
   }
 
   #portfolio-grid {
-    column-count: 3;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   #album-grid {
