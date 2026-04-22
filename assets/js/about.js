@@ -36,6 +36,12 @@ const fallback = {
   ]
 };
 
+function normalizeMultilineText(value) {
+  return String(value || "")
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n");
+}
+
 function normalizeTestimonials(value) {
   if (!Array.isArray(value)) {
     return fallback.testimonials;
@@ -57,7 +63,7 @@ function renderRichText(node, text) {
   }
 
   node.innerHTML = "";
-  String(text || "")
+  normalizeMultilineText(text)
     .split(/\n\n+/)
     .map((part) => part.trim())
     .filter(Boolean)

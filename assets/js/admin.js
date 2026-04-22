@@ -90,6 +90,12 @@ const testimonialFields = [
   }
 ];
 
+function normalizeMultilineText(value) {
+  return String(value || "")
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n");
+}
+
 function getDefaultAboutPayload() {
   return {
     id: 1,
@@ -139,9 +145,9 @@ function fillAboutForm(content) {
     return;
   }
 
-  aboutStoryInput.value = content.story || "";
-  aboutValuesInput.value = content.values_text || "";
-  aboutPersonalInput.value = content.personal_text || "";
+  aboutStoryInput.value = normalizeMultilineText(content.story);
+  aboutValuesInput.value = normalizeMultilineText(content.values_text);
+  aboutPersonalInput.value = normalizeMultilineText(content.personal_text);
 
   if (aboutPhotoPreview) {
     if (content.photo_url) {
