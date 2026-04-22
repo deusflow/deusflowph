@@ -170,7 +170,7 @@ function getDefaultAboutPayload() {
     values_text:
       "I work quietly, observe honestly, and guide only when it helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.",
     personal_text:
-      "Originally from Ukraine, now based near Aarhus. I work across Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.",
+      "Originally from Ukraine, now based near Aarhus. I bring 10 years of wedding photography experience across Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.",
     testimonials: [
       {
         name: "Volodymyr Ostapchuk (TV Presenter)",

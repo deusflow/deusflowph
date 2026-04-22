@@ -7,6 +7,61 @@ const descriptionNode = document.getElementById("album-description");
 const grid = document.getElementById("album-grid");
 const storyNav = document.getElementById("album-story-nav");
 
+function buildAlbumPhotoAlt(album, index) {
+  const title = String(album?.title || "Wedding story").trim();
+  return `${title} - wedding photography in Denmark, photo ${index + 1}`;
+}
+
+function renderAlbumSchema(album, photos) {
+  const existing = document.getElementById("album-schema");
+  if (existing) {
+    existing.remove();
+  }
+
+  const pageUrl = window.location.href;
+  const graph = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ImageGallery",
+        "@id": `${pageUrl}#gallery`,
+        name: `${album.title} Wedding Gallery`,
+        description: album.description || `Wedding story by Oleh Ro: ${album.title}`,
+        url: pageUrl,
+        creator: {
+          "@type": "Person",
+          name: "Oleh Ro"
+        },
+        associatedMedia: photos.map((photo, index) => ({
+          "@type": "ImageObject",
+          contentUrl: photo.url,
+          name: buildAlbumPhotoAlt(album, index)
+        }))
+      },
+      ...photos.map((photo, index) => ({
+        "@type": "Photograph",
+        "@id": `${pageUrl}#photo-${index + 1}`,
+        name: buildAlbumPhotoAlt(album, index),
+        image: photo.url,
+        contentUrl: photo.url,
+        creator: {
+          "@type": "Person",
+          name: "Oleh Ro"
+        },
+        isPartOf: {
+          "@id": `${pageUrl}#gallery`
+        }
+      }))
+    ]
+  };
+
+  const script = document.createElement("script");
+  script.id = "album-schema";
+  script.type = "application/ld+json";
+  script.textContent = JSON.stringify(graph);
+  document.head.appendChild(script);
+}
+
 function getDisplayOrderValue(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : Number.MAX_SAFE_INTEGER;
@@ -150,12 +205,13 @@ async function renderAlbum() {
     photos.forEach((photo, index) => {
       const item = document.createElement("article");
       item.className = "masonry-item";
-      item.innerHTML = `<img data-src="${photo.url}" data-lightbox-src="${photo.url}" alt="${album.title} photo ${index + 1}" loading="lazy" />`;
+      item.innerHTML = `<img data-src="${photo.url}" data-lightbox-src="${photo.url}" alt="${buildAlbumPhotoAlt(album, index)}" loading="lazy" />`;
       fragment.appendChild(item);
     });
 
     grid.innerHTML = "";
     grid.appendChild(fragment);
+    renderAlbumSchema(album, photos);
     observeLazyImages();
   } catch (error) {
     grid.innerHTML = "";

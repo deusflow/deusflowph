@@ -3,6 +3,10 @@ import { observeLazyImages, createStateMessage } from "./ui.js";
 
 const grid = document.getElementById("portfolio-grid");
 
+function buildPortfolioAlt(index) {
+  return `Wedding portfolio photo in Denmark by Oleh Ro, image ${index + 1}`;
+}
+
 async function renderPortfolio() {
   if (!grid) {
     return;
@@ -63,7 +67,7 @@ async function renderPortfolio() {
       item.className = "photo-card";
       item.innerHTML = `
         <div class="photo-media">
-          <img data-src="${photo.url}" alt="Portfolio photo ${index + 1}" loading="lazy" />
+          <img data-src="${photo.url}" alt="${buildPortfolioAlt(index)}" loading="lazy" />
         </div>
       `;
       fragment.appendChild(item);

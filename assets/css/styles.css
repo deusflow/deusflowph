@@ -268,6 +268,38 @@ h3,
   content: none;
 }
 
+.hero-proof {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  max-width: 820px;
+  margin: 0 auto 1.8rem;
+}
+
+.hero-proof-item {
+  border: 1px solid rgba(232, 226, 217, 0.28);
+  background: rgba(10, 10, 10, 0.45);
+  padding: 0.75rem 0.85rem;
+  border-radius: 999px;
+}
+
+.hero-proof-value {
+  margin: 0;
+  color: var(--gold);
+  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
+  line-height: 1;
+  letter-spacing: 0.06em;
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+.hero-proof-label {
+  margin: 0.22rem 0 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 226, 217, 0.78);
+}
+
 .section {
   padding: var(--section-space) 0;
 }
@@ -889,6 +921,26 @@ h3,
   gap: 1rem;
 }
 
+.about-experience-card {
+  text-align: center;
+}
+
+.about-experience-value {
+  margin: 0;
+  color: var(--gold);
+  font-size: clamp(2.2rem, 4vw, 3.1rem);
+  line-height: 1;
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+.about-experience-label {
+  margin: 0.45rem 0 0;
+  color: rgba(232, 226, 217, 0.82);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
 .testimonials-grid {
   display: grid;
   gap: 1rem;
@@ -897,6 +949,27 @@ h3,
 .testimonial-card {
   text-align: left;
   border-color: rgba(197, 168, 128, 0.28);
+}
+
+.testimonials-row {
+  display: flex;
+  gap: 0.85rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  scroll-snap-type: x mandatory;
+}
+
+.testimonial-chip {
+  min-width: min(100%, 320px);
+  max-width: 320px;
+  transition: transform var(--motion-base) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), background var(--motion-fast) var(--motion-ease);
+  scroll-snap-align: start;
+}
+
+.testimonial-chip:hover {
+  transform: translateY(-3px);
+  border-color: rgba(197, 168, 128, 0.7);
+  background: linear-gradient(180deg, rgba(197, 168, 128, 0.08) 0%, rgba(255, 255, 255, 0.01) 70%);
 }
 
 .testimonial-quote {
@@ -1414,6 +1487,10 @@ button.danger {
     gap: 1.35rem;
   }
 
+  .about-experience-card {
+    grid-column: 1 / -1;
+  }
+
   .testimonials-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
@@ -1446,6 +1523,11 @@ button.danger {
 
   .hero-copy {
     padding: 0.9rem 0.7rem 0.8rem;
+  }
+
+  .hero-proof {
+    grid-template-columns: 1fr;
+    max-width: 360px;
   }
 
   .section {

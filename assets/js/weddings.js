@@ -3,6 +3,11 @@ import { observeLazyImages, createStateMessage } from "./ui.js";
 
 const list = document.getElementById("weddings-grid");
 
+function buildWeddingCoverAlt(album) {
+  const title = String(album?.title || "Wedding story").trim();
+  return `${title} - wedding photographer in Denmark`;
+}
+
 async function renderWeddings() {
   if (!list) {
     return;
@@ -46,7 +51,7 @@ async function renderWeddings() {
       card.href = `album/index.html?slug=${encodeURIComponent(album.slug)}`;
       card.innerHTML = `
         <div class="photo-media">
-          <img data-src="${album.cover_url || "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=1974&auto=format&fit=crop"}" alt="${album.title}" loading="lazy" />
+          <img data-src="${album.cover_url || "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=1974&auto=format&fit=crop"}" alt="${buildWeddingCoverAlt(album)}" loading="lazy" />
         </div>
         <h3 class="photo-title">${album.title}</h3>
         <p class="photo-subtitle">${formatDate(album.date)}</p>
