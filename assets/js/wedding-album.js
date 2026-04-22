@@ -1,11 +1,31 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, setupLightbox } from "./ui.js";
+import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry } from "./ui.js";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
 const descriptionNode = document.getElementById("album-description");
 const grid = document.getElementById("album-grid");
 const storyNav = document.getElementById("album-story-nav");
+let albumPhotoNodes = [];
+let masonryResizeBound = false;
+
+function bindMasonryResize() {
+  if (masonryResizeBound || !grid) {
+    return;
+  }
+
+  masonryResizeBound = true;
+  let rafId = 0;
+
+  window.addEventListener("resize", () => {
+    if (rafId) {
+      window.cancelAnimationFrame(rafId);
+    }
+    rafId = window.requestAnimationFrame(() => {
+      renderOrderedMasonry(grid, albumPhotoNodes);
+    });
+  });
+}
 
 function buildAlbumPhotoAlt(album, index) {
   const title = String(album?.title || "Wedding story").trim();
@@ -201,16 +221,17 @@ async function renderAlbum() {
       renderStoryNavigation(album.slug, normalized);
     }
 
-    const fragment = document.createDocumentFragment();
+    const nodes = [];
     photos.forEach((photo, index) => {
       const item = document.createElement("article");
       item.className = "masonry-item";
       item.innerHTML = `<img data-src="${photo.url}" data-lightbox-src="${photo.url}" alt="${buildAlbumPhotoAlt(album, index)}" loading="lazy" />`;
-      fragment.appendChild(item);
+      nodes.push(item);
     });
 
-    grid.innerHTML = "";
-    grid.appendChild(fragment);
+    albumPhotoNodes = nodes;
+    renderOrderedMasonry(grid, albumPhotoNodes);
+    bindMasonryResize();
     renderAlbumSchema(album, photos);
     observeLazyImages();
   } catch (error) {

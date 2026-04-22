@@ -437,13 +437,13 @@ h3,
 }
 
 /* Gallery pages should keep original ratios and stack tightly like masonry. */
-.masonry.is-ordered-masonry {
+.is-ordered-masonry {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
 }
 
-.masonry.is-ordered-masonry .masonry-column {
+.is-ordered-masonry .masonry-column {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -1493,7 +1493,7 @@ button.danger {
     gap: 1.25rem;
   }
 
-  .masonry.is-ordered-masonry {
+  .is-ordered-masonry {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.5rem;
   }
@@ -1645,7 +1645,7 @@ button.danger {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .masonry.is-ordered-masonry {
+  .is-ordered-masonry {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

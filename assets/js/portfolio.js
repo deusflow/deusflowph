@@ -1,7 +1,27 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage } from "./ui.js";
+import { observeLazyImages, createStateMessage, renderOrderedMasonry } from "./ui.js";
 
 const grid = document.getElementById("portfolio-grid");
+let portfolioNodes = [];
+let masonryResizeBound = false;
+
+function bindMasonryResize() {
+  if (masonryResizeBound || !grid) {
+    return;
+  }
+
+  masonryResizeBound = true;
+  let rafId = 0;
+
+  window.addEventListener("resize", () => {
+    if (rafId) {
+      window.cancelAnimationFrame(rafId);
+    }
+    rafId = window.requestAnimationFrame(() => {
+      renderOrderedMasonry(grid, portfolioNodes);
+    });
+  });
+}
 
 function buildPortfolioAlt(index) {
   return `Wedding portfolio photo in Denmark by Oleh Ro, image ${index + 1}`;
@@ -61,7 +81,7 @@ async function renderPortfolio() {
       return;
     }
 
-    const fragment = document.createDocumentFragment();
+    const nodes = [];
     photos.forEach((photo, index) => {
       const item = document.createElement("article");
       item.className = "photo-card";
@@ -70,10 +90,12 @@ async function renderPortfolio() {
           <img data-src="${photo.url}" alt="${buildPortfolioAlt(index)}" loading="lazy" />
         </div>
       `;
-      fragment.appendChild(item);
+      nodes.push(item);
     });
 
-    grid.appendChild(fragment);
+    portfolioNodes = nodes;
+    renderOrderedMasonry(grid, portfolioNodes);
+    bindMasonryResize();
     observeLazyImages();
   } catch (error) {
     grid.innerHTML = "";
