@@ -25,11 +25,13 @@
     const primaryHref = instagramDmUrl;
     const primaryLabel = `${ctaLabel} via Instagram`;
 
+    const contactTarget = document.getElementById("contact-block") ? "#contact-block" : (document.documentElement.dataset.root || ".") + "/index.html#contact-block";
+
     const wrap = document.createElement("div");
     wrap.className = "floating-cta";
     wrap.innerHTML = `
       <a class="floating-cta-button" id="global-chat-cta" href="${primaryHref}" target="_blank" rel="noopener noreferrer">${primaryLabel}</a>
-      <p class="floating-cta-note" id="global-chat-note">${availabilityNote} · DM on Instagram ${handle}${telegramUrl ? ` · <a class="text-hover-gold" href="${telegramUrl}" target="_blank" rel="noopener noreferrer">Telegram</a>` : ""}${whatsappUrl ? ` · <a class="text-hover-gold" href="${buildWhatsAppWithText(whatsappUrl, encodedBrief)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>` : ""}</p>
+      <p class="floating-cta-note" id="global-chat-note">${availabilityNote} &middot; <a class="text-hover-gold" href="${contactTarget}">See all contact options</a></p>
     `;
 
     document.body.appendChild(wrap);
@@ -62,4 +64,3 @@
     console.warn("Global CTA init failed", error);
   }
 })();
-
