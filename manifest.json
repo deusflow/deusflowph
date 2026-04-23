@@ -1,7 +1,7 @@
 {
   "name": "Oleh Ro Photography",
   "short_name": "Oleh Ro",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#FAF9F6",
   "theme_color": "#D4AF37",
