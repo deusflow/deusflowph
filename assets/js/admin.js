@@ -832,6 +832,14 @@ async function loadAlbums() {
   updatePortfolioQuickAccessState();
   updateAlbumOrderControlsState();
 
+  // DASHBOARD STATS UPDATE
+  const tAlbums = document.getElementById("stat-total-albums");
+  const pAlbums = document.getElementById("stat-published-albums");
+  const dAlbums = document.getElementById("stat-draft-albums");
+  if(tAlbums) tAlbums.textContent = state.albums.length;
+  if(pAlbums) pAlbums.textContent = state.albums.filter(a => a.visible).length;
+  if(dAlbums) dAlbums.textContent = state.albums.filter(a => !a.visible).length;
+
   state.albums.forEach((album, index) => {
     const row = document.createElement("div");
     row.className = "album-row";
@@ -840,10 +848,15 @@ async function loadAlbums() {
     const weddingIndex = album.type === "wedding" ? weddingAlbumsCurrent.findIndex((item) => item.id === album.id) : -1;
 
     const info = document.createElement("div");
+    info.className = "album-info-wrap";
     const orderText = album.type === "wedding" && weddingIndex >= 0 ? ` | order: ${weddingIndex + 1}` : "";
+    const coverHtml = album.cover_url ? `<img src="${album.cover_url}" class="album-list-thumb" alt="cover" />` : `<div class="album-list-thumb empty">No Cover</div>`;
     info.innerHTML = `
-      <strong>${album.title}</strong><br />
-      <span class="photo-subtitle">${album.type.toUpperCase()} | ${formatDate(album.date)} | ${album.slug}${orderText}</span>
+      ${coverHtml}
+      <div>
+        <strong>${album.title}</strong><br />
+        <span class="photo-subtitle">${album.type.toUpperCase()} | ${formatDate(album.date)} | ${album.slug}${orderText}</span>
+      </div>
     `;
 
     const visibility = document.createElement("label");

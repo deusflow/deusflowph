@@ -8,11 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/styles.css?v=20260422" />
-
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20260423" />
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20260423" />
   <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#FAF9F6">
-    <link rel="apple-touch-icon" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png">
+  <meta name="theme-color" content="#FAF9F6">
+  <link rel="apple-touch-icon" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png">
 </head>
 <body>
   <header class="site-header">
@@ -22,265 +22,330 @@
       <button id="logout-button" class="menu-link" type="button">Logout</button>
     </div>
   </header>
-
-  <main class="container admin-wrap">
-    <section id="login-panel" class="panel narrow">
-      <h1>Admin Login</h1>
-      <p>Use your Supabase Auth email and password.</p>
-      <form id="login-form">
+  <main class="admin-dashboard-layout">
+    <section id="login-panel" class="panel narrow" style="margin: 0 auto; max-width: 380px; padding: 2.5rem; text-align: center; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); background: #121214;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--admin-accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <h1 style="margin-bottom: 0.5rem; font-size: 1.7rem; font-family: inherit;">Admin Access</h1>
+      <p style="color: var(--admin-muted); font-size: 0.85rem; margin-bottom: 2rem;">Sign in using your Supabase credentials.</p>
+      <form id="login-form" style="text-align: left;">
         <div class="form-row">
           <label for="email">Email</label>
-          <input id="email" name="email" type="email" required autocomplete="email" />
+          <input id="email" name="email" type="email" required autocomplete="email" placeholder="hello@olehro.com" />
         </div>
-        <div class="form-row">
+        <div class="form-row" style="margin-bottom: 1.5rem;">
           <label for="password">Password</label>
-          <input id="password" name="password" type="password" required autocomplete="current-password" />
+          <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="•••••••••" />
         </div>
-        <button class="primary" type="submit">Login</button>
+        <button class="primary" type="submit" style="width: 100%;">Sign In</button>
       </form>
-      <p id="login-error" style="color:#d39e9e;"></p>
+      <p id="login-error" style="color:var(--admin-danger); font-size: 0.85rem; margin-top: 1rem;"></p>
     </section>
+    <!-- NEW DASHBOARD WRAPPER -->
+    <div id="dashboard-panel" class="hidden" style="width: 100%; display: flex; flex-direction: inherit; gap: inherit;">
+      <aside class="admin-sidebar" id="admin-sidebar">
+        <nav class="admin-nav-menu">
+          <button type="button" class="admin-nav-button active" data-target="tab-albums">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Weddings & Albums
+          </button>
+          <button type="button" class="admin-nav-button" data-target="tab-portfolio" id="sidebar-portfolio-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            Signature Portfolio
+          </button>
+          <button type="button" class="admin-nav-button" data-target="tab-about">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            About Page CMS
+          </button>
+        </nav>
+      </aside>
+      <div class="admin-content-area" id="admin-content">
+        <!-- ========== ALBUMS TAB ========== -->
+        <div id="tab-albums" class="admin-tab-pane active">
+          <div class="admin-header-row">
+            <h2>Weddings & Albums</h2>
+            <button id="show-create-album-btn" class="primary" onclick="document.getElementById('create-album-section').scrollIntoView({behavior:'smooth'})" style="width: auto;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              New Album
+            </button>
+          </div>
 
-    <section id="dashboard-panel" class="hidden">
-      <div class="admin-grid">
-        <article class="panel">
-          <details class="admin-section" open>
-            <summary>Portfolio Quick Access</summary>
-            <div class="admin-section-body">
-              <p>Open your main portfolio manager to upload and sort signature photos. If missing, it is created automatically.</p>
-              <div class="admin-quick-actions">
-                <button id="open-portfolio-manager-button" type="button" class="primary">Open Portfolio Manager</button>
-                <a class="ghost admin-link-button" href="../portfolio/index.html" target="_blank" rel="noopener noreferrer">Open Public Portfolio Page</a>
+          <!-- QUICK STATS DASHBOARD -->
+          <div class="stats-grid" id="admin-stats-grid">
+            <div class="stat-card">
+              <span class="stat-label">Total Albums</span>
+              <span class="stat-value" id="stat-total-albums">-</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Published</span>
+              <span class="stat-value" id="stat-published-albums">-</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Drafts</span>
+              <span class="stat-value" id="stat-draft-albums">-</span>
+            </div>
+          </div>
+
+          <div class="admin-grid" id="albums-main-grid">
+            <article class="panel">
+              <div id="albums-section" class="admin-section">
+                <div class="admin-card-header"><h3>All Albums</h3></div>
+                <div class="admin-section-body">
+                  <p>Create, publish, open, and reorder wedding albums.</p>
+                  <div class="album-order-controls">
+                    <button id="apply-album-order-button" type="button" class="primary" disabled>Save album order</button>
+                    <button id="clear-album-order-button" type="button" class="ghost" disabled>Clear staged album moves</button>
+                  </div>
+                  <p class="upload-note">Album order affects `/weddings` and home Featured Stories.</p>
+                  <div id="albums-list" class="album-list"></div>
+                </div>
               </div>
-              <p id="portfolio-quick-note" class="upload-note" style="margin-top:0.7rem;"></p>
-            </div>
-          </details>
-
-          <details id="albums-section" class="admin-section" open>
-            <summary>Albums</summary>
-            <div class="admin-section-body">
-              <p>Create, publish, open, and reorder wedding albums.</p>
-              <div class="album-order-controls">
-                <button id="apply-album-order-button" type="button" class="primary" disabled>Save album order</button>
-                <button id="clear-album-order-button" type="button" class="ghost" disabled>Clear staged album moves</button>
+            </article>
+            <article class="panel">
+              <div id="create-album-section" class="admin-section">
+                <div class="admin-card-header"><h3>Create Album</h3></div>
+                <div class="admin-section-body">
+                  <form id="create-album-form">
+                    <div class="form-row">
+                      <label for="title">Title</label>
+                      <input id="title" name="title" type="text" required />
+                    </div>
+                    <div class="form-row">
+                      <label for="slug">Slug (optional)</label>
+                      <input id="slug" name="slug" type="text" placeholder="will-be-generated-if-empty" />
+                    </div>
+                    <div class="form-row">
+                      <label for="type">Type</label>
+                      <select id="type" name="type" required>
+                        <option value="wedding">wedding</option>
+                      </select>
+                      <small class="upload-note">Portfolio album is managed from Signature Portfolio to keep one source.</small>
+                    </div>
+                    <div class="form-row">
+                      <label for="date">Date</label>
+                      <input id="date" name="date" type="date" />
+                    </div>
+                    <div class="form-row">
+                      <label for="description">Description (optional)</label>
+                      <textarea id="description" name="description" rows="3" placeholder="Short story mood, place, or couple vibe..."></textarea>
+                    </div>
+                    <div class="form-row">
+                      <label for="cover">Cover image (JPEG/WEBP/PNG)</label>
+                      <input id="cover" name="cover" type="file" accept="image/*" required />
+                    </div>
+                    <button type="submit" class="primary">Create Album</button>
+                  </form>
+                </div>
               </div>
-              <p class="upload-note">Album order affects `/weddings` and home Featured Stories.</p>
-              <div id="albums-list" class="album-list"></div>
+            </article>
+          </div>
+        </div>
+        <!-- ========== PORTFOLIO TAB ========== -->
+        <div id="tab-portfolio" class="admin-tab-pane">
+          <div class="admin-header-row">
+            <h2>Signature Portfolio</h2>
+          </div>
+          <article class="panel" style="margin-bottom: 1.5rem;">
+            <p>Open your main portfolio manager to upload and sort signature photos. If missing, it is created automatically.</p>
+            <div class="admin-quick-actions">
+              <button id="open-portfolio-manager-button" type="button" class="primary">Open Portfolio Manager</button>
+              <a class="ghost admin-link-button" href="../portfolio/index.html" target="_blank" rel="noopener noreferrer">Open Public Portfolio Page</a>
             </div>
-          </details>
-        </article>
-
-        <article class="panel">
-          <details id="create-album-section" class="admin-section">
-            <summary>Create Album</summary>
+            <p id="portfolio-quick-note" class="upload-note" style="margin-top:0.7rem;"></p>
+          </article>
+        </div>
+        <!-- ========== ABOUT TAB ========== -->
+        <div id="tab-about" class="admin-tab-pane">
+          <div class="admin-header-row">
+            <h2>About Page CMS</h2>
+          </div>
+          <article class="panel" style="margin-bottom:1.5rem;">
+            <div id="about-cms-section" class="admin-section">
+              <div class="admin-card-header"><h3>Content & Testimonials</h3></div>
+              <div class="admin-section-body">
+                <p>Edit your About page story and testimonials. Layout on public page: photo on the left, story on the right.</p>
+                <form id="about-form">
+                  <div class="form-row">
+                    <label>Current portrait</label>
+                    <img id="about-photo-preview" class="admin-cover-preview hidden" src="" alt="About portrait preview" />
+                  </div>
+                  <div class="form-row">
+                    <label for="about-photo">Replace portrait photo (optional)</label>
+                    <input id="about-photo" name="about-photo" type="file" accept="image/*" />
+                  </div>
+                  <div class="form-row">
+                    <label for="about-story">Main story</label>
+                    <textarea id="about-story" name="about-story" rows="10" required></textarea>
+                  </div>
+                  <div class="form-row">
+                    <label for="about-values">Values and approach</label>
+                    <textarea id="about-values" name="about-values" rows="4"></textarea>
+                  </div>
+                  <div class="form-row">
+                    <label for="about-personal">Personal note</label>
+                    <textarea id="about-personal" name="about-personal" rows="4"></textarea>
+                  </div>
+                  <h3 style="margin-top:2rem">Testimonials</h3>
+                  <div class="form-row" data-testimonial-index="0">
+                    <div class="testimonial-move-controls">
+                      <button id="testimonial-1-up" type="button" class="ghost">Move Up</button>
+                      <button id="testimonial-1-down" type="button" class="ghost">Move Down</button>
+                    </div>
+                    <label for="testimonial-1-name">Testimonial 1 - Name</label>
+                    <input id="testimonial-1-name" type="text" />
+                    <label for="testimonial-1-quote">Testimonial 1 - Quote</label>
+                    <textarea id="testimonial-1-quote" rows="3"></textarea>
+                  </div>
+                  <div class="form-row" data-testimonial-index="1">
+                    <div class="testimonial-move-controls">
+                      <button id="testimonial-2-up" type="button" class="ghost">Move Up</button>
+                      <button id="testimonial-2-down" type="button" class="ghost">Move Down</button>
+                    </div>
+                    <label for="testimonial-2-name">Testimonial 2 - Name</label>
+                    <input id="testimonial-2-name" type="text" />
+                    <label for="testimonial-2-quote">Testimonial 2 - Quote</label>
+                    <textarea id="testimonial-2-quote" rows="3"></textarea>
+                  </div>
+                  <div class="form-row" data-testimonial-index="2">
+                    <div class="testimonial-move-controls">
+                      <button id="testimonial-3-up" type="button" class="ghost">Move Up</button>
+                      <button id="testimonial-3-down" type="button" class="ghost">Move Down</button>
+                    </div>
+                    <label for="testimonial-3-name">Testimonial 3 - Name</label>
+                    <input id="testimonial-3-name" type="text" />
+                    <label for="testimonial-3-quote">Testimonial 3 - Quote</label>
+                    <textarea id="testimonial-3-quote" rows="3"></textarea>
+                  </div>
+                  <div class="form-row" data-testimonial-index="3">
+                    <div class="testimonial-move-controls">
+                      <button id="testimonial-4-up" type="button" class="ghost">Move Up</button>
+                      <button id="testimonial-4-down" type="button" class="ghost">Move Down</button>
+                    </div>
+                    <label for="testimonial-4-name">Testimonial 4 - Name</label>
+                    <input id="testimonial-4-name" type="text" />
+                    <label for="testimonial-4-quote">Testimonial 4 - Quote</label>
+                    <textarea id="testimonial-4-quote" rows="3"></textarea>
+                  </div>
+                  <button id="save-about-button" type="submit" class="primary">Save About Page</button>
+                  <a class="ghost admin-link-button" href="../about/index.html" target="_blank" rel="noopener noreferrer">Open Public About Page</a>
+                  <p id="about-status-text" class="upload-note" style="margin-top:0.7rem;"></p>
+                </form>
+              </div>
+            </div>
+          </article>
+        </div>
+        <!-- ========== SELECTED ALBUM OVERLAY/SECTION ========== -->
+        <article id="selected-album-panel" class="panel hidden" style="margin-top:1.5rem; position: relative;">
+          <!-- Close button -->
+          <button type="button" class="danger" id="close-album-btn" style="position:absolute; top: 1.25rem; right: 1.25rem; width: auto; font-size: 10px;">Close Album</button>
+          <h3 id="selected-album-name">Album</h3>
+          <p id="selected-album-meta"></p>
+          <div id="album-edit-section" class="admin-section">
+            <div class="admin-card-header"><h3>Edit Album</h3></div>
             <div class="admin-section-body">
-              <form id="create-album-form">
-            <div class="form-row">
-              <label for="title">Title</label>
-              <input id="title" name="title" type="text" required />
-            </div>
-
-            <div class="form-row">
-              <label for="slug">Slug (optional)</label>
-              <input id="slug" name="slug" type="text" placeholder="will-be-generated-if-empty" />
-            </div>
-
-            <div class="form-row">
-              <label for="type">Type</label>
-              <select id="type" name="type" required>
-                <option value="wedding">wedding</option>
-              </select>
-              <small class="upload-note">Portfolio album is managed from Portfolio Quick Access to keep one source (`portfolio-main`).</small>
-            </div>
-
-            <div class="form-row">
-              <label for="date">Date</label>
-              <input id="date" name="date" type="date" />
-            </div>
-
-            <div class="form-row">
-              <label for="description">Description (optional)</label>
-              <textarea id="description" name="description" rows="3" placeholder="Short story mood, place, or couple vibe..."></textarea>
-            </div>
-
-            <div class="form-row">
-              <label for="cover">Cover image (JPEG/WEBP/PNG)</label>
-              <input id="cover" name="cover" type="file" accept="image/*" required />
-            </div>
-
-            <button type="submit" class="primary">Create Album</button>
+              <form id="edit-album-form">
+                <div class="form-row">
+                  <label for="edit-title">Album title</label>
+                  <input id="edit-title" name="title" type="text" required />
+                </div>
+                <div class="form-row">
+                  <label for="edit-date">Date</label>
+                  <input id="edit-date" name="date" type="date" />
+                </div>
+                <div class="form-row">
+                  <label for="edit-description">Description</label>
+                  <textarea id="edit-description" name="description" rows="3" placeholder="Short wedding story description..."></textarea>
+                </div>
+                <div class="form-row">
+                  <label>Current cover</label>
+                  <img id="edit-cover-preview" class="admin-cover-preview hidden" src="" alt="Album cover preview" />
+                  <small class="upload-note">Upload a new file below to replace the current album cover.</small>
+                </div>
+                <div class="form-row">
+                  <label for="edit-cover">Replace cover image (optional)</label>
+                  <input id="edit-cover" name="cover" type="file" accept="image/*" />
+                </div>
+                <button id="save-album-button" type="submit" class="primary">Save Album Details</button>
               </form>
             </div>
-          </details>
+          </div>
+          <div id="album-upload-section" class="admin-section">
+            <div class="admin-card-header"><h3>Upload Photos</h3></div>
+            <div class="admin-section-body">
+              <div class="form-row">
+                <label for="photo-upload-input">Upload photos</label>
+                <input id="photo-upload-input" type="file" accept="image/*" multiple />
+                <small class="upload-note">Photos start uploading automatically after you select or drop files.</small>
+              </div>
+              <div id="photo-dropzone" class="dropzone">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg><br/>
+                Drag and drop high-res photos here
+              </div>
+              <div id="upload-status" class="upload-status" aria-live="polite">
+                <div id="upload-status-text">No upload in progress.</div>
+                <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <div id="upload-progress-bar" class="upload-progress-bar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="album-sort-section" class="admin-section">
+            <div class="admin-card-header"><h3>Sort and Manage Photos</h3></div>
+            <div class="admin-section-body">
+              <p class="upload-note">Tip: set multiple target positions first, then click Save order changes once.</p>
+              <div class="photo-view-controls">
+                <button id="compact-view-button" type="button" class="ghost">Compact Sort View</button>
+                <button id="detailed-view-button" type="button" class="ghost">Detailed View</button>
+              </div>
+              <div class="photo-order-controls">
+                <button id="apply-order-button" type="button" class="primary" disabled>Save order changes</button>
+                <button id="clear-order-button" type="button" class="ghost" disabled>Clear staged changes</button>
+              </div>
+              <div id="photos-list" class="album-list"></div>
+            </div>
+          </div>
         </article>
       </div>
-
-      <article id="selected-album-panel" class="panel hidden" style="margin-top:1.5rem;">
-        <h3 id="selected-album-name">Album</h3>
-        <p id="selected-album-meta"></p>
-
-        <details id="album-edit-section" class="admin-section" open>
-          <summary>Edit Album</summary>
-          <div class="admin-section-body">
-            <form id="edit-album-form">
-          <div class="form-row">
-            <label for="edit-title">Album title</label>
-            <input id="edit-title" name="title" type="text" required />
-          </div>
-
-          <div class="form-row">
-            <label for="edit-date">Date</label>
-            <input id="edit-date" name="date" type="date" />
-          </div>
-
-          <div class="form-row">
-            <label for="edit-description">Description</label>
-            <textarea id="edit-description" name="description" rows="3" placeholder="Short wedding story description..."></textarea>
-          </div>
-
-          <div class="form-row">
-            <label>Current cover</label>
-            <img id="edit-cover-preview" class="admin-cover-preview hidden" src="" alt="Album cover preview" />
-            <small class="upload-note">Upload a new file below to replace the current album cover.</small>
-          </div>
-
-          <div class="form-row">
-            <label for="edit-cover">Replace cover image (optional)</label>
-            <input id="edit-cover" name="cover" type="file" accept="image/*" />
-          </div>
-
-          <button id="save-album-button" type="submit" class="primary">Save Album Details</button>
-            </form>
-          </div>
-        </details>
-
-        <details id="album-upload-section" class="admin-section">
-          <summary>Upload Photos</summary>
-          <div class="admin-section-body">
-            <div class="form-row">
-              <label for="photo-upload-input">Upload photos</label>
-              <input id="photo-upload-input" type="file" accept="image/*" multiple />
-              <small class="upload-note">Photos start uploading automatically after you select or drop files.</small>
-            </div>
-
-            <div id="photo-dropzone" class="dropzone">
-              Drag and drop multiple photos here
-            </div>
-
-            <div id="upload-status" class="upload-status" aria-live="polite">
-              <div id="upload-status-text">No upload in progress.</div>
-              <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                <div id="upload-progress-bar" class="upload-progress-bar"></div>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <details id="album-sort-section" class="admin-section">
-          <summary>Sort and Manage Photos</summary>
-          <div class="admin-section-body">
-            <p class="upload-note">Tip: set multiple target positions first, then click Save order changes once.</p>
-            <div class="photo-view-controls">
-              <button id="compact-view-button" type="button" class="ghost">Compact Sort View</button>
-              <button id="detailed-view-button" type="button" class="ghost">Detailed View</button>
-            </div>
-            <div class="photo-order-controls">
-              <button id="apply-order-button" type="button" class="primary" disabled>Save order changes</button>
-              <button id="clear-order-button" type="button" class="ghost" disabled>Clear staged changes</button>
-            </div>
-            <div id="photos-list" class="album-list"></div>
-          </div>
-        </details>
-      </article>
-
-      <article class="panel" style="margin-top:1.5rem;">
-        <details id="about-cms-section" class="admin-section">
-          <summary>About Page CMS</summary>
-          <div class="admin-section-body">
-            <p>Edit your About page story and testimonials. Layout on public page: photo on the left, story on the right.</p>
-            <form id="about-form">
-              <div class="form-row">
-                <label>Current portrait</label>
-                <img id="about-photo-preview" class="admin-cover-preview hidden" src="" alt="About portrait preview" />
-              </div>
-
-              <div class="form-row">
-                <label for="about-photo">Replace portrait photo (optional)</label>
-                <input id="about-photo" name="about-photo" type="file" accept="image/*" />
-              </div>
-
-              <div class="form-row">
-                <label for="about-story">Main story</label>
-                <textarea id="about-story" name="about-story" rows="10" required></textarea>
-              </div>
-
-              <div class="form-row">
-                <label for="about-values">Values and approach</label>
-                <textarea id="about-values" name="about-values" rows="4"></textarea>
-              </div>
-
-              <div class="form-row">
-                <label for="about-personal">Personal note</label>
-                <textarea id="about-personal" name="about-personal" rows="4"></textarea>
-              </div>
-
-              <div class="form-row" data-testimonial-index="0">
-                <div class="testimonial-move-controls">
-                  <button id="testimonial-1-up" type="button" class="ghost">Move Up</button>
-                  <button id="testimonial-1-down" type="button" class="ghost">Move Down</button>
-                </div>
-                <label for="testimonial-1-name">Testimonial 1 - Name</label>
-                <input id="testimonial-1-name" type="text" />
-                <label for="testimonial-1-quote">Testimonial 1 - Quote</label>
-                <textarea id="testimonial-1-quote" rows="3"></textarea>
-              </div>
-
-              <div class="form-row" data-testimonial-index="1">
-                <div class="testimonial-move-controls">
-                  <button id="testimonial-2-up" type="button" class="ghost">Move Up</button>
-                  <button id="testimonial-2-down" type="button" class="ghost">Move Down</button>
-                </div>
-                <label for="testimonial-2-name">Testimonial 2 - Name</label>
-                <input id="testimonial-2-name" type="text" />
-                <label for="testimonial-2-quote">Testimonial 2 - Quote</label>
-                <textarea id="testimonial-2-quote" rows="3"></textarea>
-              </div>
-
-              <div class="form-row" data-testimonial-index="2">
-                <div class="testimonial-move-controls">
-                  <button id="testimonial-3-up" type="button" class="ghost">Move Up</button>
-                  <button id="testimonial-3-down" type="button" class="ghost">Move Down</button>
-                </div>
-                <label for="testimonial-3-name">Testimonial 3 - Name</label>
-                <input id="testimonial-3-name" type="text" />
-                <label for="testimonial-3-quote">Testimonial 3 - Quote</label>
-                <textarea id="testimonial-3-quote" rows="3"></textarea>
-              </div>
-
-              <div class="form-row" data-testimonial-index="3">
-                <div class="testimonial-move-controls">
-                  <button id="testimonial-4-up" type="button" class="ghost">Move Up</button>
-                  <button id="testimonial-4-down" type="button" class="ghost">Move Down</button>
-                </div>
-                <label for="testimonial-4-name">Testimonial 4 - Name</label>
-                <input id="testimonial-4-name" type="text" />
-                <label for="testimonial-4-quote">Testimonial 4 - Quote</label>
-                <textarea id="testimonial-4-quote" rows="3"></textarea>
-              </div>
-
-              <button id="save-about-button" type="submit" class="primary">Save About Page</button>
-              <a class="ghost admin-link-button" href="../about/index.html" target="_blank" rel="noopener noreferrer">Open Public About Page</a>
-              <p id="about-status-text" class="upload-note" style="margin-top:0.7rem;"></p>
-            </form>
-          </div>
-        </details>
-      </article>
-    </section>
+    </div>
   </main>
-
   <script src="../config.js"></script>
   <script src="../assets/js/runtime-config.js"></script>
-  <script type="module" src="../assets/js/admin.js?v=20260422"></script>
+  <script type="module" src="../assets/js/admin.js?v=20260423"></script>
+  <script>
+    // Tab Switching Logic
+    document.addEventListener("DOMContentLoaded", () => {
+      const navButtons = document.querySelectorAll(".admin-nav-button");
+      const tabPanes = document.querySelectorAll(".admin-tab-pane");
+      const selectedAlbumPanel = document.getElementById("selected-album-panel");
+      const closeAlbumBtn = document.getElementById("close-album-btn");
+      navButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          navButtons.forEach(b => b.classList.remove("active"));
+          tabPanes.forEach(pane => pane.classList.remove("active"));
+          btn.classList.add("active");
+          const targetId = btn.getAttribute("data-target");
+          document.getElementById(targetId).classList.add("active");
+          if (selectedAlbumPanel && targetId !== 'tab-portfolio') {
+             // In tab portfolio it uses selectedAlbumPanel as well. 
+             // We'll let admin.js handle showing it when "Open Portfolio Manager" is clicked
+             selectedAlbumPanel.classList.add("hidden");
+          }
+        });
+      });
+      if(closeAlbumBtn) {
+        closeAlbumBtn.addEventListener("click", () => {
+          selectedAlbumPanel.classList.add("hidden");
+        });
+      }
+      // Also grab portfolio open button to make sure it opens overlay correctly
+      const openPortfolioBtn = document.getElementById("open-portfolio-manager-button");
+      if(openPortfolioBtn) {
+        openPortfolioBtn.addEventListener("click", () => {
+           // when clicked, Admin JS will unhide selectedAlbumPanel, 
+           // but we need to ensure it appears in the DOM under the current tab context if we want it isolated,
+           // but right now it's globally at the bottom of .admin-content-area, which is perfect and will hover/show.
+        });
+      }
+    });
+  </script>
 </body>
 </html>
-
