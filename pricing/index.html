@@ -41,7 +41,7 @@
       ]
     }
   </script>
-  <script type="application/ld+json">
+  <script id="pricing-service-jsonld" type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -171,7 +171,7 @@
       <div class="packages packages-premium">
         <article class="package">
           <h2>Essentials</h2>
-          <p class="price">kr 6,500</p>
+          <p class="price" data-package-price="essentials">kr 6,500</p>
           <ul>
             <li>4 hours coverage</li>
             <li>Turnaround Time: 4 weeks</li>
@@ -182,7 +182,7 @@
 
         <article class="package package-featured">
           <h2>Signature</h2>
-          <p class="price">kr 12,000</p>
+          <p class="price" data-package-price="signature">kr 12,000</p>
           <ul>
             <li>8 hours coverage</li>
             <li>250 signature-edited images</li>
@@ -194,7 +194,7 @@
 
         <article class="package">
           <h2>Luxury</h2>
-          <p class="price">kr 18,000</p>
+          <p class="price" data-package-price="luxury">kr 18,000</p>
           <ul>
             <li>Full day coverage (12 hours)</li>
             <li>Turnaround Time: 4 weeks</li>
@@ -206,7 +206,7 @@
 
         <article class="package package-personal">
           <h2>Individual Session</h2>
-          <p class="price">kr 2,500</p>
+          <p class="price" data-package-price="session">kr 2,500</p>
           <ul>
             <li>1 - 1.5 hours photoshoot</li>
             <li>Turnaround Time: 4 weeks</li>
@@ -216,9 +216,10 @@
         </article>
       </div>
 
-      <p class="package-note">
+      <p id="pricing-travel-note" class="package-note">
         Travel costs are included within Jutland. Weddings outside Jutland include standard travel and accommodation fees.
       </p>
+      <p id="pricing-updated-at" class="package-note"></p>
     </section>
 
     <section class="section container narrow" style="padding-top: 0;">
@@ -317,7 +318,7 @@
     <section class="section container narrow" style="padding-top: 0;">
       <div id="contact-block" class="panel content-panel" style="text-align: center; border: 1px solid var(--gold); background: var(--surface);">
         <h2 style="margin-bottom: 1rem; font-size: 2rem;">Ready to secure your date?</h2>
-        <p style="margin-bottom: 2rem; color: var(--gold); font-size: 1.1rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+        <p id="pricing-contact" style="margin-bottom: 2rem; color: var(--gold); font-size: 1.1rem; max-width: 500px; margin-left: auto; margin-right: auto;">
           Because I take a limited number of weddings each year, I handle all bookings personally via chat.
           Message me directly to confirm availability.
         </p>

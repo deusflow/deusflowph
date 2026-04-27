@@ -10,6 +10,7 @@ import { createStateMessage } from "./ui.js";
 const state = {
   selectedAlbum: null,
   aboutContent: null,
+  pricingContent: null,
   albums: [],
   selectedAlbumPhotos: [],
   selectedAlbumMetaBase: "",
@@ -71,6 +72,15 @@ const aboutStoryInput = document.getElementById("about-story");
 const aboutValuesInput = document.getElementById("about-values");
 const aboutPersonalInput = document.getElementById("about-personal");
 const aboutStatusText = document.getElementById("about-status-text");
+const pricingForm = document.getElementById("pricing-form");
+const savePricingButton = document.getElementById("save-pricing-button");
+const pricingCurrencyInput = document.getElementById("pricing-currency");
+const pricingEssentialsInput = document.getElementById("pricing-essentials");
+const pricingSignatureInput = document.getElementById("pricing-signature");
+const pricingLuxuryInput = document.getElementById("pricing-luxury");
+const pricingSessionInput = document.getElementById("pricing-session");
+const pricingTravelNoteInput = document.getElementById("pricing-travel-note");
+const pricingStatusText = document.getElementById("pricing-status-text");
 
 const testimonialFields = [
   {
@@ -159,6 +169,163 @@ function setAboutStatus(message, tone = "default") {
   }
   aboutStatusText.textContent = message;
   aboutStatusText.style.color = tone === "error" ? "#d39e9e" : "rgba(232, 226, 217, 0.72)";
+}
+
+function setPricingStatus(message, tone = "default") {
+  if (!pricingStatusText) {
+    return;
+  }
+  pricingStatusText.textContent = message;
+  pricingStatusText.style.color = tone === "error" ? "#d39e9e" : "rgba(232, 226, 217, 0.72)";
+}
+
+function getDefaultPricingPayload() {
+  return {
+    id: 1,
+    essentials_price: 6500,
+    signature_price: 12000,
+    luxury_price: 18000,
+    session_price: 2500,
+    currency: "DKK",
+    travel_note:
+      "Travel costs are included within Jutland. Weddings outside Jutland include standard travel and accommodation fees."
+  };
+}
+
+function fillPricingForm(content) {
+  if (!pricingForm) {
+    return;
+  }
+
+  pricingCurrencyInput.value = String(content.currency || "DKK").toUpperCase();
+  pricingEssentialsInput.value = String(Math.max(0, Number(content.essentials_price) || 0));
+  pricingSignatureInput.value = String(Math.max(0, Number(content.signature_price) || 0));
+  pricingLuxuryInput.value = String(Math.max(0, Number(content.luxury_price) || 0));
+  pricingSessionInput.value = String(Math.max(0, Number(content.session_price) || 0));
+  pricingTravelNoteInput.value = String(content.travel_note || "");
+}
+
+async function loadPricingContentAdmin() {
+  if (!pricingForm) {
+    return;
+  }
+
+  const supabase = getSupabase();
+  const defaults = getDefaultPricingPayload();
+  const { data, error } = await supabase.from("pricing_content").select("*").eq("id", 1).maybeSingle();
+
+  if (error) {
+    setUploadStatus(`Could not load Pricing content: ${error.message}`, 0, "error");
+    setPricingStatus(`Could not load Pricing content: ${error.message}`, "error");
+    fillPricingForm(defaults);
+    return;
+  }
+
+  let resolved = data;
+  if (!resolved) {
+    const insert = await supabase
+      .from("pricing_content")
+      .insert(defaults)
+      .select("*")
+      .single();
+
+    if (insert.error) {
+      setUploadStatus(`Pricing content setup failed: ${insert.error.message}`, 0, "error");
+      setPricingStatus(`Pricing content setup failed: ${insert.error.message}`, "error");
+      fillPricingForm(defaults);
+      return;
+    }
+    resolved = insert.data;
+  }
+
+  state.pricingContent = resolved;
+  fillPricingForm({ ...defaults, ...resolved });
+  setPricingStatus("Pricing content loaded.");
+}
+
+function toNonNegativeInteger(value) {
+  const parsed = Number.parseInt(String(value || "").trim(), 10);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return null;
+  }
+  return parsed;
+}
+
+async function savePricingContent(event) {
+  event.preventDefault();
+  if (!pricingForm || !savePricingButton) {
+    return;
+  }
+
+  const currency = String(pricingCurrencyInput?.value || "").trim().toUpperCase();
+  const essentialsPrice = toNonNegativeInteger(pricingEssentialsInput?.value);
+  const signaturePrice = toNonNegativeInteger(pricingSignatureInput?.value);
+  const luxuryPrice = toNonNegativeInteger(pricingLuxuryInput?.value);
+  const sessionPrice = toNonNegativeInteger(pricingSessionInput?.value);
+  const travelNote = String(pricingTravelNoteInput?.value || "").trim();
+
+  if (!currency || currency.length < 3) {
+    setUploadStatus("Currency must be a valid code, e.g. DKK.", 0, "error");
+    setPricingStatus("Currency must be a valid code, e.g. DKK.", "error");
+    return;
+  }
+
+  if ([essentialsPrice, signaturePrice, luxuryPrice, sessionPrice].some((value) => value === null)) {
+    setUploadStatus("All prices must be non-negative integers.", 0, "error");
+    setPricingStatus("All prices must be non-negative integers.", "error");
+    return;
+  }
+
+  savePricingButton.disabled = true;
+  savePricingButton.textContent = "Saving...";
+  setUploadStatus("Saving Pricing page...", 30);
+  setPricingStatus("Saving Pricing page...");
+
+  const supabase = getSupabase();
+  const payload = {
+    essentials_price: essentialsPrice,
+    signature_price: signaturePrice,
+    luxury_price: luxuryPrice,
+    session_price: sessionPrice,
+    currency,
+    travel_note: travelNote || null,
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    let result = await supabase
+      .from("pricing_content")
+      .update(payload)
+      .eq("id", 1)
+      .select("*")
+      .maybeSingle();
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    if (!result.data) {
+      result = await supabase
+        .from("pricing_content")
+        .insert({ id: 1, ...payload })
+        .select("*")
+        .single();
+      if (result.error) {
+        throw result.error;
+      }
+    }
+
+    state.pricingContent = result.data;
+    fillPricingForm({ ...getDefaultPricingPayload(), ...result.data });
+    setUploadStatus("Pricing page saved.", 100);
+    setPricingStatus("Pricing page saved.");
+  } catch (error) {
+    setUploadStatus(`Could not save Pricing page: ${error.message}`, 0, "error");
+    setPricingStatus(`Could not save Pricing page: ${error.message}`, "error");
+  } finally {
+    savePricingButton.disabled = false;
+    savePricingButton.textContent = "Save Pricing";
+  }
 }
 
 function getDefaultAboutPayload() {
@@ -1644,6 +1811,7 @@ async function boot() {
 
     await loadAlbums();
     await loadAboutContent();
+    await loadPricingContentAdmin();
   } catch (error) {
     loginError.textContent = error.message;
     setAuthView(false);
@@ -1715,6 +1883,10 @@ if (openPortfolioManagerButton) {
 
 if (aboutForm) {
   aboutForm.addEventListener("submit", saveAboutContent);
+}
+
+if (pricingForm) {
+  pricingForm.addEventListener("submit", savePricingContent);
 }
 
 setupTestimonialReorder();

@@ -43,15 +43,29 @@ create table if not exists public.about_content (
   updated_at timestamptz not null default now()
 );
 
+-- Singleton page content for Pricing route
+create table if not exists public.pricing_content (
+  id integer primary key default 1 check (id = 1),
+  essentials_price integer not null default 6500,
+  signature_price integer not null default 12000,
+  luxury_price integer not null default 18000,
+  session_price integer not null default 2500,
+  currency text not null default 'DKK',
+  travel_note text,
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists idx_albums_type_visible on public.albums(type, visible);
 create index if not exists idx_albums_slug on public.albums(slug);
 create index if not exists idx_albums_type_order on public.albums(type, display_order, date desc, created_at desc);
 create index if not exists idx_photos_album_order on public.photos(album_id, display_order);
 create index if not exists idx_about_content_id on public.about_content(id);
+create index if not exists idx_pricing_content_id on public.pricing_content(id);
 
 alter table public.albums enable row level security;
 alter table public.photos enable row level security;
 alter table public.about_content enable row level security;
+alter table public.pricing_content enable row level security;
 
 -- Drop old policies if re-running
 
@@ -61,6 +75,8 @@ drop policy if exists "photos_public_select_visible_albums" on public.photos;
 drop policy if exists "photos_admin_all" on public.photos;
 drop policy if exists "about_public_select" on public.about_content;
 drop policy if exists "about_admin_all" on public.about_content;
+drop policy if exists "pricing_public_select" on public.pricing_content;
+drop policy if exists "pricing_admin_all" on public.pricing_content;
 
 -- Public read access: only visible albums
 create policy "albums_public_select_visible"
@@ -114,6 +130,21 @@ to authenticated
 using (true)
 with check (true);
 
+-- Public read for Pricing page content
+create policy "pricing_public_select"
+on public.pricing_content
+for select
+to anon, authenticated
+using (true);
+
+-- Admin edit access for Pricing page content
+create policy "pricing_admin_all"
+on public.pricing_content
+for all
+to authenticated
+using (true)
+with check (true);
+
 insert into public.about_content (id, story, values_text, personal_text, testimonials)
 values (
   1,
@@ -127,6 +158,18 @@ Your wedding day? Trust me, I've got this.$$,
   'I work quietly, observe honestly, and guide only when it helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.',
   'Originally from Ukraine, now based near Aarhus. I bring 10 years of wedding photography experience across Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.',
   '[{"name":"Volodymyr Ostapchuk (TV Presenter)","quote":"Oleh has an incredible talent for capturing genuine emotions. Our wedding photos tell the perfect story of our day. Highly recommended!"},{"name":"Jerry Heil (Singer & Songwriter)","quote":"We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."},{"name":"Oleksandr Popov (Actor)","quote":"I worked with Oleh on a shoot for my TV series. He is an absolute professional with a great eye for cinematic detail."},{"name":"Amalie Frank","quote":"Wow, hvor ser det godt ud! Tusind tusind tak for det - kaempe anbefaling! Der har virkelig vaeret stor ros for alle billederne fra alle gaester og slottet ogsaa. Det har vaeret fantastisk at have arbejdet med jer."}]'::jsonb
+)
+on conflict (id) do nothing;
+
+insert into public.pricing_content (id, essentials_price, signature_price, luxury_price, session_price, currency, travel_note)
+values (
+  1,
+  6500,
+  12000,
+  18000,
+  2500,
+  'DKK',
+  'Travel costs are included within Jutland. Weddings outside Jutland include standard travel and accommodation fees.'
 )
 on conflict (id) do nothing;
 

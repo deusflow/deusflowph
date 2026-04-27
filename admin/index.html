@@ -56,6 +56,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             About Page CMS
           </button>
+          <button type="button" class="admin-nav-button" data-target="tab-pricing">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Pricing CMS
+          </button>
         </nav>
       </aside>
       <div class="admin-content-area" id="admin-content">
@@ -228,6 +232,49 @@
                   <button id="save-about-button" type="submit" class="primary">Save About Page</button>
                   <a class="ghost admin-link-button" href="../about/index.html" target="_blank" rel="noopener noreferrer">Open Public About Page</a>
                   <p id="about-status-text" class="upload-note" style="margin-top:0.7rem;"></p>
+                </form>
+              </div>
+            </div>
+          </article>
+        </div>
+        <!-- ========== PRICING TAB ========== -->
+        <div id="tab-pricing" class="admin-tab-pane">
+          <div class="admin-header-row">
+            <h2>Pricing CMS</h2>
+          </div>
+          <article class="panel" style="margin-bottom:1.5rem;">
+            <div id="pricing-cms-section" class="admin-section">
+              <div class="admin-card-header"><h3>Collections Pricing</h3></div>
+              <div class="admin-section-body">
+                <p>Update package prices and travel note used on the public Pricing page.</p>
+                <form id="pricing-form">
+                  <div class="form-row">
+                    <label for="pricing-currency">Currency</label>
+                    <input id="pricing-currency" name="pricing-currency" type="text" maxlength="8" required />
+                  </div>
+                  <div class="form-row">
+                    <label for="pricing-essentials">Essentials price</label>
+                    <input id="pricing-essentials" name="pricing-essentials" type="number" min="0" step="1" required />
+                  </div>
+                  <div class="form-row">
+                    <label for="pricing-signature">Signature price</label>
+                    <input id="pricing-signature" name="pricing-signature" type="number" min="0" step="1" required />
+                  </div>
+                  <div class="form-row">
+                    <label for="pricing-luxury">Luxury price</label>
+                    <input id="pricing-luxury" name="pricing-luxury" type="number" min="0" step="1" required />
+                  </div>
+                  <div class="form-row">
+                    <label for="pricing-session">Individual session price</label>
+                    <input id="pricing-session" name="pricing-session" type="number" min="0" step="1" required />
+                  </div>
+                  <div class="form-row">
+                    <label for="pricing-travel-note">Travel note</label>
+                    <textarea id="pricing-travel-note" name="pricing-travel-note" rows="3"></textarea>
+                  </div>
+                  <button id="save-pricing-button" type="submit" class="primary">Save Pricing</button>
+                  <a class="ghost admin-link-button" href="../pricing/index.html" target="_blank" rel="noopener noreferrer">Open Public Pricing Page</a>
+                  <p id="pricing-status-text" class="upload-note" style="margin-top:0.7rem;"></p>
                 </form>
               </div>
             </div>
