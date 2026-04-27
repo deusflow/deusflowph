@@ -221,21 +221,12 @@ async function loadPricingContentAdmin() {
     return;
   }
 
-  let resolved = data;
+  const resolved = data;
   if (!resolved) {
-    const insert = await supabase
-      .from("pricing_content")
-      .insert(defaults)
-      .select("*")
-      .single();
-
-    if (insert.error) {
-      setUploadStatus(`Pricing content setup failed: ${insert.error.message}`, 0, "error");
-      setPricingStatus(`Pricing content setup failed: ${insert.error.message}`, "error");
-      fillPricingForm(defaults);
-      return;
-    }
-    resolved = insert.data;
+    fillPricingForm(defaults);
+    setUploadStatus("Pricing content row is missing (id=1). Add it once in Supabase SQL Editor.", 0, "error");
+    setPricingStatus("Missing row in pricing_content (id=1). Run seed SQL once.", "error");
+    return;
   }
 
   state.pricingContent = resolved;
@@ -293,7 +284,7 @@ async function savePricingContent(event) {
   };
 
   try {
-    let result = await supabase
+    const result = await supabase
       .from("pricing_content")
       .update(payload)
       .eq("id", 1)
@@ -305,14 +296,9 @@ async function savePricingContent(event) {
     }
 
     if (!result.data) {
-      result = await supabase
-        .from("pricing_content")
-        .insert({ id: 1, ...payload })
-        .select("*")
-        .single();
-      if (result.error) {
-        throw result.error;
-      }
+      setUploadStatus("Pricing row id=1 not found. Seed pricing_content in SQL editor, then retry.", 0, "error");
+      setPricingStatus("Row id=1 not found in pricing_content. Seed table first.", "error");
+      return;
     }
 
     state.pricingContent = result.data;
