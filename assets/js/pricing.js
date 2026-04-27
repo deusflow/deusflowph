@@ -176,7 +176,10 @@ async function loadPricingContent() {
 
   if (error) {
     if (travelNoteNode) {
-      travelNoteNode.prepend(createStateMessage(`Live pricing unavailable. Showing fallback. ${error.message}`));
+      const hint = error?.code === "42501" || String(error?.message || "").toLowerCase().includes("permission")
+        ? "Live pricing unavailable (DB access denied). Check pricing_content grants/RLS in Supabase."
+        : `Live pricing unavailable. Showing fallback. ${error.message}`;
+      travelNoteNode.prepend(createStateMessage(hint));
     }
   } else if (data) {
     resolved = { ...resolved, ...data };

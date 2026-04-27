@@ -145,6 +145,10 @@ to authenticated
 using (true)
 with check (true);
 
+-- Explicit grants for REST access (required in addition to RLS policies)
+grant select on table public.pricing_content to anon, authenticated;
+grant insert, update, delete on table public.pricing_content to authenticated;
+
 insert into public.about_content (id, story, values_text, personal_text, testimonials)
 values (
   1,
