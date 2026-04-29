@@ -1563,13 +1563,13 @@ button.danger {
     line-height: 1.1;
   }
 
-  .menu-link[href*="weddings"] {
+  .header-inner .menu-link[href*="weddings"] {
     grid-area: nav-left;
     justify-self: start;
     align-self: center;
   }
 
-  .menu-link[href*="pricing"] {
+  .header-inner .menu-link[href*="pricing"] {
     grid-area: nav-right;
     justify-self: end;
     align-self: center;
