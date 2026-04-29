@@ -62,30 +62,13 @@ function initLangToggle() {
   if (headerInner) {
     const toggleContainer = document.createElement('div');
     toggleContainer.className = 'lang-switcher';
-    toggleContainer.style.position = 'absolute';
-    toggleContainer.style.right = '2rem';
-    toggleContainer.style.top = '50%';
-    toggleContainer.style.transform = 'translateY(-50%)';
-    toggleContainer.style.display = 'flex';
-    toggleContainer.style.alignItems = 'center';
 
     const btn = document.createElement('button');
-    btn.className = 'menu-link';
-    btn.style.background = 'none';
-    btn.style.border = 'none';
-    btn.style.cursor = 'pointer';
-    btn.style.fontSize = '0.9rem';
-    btn.style.padding = '0';
-    btn.style.opacity = '0.7';
-    btn.style.textTransform = 'uppercase';
-    btn.style.letterSpacing = '0.05em';
-    btn.style.fontFamily = 'inherit';
+    btn.className = 'lang-btn menu-link';
 
     btn.textContent = currentLang === 'en' ? 'DA' : 'EN';
     btn.title = currentLang === 'en' ? 'Skift til Dansk' : 'Switch to English';
 
-    btn.onmouseenter = () => btn.style.opacity = '1';
-    btn.onmouseleave = () => btn.style.opacity = '0.7';
 
     btn.addEventListener('click', () => {
       const newLang = currentLang === 'en' ? 'da' : 'en';

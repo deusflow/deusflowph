@@ -151,6 +151,33 @@ h3,
   justify-self: end;
 }
 
+.lang-switcher {
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.lang-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: inherit;
+  color: inherit;
+  transition: opacity var(--motion-fast) var(--motion-ease);
+}
+
+.lang-btn:hover {
+  opacity: 1;
+}
+
 .hero {
   min-height: 100vh;
   position: relative;
@@ -1506,7 +1533,58 @@ button.danger {
 
 @media (max-width: 759px) {
   .header-inner {
-    min-height: 86px;
+    min-height: auto;
+    padding: 0.8rem 1rem;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "brand brand brand"
+      "nav-left lang nav-right";
+    row-gap: 0.9rem;
+  }
+
+  .brand-stack {
+    grid-area: brand;
+    width: 100%;
+  }
+
+  .brand-topline {
+    white-space: nowrap;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    margin-bottom: 0.35rem;
+  }
+
+  .logo {
+    display: block;
+    line-height: 1.1;
+  }
+
+  .menu-link[href*="weddings"] {
+    grid-area: nav-left;
+    justify-self: start;
+    align-self: center;
+  }
+
+  .menu-link[href*="pricing"] {
+    grid-area: nav-right;
+    justify-self: end;
+    align-self: center;
+  }
+
+  .lang-switcher {
+    grid-area: lang;
+    position: static;
+    transform: none;
+    justify-self: center;
+    align-self: center;
+  }
+
+  .lang-btn {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    opacity: 0.8;
   }
 
   .menu-link {
@@ -1520,39 +1598,79 @@ button.danger {
 
   .hero-copy {
     padding: 0.9rem 0.7rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-copy h1 {
+    order: 1;
   }
 
   .hero-proof {
-    grid-template-columns: 1fr;
-    max-width: 360px;
+    order: 2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+    max-width: 100%;
+    margin: 1.3rem auto 1.5rem;
+  }
+
+  .hero-proof-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid rgba(232, 226, 217, 0.15);
+  }
+
+  /* Hide the 2nd counter item (Countries) on mobile to keep it cleaner */
+  .hero-proof-item:nth-child(2) {
+    display: none;
+  }
+
+  .hero-proof-value {
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .hero-proof-label {
+    margin: 0;
+    font-size: 9px;
+  }
+
+  .signature-chip {
+    order: 3;
+    margin: 0 auto 1.8rem;
+    font-size: 0.98rem;
+    opacity: 0.85;
+  }
+
+  .hero-actions {
+    order: 4;
   }
 
   .section {
-    padding: clamp(3.2rem, 10vw, 4.4rem) 0;
-  }
-
-  .page-intro {
-    padding-top: 176px;
-    padding-bottom: 2.6rem;
-  }
-
-  .content-panel {
-    padding: 1.1rem;
-  }
-
-  .process-steps {
-    gap: 1.1rem;
-  }
-
-  .process-steps li,
-  .faq-list details {
-    padding: 1.05rem 0.9rem;
+    padding: var(--section-space) 0;
   }
 
   .section-head {
     flex-direction: column;
     align-items: center;
     text-align: center;
+  }
+
+  .section-quote h2 {
+    font-size: clamp(1.45rem, 4.5vw, 2.2rem);
+    color: rgba(232, 226, 217, 0.85);
+    line-height: 1.45;
+  }
+
+  .section-quote p {
+    margin-top: 1.2rem;
+    font-size: 10px;
   }
 
   .about-story-panel,
@@ -1769,4 +1887,3 @@ button.danger {
     border-bottom-color: var(--gold);
   }
 }
-
