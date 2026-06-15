@@ -1965,3 +1965,78 @@ button.danger {
   transform: translateY(0);
 }
 
+/* Editorial Magazine Style (Ultra-Premium 2026) */
+.text-massive {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(3rem, 12vw, 10rem);
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  font-style: italic;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.text-massive-sub {
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: clamp(0.7rem, 2vw, 1rem);
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  margin-top: 2rem;
+  color: var(--gold);
+}
+
+.editorial-drop-cap::first-letter {
+  float: left;
+  font-size: 5.5em;
+  line-height: 0.65;
+  padding-top: 0.15em;
+  padding-right: 0.1em;
+  padding-left: 0.05em;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  color: var(--gold);
+}
+
+.editorial-pull-quote {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  line-height: 1.2;
+  font-style: italic;
+  margin: 4rem 0;
+  padding-left: 2rem;
+  border-left: 2px solid var(--gold);
+  color: var(--text);
+}
+
+.cta-editorial {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-size: 11px;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid var(--border);
+  transition: border-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+
+.cta-editorial:hover {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.editorial-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .editorial-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8rem;
+    align-items: center;
+  }
+}
+
+

@@ -38,38 +38,45 @@
   </header>
 
   <main>
-    <section class="section container about-layout reveal-up" style="padding-top: 160px;">
-      <article class="about-photo-panel" style="border-radius: 0; padding: 0;">
-        <img
-          id="about-photo"
-          class="about-photo"
-          src="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg"
-          alt="Portrait of wedding photographer Oleh Ro"
-          loading="lazy"
-        />
-      </article>
-
-      <article class="about-story-shell about-story-panel">
-        <p class="eyebrow">Story</p>
-        <h2 class="content-title">Real moments. Calm direction.</h2>
-        <div id="about-story" class="about-rich-text"></div>
-      </article>
+    <section class="section container" style="padding-top: 180px;">
+      <div class="editorial-grid">
+        <article style="align-self: start;">
+          <h1 class="text-massive">Oleh Ro.</h1>
+          <p class="text-massive-sub" style="margin-bottom: 4rem;">Documentary & Editorial</p>
+          <div id="about-story" class="about-rich-text editorial-drop-cap" style="font-size: 1.1rem; line-height: 1.8;"></div>
+        </article>
+        
+        <article class="about-photo-panel" style="border-radius: 0; padding: 0; border: 1px solid var(--border);">
+          <img
+            id="about-photo"
+            class="about-photo"
+            src="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg"
+            alt="Portrait of wedding photographer Oleh Ro"
+            loading="lazy"
+            style="filter: grayscale(10%) contrast(1.1);"
+          />
+        </article>
+      </div>
     </section>
 
-    <section class="section container reveal-up" style="padding-top: 0;">
-      <div class="about-meta-grid" style="gap: 4rem; border-top: 1px solid var(--border); padding-top: 4rem;">
+    <section class="section container" style="padding-top: 0;">
+      <div class="editorial-pull-quote">
+        "I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day."
+      </div>
+      
+      <div class="editorial-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 4rem; border-top: 2px solid var(--border); padding-top: 4rem;">
         <article class="about-text-block">
-          <p class="eyebrow">Values and Approach</p>
-          <div id="about-values" class="about-rich-text"></div>
+          <p class="text-massive-sub" style="margin-top: 0;">Values</p>
+          <div id="about-values" class="about-rich-text" style="margin-top: 1.5rem;"></div>
         </article>
         <article class="about-text-block">
-          <p class="eyebrow">Personal Note</p>
-          <div id="about-personal" class="about-rich-text"></div>
+          <p class="text-massive-sub" style="margin-top: 0;">Background</p>
+          <div id="about-personal" class="about-rich-text" style="margin-top: 1.5rem;"></div>
         </article>
-        <article class="about-experience-card">
-          <p class="eyebrow">The Journey</p>
-          <p class="about-experience-value">10 years</p>
-          <p class="about-experience-label">From Ukraine to Denmark. Bringing a distinct, European editorial eye to your wedding.</p>
+        <article class="about-text-block">
+          <p class="text-massive-sub" style="margin-top: 0;">Experience</p>
+          <p class="text-massive" style="font-size: 4rem;">10+</p>
+          <p style="margin-top: 1rem; color: var(--text-muted);">Years of experience across Denmark and Europe.</p>
         </article>
       </div>
     </section>
