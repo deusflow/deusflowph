@@ -42,7 +42,7 @@ export function createStateMessage(message) {
 
 export function createPhotoCard({ title, subtitle, imageUrl, href = "#" }) {
   const card = document.createElement("a");
-  card.className = "photo-card";
+  card.className = "photo-card reveal-up";
   card.href = href;
 
   card.innerHTML = `
