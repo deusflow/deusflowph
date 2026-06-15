@@ -10,10 +10,10 @@
   --motion-fast: 0.2s;
   --motion-base: 0.35s;
   --motion-slow: 0.7s;
-  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --section-space: clamp(4.6rem, 7vw, 7rem);
+  --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --section-space: clamp(5rem, 10vw, 9rem);
   --type-body: clamp(1rem, 0.35vw + 0.94rem, 1.08rem);
-  --type-h1: clamp(2.8rem, 6vw, 5.5rem);
+  --type-h1: clamp(3.5rem, 10vw, 8rem);
   --type-h2: clamp(1.85rem, 3.6vw, 3rem);
   --type-h3: clamp(1.2rem, 2vw, 1.6rem);
   --type-caption: 11px;
@@ -44,6 +44,12 @@ img {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+  border-radius: 2px;
 }
 
 body {
@@ -105,9 +111,10 @@ h3,
   left: 0;
   width: 100%;
   z-index: 50;
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 10, 0.4);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid rgba(212, 186, 149, 0.1);
 }
 
 .header-inner {
@@ -202,6 +209,7 @@ h3,
 .hero-media {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 }
 
 .hero-media img {
@@ -209,6 +217,7 @@ h3,
   height: 100%;
   object-fit: cover;
   opacity: 0.72;
+  will-change: transform;
 }
 
 .hero-overlay {

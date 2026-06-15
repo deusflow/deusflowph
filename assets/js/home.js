@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals } from "./ui.js";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax } from "./ui.js";
 
 const featuredGrid = document.getElementById("featured-grid");
 const heroImage = document.getElementById("hero-image");
@@ -95,13 +95,7 @@ async function loadTestimonials() {
   }
 }
 
-function applyHeroImageFromConfig() {
-  if (!heroImage || !window.APP_CONFIG || !window.APP_CONFIG.HERO_IMAGE_URL) {
-    return;
-  }
 
-  heroImage.src = window.APP_CONFIG.HERO_IMAGE_URL;
-}
 
 async function loadFeatured() {
   if (!featuredGrid) {
@@ -188,7 +182,8 @@ async function loadFeatured() {
   }
 }
 
-applyHeroImageFromConfig();
 loadFeatured();
 loadTestimonials();
 initScrollReveals();
+initMagneticButtons();
+initParallax();

@@ -166,6 +166,12 @@ export function setupLightbox() {
     renderCurrent(items);
     lightbox.classList.add("is-open");
     document.body.style.overflow = "hidden";
+    
+    // Focus trap
+    const focusableElements = lightbox.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusableElements.length) {
+      focusableElements[0].focus();
+    }
   });
 
   const closeLightbox = () => {
@@ -176,6 +182,8 @@ export function setupLightbox() {
     }
     currentIndex = -1;
     document.body.style.overflow = "";
+    // Return focus to the body or trigger
+    document.body.focus();
   };
 
   close.addEventListener("click", closeLightbox);
@@ -255,3 +263,42 @@ export function initScrollReveals() {
   document.querySelectorAll('.reveal-up').forEach(el => observer.observe(el));
 }
 
+export function initMagneticButtons() {
+  const magnets = document.querySelectorAll('.cta');
+  
+  magnets.forEach((magnet) => {
+    magnet.addEventListener('mousemove', (e) => {
+      const rect = magnet.getBoundingClientRect();
+      const h = rect.width / 2;
+      const v = rect.height / 2;
+      
+      const x = e.clientX - rect.left - h;
+      const y = e.clientY - rect.top - v;
+      
+      magnet.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+    });
+    
+    magnet.addEventListener('mouseleave', () => {
+      magnet.style.transform = 'translate(0px, 0px)';
+    });
+  });
+}
+
+export function initParallax() {
+  const heroImage = document.querySelector('.hero-media img');
+  if (!heroImage) return;
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const scrolled = window.pageYOffset;
+        if (scrolled < window.innerHeight) {
+          heroImage.style.transform = `translateY(${scrolled * 0.3}px) scale(1.02)`;
+        }
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+}
