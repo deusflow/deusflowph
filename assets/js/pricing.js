@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js";
+import { createStateMessage, initScrollReveals } from "./ui.js";
 
 const contactNode = document.getElementById("pricing-contact");
 const travelNoteNode = document.getElementById("pricing-travel-note");
@@ -199,4 +199,6 @@ try {
   }
 }
 
-loadPricingContent();
+loadPricingContent().then(() => {
+  initScrollReveals();
+});

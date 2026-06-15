@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js";
+import { createStateMessage, initScrollReveals } from "./ui.js";
 
 const photoNode = document.getElementById("about-photo");
 const storyNode = document.getElementById("about-story");
@@ -133,5 +133,7 @@ async function loadAbout() {
   }
 }
 
-loadAbout();
+loadAbout().then(() => {
+  initScrollReveals();
+});
 

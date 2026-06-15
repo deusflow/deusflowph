@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, renderOrderedMasonry } from "./ui.js";
+import { observeLazyImages, createStateMessage, renderOrderedMasonry, initScrollReveals, setupLightbox } from "./ui.js";
 
 const grid = document.getElementById("portfolio-grid");
 let portfolioNodes = [];
@@ -84,10 +84,10 @@ async function renderPortfolio() {
     const nodes = [];
     photos.forEach((photo, index) => {
       const item = document.createElement("article");
-      item.className = "photo-card";
+      item.className = "photo-card reveal-up";
       item.innerHTML = `
-        <div class="photo-media">
-          <img data-src="${photo.url}" alt="${buildPortfolioAlt(index)}" loading="lazy" />
+        <div class="photo-media" style="cursor: zoom-in;">
+          <img data-src="${photo.url}" data-lightbox-src="${photo.url}" alt="${buildPortfolioAlt(index)}" loading="lazy" />
         </div>
       `;
       nodes.push(item);
@@ -103,5 +103,8 @@ async function renderPortfolio() {
   }
 }
 
-renderPortfolio();
+renderPortfolio().then(() => {
+  initScrollReveals();
+  setupLightbox();
+});
 
