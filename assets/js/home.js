@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage } from "./ui.js";
+import { observeLazyImages, createStateMessage, initScrollReveals } from "./ui.js";
 
 const featuredGrid = document.getElementById("featured-grid");
 const heroImage = document.getElementById("hero-image");
@@ -191,3 +191,4 @@ async function loadFeatured() {
 applyHeroImageFromConfig();
 loadFeatured();
 loadTestimonials();
+initScrollReveals();

@@ -1,0 +1,25 @@
+{
+  "name": "deusflowph",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Luxury wedding photography portfolio (GitHub Pages + Supabase)",
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 4173",
+    "test": "node scripts/smoke-test.mjs"
+  },
+  "keywords": [
+    "wedding-photography",
+    "supabase",
+    "github-pages",
+    "static-site"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.8"
+  }
+}

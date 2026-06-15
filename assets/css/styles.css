@@ -13,7 +13,7 @@
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --section-space: clamp(4.6rem, 7vw, 7rem);
   --type-body: clamp(1rem, 0.35vw + 0.94rem, 1.08rem);
-  --type-h1: clamp(2.4rem, 5vw, 4.9rem);
+  --type-h1: clamp(2.8rem, 6vw, 5.5rem);
   --type-h2: clamp(1.85rem, 3.6vw, 3rem);
   --type-h3: clamp(1.2rem, 2vw, 1.6rem);
   --type-caption: 11px;
@@ -51,7 +51,19 @@ body {
   font-weight: 300;
   font-size: var(--type-body);
   line-height: 1.62;
-  background-image: radial-gradient(circle at 80% 8%, rgba(242, 191, 212, 0.07), transparent 32%);
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at 80% 8%, rgba(242, 191, 212, 0.05), transparent 40%);
+  position: relative;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.8;
 }
 
 h1 {
@@ -267,8 +279,9 @@ h3,
 }
 
 .cta:hover {
-  transform: translateY(-1px);
-  background: linear-gradient(90deg, #d4ba95 0%, #e5cfd9 100%);
+  transform: translateY(-2px);
+  background: linear-gradient(90deg, #dfc6a3 0%, #ecd7e1 100%);
+  box-shadow: 0 8px 24px rgba(212, 186, 149, 0.25);
 }
 
 .cta-ghost {
@@ -461,8 +474,9 @@ h3,
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1);
-  transition: transform var(--motion-slow) var(--motion-ease);
+  transform: scale(1.01);
+  transition: transform var(--motion-slow) cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 /* Gallery pages should keep original ratios and stack tightly like masonry. */
@@ -511,7 +525,7 @@ h3,
 
 .photo-card:hover .photo-media img,
 .album-card:hover .photo-media img {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .photo-title {
@@ -1890,3 +1904,16 @@ button.danger {
     border-bottom-color: var(--gold);
   }
 }
+
+/* Modern Scroll Reveals (2026) */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+

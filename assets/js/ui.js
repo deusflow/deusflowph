@@ -218,3 +218,40 @@ export function setupLightbox() {
   });
 }
 
+
+export function initScrollReveals() {
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('.reveal-up').forEach(el => el.classList.add('is-visible'));
+    return;
+  }
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        // Animate numbers if they exist
+        const counters = entry.target.querySelectorAll('[data-count]');
+        counters.forEach(counter => {
+          const target = +counter.getAttribute('data-count');
+          const duration = 1500;
+          const start = performance.now();
+          const update = (currentTime) => {
+            const elapsed = currentTime - start;
+            const progress = Math.min(elapsed / duration, 1);
+            // easeOutExpo
+            const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            counter.textContent = Math.floor(easeProgress * target);
+            if (progress < 1) requestAnimationFrame(update);
+            else counter.textContent = target;
+          };
+          requestAnimationFrame(update);
+          counter.removeAttribute('data-count'); // ensure it only runs once
+        });
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.reveal-up').forEach(el => observer.observe(el));
+}
+
