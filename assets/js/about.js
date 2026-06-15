@@ -109,7 +109,9 @@ function renderAbout(content) {
     testimonials: normalizeTestimonials(content?.testimonials)
   };
 
-  // Photo preloaded in HTML, do not override
+  if (photoNode && about.photo_url) {
+    photoNode.src = about.photo_url;
+  }
   
   renderRichText(storyNode, about.story);
   renderRichText(valuesNode, about.values_text);
