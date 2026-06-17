@@ -223,7 +223,13 @@ h3,
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(10, 10, 10, 0.4), rgba(10, 10, 10, 0), #0a0a0a);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  z-index: 1;
 }
 
 .hero-content {
@@ -1964,6 +1970,28 @@ button.danger {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Cinematic Hero Entrance (Pure CSS) */
+@keyframes cinematic-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-entrance {
+  opacity: 0; /* Hidden before animation starts */
+  animation: cinematic-fade-up 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  will-change: opacity, transform;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.25s; }
+.delay-3 { animation-delay: 0.4s; }
 
 /* Editorial Magazine Style (Ultra-Premium 2026) */
 .text-massive {

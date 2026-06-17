@@ -294,7 +294,7 @@ export function initParallax() {
       window.requestAnimationFrame(() => {
         const scrolled = window.pageYOffset;
         if (scrolled < window.innerHeight) {
-          heroImage.style.transform = `translateY(${scrolled * 0.3}px) scale(1.02)`;
+          heroImage.style.transform = `translate3d(0, ${scrolled * 0.3}px, 0) scale(1.02)`;
         }
         ticking = false;
       });
