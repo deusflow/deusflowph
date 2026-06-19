@@ -1,3 +1,5 @@
+import { getSupabase } from "./supabase-client.js";
+
 export function observeLazyImages(selector = "img[data-src]") {
   const images = Array.from(document.querySelectorAll(selector));
   if (!images.length) {
@@ -33,6 +35,16 @@ export function observeLazyImages(selector = "img[data-src]") {
   images.forEach((img) => observer.observe(img));
 }
 
+export function escapeHTML(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function createStateMessage(message) {
   const box = document.createElement("div");
   box.className = "state-box";
@@ -45,12 +57,16 @@ export function createPhotoCard({ title, subtitle, imageUrl, href = "#" }) {
   card.className = "photo-card reveal-up";
   card.href = href;
 
+  const escapedTitle = escapeHTML(title);
+  const escapedSubtitle = escapeHTML(subtitle);
+  const escapedImageUrl = escapeHTML(imageUrl);
+
   card.innerHTML = `
     <div class="photo-media">
-      <img data-src="${imageUrl}" alt="${title}" loading="lazy" />
+      <img data-src="${escapedImageUrl}" alt="${escapedTitle}" loading="lazy" />
     </div>
-    <h3 class="photo-title">${title}</h3>
-    <p class="photo-subtitle">${subtitle || ""}</p>
+    <h3 class="photo-title">${escapedTitle}</h3>
+    <p class="photo-subtitle">${escapedSubtitle}</p>
   `;
 
   return card;
@@ -301,4 +317,77 @@ export function initParallax() {
       ticking = true;
     }
   }, { passive: true });
+}
+
+export async function applySiteSettings() {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from("pricing_content").select("*").eq("id", 1).maybeSingle();
+    if (error || !data) {
+      return null;
+    }
+
+    // Apply navigation visibility
+    const links = document.querySelectorAll(".menu-link, .footer-links a");
+    links.forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      if (href.includes("pricing/") && data.show_pricing === false) {
+        link.style.display = "none";
+      }
+      if (href.includes("weddings/") && data.show_weddings === false) {
+        link.style.display = "none";
+      }
+      if (href.includes("portfolio/") && data.show_portfolio === false) {
+        link.style.display = "none";
+      }
+      if (href.includes("about/") && data.show_about === false) {
+        link.style.display = "none";
+      }
+    });
+
+    // Check if the current page should redirect
+    const path = window.location.pathname;
+    if (path.includes("/pricing/") && data.show_pricing === false) {
+      window.location.replace((document.documentElement.dataset.root || ".") + "/index.html");
+      return data;
+    }
+    if (path.includes("/weddings/") && data.show_weddings === false) {
+      window.location.replace((document.documentElement.dataset.root || ".") + "/index.html");
+      return data;
+    }
+    if (path.includes("/portfolio/") && data.show_portfolio === false) {
+      window.location.replace((document.documentElement.dataset.root || ".") + "/index.html");
+      return data;
+    }
+    if (path.includes("/about/") && data.show_about === false) {
+      window.location.replace((document.documentElement.dataset.root || ".") + "/index.html");
+      return data;
+    }
+
+    // Dynamic Title & Description for public Homepage
+    const isSubdirectory = path.includes("/pricing/") || path.includes("/weddings/") || path.includes("/portfolio/") || path.includes("/about/") || path.includes("/locations/") || path.includes("/legal/");
+    if (!isSubdirectory) {
+      if (data.homepage_title) {
+        document.title = data.homepage_title;
+      }
+      const descMeta = document.querySelector('meta[name="description"]');
+      if (descMeta && data.homepage_description) {
+        descMeta.content = data.homepage_description;
+      }
+    }
+
+    window.SITE_SETTINGS = data;
+    document.dispatchEvent(new CustomEvent("settingsloaded", { detail: data }));
+    return data;
+  } catch (err) {
+    console.warn("Failed to apply site settings", err);
+    return null;
+  }
+}
+
+// Auto-run when DOM content is loaded
+if (typeof window !== "undefined" && !document.body?.classList.contains("admin-page")) {
+  document.addEventListener("DOMContentLoaded", () => {
+    applySiteSettings();
+  });
 }

@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals } from "./ui.js";
+import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML } from "./ui.js";
 
 const list = document.getElementById("weddings-grid");
 
@@ -49,13 +49,17 @@ async function renderWeddings() {
       const card = document.createElement("a");
       card.className = "album-card";
       card.href = `album/index.html?slug=${encodeURIComponent(album.slug)}`;
+      const escapedTitle = escapeHTML(album.title);
+      const escapedDesc = escapeHTML(album.description);
+      const escapedCoverUrl = escapeHTML(album.cover_url || "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=1974&auto=format&fit=crop");
+      const escapedAlt = escapeHTML(buildWeddingCoverAlt(album));
       card.innerHTML = `
         <div class="photo-media">
-          <img data-src="${album.cover_url || "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=1974&auto=format&fit=crop"}" alt="${buildWeddingCoverAlt(album)}" loading="lazy" />
+          <img data-src="${escapedCoverUrl}" alt="${escapedAlt}" loading="lazy" />
         </div>
-        <h3 class="photo-title">${album.title}</h3>
+        <h3 class="photo-title">${escapedTitle}</h3>
         <p class="photo-subtitle">${formatDate(album.date)}</p>
-        ${album.description ? `<p class="album-description">${album.description}</p>` : ""}
+        ${escapedDesc ? `<p class="album-description">${escapedDesc}</p>` : ""}
       `;
       fragment.appendChild(card);
     });

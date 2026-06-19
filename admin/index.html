@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://firnyacuwvxsolxljqxu.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://firnyacuwvxsolxljqxu.supabase.co https://images.unsplash.com; connect-src 'self' https://firnyacuwvxsolxljqxu.supabase.co https://esm.sh; script-src 'self' https://esm.sh; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self';">
   <title>Admin | Oleh Ro</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -14,7 +15,12 @@
   <meta name="theme-color" content="#FAF9F6">
   <link rel="apple-touch-icon" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png">
 </head>
-<body>
+<body class="admin-page">
+  <noscript>
+    <div style="background: #000; color: #fff; padding: 2rem; text-align: center; border-bottom: 1px solid #333;">
+      <p style="margin:0; font-family: sans-serif;">JavaScript is disabled. The site may not load dynamic pricing or photos properly. Please enable JavaScript for the full experience.</p>
+    </div>
+  </noscript>
   <header class="site-header">
     <div class="container header-inner">
       <a class="menu-link" href="../index.html">Public Site</a>
@@ -23,11 +29,11 @@
     </div>
   </header>
   <main class="admin-dashboard-layout">
-    <section id="login-panel" class="panel narrow" style="margin: 0 auto; max-width: 380px; padding: 2.5rem; text-align: center; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); background: #121214;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--admin-accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <h1 style="margin-bottom: 0.5rem; font-size: 1.7rem; font-family: inherit;">Admin Access</h1>
+    <section id="login-panel" class="panel narrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--admin-accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; stroke: var(--admin-accent);"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <h1>Admin Access</h1>
       <p style="color: var(--admin-muted); font-size: 0.85rem; margin-bottom: 2rem;">Sign in using your Supabase credentials.</p>
-      <form id="login-form" style="text-align: left;">
+      <form id="login-form">
         <div class="form-row">
           <label for="email">Email</label>
           <input id="email" name="email" type="email" required autocomplete="email" placeholder="hello@olehro.com" />
@@ -41,7 +47,7 @@
       <p id="login-error" style="color:var(--admin-danger); font-size: 0.85rem; margin-top: 1rem;"></p>
     </section>
     <!-- NEW DASHBOARD WRAPPER -->
-    <div id="dashboard-panel" class="hidden" style="width: 100%; display: flex; flex-direction: inherit; gap: inherit;">
+    <div id="dashboard-panel" class="hidden">
       <aside class="admin-sidebar" id="admin-sidebar">
         <nav class="admin-nav-menu">
           <button type="button" class="admin-nav-button active" data-target="tab-albums">
@@ -59,6 +65,10 @@
           <button type="button" class="admin-nav-button" data-target="tab-pricing">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             Pricing CMS
+          </button>
+          <button type="button" class="admin-nav-button" data-target="tab-settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Site Settings
           </button>
         </nav>
       </aside>
@@ -280,6 +290,116 @@
             </div>
           </article>
         </div>
+        <!-- ========== SETTINGS TAB ========== -->
+        <div id="tab-settings" class="admin-tab-pane">
+          <div class="admin-header-row">
+            <h2>Site Settings</h2>
+            <button id="save-settings-button" type="submit" form="settings-form" class="primary" style="width: auto;">Save Settings</button>
+          </div>
+          <form id="settings-form">
+            <div class="admin-grid" style="grid-template-columns: 1fr 1fr; align-items: start;">
+              <article class="panel">
+                <div class="admin-section">
+                  <div class="admin-card-header"><h3>Navigation & Pricing Toggles</h3></div>
+                  <div class="admin-section-body">
+                    <p style="margin-bottom: 1.5rem;">Hide navigation links, redirect disabled page requests, or show/hide individual pricing collections.</p>
+                    
+                    <h4 style="margin-top: 0; color: var(--admin-accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;">Public Navigation Tabs</h4>
+                    <div class="form-row-checkbox">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-weddings" name="show_weddings" checked />
+                        Show Weddings Page
+                      </label>
+                    </div>
+                    <div class="form-row-checkbox">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-portfolio" name="show_portfolio" checked />
+                        Show Portfolio Page
+                      </label>
+                    </div>
+                    <div class="form-row-checkbox">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-about" name="show_about" checked />
+                        Show About Page
+                      </label>
+                    </div>
+                    <div class="form-row-checkbox" style="margin-bottom: 2rem;">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-pricing" name="show_pricing" checked />
+                        Show Pricing Page
+                      </label>
+                    </div>
+
+                    <h4 style="color: var(--admin-accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;">Pricing Packages</h4>
+                    <div class="form-row-checkbox">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-essentials" name="show_essentials" checked />
+                        Show Essentials Collection
+                      </label>
+                    </div>
+                    <div class="form-row-checkbox">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-signature" name="show_signature" checked />
+                        Show Signature Collection
+                      </label>
+                    </div>
+                    <div class="form-row-checkbox">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-luxury" name="show_luxury" checked />
+                        Show Luxury Collection
+                      </label>
+                    </div>
+                    <div class="form-row-checkbox">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-session" name="show_session" checked />
+                        Show Individual Session
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="admin-section">
+                  <div class="admin-card-header"><h3>SEO & SMM Configuration</h3></div>
+                  <div class="admin-section-body">
+                    <p style="margin-bottom: 1.5rem;">Configure your homepage metadata keywords and SMM booking handles.</p>
+                    
+                    <div class="form-row">
+                      <label for="settings-homepage-title">Homepage SEO Title</label>
+                      <input id="settings-homepage-title" name="homepage_title" type="text" placeholder="Oleh Ro | Wedding Photographer in Denmark" />
+                      <small class="upload-note">Browser tab title and search results header.</small>
+                    </div>
+                    <div class="form-row">
+                      <label for="settings-homepage-description">Homepage Meta Description</label>
+                      <textarea id="settings-homepage-description" name="homepage_description" rows="3" placeholder="Luxury wedding photography in Denmark by Oleh Ro..."></textarea>
+                      <small class="upload-note">Under 160 characters recommended to fit search engine snippet lengths.</small>
+                    </div>
+                    <div class="form-row">
+                      <label for="settings-instagram-handle">Instagram Handle</label>
+                      <input id="settings-instagram-handle" name="instagram_handle" type="text" placeholder="@deusflow" />
+                    </div>
+                    <div class="form-row">
+                      <label for="settings-instagram-dm-url">Instagram DM URL</label>
+                      <input id="settings-instagram-dm-url" name="instagram_dm_url" type="url" placeholder="https://ig.me/m/deusflow" />
+                    </div>
+                    <div class="form-row">
+                      <label for="settings-telegram-url">Telegram Contact URL</label>
+                      <input id="settings-telegram-url" name="telegram_url" type="url" placeholder="https://t.me/deusflow" />
+                    </div>
+                    <div class="form-row">
+                      <label for="settings-whatsapp-url">WhatsApp Contact URL</label>
+                      <input id="settings-whatsapp-url" name="whatsapp_url" type="url" placeholder="https://wa.me/4512345678" />
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+              <p id="settings-status-text" class="upload-note" style="margin-top: 0.7rem; font-size: 0.95rem;"></p>
+            </div>
+          </form>
+        </div>
         <!-- ========== SELECTED ALBUM OVERLAY/SECTION ========== -->
         <article id="selected-album-panel" class="panel hidden" style="margin-top:1.5rem; position: relative;">
           <!-- Close button -->
@@ -357,42 +477,5 @@
   <script src="../config.js"></script>
   <script src="../assets/js/runtime-config.js"></script>
   <script type="module" src="../assets/js/admin.js?v=20260427"></script>
-  <script>
-    // Tab Switching Logic
-    document.addEventListener("DOMContentLoaded", () => {
-      const navButtons = document.querySelectorAll(".admin-nav-button");
-      const tabPanes = document.querySelectorAll(".admin-tab-pane");
-      const selectedAlbumPanel = document.getElementById("selected-album-panel");
-      const closeAlbumBtn = document.getElementById("close-album-btn");
-      navButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-          navButtons.forEach(b => b.classList.remove("active"));
-          tabPanes.forEach(pane => pane.classList.remove("active"));
-          btn.classList.add("active");
-          const targetId = btn.getAttribute("data-target");
-          document.getElementById(targetId).classList.add("active");
-          if (selectedAlbumPanel && targetId !== 'tab-portfolio') {
-             // In tab portfolio it uses selectedAlbumPanel as well. 
-             // We'll let admin.js handle showing it when "Open Portfolio Manager" is clicked
-             selectedAlbumPanel.classList.add("hidden");
-          }
-        });
-      });
-      if(closeAlbumBtn) {
-        closeAlbumBtn.addEventListener("click", () => {
-          selectedAlbumPanel.classList.add("hidden");
-        });
-      }
-      // Also grab portfolio open button to make sure it opens overlay correctly
-      const openPortfolioBtn = document.getElementById("open-portfolio-manager-button");
-      if(openPortfolioBtn) {
-        openPortfolioBtn.addEventListener("click", () => {
-           // when clicked, Admin JS will unhide selectedAlbumPanel, 
-           // but we need to ensure it appears in the DOM under the current tab context if we want it isolated,
-           // but right now it's globally at the bottom of .admin-content-area, which is perfect and will hover/show.
-        });
-      }
-    });
-  </script>
 </body>
 </html>

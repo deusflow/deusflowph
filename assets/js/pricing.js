@@ -183,12 +183,28 @@ async function loadPricingContent() {
     }
   } else if (data) {
     resolved = { ...resolved, ...data };
+
+    // Hide individual packages if configured false
+    if (data.show_essentials === false) hidePackage("essentials");
+    if (data.show_signature === false) hidePackage("signature");
+    if (data.show_luxury === false) hidePackage("luxury");
+    if (data.show_session === false) hidePackage("session");
   }
 
   applyPackagePrices(resolved);
   applyTravelNote(resolved);
   applyServiceSchema(resolved);
   applyUpdatedAt(resolved);
+}
+
+function hidePackage(name) {
+  const priceNode = document.querySelector(`[data-package-price="${name}"]`);
+  if (priceNode) {
+    const article = priceNode.closest(".editorial-menu-item");
+    if (article) {
+      article.style.display = "none";
+    }
+  }
 }
 
 try {

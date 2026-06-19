@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry } from "./ui.js";
+import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, escapeHTML } from "./ui.js";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
@@ -111,9 +111,10 @@ function renderStoryNavigation(currentSlug, albums) {
     const prevLink = document.createElement("a");
     prevLink.className = "story-nav-link";
     prevLink.href = `index.html?slug=${encodeURIComponent(prevAlbum.slug)}`;
+    const escapedPrevTitle = escapeHTML(prevAlbum.title);
     prevLink.innerHTML = `
       <span class="story-nav-label">Previous story</span>
-      <span class="story-nav-title">${prevAlbum.title}</span>
+      <span class="story-nav-title">${escapedPrevTitle}</span>
     `;
     storyNav.appendChild(prevLink);
   }
@@ -122,9 +123,10 @@ function renderStoryNavigation(currentSlug, albums) {
     const nextLink = document.createElement("a");
     nextLink.className = "story-nav-link";
     nextLink.href = `index.html?slug=${encodeURIComponent(nextAlbum.slug)}`;
+    const escapedNextTitle = escapeHTML(nextAlbum.title);
     nextLink.innerHTML = `
       <span class="story-nav-label">Next story</span>
-      <span class="story-nav-title">${nextAlbum.title}</span>
+      <span class="story-nav-title">${escapedNextTitle}</span>
     `;
     storyNav.appendChild(nextLink);
   }
@@ -225,7 +227,9 @@ async function renderAlbum() {
     photos.forEach((photo, index) => {
       const item = document.createElement("article");
       item.className = "masonry-item";
-      item.innerHTML = `<img data-src="${photo.url}" data-lightbox-src="${photo.url}" alt="${buildAlbumPhotoAlt(album, index)}" loading="lazy" />`;
+      const escapedUrl = escapeHTML(photo.url);
+      const escapedAlt = escapeHTML(buildAlbumPhotoAlt(album, index));
+      item.innerHTML = `<img data-src="${escapedUrl}" data-lightbox-src="${escapedUrl}" alt="${escapedAlt}" loading="lazy" />`;
       nodes.push(item);
     });
 

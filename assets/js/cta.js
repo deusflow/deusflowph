@@ -60,6 +60,61 @@
         // Clipboard access can be blocked by browser permissions.
       }
     });
+
+    function applyCtaLinks(settings) {
+      if (!settings) return;
+      const handle = settings.instagram_handle || config.INSTAGRAM_HANDLE || "@deusflow";
+      const user = String(handle).replace(/^@/, "") || "deusflow";
+      const igDmUrl = settings.instagram_dm_url || config.INSTAGRAM_DM_URL || `https://ig.me/m/${user}`;
+      const waUrl = settings.whatsapp_url || config.WHATSAPP_URL || "";
+      const tgUrl = settings.telegram_url || config.TELEGRAM_URL || "";
+
+      const ctaBtn = document.getElementById("global-chat-cta");
+      const stickyBtn = document.querySelector(".mobile-sticky-cta-button");
+      if (ctaBtn) {
+        ctaBtn.href = igDmUrl;
+      }
+      if (stickyBtn) {
+        stickyBtn.href = igDmUrl;
+      }
+
+      // Update static page contacts (Telegram, WhatsApp)
+      const tgLinks = document.querySelectorAll("[data-runtime-link='telegram']");
+      tgLinks.forEach((link) => {
+        if (tgUrl) {
+          link.href = tgUrl;
+          link.style.display = "";
+        } else {
+          link.style.display = "none";
+        }
+      });
+
+      const waLinks = document.querySelectorAll("[data-runtime-link='whatsapp']");
+      waLinks.forEach((link) => {
+        if (waUrl) {
+          link.href = waUrl;
+          link.style.display = "";
+        } else {
+          link.style.display = "none";
+        }
+      });
+
+      // Instagram links
+      const igLinks = document.querySelectorAll("a[href*='instagram.com']");
+      igLinks.forEach((link) => {
+        if (user && !link.classList.contains("menu-link")) {
+          link.href = `https://instagram.com/${user}`;
+        }
+      });
+    }
+
+    document.addEventListener("settingsloaded", (event) => {
+      applyCtaLinks(event.detail);
+    });
+
+    if (window.SITE_SETTINGS) {
+      applyCtaLinks(window.SITE_SETTINGS);
+    }
   } catch (error) {
     console.warn("Global CTA init failed", error);
   }

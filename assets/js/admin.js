@@ -82,6 +82,28 @@ const pricingSessionInput = document.getElementById("pricing-session");
 const pricingTravelNoteInput = document.getElementById("pricing-travel-note");
 const pricingStatusText = document.getElementById("pricing-status-text");
 
+const settingsForm = document.getElementById("settings-form");
+const saveSettingsButton = document.getElementById("save-settings-button");
+const settingsStatusText = document.getElementById("settings-status-text");
+
+const settingsShowWeddings = document.getElementById("settings-show-weddings");
+const settingsShowPortfolio = document.getElementById("settings-show-portfolio");
+const settingsShowAbout = document.getElementById("settings-show-about");
+const settingsShowPricing = document.getElementById("settings-show-pricing");
+
+const settingsShowEssentials = document.getElementById("settings-show-essentials");
+const settingsShowSignature = document.getElementById("settings-show-signature");
+const settingsShowLuxury = document.getElementById("settings-show-luxury");
+const settingsShowSession = document.getElementById("settings-show-session");
+
+const settingsHomepageTitle = document.getElementById("settings-homepage-title");
+const settingsHomepageDescription = document.getElementById("settings-homepage-description");
+
+const settingsInstagramHandle = document.getElementById("settings-instagram-handle");
+const settingsInstagramDmUrl = document.getElementById("settings-instagram-dm-url");
+const settingsTelegramUrl = document.getElementById("settings-telegram-url");
+const settingsWhatsappUrl = document.getElementById("settings-whatsapp-url");
+
 const testimonialFields = [
   {
     name: document.getElementById("testimonial-1-name"),
@@ -155,6 +177,16 @@ function setupTestimonialReorder() {
     field.down?.addEventListener("click", () => swapTestimonialValues(index, index + 1));
   });
   updateTestimonialMoveButtons();
+}
+
+function escapeHTML(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function normalizeMultilineText(value) {
@@ -231,7 +263,93 @@ async function loadPricingContentAdmin() {
 
   state.pricingContent = resolved;
   fillPricingForm({ ...defaults, ...resolved });
+  fillSettingsForm(resolved);
   setPricingStatus("Pricing content loaded.");
+}
+
+function fillSettingsForm(content) {
+  if (!settingsForm) return;
+  settingsShowWeddings.checked = content.show_weddings !== false;
+  settingsShowPortfolio.checked = content.show_portfolio !== false;
+  settingsShowAbout.checked = content.show_about !== false;
+  settingsShowPricing.checked = content.show_pricing !== false;
+
+  settingsShowEssentials.checked = content.show_essentials !== false;
+  settingsShowSignature.checked = content.show_signature !== false;
+  settingsShowLuxury.checked = content.show_luxury !== false;
+  settingsShowSession.checked = content.show_session !== false;
+
+  settingsHomepageTitle.value = content.homepage_title || "";
+  settingsHomepageDescription.value = content.homepage_description || "";
+
+  settingsInstagramHandle.value = content.instagram_handle || "";
+  settingsInstagramDmUrl.value = content.instagram_dm_url || "";
+  settingsTelegramUrl.value = content.telegram_url || "";
+  settingsWhatsappUrl.value = content.whatsapp_url || "";
+}
+
+async function saveSiteSettings(event) {
+  event.preventDefault();
+  if (!settingsForm || !saveSettingsButton) return;
+
+  saveSettingsButton.disabled = true;
+  saveSettingsButton.textContent = "Saving...";
+  setUploadStatus("Saving Site Settings...", 30);
+  if (settingsStatusText) {
+    settingsStatusText.textContent = "Saving settings...";
+    settingsStatusText.style.color = "rgba(232, 226, 217, 0.72)";
+  }
+
+  const payload = {
+    show_weddings: settingsShowWeddings.checked,
+    show_portfolio: settingsShowPortfolio.checked,
+    show_about: settingsShowAbout.checked,
+    show_pricing: settingsShowPricing.checked,
+    show_essentials: settingsShowEssentials.checked,
+    show_signature: settingsShowSignature.checked,
+    show_luxury: settingsShowLuxury.checked,
+    show_session: settingsShowSession.checked,
+    homepage_title: settingsHomepageTitle.value.trim() || null,
+    homepage_description: settingsHomepageDescription.value.trim() || null,
+    instagram_handle: settingsInstagramHandle.value.trim() || null,
+    instagram_dm_url: settingsInstagramDmUrl.value.trim() || null,
+    telegram_url: settingsTelegramUrl.value.trim() || null,
+    whatsapp_url: settingsWhatsappUrl.value.trim() || null,
+    updated_at: new Date().toISOString()
+  };
+
+  const supabase = getSupabase();
+  try {
+    const result = await supabase
+      .from("pricing_content")
+      .update(payload)
+      .eq("id", 1)
+      .select("*")
+      .maybeSingle();
+
+    if (result.error) throw result.error;
+
+    if (result.data) {
+      state.pricingContent = result.data;
+      fillSettingsForm(result.data);
+      fillPricingForm({ ...getDefaultPricingPayload(), ...result.data });
+    }
+
+    setUploadStatus("Site settings saved.", 100);
+    if (settingsStatusText) {
+      settingsStatusText.textContent = "Site settings saved.";
+      settingsStatusText.style.color = "rgba(232, 226, 217, 0.72)";
+    }
+  } catch (err) {
+    setUploadStatus(`Could not save settings: ${err.message}`, 0, "error");
+    if (settingsStatusText) {
+      settingsStatusText.textContent = `Could not save settings: ${err.message}`;
+      settingsStatusText.style.color = "#d39e9e";
+    }
+  } finally {
+    saveSettingsButton.disabled = false;
+    saveSettingsButton.textContent = "Save Settings";
+  }
 }
 
 function toNonNegativeInteger(value) {
@@ -1003,12 +1121,12 @@ async function loadAlbums() {
     const info = document.createElement("div");
     info.className = "album-info-wrap";
     const orderText = album.type === "wedding" && weddingIndex >= 0 ? ` | order: ${weddingIndex + 1}` : "";
-    const coverHtml = album.cover_url ? `<img src="${album.cover_url}" class="album-list-thumb" alt="cover" />` : `<div class="album-list-thumb empty">No Cover</div>`;
+    const coverHtml = album.cover_url ? `<img src="${escapeHTML(album.cover_url)}" class="album-list-thumb" alt="cover" />` : `<div class="album-list-thumb empty">No Cover</div>`;
     info.innerHTML = `
       ${coverHtml}
       <div>
-        <strong>${album.title}</strong><br />
-        <span class="photo-subtitle">${album.type.toUpperCase()} | ${formatDate(album.date)} | ${album.slug}${orderText}</span>
+        <strong>${escapeHTML(album.title)}</strong><br />
+        <span class="photo-subtitle">${escapeHTML(album.type.toUpperCase())} | ${formatDate(album.date)} | ${escapeHTML(album.slug)}${orderText}</span>
       </div>
     `;
 
@@ -1753,6 +1871,35 @@ async function uploadPhotos(files) {
   }
 }
 
+function setupTabSwitching() {
+  const navButtons = document.querySelectorAll(".admin-nav-button");
+  const tabPanes = document.querySelectorAll(".admin-tab-pane");
+  const selectedAlbumPanel = document.getElementById("selected-album-panel");
+  const closeAlbumBtn = document.getElementById("close-album-btn");
+
+  navButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      navButtons.forEach((b) => b.classList.remove("active"));
+      tabPanes.forEach((pane) => pane.classList.remove("active"));
+      btn.classList.add("active");
+      const targetId = btn.getAttribute("data-target");
+      const targetPane = document.getElementById(targetId);
+      if (targetPane) {
+        targetPane.classList.add("active");
+      }
+      if (selectedAlbumPanel && targetId !== "tab-portfolio") {
+        selectedAlbumPanel.classList.add("hidden");
+      }
+    });
+  });
+
+  if (closeAlbumBtn && selectedAlbumPanel) {
+    closeAlbumBtn.addEventListener("click", () => {
+      selectedAlbumPanel.classList.add("hidden");
+    });
+  }
+}
+
 function setupDropzone() {
   dropzone.addEventListener("dragover", (event) => {
     event.preventDefault();
@@ -1834,6 +1981,7 @@ logoutButton.addEventListener("click", async () => {
   setAuthView(false);
 });
 
+setupTabSwitching();
 setupDropzone();
 setUploadStatus("No upload in progress.", 0);
 compactViewButton.addEventListener("click", () => {
@@ -1873,6 +2021,10 @@ if (aboutForm) {
 
 if (pricingForm) {
   pricingForm.addEventListener("submit", savePricingContent);
+}
+
+if (settingsForm) {
+  settingsForm.addEventListener("submit", saveSiteSettings);
 }
 
 setupTestimonialReorder();
