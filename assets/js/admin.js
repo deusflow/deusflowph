@@ -581,6 +581,12 @@ async function saveAboutContent(event) {
   let nextPhotoUrl = previousPhotoUrl;
   const nextPhotoFile = aboutPhotoInput?.files?.[0] || null;
 
+  if (nextPhotoFile && nextPhotoFile.size > 10 * 1024 * 1024) {
+    setUploadStatus("Portrait image exceeds 10MB limit. Please compress it first.", 0, "error");
+    setAboutStatus("Portrait image exceeds 10MB limit. Please compress it first.", "error");
+    return;
+  }
+
   try {
     if (nextPhotoFile) {
       const extension = nextPhotoFile.name.split(".").pop() || "jpg";
@@ -1650,6 +1656,11 @@ async function createAlbum(event) {
     return;
   }
 
+  if (coverFile && coverFile.size > 10 * 1024 * 1024) {
+    setUploadStatus("Cover image exceeds 10MB limit. Please compress it first.", 0, "error");
+    return;
+  }
+
   setUploadStatus("Creating album...", 20);
 
   const slug = slugInputValue ? slugify(slugInputValue) : slugify(`${title}-${Date.now()}`);
@@ -1736,6 +1747,11 @@ async function saveAlbumDetails(event) {
   const previousCoverUrl = state.selectedAlbum.cover_url || null;
   let nextCoverUrl = previousCoverUrl;
 
+  if (nextCoverFile && nextCoverFile.size > 10 * 1024 * 1024) {
+    setUploadStatus("Cover image exceeds 10MB limit. Please compress it first.", 0, "error");
+    return;
+  }
+
   if (nextCoverFile) {
     const extension = nextCoverFile.name.split(".").pop() || "jpg";
     const coverPath = `covers/${state.selectedAlbum.slug}-${Date.now()}.${extension}`;
@@ -1813,8 +1829,25 @@ async function uploadPhotos(files) {
     return;
   }
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const tooLargeFiles = imageFiles.filter((file) => file.size > MAX_FILE_SIZE);
+  const allowedFiles = imageFiles.filter((file) => file.size <= MAX_FILE_SIZE);
+
+  if (tooLargeFiles.length > 0) {
+    if (allowedFiles.length === 0) {
+      setUploadStatus(`All selected files exceed the 10MB limit (e.g., ${tooLargeFiles[0].name}). Please compress them first.`, 0, "error");
+      return;
+    } else {
+      setUploadStatus(`Skipping ${tooLargeFiles.length} file(s) exceeding 10MB. Uploading remaining ${allowedFiles.length} file(s)...`, 0, "error");
+      // Let the user see the warning for a second before continuing
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+  }
+
+  const filesToUpload = allowedFiles;
+
   const supabase = getSupabase();
-  const total = imageFiles.length;
+  const total = filesToUpload.length;
   let uploaded = 0;
   let failed = 0;
 
@@ -1827,7 +1860,7 @@ async function uploadPhotos(files) {
   setUploadBusy(true);
   setUploadStatus(`Uploading 0/${total} photos...`, 0);
 
-  for (const file of imageFiles) {
+  for (const file of filesToUpload) {
     const completed = uploaded + failed;
     const startedPercent = total > 0 ? (completed / total) * 100 : 0;
     setUploadStatus(`Uploading ${completed + 1}/${total}: ${file.name}`, startedPercent);

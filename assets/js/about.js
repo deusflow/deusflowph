@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage, initScrollReveals } from "./ui.js";
+import { createStateMessage, initScrollReveals, getOptimizedImageUrl } from "./ui.js";
 
 const photoNode = document.getElementById("about-photo");
 const storyNode = document.getElementById("about-story");
@@ -110,7 +110,7 @@ function renderAbout(content) {
   };
 
   if (photoNode && about.photo_url) {
-    photoNode.src = about.photo_url;
+    photoNode.src = getOptimizedImageUrl(about.photo_url, 1200);
   }
   
   renderRichText(storyNode, about.story);

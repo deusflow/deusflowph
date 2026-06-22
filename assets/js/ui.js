@@ -45,6 +45,31 @@ export function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
+export function getOptimizedImageUrl(url, width) {
+  if (!url) return "";
+
+  const config = window.APP_CONFIG || {};
+  if (!config.ENABLE_IMAGE_TRANSFORMATION) {
+    return url;
+  }
+
+  try {
+    const supabaseUrl = config.SUPABASE_URL;
+    if (supabaseUrl && url.startsWith(supabaseUrl)) {
+      let optimized = url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+      if (optimized !== url) {
+        const separator = optimized.includes("?") ? "&" : "?";
+        optimized = `${optimized}${separator}width=${width}&quality=82`;
+        return optimized;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to optimize image URL", err);
+  }
+
+  return url;
+}
+
 export function createStateMessage(message) {
   const box = document.createElement("div");
   box.className = "state-box";
@@ -59,7 +84,7 @@ export function createPhotoCard({ title, subtitle, imageUrl, href = "#" }) {
 
   const escapedTitle = escapeHTML(title);
   const escapedSubtitle = escapeHTML(subtitle);
-  const escapedImageUrl = escapeHTML(imageUrl);
+  const escapedImageUrl = escapeHTML(getOptimizedImageUrl(imageUrl, 800));
 
   card.innerHTML = `
     <div class="photo-media">

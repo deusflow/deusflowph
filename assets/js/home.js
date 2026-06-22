@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML } from "./ui.js";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl } from "./ui.js";
 
 const featuredGrid = document.getElementById("featured-grid");
 const heroImage = document.getElementById("hero-image");
@@ -163,7 +163,7 @@ async function loadFeatured() {
       card.className = "photo-card";
       card.href = `weddings/album/index.html?slug=${encodeURIComponent(album.slug)}`;
       const escapedTitle = escapeHTML(album.title);
-      const escapedImgUrl = escapeHTML(imageUrl);
+      const escapedImgUrl = escapeHTML(getOptimizedImageUrl(imageUrl, 800));
       const escapedAlt = escapeHTML(buildFeaturedAlt(album));
       card.innerHTML = `
         <div class="photo-media">

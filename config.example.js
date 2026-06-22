@@ -13,5 +13,6 @@ window.APP_CONFIG = {
   INSTAGRAM_DM_URL: "https://ig.me/m/deusflow",
   TELEGRAM_URL: "https://t.me/OflowPhotography",
   WHATSAPP_URL: "https://wa.me/4550300636",
-  BRIEF_TEMPLATE: "Hi Oleh! Wedding inquiry:\n- Date:\n- City:\n- Format (wedding/elopement/session):\n- Budget range:\n- Guest count:\n- Link to inspiration:"
+  BRIEF_TEMPLATE: "Hi Oleh! Wedding inquiry:\n- Date:\n- City:\n- Format (wedding/elopement/session):\n- Budget range:\n- Guest count:\n- Link to inspiration:",
+  ENABLE_IMAGE_TRANSFORMATION: false
 };
