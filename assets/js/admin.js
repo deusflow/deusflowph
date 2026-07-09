@@ -801,14 +801,14 @@ function refreshAlbumMeta(photoCount) {
 }
 
 function clearPhotoDropTargets() {
-  photosList.querySelectorAll(".photo-row.drop-target").forEach((node) => {
+  photosList.querySelectorAll(".photo-card-premium.drop-target").forEach((node) => {
     node.classList.remove("drop-target");
   });
 }
 
 function clearPendingMoves() {
   state.pendingMoves.clear();
-  photosList.querySelectorAll(".move-to-input").forEach((input) => {
+  photosList.querySelectorAll(".photo-card-position-input").forEach((input) => {
     input.value = "";
     input.classList.remove("is-staged");
   });
@@ -889,6 +889,7 @@ async function persistWeddingAlbumOrder(reorderedAlbums, supabaseClient = null) 
   const supabase = supabaseClient || getSupabase();
   const oldOrder = new Map(getWeddingAlbumsSorted().map((album) => [album.id, getDisplayOrderValue(album.display_order)]));
 
+  const promises = [];
   for (let index = 0; index < reorderedAlbums.length; index += 1) {
     const album = reorderedAlbums[index];
     const nextOrder = index + 1;
@@ -896,18 +897,56 @@ async function persistWeddingAlbumOrder(reorderedAlbums, supabaseClient = null) 
       continue;
     }
 
-    const { error } = await supabase
-      .from("albums")
-      .update({ display_order: nextOrder })
-      .eq("id", album.id);
+    promises.push(
+      supabase
+        .from("albums")
+        .update({ display_order: nextOrder })
+        .eq("id", album.id)
+    );
+  }
 
-    if (error) {
-      setUploadStatus(`Could not reorder albums: ${error.message}`, 0, "error");
-      return false;
-    }
+  if (promises.length === 0) {
+    return true;
+  }
+
+  const results = await Promise.all(promises);
+  const failed = results.find((r) => r.error);
+  if (failed) {
+    setUploadStatus(`Could not reorder albums: ${failed.error.message}`, 0, "error");
+    return false;
   }
 
   return true;
+}
+
+async function saveNewAlbumDOMOrder() {
+  const albumRows = Array.from(albumsList.querySelectorAll(".album-row"));
+  const reordered = [];
+
+  albumRows.forEach((row) => {
+    const albumId = row.dataset.id;
+    const album = state.albums.find((a) => a.id === albumId);
+    if (album && album.type === "wedding") {
+      reordered.push(album);
+    }
+  });
+
+  if (reordered.length === 0) {
+    return;
+  }
+
+  state.albumReorderInProgress = true;
+  setUploadStatus("Saving album order...", 30);
+
+  const success = await persistWeddingAlbumOrder(reordered);
+  state.albumReorderInProgress = false;
+
+  if (success) {
+    await loadAlbums();
+    setUploadStatus("Album order saved.", 100);
+  } else {
+    setUploadStatus("Album order save failed.", 0, "error");
+  }
 }
 
 async function applyPendingAlbumOrderChanges() {
@@ -1124,6 +1163,56 @@ async function loadAlbums() {
     const weddingAlbumsCurrent = getWeddingAlbumsSorted();
     const weddingIndex = album.type === "wedding" ? weddingAlbumsCurrent.findIndex((item) => item.id === album.id) : -1;
 
+    if (album.type === "wedding" && weddingIndex >= 0) {
+      row.draggable = true;
+      row.dataset.id = album.id;
+      row.dataset.index = String(weddingIndex);
+
+      row.addEventListener("dragstart", (event) => {
+        if (state.albumReorderInProgress) {
+          event.preventDefault();
+          return;
+        }
+        state.dragSourceIndex = weddingIndex;
+        row.classList.add("dragging");
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", String(weddingIndex));
+        }
+      });
+
+      row.addEventListener("dragend", () => {
+        state.dragSourceIndex = null;
+        row.classList.remove("dragging");
+        albumsList.querySelectorAll(".album-row").forEach((r) => r.classList.remove("drop-target"));
+      });
+
+      row.addEventListener("dragover", (event) => {
+        if (state.albumReorderInProgress) {
+          return;
+        }
+        event.preventDefault();
+
+        const draggingElement = albumsList.querySelector(".album-row.dragging");
+        if (draggingElement && draggingElement !== row) {
+          row.classList.add("drop-target");
+          const rect = row.getBoundingClientRect();
+          const next = (event.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+          albumsList.insertBefore(draggingElement, next ? row.nextSibling : row);
+        }
+      });
+
+      row.addEventListener("dragleave", () => {
+        row.classList.remove("drop-target");
+      });
+
+      row.addEventListener("drop", async (event) => {
+        event.preventDefault();
+        row.classList.remove("drop-target");
+        await saveNewAlbumDOMOrder();
+      });
+    }
+
     const info = document.createElement("div");
     info.className = "album-info-wrap";
     const orderText = album.type === "wedding" && weddingIndex >= 0 ? ` | order: ${weddingIndex + 1}` : "";
@@ -1171,12 +1260,12 @@ async function loadAlbums() {
     deleteButton.className = "danger";
     deleteButton.textContent = "Delete";
     deleteButton.addEventListener("click", async () => {
-      const confirmed = window.confirm(`Delete album \"${album.title}\" and all related photos?`);
+      const confirmed = window.confirm(`Delete album "${album.title}" and all related photos?`);
       if (!confirmed) {
         return;
       }
 
-      setUploadStatus(`Deleting album \"${album.title}\"...`, 20);
+      setUploadStatus(`Deleting album "${album.title}"...`, 20);
       try {
         await deleteAlbum(album.id);
         if (state.selectedAlbum && state.selectedAlbum.id === album.id) {
@@ -1197,8 +1286,12 @@ async function loadAlbums() {
       upButton.className = "ghost";
       upButton.textContent = "Up";
       upButton.disabled = weddingIndex === 0;
-      upButton.addEventListener("click", () => {
-        stageAlbumMove(album.id, String(Math.max(1, weddingIndex)), weddingAlbumsCurrent.length);
+      upButton.addEventListener("click", async () => {
+        const sibling = row.previousSibling;
+        if (sibling && sibling.classList.contains("album-row")) {
+          albumsList.insertBefore(row, sibling);
+          await saveNewAlbumDOMOrder();
+        }
       });
 
       const downButton = document.createElement("button");
@@ -1206,8 +1299,12 @@ async function loadAlbums() {
       downButton.className = "ghost";
       downButton.textContent = "Down";
       downButton.disabled = weddingIndex === weddingAlbumsCurrent.length - 1;
-      downButton.addEventListener("click", () => {
-        stageAlbumMove(album.id, String(Math.min(weddingAlbumsCurrent.length, weddingIndex + 2)), weddingAlbumsCurrent.length);
+      downButton.addEventListener("click", async () => {
+        const sibling = row.nextSibling;
+        if (sibling && sibling.classList.contains("album-row")) {
+          albumsList.insertBefore(row, sibling.nextSibling);
+          await saveNewAlbumDOMOrder();
+        }
       });
 
       const moveWrap = document.createElement("div");
@@ -1225,13 +1322,26 @@ async function loadAlbums() {
       moveButton.type = "button";
       moveButton.className = "ghost";
       moveButton.textContent = "Set";
-      moveButton.addEventListener("click", () => {
-        stageAlbumMove(album.id, moveInput.value, weddingAlbumsCurrent.length, moveInput);
-      });
-      moveInput.addEventListener("keydown", (event) => {
+
+      const moveAlbumToPosition = async () => {
+        const pos = parseTargetPosition(moveInput.value, weddingAlbumsCurrent.length);
+        if (pos === null) return;
+        const targetRow = albumsList.children[pos];
+        if (targetRow && targetRow !== row) {
+          if (pos > weddingIndex) {
+            albumsList.insertBefore(row, targetRow.nextSibling);
+          } else {
+            albumsList.insertBefore(row, targetRow);
+          }
+          await saveNewAlbumDOMOrder();
+        }
+      };
+
+      moveButton.addEventListener("click", moveAlbumToPosition);
+      moveInput.addEventListener("keydown", async (event) => {
         if (event.key === "Enter") {
           event.preventDefault();
-          stageAlbumMove(album.id, moveInput.value, weddingAlbumsCurrent.length, moveInput);
+          await moveAlbumToPosition();
         }
       });
 
@@ -1334,20 +1444,66 @@ async function persistPhotoOrder(reorderedPhotos, supabaseClient = null) {
   const normalized = reorderedPhotos.map((photo, index) => ({ ...photo, display_order: index + 1 }));
   const changedRows = normalized.filter((photo) => oldOrder.get(photo.id) !== photo.display_order);
 
-  for (const row of changedRows) {
-    const { error } = await supabase
+  const promises = changedRows.map((row) =>
+    supabase
       .from("photos")
       .update({ display_order: row.display_order })
-      .eq("id", row.id);
+      .eq("id", row.id)
+  );
 
-    if (error) {
-      setUploadStatus(`Could not reorder photos: ${error.message}`, 0, "error");
-      return false;
-    }
+  if (promises.length === 0) {
+    state.selectedAlbumPhotos = normalized;
+    return true;
+  }
+
+  const results = await Promise.all(promises);
+  const failed = results.find((r) => r.error);
+  if (failed) {
+    setUploadStatus(`Could not reorder photos: ${failed.error.message}`, 0, "error");
+    return false;
   }
 
   state.selectedAlbumPhotos = normalized;
   return true;
+}
+
+async function saveNewPhotoDOMOrder() {
+  const photoCards = Array.from(photosList.querySelectorAll(".photo-card-premium"));
+  const reordered = [];
+
+  photoCards.forEach((card) => {
+    const photoId = card.dataset.id;
+    const photo = state.selectedAlbumPhotos.find((p) => p.id === photoId);
+    if (photo) {
+      reordered.push(photo);
+    }
+  });
+
+  if (reordered.length === 0) {
+    return;
+  }
+
+  state.reorderInProgress = true;
+  setUploadStatus("Saving photo order...", 30);
+
+  const success = await persistPhotoOrder(reordered);
+  state.reorderInProgress = false;
+
+  if (success) {
+    reordered.forEach((photo, index) => {
+      const card = photosList.querySelector(`.photo-card-premium[data-id="${photo.id}"]`);
+      if (card) {
+        card.dataset.index = String(index);
+        const badge = card.querySelector(".photo-card-badge");
+        if (badge) {
+          badge.textContent = `#${index + 1}`;
+        }
+      }
+    });
+    setUploadStatus("Photo order saved.", 100);
+  } else {
+    setUploadStatus("Photo order save failed.", 0, "error");
+  }
 }
 
 async function applyPendingOrderChanges() {
@@ -1448,187 +1604,222 @@ async function loadPhotos(albumId) {
 
   photos.forEach((photo, index) => {
     const row = document.createElement("div");
-    row.className = "photo-row";
+    row.className = "photo-card-premium";
     row.draggable = true;
+    row.dataset.id = photo.id;
     row.dataset.index = String(index);
 
+    // Image container
+    const media = document.createElement("div");
+    media.className = "photo-card-media";
+    const img = document.createElement("img");
+    img.src = photo.url;
+    img.alt = `Photo ${index + 1}`;
+    img.loading = "lazy";
+    media.appendChild(img);
+
+    // Order indicator Badge
+    const badge = document.createElement("div");
+    badge.className = "photo-card-badge";
+    badge.textContent = `#${index + 1}`;
+
+    // Delete Button
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "photo-card-delete-btn";
+    deleteBtn.title = "Delete photo permanently";
+    deleteBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17"></line>
+      </svg>
+    `;
+
+    deleteBtn.addEventListener("click", async () => {
+      const confirmed = window.confirm("Delete this photo permanently?");
+      if (!confirmed) {
+        return;
+      }
+
+      row.remove();
+
+      const deletedIndex = state.selectedAlbumPhotos.findIndex((p) => p.id === photo.id);
+      if (deletedIndex !== -1) {
+        state.selectedAlbumPhotos.splice(deletedIndex, 1);
+      }
+
+      refreshAlbumMeta(state.selectedAlbumPhotos.length);
+
+      const cards = Array.from(photosList.querySelectorAll(".photo-card-premium"));
+      cards.forEach((card, idx) => {
+        card.dataset.index = String(idx);
+        const b = card.querySelector(".photo-card-badge");
+        if (b) {
+          b.textContent = `#${idx + 1}`;
+        }
+      });
+
+      setUploadStatus("Deleting photo...", 40);
+
+      try {
+        const path = storagePathFromPublicUrl(photo.url);
+        if (path) {
+          await supabase.storage.from("photos").remove([path]);
+        }
+
+        const { error: deleteError } = await supabase.from("photos").delete().eq("id", photo.id);
+        if (deleteError) {
+          setUploadStatus(deleteError.message, 0, "error");
+          return;
+        }
+
+        await persistPhotoOrder(state.selectedAlbumPhotos);
+        setUploadStatus("Photo deleted and order updated.", 100);
+      } catch (err) {
+        setUploadStatus(`Error deleting photo: ${err.message}`, 0, "error");
+      }
+    });
+
+    // Info footer
+    const info = document.createElement("div");
+    info.className = "photo-card-info";
+
+    // Set cover button
+    const isCover = state.selectedAlbum.cover_url === photo.url;
+    const coverBtn = document.createElement("button");
+    coverBtn.type = "button";
+    coverBtn.className = `photo-card-cover-btn ${isCover ? "is-cover" : ""}`;
+    coverBtn.style.color = isCover ? "var(--admin-accent)" : "var(--admin-muted)";
+    coverBtn.title = "Set as album cover";
+    coverBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="${isCover ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+      </svg>
+      <span>Cover</span>
+    `;
+
+    coverBtn.addEventListener("click", async () => {
+      if (state.selectedAlbum.cover_url === photo.url) {
+        return;
+      }
+
+      setUploadStatus("Updating album cover...", 30);
+      const { error: coverError } = await supabase
+        .from("albums")
+        .update({ cover_url: photo.url })
+        .eq("id", albumId);
+
+      if (coverError) {
+        setUploadStatus(`Could not update cover: ${coverError.message}`, 0, "error");
+        return;
+      }
+
+      state.selectedAlbum.cover_url = photo.url;
+      if (editCoverPreview) {
+        editCoverPreview.src = photo.url;
+        editCoverPreview.style.display = "block";
+      }
+
+      photosList.querySelectorAll(".photo-card-cover-btn").forEach((btn) => {
+        btn.classList.remove("is-cover");
+        btn.style.color = "var(--admin-muted)";
+        const starSvg = btn.querySelector("svg");
+        if (starSvg) starSvg.setAttribute("fill", "none");
+      });
+
+      coverBtn.classList.add("is-cover");
+      coverBtn.style.color = "var(--admin-accent)";
+      const currentStar = coverBtn.querySelector("svg");
+      if (currentStar) currentStar.setAttribute("fill", "currentColor");
+
+      setUploadStatus("Album cover updated.", 100);
+    });
+
+    // Position input
+    const posInput = document.createElement("input");
+    posInput.type = "number";
+    posInput.className = "photo-card-position-input";
+    posInput.min = "1";
+    posInput.max = String(photos.length);
+    posInput.value = String(index + 1);
+    posInput.title = "Jump to position";
+
+    const movePhotoToPosition = async () => {
+      const pos = parseTargetPosition(posInput.value, photos.length);
+      if (pos === null) {
+        setUploadStatus(`Enter a position from 1 to ${photos.length}.`, 0, "error");
+        return;
+      }
+
+      const cards = Array.from(photosList.querySelectorAll(".photo-card-premium"));
+      const targetCard = cards[pos];
+      if (targetCard && targetCard !== row) {
+        if (pos > index) {
+          photosList.insertBefore(row, targetCard.nextSibling);
+        } else {
+          photosList.insertBefore(row, targetCard);
+        }
+        await saveNewPhotoDOMOrder();
+      }
+    };
+
+    posInput.addEventListener("keydown", async (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        await movePhotoToPosition();
+      }
+    });
+
+    info.appendChild(coverBtn);
+    info.appendChild(posInput);
+
+    // Drag-and-drop Events
     row.addEventListener("dragstart", (event) => {
       if (state.reorderInProgress) {
         event.preventDefault();
         return;
       }
-
       state.dragSourceIndex = index;
       row.classList.add("dragging");
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", String(index));
+        event.dataTransfer.setData("text/plain", photo.id);
       }
     });
 
-    row.addEventListener("dragend", () => {
+    row.addEventListener("dragend", async () => {
       state.dragSourceIndex = null;
       row.classList.remove("dragging");
-      clearPhotoDropTargets();
+      photosList.querySelectorAll(".photo-card-premium").forEach((c) => c.classList.remove("drop-target"));
+      await saveNewPhotoDOMOrder();
     });
 
     row.addEventListener("dragover", (event) => {
       if (state.reorderInProgress) {
         return;
       }
-
       event.preventDefault();
-      clearPhotoDropTargets();
-      row.classList.add("drop-target");
-      handleDragAutoScroll(event);
-      if (event.dataTransfer) {
-        event.dataTransfer.dropEffect = "move";
+
+      const draggingElement = photosList.querySelector(".photo-card-premium.dragging");
+      if (draggingElement && draggingElement !== row) {
+        row.classList.add("drop-target");
+        const rect = row.getBoundingClientRect();
+        const next = (event.clientX - rect.left) / (rect.right - rect.left) > 0.5;
+        photosList.insertBefore(draggingElement, next ? row.nextSibling : row);
       }
+      handleDragAutoScroll(event);
     });
 
     row.addEventListener("dragleave", () => {
       row.classList.remove("drop-target");
     });
 
-    row.addEventListener("drop", async (event) => {
-      event.preventDefault();
-      clearPhotoDropTargets();
-
-      const targetIndex = Number(row.dataset.index);
-      const sourceFromData = event.dataTransfer ? Number(event.dataTransfer.getData("text/plain")) : Number.NaN;
-      const sourceIndex = Number.isInteger(sourceFromData) ? sourceFromData : state.dragSourceIndex;
-
-      if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex)) {
-        return;
-      }
-
-      await movePhotoByIndex(sourceIndex, targetIndex);
-    });
-
-    const info = document.createElement("div");
-    info.innerHTML = `
-      <strong>Order: ${photo.display_order}</strong><br />
-      <span class="photo-subtitle">${photo.id}</span>
-    `;
-
-    const actions = document.createElement("div");
-    actions.className = "photo-actions";
-
-    const upButton = document.createElement("button");
-    upButton.type = "button";
-    upButton.className = "ghost";
-    upButton.textContent = "Up";
-    upButton.disabled = index === 0;
-    upButton.addEventListener("click", () => movePhotoByIndex(index, index - 1));
-
-    const downButton = document.createElement("button");
-    downButton.type = "button";
-    downButton.className = "ghost";
-    downButton.textContent = "Down";
-    downButton.disabled = index === photos.length - 1;
-    downButton.addEventListener("click", () => movePhotoByIndex(index, index + 1));
-
-    const topButton = document.createElement("button");
-    topButton.type = "button";
-    topButton.className = "ghost";
-    topButton.textContent = "Top";
-    topButton.disabled = index === 0;
-    topButton.addEventListener("click", () => movePhotoByIndex(index, 0));
-
-    const bottomButton = document.createElement("button");
-    bottomButton.type = "button";
-    bottomButton.className = "ghost";
-    bottomButton.textContent = "Bottom";
-    bottomButton.disabled = index === photos.length - 1;
-    bottomButton.addEventListener("click", () => movePhotoByIndex(index, photos.length - 1));
-
-    const moveToWrap = document.createElement("div");
-    moveToWrap.className = "move-to-wrap";
-
-    const moveToInput = document.createElement("input");
-    moveToInput.type = "number";
-    moveToInput.className = "move-to-input";
-    moveToInput.min = "1";
-    moveToInput.max = String(photos.length);
-    moveToInput.placeholder = "#";
-    moveToInput.title = `Move photo to position 1-${photos.length}`;
-
-    const moveToButton = document.createElement("button");
-    moveToButton.type = "button";
-    moveToButton.className = "ghost";
-    moveToButton.textContent = "Set";
-
-    const stageMoveToPosition = () => {
-      const targetIndex = parseTargetPosition(moveToInput.value, photos.length);
-      if (targetIndex === null) {
-        setUploadStatus(`Enter a position from 1 to ${photos.length}.`, 0, "error");
-        return;
-      }
-
-      state.moveSequence += 1;
-      state.pendingMoves.set(photo.id, { targetIndex, sequence: state.moveSequence });
-      moveToInput.classList.add("is-staged");
-      updateOrderControlsState();
-      setUploadStatus(`Staged ${state.pendingMoves.size} order change(s). Click Save order changes to apply.`, 0);
-    };
-
-    moveToButton.addEventListener("click", stageMoveToPosition);
-    moveToInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        stageMoveToPosition();
-      }
-    });
-
-    moveToWrap.appendChild(moveToInput);
-    moveToWrap.appendChild(moveToButton);
-
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "danger";
-    deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", async () => {
-      const confirmed = window.confirm("Delete this photo permanently?");
-      if (!confirmed) {
-        return;
-      }
-
-      setUploadStatus("Deleting photo...", 20);
-
-      const path = storagePathFromPublicUrl(photo.url);
-      if (path) {
-        const { error: storageError } = await supabase.storage.from("photos").remove([path]);
-        if (storageError) {
-          setUploadStatus(storageError.message, 0, "error");
-          return;
-        }
-      }
-
-      const { error: deleteError } = await supabase.from("photos").delete().eq("id", photo.id);
-      if (deleteError) {
-        setUploadStatus(deleteError.message, 0, "error");
-        return;
-      }
-
-      await loadPhotos(albumId);
-      setUploadStatus("Photo deleted.", 100);
-    });
-
-    actions.appendChild(upButton);
-    actions.appendChild(downButton);
-    actions.appendChild(topButton);
-    actions.appendChild(bottomButton);
-    actions.appendChild(moveToWrap);
-    actions.appendChild(deleteButton);
-
-    const thumb = document.createElement("img");
-    thumb.src = photo.url;
-    thumb.alt = "Album photo";
-    thumb.loading = "lazy";
-
-    row.appendChild(thumb);
+    row.appendChild(media);
+    row.appendChild(badge);
+    row.appendChild(deleteBtn);
     row.appendChild(info);
-    row.appendChild(actions);
     photosList.appendChild(row);
   });
 }
