@@ -1220,27 +1220,99 @@ h3,
   position: absolute;
   top: 16px;
   right: 16px;
-  border: 1px solid var(--border);
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(10, 10, 10, 0.4);
   color: var(--text);
-  padding: 0.6rem 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-size: 10px;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   cursor: pointer;
+  z-index: 105;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.25s var(--motion-ease);
+  opacity: 0.6;
 }
 
+.lightbox button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: var(--gold);
+  opacity: 1;
+}
+
+/* Close Button Icon */
+.lightbox button:not([data-lightbox-prev]):not([data-lightbox-next]) {
+  font-size: 0;
+}
+.lightbox button:not([data-lightbox-prev]):not([data-lightbox-next])::before,
+.lightbox button:not([data-lightbox-prev]):not([data-lightbox-next])::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 1.5px;
+  background-color: currentColor;
+}
+.lightbox button:not([data-lightbox-prev]):not([data-lightbox-next])::before {
+  transform: rotate(45deg);
+}
+.lightbox button:not([data-lightbox-prev]):not([data-lightbox-next])::after {
+  transform: rotate(-45deg);
+}
+
+/* Prev & Next Buttons Icons */
 .lightbox [data-lightbox-prev] {
-  left: 16px;
+  left: 20px;
   right: auto;
   top: 50%;
   transform: translateY(-50%);
+  font-size: 0;
+}
+
+.lightbox [data-lightbox-prev]::before {
+  content: "";
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  margin-left: 2px;
 }
 
 .lightbox [data-lightbox-next] {
-  right: 16px;
+  right: 20px;
   top: 50%;
   transform: translateY(-50%);
+  font-size: 0;
+}
+
+.lightbox [data-lightbox-next]::before {
+  content: "";
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: rotate(45deg);
+  margin-right: 2px;
+}
+
+/* Mobile optimizations to make sure buttons do not block vertical/wide photos */
+@media (max-width: 767px) {
+  .lightbox button {
+    opacity: 0.8;
+  }
+  .lightbox [data-lightbox-prev] {
+    left: 10px;
+  }
+  .lightbox [data-lightbox-next] {
+    right: 10px;
+  }
 }
 
 .lightbox-counter {
