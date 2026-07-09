@@ -195,12 +195,73 @@ function normalizeMultilineText(value) {
     .replace(/\\n/g, "\n");
 }
 
+function showToast(message, type = "success") {
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    container.style.position = "fixed";
+    container.style.top = "24px";
+    container.style.right = "24px";
+    container.style.zIndex = "99999";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.gap = "12px";
+    container.style.pointerEvents = "none";
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `admin-toast toast-${type}`;
+  toast.style.pointerEvents = "auto";
+
+  let iconSvg = "";
+  if (type === "success") {
+    iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--admin-accent);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+  } else if (type === "error") {
+    iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+  } else {
+    iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--admin-muted);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+  }
+
+  toast.innerHTML = `
+    <div class="toast-icon">${iconSvg}</div>
+    <div class="toast-message" style="word-break: break-word;"></div>
+    <button class="toast-close-btn">&times;</button>
+  `;
+  
+  toast.querySelector(".toast-message").textContent = message;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("show");
+  }, 10);
+
+  const closeToast = () => {
+    toast.classList.remove("show");
+    toast.classList.add("hide");
+    toast.addEventListener("transitionend", () => {
+      toast.remove();
+    });
+  };
+
+  toast.querySelector(".toast-close-btn").addEventListener("click", closeToast);
+  setTimeout(closeToast, 4000);
+}
+
 function setAboutStatus(message, tone = "default") {
   if (!aboutStatusText) {
     return;
   }
   aboutStatusText.textContent = message;
   aboutStatusText.style.color = tone === "error" ? "#d39e9e" : "rgba(232, 226, 217, 0.72)";
+
+  if (tone === "error") {
+    showToast(message, "error");
+  } else if (message.toLowerCase().includes("saved") || message.toLowerCase().includes("updated")) {
+    showToast(message, "success");
+  }
 }
 
 function setPricingStatus(message, tone = "default") {
@@ -209,6 +270,12 @@ function setPricingStatus(message, tone = "default") {
   }
   pricingStatusText.textContent = message;
   pricingStatusText.style.color = tone === "error" ? "#d39e9e" : "rgba(232, 226, 217, 0.72)";
+
+  if (tone === "error") {
+    showToast(message, "error");
+  } else if (message.toLowerCase().includes("saved") || message.toLowerCase().includes("updated")) {
+    showToast(message, "success");
+  }
 }
 
 function getDefaultPricingPayload() {
@@ -784,6 +851,12 @@ function setUploadStatus(message, percent = 0, tone = "default") {
 
   if (uploadProgressTrack) {
     uploadProgressTrack.setAttribute("aria-valuenow", String(Math.round(percent)));
+  }
+
+  if (tone === "error") {
+    showToast(message, "error");
+  } else if (percent === 100 || message.toLowerCase().includes("saved") || message.toLowerCase().includes("deleted") || message.toLowerCase().includes("updated") || message.toLowerCase().includes("published")) {
+    showToast(message, "success");
   }
 }
 
