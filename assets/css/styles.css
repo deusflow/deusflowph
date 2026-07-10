@@ -2389,8 +2389,13 @@ button.danger {
   text-decoration: none !important;
   position: relative;
   overflow: hidden;
+  transition: border-color 0.4s var(--motion-ease),
+              box-shadow 0.4s var(--motion-ease),
+              transform 0.4s var(--motion-ease) !important;
+}
 
-  /* Initial cinematic rack-focus state */
+/* Initial cinematic rack-focus state for homepage featured stories ONLY */
+#featured-grid .polaroid-luxury {
   opacity: 0;
   filter: blur(16px);
   transform: scale(1.08) translateY(35px);
@@ -2402,20 +2407,20 @@ button.danger {
   will-change: opacity, filter, transform;
 }
 
-.polaroid-luxury.in-focus {
+#featured-grid .polaroid-luxury.in-focus {
   opacity: 1;
   filter: blur(0);
   transform: scale(1) translateY(0);
 }
 
 @media (min-width: 768px) {
-  .photo-grid.cols-3 .polaroid-luxury:nth-child(1) {
+  #featured-grid .polaroid-luxury:nth-child(1) {
     transition-delay: 0.1s !important;
   }
-  .photo-grid.cols-3 .polaroid-luxury:nth-child(2) {
+  #featured-grid .polaroid-luxury:nth-child(2) {
     transition-delay: 0.3s !important;
   }
-  .photo-grid.cols-3 .polaroid-luxury:nth-child(3) {
+  #featured-grid .polaroid-luxury:nth-child(3) {
     transition-delay: 0.5s !important;
   }
 }

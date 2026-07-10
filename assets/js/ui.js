@@ -426,8 +426,15 @@ export function initRackFocusReveal() {
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
+  }, { threshold: 0.01, rootMargin: '0px 0px 100px 0px' });
 
+  cards.forEach(card => {
+    observer.observe(card);
+    // Failsafe: if intersection observer doesn't trigger within 1.5s, force show
+    setTimeout(() => {
+      card.classList.add('in-focus');
+    }, 1500);
+  });
 }
 
 export function initWordReveal() {
