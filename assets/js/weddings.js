@@ -47,19 +47,21 @@ async function renderWeddings() {
     const fragment = document.createDocumentFragment();
     albums.forEach((album) => {
       const card = document.createElement("a");
-      card.className = "album-card";
+      card.className = "album-card polaroid-luxury";
       card.href = `album/index.html?slug=${encodeURIComponent(album.slug)}`;
       const escapedTitle = escapeHTML(album.title);
-      const escapedDesc = escapeHTML(album.description);
       const escapedCoverUrl = escapeHTML(getOptimizedImageUrl(album.cover_url || "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=1974&auto=format&fit=crop", 800));
       const escapedAlt = escapeHTML(buildWeddingCoverAlt(album));
       card.innerHTML = `
-        <div class="photo-media">
-          <img data-src="${escapedCoverUrl}" alt="${escapedAlt}" loading="lazy" />
+        <div class="polaroid-inner">
+          <div class="photo-media">
+            <img data-src="${escapedCoverUrl}" alt="${escapedAlt}" loading="lazy" />
+          </div>
+          <div class="polaroid-footer">
+            <h3 class="photo-title">${escapedTitle}</h3>
+            <p class="photo-subtitle">${formatDate(album.date)}</p>
+          </div>
         </div>
-        <h3 class="photo-title">${escapedTitle}</h3>
-        <p class="photo-subtitle">${formatDate(album.date)}</p>
-        ${escapedDesc ? `<p class="album-description">${escapedDesc}</p>` : ""}
       `;
       fragment.appendChild(card);
     });

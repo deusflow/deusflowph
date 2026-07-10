@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-root=".">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TEST (Option 1) | Oleh Ro Photography</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://firnyacuwvxsolxljqxu.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://firnyacuwvxsolxljqxu.supabase.co https://images.unsplash.com; connect-src 'self' https://firnyacuwvxsolxljqxu.supabase.co https://esm.sh; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://esm.sh; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self';">
+  <meta name="description" content="Test version of Oleh Ro Photography homepage featuring Scenario 1: Magnetic Scatter Collage." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet" />
+  <script src="assets/js/i18n.js?v=20260429-2" defer></script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260710-1" />
+
+  <style>
+    /* Option 1: Magnetic Scatter Collage Styles */
+    .scatter-collage-parent {
+      height: 200vh; /* Dynamic scroll area to anchor the sticky animation */
+      position: relative;
+      background: #070707;
+      margin-top: 4rem;
+      margin-bottom: 4rem;
+    }
+
+    .scatter-collage-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .collage-card {
+      position: absolute;
+      width: clamp(140px, 20vw, 240px);
+      height: clamp(200px, 28vw, 340px);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+      background: #111;
+      will-change: transform, opacity;
+      z-index: 2;
+    }
+
+    .collage-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s var(--motion-ease);
+    }
+
+    /* Final assembled grid layout coordinates (relative to center of screen) */
+    /* Target layout:
+       Card 1: Shifted Left & Top
+       Card 2: Shifted Right & Top
+       Card 3: Shifted Left & Bottom
+       Card 4: Shifted Right & Bottom
+    */
+    .collage-center-content {
+      z-index: 10;
+      text-align: center;
+      max-width: 550px;
+      width: 90%;
+      padding: clamp(1.5rem, 4vw, 3rem);
+      background: rgba(10, 10, 10, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      opacity: 0;
+      transform: scale(0.85);
+      will-change: transform, opacity;
+      pointer-events: none; /* Let scroll events pass through to parent */
+    }
+
+    .collage-center-content h2 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+      font-style: italic;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.35;
+      margin: 0 0 1.2rem 0;
+    }
+
+    .collage-center-content p {
+      font-family: "Montserrat", sans-serif;
+      color: var(--gold);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="menu-link" href="weddings/index.html">Weddings</a>
+      <div class="brand-stack">
+        <p class="brand-topline">Wedding Photographer | Aarhus, Denmark</p>
+        <a class="logo" href="index.html">Oleh Ro</a>
+      </div>
+      <a class="menu-link" href="pricing/index.html">Pricing</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-media">
+        <img
+          id="hero-image"
+          src="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg"
+          alt="Editorial wedding portrait"
+          fetchpriority="high"
+        />
+        <div class="hero-overlay"></div>
+      </div>
+      <div class="hero-content container">
+        <div class="hero-copy">
+          <h1 class="text-massive">Not loud.<br><span class="text-gold-italic">But your photos will be.</span></h1>
+          <p class="text-massive-sub">I stay quiet so your moments can speak — raw, awkward, real. Like magic.</p>
+          <div class="hero-actions" style="margin-top: 4rem; justify-content: center; gap: 3rem;">
+            <a class="cta-editorial" href="portfolio/index.html">View Portfolio <span class="arrow">→</span></a>
+            <a class="cta-editorial" href="about/index.html">Meet Oleh Ro <span class="arrow">→</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Option 1: Magnetic Scatter Collage -->
+    <section class="scatter-collage-parent" id="scatter-collage-section">
+      <div class="scatter-collage-sticky">
+        <div class="collage-card" id="card-1">
+          <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=600&auto=format&fit=crop" alt="Getting ready detail" />
+        </div>
+        <div class="collage-card" id="card-2">
+          <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=600&auto=format&fit=crop" alt="Beautiful couple portrait" />
+        </div>
+        <div class="collage-card" id="card-3">
+          <img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=600&auto=format&fit=crop" alt="Emotional wedding moment" />
+        </div>
+        <div class="collage-card" id="card-4">
+          <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=600&auto=format&fit=crop" alt="Reception sparklers dance" />
+        </div>
+        
+        <div class="collage-center-content" id="collage-text">
+          <h2>"Real over perfect - love as it feels."</h2>
+          <p>- Oleh Ro</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container reveal-up" id="home-testimonials" style="padding-top: 0;">
+      <div class="section-head">
+        <h2>Testimonials</h2>
+        <a href="https://instagram.com/deusflow" target="_blank" rel="noopener noreferrer">See more in Instagram</a>
+      </div>
+      <div id="testimonials-grid" class="testimonials-grid testimonials-row"></div>
+    </section>
+
+    <section class="section container narrow reveal-up" style="padding-top: 0;">
+      <div class="state-box">
+        Searching by location? Explore: <a class="text-hover-gold" href="locations/aarhus/index.html">Aarhus</a>, <a class="text-hover-gold" href="locations/copenhagen/index.html">Copenhagen</a>, <a class="text-hover-gold" href="locations/odense/index.html">Odense</a>, and <a class="text-hover-gold" href="locations/aalborg/index.html">Aalborg</a> wedding photography.
+      </div>
+    </section>
+
+    <section class="section container reveal-up" id="home-featured">
+      <div class="section-head">
+        <h2>Featured Stories</h2>
+        <a href="weddings/index.html">View Weddings</a>
+      </div>
+      <div id="featured-grid" class="photo-grid cols-3 centered-grid"></div>
+    </section>
+
+    <section class="section container narrow reveal-up" style="padding-top: 0;">
+      <div id="contact-block" class="contact-panel">
+        <h2>Let's plan your shoot</h2>
+        <p>
+          I handle all bookings and questions personally. No generic forms.
+          Send me a message with your date and let's craft something timeless.
+        </p>
+        <div class="cta-container">
+          <a class="cta" href="https://instagram.com/deusflow" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a class="cta" data-runtime-link="telegram" href="https://t.me/deusflow" target="_blank" rel="noopener noreferrer">Telegram</a>
+          <a class="cta" data-runtime-link="whatsapp" href="https://wa.me/4512345678" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-logo">Oleh Ro</div>
+      <p>
+        Wedding photography for modern couples in Denmark and across Europe.
+      </p>
+      <div class="footer-links">
+        <a href="https://instagram.com/deusflow" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a data-runtime-link="telegram" href="https://t.me/deusflow" target="_blank" rel="noopener noreferrer">Telegram</a>
+        <a data-runtime-link="whatsapp" href="https://wa.me/4512345678" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a href="about/index.html">About</a>
+        <a href="legal/index.html">Terms & Privacy</a>
+      </div>
+      <p class="footer-creator">Site crafted by <span>Deusflow</span></p>
+      <small>&copy; 2026 Oleh Ro Photography. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="assets/js/seo.js"></script>
+  <script src="assets/js/runtime-config.js"></script>
+  <script src="assets/js/cta.js?v=20260422"></script>
+  <script type="module" src="assets/js/test-option1.js"></script>
+</body>
+</html>

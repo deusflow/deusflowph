@@ -2377,4 +2377,91 @@ button.danger {
   flex-wrap: wrap;
 }
 
+/* Polaroid Luxury Card Styling */
+.polaroid-luxury {
+  background: rgba(15, 15, 15, 0.45) !important;
+  border: 1px solid var(--border) !important;
+  padding: 1.2rem 1.2rem 2.2rem 1.2rem !important; /* Thick bottom frame */
+  border-radius: 6px !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  transition: all 0.5s var(--motion-ease) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  text-decoration: none !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.polaroid-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.polaroid-luxury .photo-media {
+  border: 1px solid var(--border) !important;
+  aspect-ratio: 1 / 1 !important; /* Authentic polaroid square crop */
+  overflow: hidden !important;
+  width: 100% !important;
+  background: #0d0d0d;
+}
+
+.polaroid-luxury .photo-media img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transition: transform 0.8s var(--motion-ease) !important;
+}
+
+.polaroid-luxury:hover {
+  border-color: var(--gold) !important;
+  box-shadow: 0 20px 45px rgba(212, 186, 149, 0.08) !important;
+  transform: translateY(-8px) rotate(-1deg) !important; /* Playful tilt */
+}
+
+.polaroid-luxury:nth-child(even):hover {
+  transform: translateY(-8px) rotate(1deg) !important;
+}
+
+.polaroid-luxury:hover .photo-media img {
+  transform: scale(1.05);
+}
+
+.polaroid-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.polaroid-footer h3 {
+  font-family: "Cormorant Garamond", Georgia, serif !important;
+  font-style: italic !important;
+  font-size: 1.35rem !important;
+  font-weight: 400 !important;
+  color: var(--gold) !important;
+  margin: 0 0 0.3rem 0 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.polaroid-footer p {
+  font-family: "Montserrat", sans-serif !important;
+  font-size: 0.72rem !important;
+  color: var(--text-muted) !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  margin: 0 !important;
+}
+
+/* Canvas container for golden dust cursor trail */
+#dust-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+
 

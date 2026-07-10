@@ -410,9 +410,113 @@ export async function applySiteSettings() {
   }
 }
 
+export function initGoldenDustTrail() {
+  if (typeof window === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
+  // Avoid running on mobile devices to optimize battery and performance
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if (isTouchDevice) {
+    return;
+  }
+
+  // Create canvas element dynamically
+  const canvas = document.createElement("canvas");
+  canvas.id = "dust-canvas";
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  window.addEventListener("resize", () => {
+    width = (canvas.width = window.innerWidth);
+    height = (canvas.height = window.innerHeight);
+  });
+
+  const particles = [];
+  const maxParticles = 60;
+  const colors = ["#d4ba95", "#ebd9bf", "#b59b75", "#ffffff"];
+
+  class Particle {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.size = Math.random() * 2.5 + 0.8;
+      this.speedX = (Math.random() - 0.5) * 1.2;
+      this.speedY = (Math.random() - 0.5) * 1.2 - 0.5; // Drift upwards slowly
+      this.color = colors[Math.floor(Math.random() * colors.length)];
+      this.opacity = 1;
+      this.decay = Math.random() * 0.015 + 0.01;
+    }
+
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      this.opacity -= this.decay;
+      if (this.size > 0.1) this.size -= 0.01;
+    }
+
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = this.opacity;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      if (Math.random() > 0.6) {
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = this.color;
+      }
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  let lastX = null;
+  let lastY = null;
+  
+  window.addEventListener("mousemove", (e) => {
+    if (lastX !== null && lastY !== null) {
+      const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
+      const steps = Math.min(6, Math.floor(dist / 8));
+      for (let i = 0; i <= steps; i++) {
+        const t = steps > 0 ? i / steps : 1;
+        const x = lastX + (e.clientX - lastX) * t;
+        const y = lastY + (e.clientY - lastY) * t;
+        if (particles.length < maxParticles) {
+          particles.push(new Particle(x + (Math.random() - 0.5) * 4, y + (Math.random() - 0.5) * 4));
+        }
+      }
+    } else {
+      if (particles.length < maxParticles) {
+        particles.push(new Particle(e.clientX, e.clientY));
+      }
+    }
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.update();
+      if (p.opacity <= 0) {
+        particles.splice(i, 1);
+      } else {
+        p.draw();
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+}
+
 // Auto-run when DOM content is loaded
 if (typeof window !== "undefined" && !document.body?.classList.contains("admin-page")) {
   document.addEventListener("DOMContentLoaded", () => {
     applySiteSettings();
+    initGoldenDustTrail();
   });
 }
