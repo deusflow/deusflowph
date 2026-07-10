@@ -435,26 +435,26 @@ export function initGoldenDustTrail() {
   });
 
   const particles = [];
-  const maxParticles = 60;
+  const maxParticles = 30; // Reduced max count
   const colors = ["#d4ba95", "#ebd9bf", "#b59b75", "#ffffff"];
 
   class Particle {
     constructor(x, y) {
       this.x = x;
       this.y = y;
-      this.size = Math.random() * 2.5 + 0.8;
-      this.speedX = (Math.random() - 0.5) * 1.2;
-      this.speedY = (Math.random() - 0.5) * 1.2 - 0.5; // Drift upwards slowly
+      this.size = Math.random() * 0.8 + 0.3; // Microscopic dust
+      this.speedX = (Math.random() - 0.5) * 0.4;
+      this.speedY = (Math.random() - 0.5) * 0.4 - 0.2; // Slow floating drift
       this.color = colors[Math.floor(Math.random() * colors.length)];
       this.opacity = 1;
-      this.decay = Math.random() * 0.015 + 0.01;
+      this.decay = Math.random() * 0.03 + 0.02; // Fades twice as fast
     }
 
     update() {
       this.x += this.speedX;
       this.y += this.speedY;
       this.opacity -= this.decay;
-      if (this.size > 0.1) this.size -= 0.01;
+      if (this.size > 0.1) this.size -= 0.005;
     }
 
     draw() {
@@ -463,8 +463,9 @@ export function initGoldenDustTrail() {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
       ctx.fillStyle = this.color;
-      if (Math.random() > 0.6) {
-        ctx.shadowBlur = 4;
+      // Very faint glow occasionally
+      if (Math.random() > 0.85) {
+        ctx.shadowBlur = 2;
         ctx.shadowColor = this.color;
       }
       ctx.fill();
@@ -478,13 +479,14 @@ export function initGoldenDustTrail() {
   window.addEventListener("mousemove", (e) => {
     if (lastX !== null && lastY !== null) {
       const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
-      const steps = Math.min(6, Math.floor(dist / 8));
+      // Reduce particle count and spawn frequency
+      const steps = Math.min(2, Math.floor(dist / 25));
       for (let i = 0; i <= steps; i++) {
         const t = steps > 0 ? i / steps : 1;
         const x = lastX + (e.clientX - lastX) * t;
         const y = lastY + (e.clientY - lastY) * t;
-        if (particles.length < maxParticles) {
-          particles.push(new Particle(x + (Math.random() - 0.5) * 4, y + (Math.random() - 0.5) * 4));
+        if (particles.length < maxParticles && Math.random() > 0.3) {
+          particles.push(new Particle(x + (Math.random() - 0.5) * 2, y + (Math.random() - 0.5) * 2));
         }
       }
     } else {

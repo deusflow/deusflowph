@@ -8,10 +8,10 @@ const parentSection = document.getElementById("scatter-collage-section");
 const textEl = document.getElementById("collage-text");
 
 const cards = [
-  { el: document.getElementById("card-1"), startX: -35, startY: -28, startR: -18, endX: -160, endY: -180, endR: -3 },
-  { el: document.getElementById("card-2"), startX: 35, startY: -20, startR: 15, endX: 160, endY: -180, endR: 3 },
-  { el: document.getElementById("card-3"), startX: -30, startY: 32, startR: -10, endX: -160, endY: 180, endR: 2 },
-  { el: document.getElementById("card-4"), startX: 30, startY: 25, startR: 12, endX: 160, endY: 180, endR: -2 }
+  { el: document.getElementById("card-1"), baseTilt: -3, driftY: -90 },  // Drifts UP
+  { el: document.getElementById("card-2"), baseTilt: 4, driftY: 80 },    // Drifts DOWN
+  { el: document.getElementById("card-3"), baseTilt: -2, driftY: -70 },  // Drifts UP
+  { el: document.getElementById("card-4"), baseTilt: 3, driftY: 90 }     // Drifts DOWN
 ];
 
 // Fallback Data for UI Loader
@@ -169,40 +169,31 @@ function handleScroll() {
 
 function updateCollageAnimation() {
   // Smooth easing using linear interpolation (lerp)
-  currentProgress += (targetProgress - currentProgress) * 0.1;
+  currentProgress += (targetProgress - currentProgress) * 0.08;
   
   const isMobile = window.innerWidth < 768;
-  const mobileScale = 0.65;
-  const desktopScale = 0.85;
 
   cards.forEach((card) => {
     if (!card.el) return;
     
-    // Scattered (starting) transforms in viewport percentage
-    const startX = card.startX * (window.innerWidth / 100);
-    const startY = card.startY * (window.innerHeight / 100);
-    const startR = card.startR;
+    // Scale drift on mobile to prevent overflow
+    const scaleFactor = isMobile ? 0.5 : 1;
+    const curY = card.driftY * currentProgress * scaleFactor;
+    const curR = card.baseTilt;
 
-    // Assembled (ending) transforms in raw pixels
-    const endX = card.endX * (isMobile ? 0.45 : 1);
-    const endY = card.endY * (isMobile ? 0.45 : 1);
-    const endR = card.endR;
-
-    // Interpolate positions
-    const curX = startX + (endX - startX) * currentProgress;
-    const curY = startY + (endY - startY) * currentProgress;
-    const curR = startR + (endR - startR) * currentProgress;
-    const curScale = (isMobile ? mobileScale : 1.0) - (1 - (isMobile ? mobileScale : desktopScale)) * currentProgress;
-
-    card.el.style.transform = `translate3d(${curX}px, ${curY}px, 0) rotate(${curR}deg) scale(${curScale})`;
-    // Fade cards in as they enter the screen, maintaining full opacity once assembled
-    card.el.style.opacity = currentProgress > 0.05 ? 1 : Math.max(0.2, currentProgress * 20);
+    card.el.style.transform = `translate3d(0, ${curY}px, 0) rotate(${curR}deg)`;
+    
+    // Smoothly fade in as user scrolls through the section
+    // Starts fading in at 5% progress and is fully visible by 45% progress
+    let opacity = (currentProgress - 0.05) / 0.4;
+    card.el.style.opacity = Math.max(0, Math.min(1, opacity));
   });
 
   // Interpolate center quote text opacity and scale
   if (textEl) {
-    textEl.style.opacity = Math.max(0, (currentProgress - 0.4) / 0.6);
-    const scale = 0.85 + 0.15 * Math.max(0, (currentProgress - 0.4) / 0.6);
+    let textOpacity = (currentProgress - 0.2) / 0.5;
+    textEl.style.opacity = Math.max(0, Math.min(1, textOpacity));
+    const scale = 0.9 + 0.1 * Math.max(0, Math.min(1, textOpacity));
     textEl.style.transform = `scale(${scale})`;
   }
 
