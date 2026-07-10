@@ -1062,65 +1062,63 @@ h3,
 }
 
 .testimonials-grid {
-  display: grid;
-  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 1.5rem 0;
+  display: flex;
+}
+
+.testimonials-track {
+  display: flex;
+  gap: 2.2rem;
+  width: max-content;
+  animation: marquee-scroll 45s linear infinite;
+  will-change: transform;
+}
+
+/* Pause animation on hover */
+.testimonials-grid:hover .testimonials-track {
+  animation-play-state: paused;
 }
 
 .testimonial-card {
+  width: clamp(290px, 28vw, 440px);
+  flex-shrink: 0;
   text-align: left;
-  border: 1px solid rgba(212, 186, 149, 0.15);
-  background: rgba(15, 15, 15, 0.4);
+  border: 1px solid rgba(212, 186, 149, 0.12) !important;
+  background: rgba(15, 15, 15, 0.45) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  padding: 2.5rem 2rem;
-  border-radius: 4px;
+  padding: 2.2rem 2rem !important;
+  border-radius: 6px;
 }
 
-.testimonials-row {
-  display: flex;
-  gap: 1.5rem;
-  overflow-x: auto;
-  padding: 1.5rem 0.5rem 2.5rem;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(212, 186, 149, 0.3) transparent;
-}
-
-@media (min-width: 768px) {
-  .testimonials-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    overflow-x: visible;
-    padding: 1.5rem 0;
+@keyframes marquee-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
   }
-  .testimonial-chip {
-    min-width: auto;
-    max-width: none;
+  100% {
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
-@media (min-width: 1024px) {
-  .testimonials-row {
-    grid-template-columns: repeat(4, 1fr);
+@media (max-width: 767px) {
+  .testimonials-track {
+    animation-duration: 35s;
+    gap: 1.5rem;
+  }
+  .testimonial-card {
+    width: 290px;
+    padding: 1.8rem 1.5rem !important;
   }
 }
 
-.testimonials-row::-webkit-scrollbar {
-  height: 3px;
-}
 
-.testimonials-row::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.testimonials-row::-webkit-scrollbar-thumb {
-  background: rgba(212, 186, 149, 0.25);
-  border-radius: 2px;
-}
-
-.testimonials-row::-webkit-scrollbar-thumb:hover {
-  background: var(--gold);
-}
 
 .testimonial-chip {
   min-width: min(100%, 360px);
@@ -2386,12 +2384,40 @@ button.danger {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  transition: all 0.5s var(--motion-ease) !important;
   display: flex !important;
   flex-direction: column !important;
   text-decoration: none !important;
   position: relative;
   overflow: hidden;
+
+  /* Initial cinematic rack-focus state */
+  opacity: 0;
+  filter: blur(16px);
+  transform: scale(1.08) translateY(35px);
+  transition: opacity 1.3s var(--motion-ease), 
+              filter 1.3s var(--motion-ease), 
+              transform 1.3s var(--motion-ease),
+              border-color 0.4s var(--motion-ease),
+              box-shadow 0.4s var(--motion-ease) !important;
+  will-change: opacity, filter, transform;
+}
+
+.polaroid-luxury.in-focus {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1) translateY(0);
+}
+
+@media (min-width: 768px) {
+  .photo-grid.cols-3 .polaroid-luxury:nth-child(1) {
+    transition-delay: 0.1s !important;
+  }
+  .photo-grid.cols-3 .polaroid-luxury:nth-child(2) {
+    transition-delay: 0.3s !important;
+  }
+  .photo-grid.cols-3 .polaroid-luxury:nth-child(3) {
+    transition-delay: 0.5s !important;
+  }
 }
 
 .polaroid-inner {
@@ -2453,14 +2479,19 @@ button.danger {
   margin: 0 !important;
 }
 
-/* Canvas container for golden dust cursor trail */
-#dust-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 9999;
+/* Quote Word Reveal Animation */
+.reveal-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.8s var(--motion-ease), transform 0.8s var(--motion-ease);
+  transition-delay: calc(var(--word-index) * 0.08s);
+  will-change: opacity, transform;
+}
+
+.reveal-word.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 

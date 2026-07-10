@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl } from "./ui.js";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal } from "./ui.js";
 
 const featuredGrid = document.getElementById("featured-grid");
 const heroImage = document.getElementById("hero-image");
@@ -46,9 +46,12 @@ function renderTestimonials(items) {
   }
 
   testimonialsGrid.innerHTML = "";
-  const fragment = document.createDocumentFragment();
 
-  items.forEach((item) => {
+  // Create track element
+  const track = document.createElement("div");
+  track.className = "testimonials-track";
+
+  const createCard = (item) => {
     const card = document.createElement("article");
     card.className = "panel testimonial-card testimonial-chip";
 
@@ -62,10 +65,20 @@ function renderTestimonials(items) {
 
     card.appendChild(quote);
     card.appendChild(author);
-    fragment.appendChild(card);
+    return card;
+  };
+
+  // Render original set
+  items.forEach((item) => {
+    track.appendChild(createCard(item));
   });
 
-  testimonialsGrid.appendChild(fragment);
+  // Render duplicated set for seamless looping
+  items.forEach((item) => {
+    track.appendChild(createCard(item));
+  });
+
+  testimonialsGrid.appendChild(track);
 }
 
 function buildFeaturedAlt(album) {
@@ -183,6 +196,7 @@ async function loadFeatured() {
     }
 
     observeLazyImages();
+    initRackFocusReveal();
   } catch (error) {
     featuredGrid.innerHTML = "";
     featuredGrid.appendChild(createStateMessage(`Could not load featured stories. ${error.message}`));
@@ -194,3 +208,4 @@ loadTestimonials();
 initScrollReveals();
 initMagneticButtons();
 initParallax();
+initWordReveal();

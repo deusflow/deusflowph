@@ -410,115 +410,59 @@ export async function applySiteSettings() {
   }
 }
 
-export function initGoldenDustTrail() {
-  if (typeof window === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+export function initRackFocusReveal() {
+  const cards = document.querySelectorAll('.polaroid-luxury');
+  if (!cards.length) return;
+
+  if (!('IntersectionObserver' in window)) {
+    cards.forEach(card => card.classList.add('in-focus'));
     return;
   }
-  // Avoid running on mobile devices to optimize battery and performance
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  if (isTouchDevice) {
-    return;
-  }
 
-  // Create canvas element dynamically
-  const canvas = document.createElement("canvas");
-  canvas.id = "dust-canvas";
-  document.body.appendChild(canvas);
-
-  const ctx = canvas.getContext("2d");
-  let width = (canvas.width = window.innerWidth);
-  let height = (canvas.height = window.innerHeight);
-
-  window.addEventListener("resize", () => {
-    width = (canvas.width = window.innerWidth);
-    height = (canvas.height = window.innerHeight);
-  });
-
-  const particles = [];
-  const maxParticles = 30; // Reduced max count
-  const colors = ["#d4ba95", "#ebd9bf", "#b59b75", "#ffffff"];
-
-  class Particle {
-    constructor(x, y) {
-      this.x = x;
-      this.y = y;
-      this.size = Math.random() * 0.8 + 0.3; // Microscopic dust
-      this.speedX = (Math.random() - 0.5) * 0.4;
-      this.speedY = (Math.random() - 0.5) * 0.4 - 0.2; // Slow floating drift
-      this.color = colors[Math.floor(Math.random() * colors.length)];
-      this.opacity = 1;
-      this.decay = Math.random() * 0.03 + 0.02; // Fades twice as fast
-    }
-
-    update() {
-      this.x += this.speedX;
-      this.y += this.speedY;
-      this.opacity -= this.decay;
-      if (this.size > 0.1) this.size -= 0.005;
-    }
-
-    draw() {
-      ctx.save();
-      ctx.globalAlpha = this.opacity;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fillStyle = this.color;
-      // Very faint glow occasionally
-      if (Math.random() > 0.85) {
-        ctx.shadowBlur = 2;
-        ctx.shadowColor = this.color;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-focus');
+        observer.unobserve(entry.target);
       }
-      ctx.fill();
-      ctx.restore();
-    }
-  }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
 
-  let lastX = null;
-  let lastY = null;
+}
+
+export function initWordReveal() {
+  const quoteEl = document.querySelector('.section-quote h2');
+  if (!quoteEl) return;
+
+  const text = quoteEl.textContent.trim();
+  const words = text.split(/\s+/);
   
-  window.addEventListener("mousemove", (e) => {
-    if (lastX !== null && lastY !== null) {
-      const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
-      // Reduce particle count and spawn frequency
-      const steps = Math.min(2, Math.floor(dist / 25));
-      for (let i = 0; i <= steps; i++) {
-        const t = steps > 0 ? i / steps : 1;
-        const x = lastX + (e.clientX - lastX) * t;
-        const y = lastY + (e.clientY - lastY) * t;
-        if (particles.length < maxParticles && Math.random() > 0.3) {
-          particles.push(new Particle(x + (Math.random() - 0.5) * 2, y + (Math.random() - 0.5) * 2));
-        }
-      }
-    } else {
-      if (particles.length < maxParticles) {
-        particles.push(new Particle(e.clientX, e.clientY));
-      }
-    }
-    lastX = e.clientX;
-    lastY = e.clientY;
-  });
+  quoteEl.innerHTML = words
+    .map((word, index) => `<span class="reveal-word" style="--word-index: ${index}">${word}</span>`)
+    .join(' ');
 
-  function animate() {
-    ctx.clearRect(0, 0, width, height);
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.update();
-      if (p.opacity <= 0) {
-        particles.splice(i, 1);
-      } else {
-        p.draw();
-      }
-    }
-    requestAnimationFrame(animate);
+  if (!('IntersectionObserver' in window)) {
+    quoteEl.querySelectorAll('.reveal-word').forEach(span => span.classList.add('is-revealed'));
+    return;
   }
 
-  requestAnimationFrame(animate);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        quoteEl.querySelectorAll('.reveal-word').forEach(span => {
+          span.classList.add('is-revealed');
+        });
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.25, rootMargin: '0px 0px -50px 0px' });
+
+  observer.observe(quoteEl);
 }
 
 // Auto-run when DOM content is loaded
 if (typeof window !== "undefined" && !document.body?.classList.contains("admin-page")) {
   document.addEventListener("DOMContentLoaded", () => {
     applySiteSettings();
-    initGoldenDustTrail();
   });
 }
