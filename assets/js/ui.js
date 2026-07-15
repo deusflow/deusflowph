@@ -145,12 +145,25 @@ export function setupLightbox() {
   }
 
   const image = lightbox.querySelector("img");
-  const close = lightbox.querySelector("button:not([data-lightbox-prev]):not([data-lightbox-next])");
+  const close = lightbox.querySelector("button:not([data-lightbox-prev]):not([data-lightbox-next]):not([data-lightbox-pin])");
   const prevButton = lightbox.querySelector("[data-lightbox-prev]");
   const nextButton = lightbox.querySelector("[data-lightbox-next]");
+  const pinButton = lightbox.querySelector("[data-lightbox-pin]");
   const counter = lightbox.querySelector(".lightbox-counter");
   let currentIndex = -1;
   let touchStartX = 0;
+
+  if (pinButton) {
+    pinButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!image || !image.src) return;
+      const pageUrl = encodeURIComponent(window.location.href);
+      const imageUrl = encodeURIComponent(image.src);
+      const desc = encodeURIComponent(document.title || "Wedding Photography by Oleh Ro");
+      const pinUrl = `https://www.pinterest.com/pin/create/button/?url=${pageUrl}&media=${imageUrl}&description=${desc}`;
+      window.open(pinUrl, "_blank", "width=600,height=600,scrollbars=yes");
+    });
+  }
 
   function getLightboxItems() {
     return Array.from(document.querySelectorAll("[data-lightbox-src]"));

@@ -1300,6 +1300,16 @@ h3,
   margin-right: 2px;
 }
 
+.lightbox [data-lightbox-pin] {
+  right: 76px;
+  font-size: 10px;
+  font-family: "Montserrat", sans-serif;
+  letter-spacing: 0.05em;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
 /* Mobile optimizations to make sure buttons do not block vertical/wide photos */
 @media (max-width: 767px) {
   .lightbox button {
@@ -2497,6 +2507,12 @@ button.danger {
 .reveal-word.is-revealed {
   opacity: 1;
   transform: translateY(0);
+}
+
+.mywed-badge-wrap:hover,
+.fearless-badge-wrap:hover {
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 
