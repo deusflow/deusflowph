@@ -1,5 +1,5 @@
-import { getSupabase } from "./supabase-client.js";
 import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initTiltEffect, initCustomCursor } from "./ui.js?v=20260710-3";
+import { fetchTestimonials, fetchFeaturedAlbums, fetchAlbumFallbackCover } from "./services/api.js";
 
 const featuredGrid = document.getElementById("featured-grid");
 const heroImage = document.getElementById("hero-image");
@@ -91,18 +91,8 @@ async function loadTestimonials() {
   }
 
   try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from("about_content")
-      .select("testimonials")
-      .eq("id", 1)
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    renderTestimonials(normalizeTestimonials(data?.testimonials));
+    const testimonials = await fetchTestimonials();
+    renderTestimonials(normalizeTestimonials(testimonials));
   } catch (error) {
     renderTestimonials(fallbackTestimonials);
   }
@@ -116,33 +106,7 @@ async function loadFeatured() {
   }
 
   try {
-    const supabase = getSupabase();
-
-    let { data: albums, error: albumError } = await supabase
-      .from("albums")
-      .select("id, slug, title, cover_url, date, display_order, created_at")
-      .eq("visible", true)
-      .eq("type", "wedding")
-      .order("display_order", { ascending: true, nullsFirst: false })
-      .order("date", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(3);
-
-    if (albumError && String(albumError.message || "").includes("display_order")) {
-      const fallback = await supabase
-        .from("albums")
-        .select("id, slug, title, cover_url, date")
-        .eq("visible", true)
-        .eq("type", "wedding")
-        .order("date", { ascending: false })
-        .limit(3);
-      albums = fallback.data;
-      albumError = fallback.error;
-    }
-
-    if (albumError) {
-      throw albumError;
-    }
+    const albums = await fetchFeaturedAlbums(3);
 
     if (!albums || albums.length === 0) {
       featuredGrid.appendChild(createStateMessage("No wedding albums published yet."));
@@ -154,22 +118,9 @@ async function loadFeatured() {
 
       // Backward compatibility for albums created before cover_url was set.
       if (!imageUrl) {
-        const { data: photos, error: photosError } = await supabase
-          .from("photos")
-          .select("url")
-          .eq("album_id", album.id)
-          .order("display_order", { ascending: true })
-          .limit(1);
-
-        if (photosError) {
-          throw photosError;
-        }
-
-        if (!photos || photos.length === 0) {
-          continue;
-        }
-
-        imageUrl = photos[0].url;
+        const fallbackUrl = await fetchAlbumFallbackCover(album.id);
+        if (!fallbackUrl) continue;
+        imageUrl = fallbackUrl;
       }
 
       const card = document.createElement("a");

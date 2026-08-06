@@ -37,3 +37,35 @@
   }
 })();
 
+window.injectDynamicSchema = function(type, data) {
+  try {
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    
+    let schema = {
+      "@context": "https://schema.org"
+    };
+
+    if (type === "ImageGallery" && data) {
+      schema["@type"] = "ImageGallery";
+      schema.name = data.title;
+      schema.description = data.description || `Wedding photography gallery by Oleh Ro: ${data.title}`;
+      schema.url = window.location.href;
+      if (data.coverUrl) {
+        schema.primaryImageOfPage = {
+          "@type": "ImageObject",
+          "contentUrl": data.coverUrl
+        };
+      }
+      schema.author = {
+        "@type": "Person",
+        "name": "Oleh Ro"
+      };
+    }
+
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+  } catch (err) {
+    console.warn("Failed to inject dynamic schema", err);
+  }
+};
