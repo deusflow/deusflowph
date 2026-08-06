@@ -2559,6 +2559,9 @@ button.danger {
   gap: 4rem;
   flex-wrap: wrap;
 }
+.awards-grid a {
+  display: block;
+}
 
 /* ProWed Badge — red PNG, show grayscale by default, original color on hover */
 .badge-prowed {
