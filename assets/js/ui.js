@@ -514,3 +514,50 @@ export function initTiltEffect() {
     });
   });
 }
+
+export function initCustomCursor() {
+  // Only initialize on non-touch devices
+  if (window.matchMedia("(pointer: coarse)").matches) return;
+
+  const cursor = document.createElement('div');
+  cursor.className = 'gallery-cursor';
+  cursor.textContent = 'View';
+  document.body.appendChild(cursor);
+
+  let mouseX = 0;
+  let mouseY = 0;
+  let cursorX = 0;
+  let cursorY = 0;
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  // Smooth follow animation
+  const updateCursor = () => {
+    const dx = mouseX - cursorX;
+    const dy = mouseY - cursorY;
+    cursorX += dx * 0.15;
+    cursorY += dy * 0.15;
+    
+    cursor.style.left = `${cursorX}px`;
+    cursor.style.top = `${cursorY}px`;
+    
+    requestAnimationFrame(updateCursor);
+  };
+  requestAnimationFrame(updateCursor);
+
+  // Attach hover events to all photo cards
+  const cards = document.querySelectorAll('.photo-card, .polaroid-luxury, .album-card');
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      cursor.classList.add('is-active');
+      card.classList.add('hide-default-cursor');
+    });
+    card.addEventListener('mouseleave', () => {
+      cursor.classList.remove('is-active');
+      card.classList.remove('hide-default-cursor');
+    });
+  });
+}
