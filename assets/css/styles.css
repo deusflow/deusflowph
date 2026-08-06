@@ -2551,11 +2551,79 @@ button.danger {
   cursor: none !important;
 }
 
-.mywed-badge-wrap:hover,
-.fearless-badge-wrap:hover {
-  opacity: 1 !important;
-  filter: none !important;
+/* Badge Styles */
+.awards-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rem;
+  flex-wrap: wrap;
 }
 
+.badge-prowed {
+  height: 70px;
+  width: auto;
+  filter: invert(1) opacity(0.6);
+  transition: all 0.4s var(--motion-ease);
+  display: block;
+}
+.badge-prowed:hover {
+  filter: invert(1) opacity(1);
+  transform: scale(1.05);
+}
+.about-affiliations .badge-prowed {
+  height: 80px;
+}
 
+.badge-mywed {
+  filter: invert(1) opacity(0.7);
+  transition: all 0.4s var(--motion-ease);
+  display: block;
+}
+.badge-mywed:hover {
+  filter: invert(1) opacity(1);
+  transform: scale(1.05);
+}
 
+.fearless-honors {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.badge-fearless-frame {
+  filter: grayscale(1) contrast(1.1);
+  opacity: 0.75;
+  transition: all 0.4s var(--motion-ease);
+}
+.badge-fearless-frame:hover {
+  filter: none;
+  opacity: 1;
+  transform: scale(1.05);
+}
+.badge-fearless-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  text-align: center;
+  line-height: 1.6;
+  transition: color 0.3s var(--motion-ease);
+}
+.badge-fearless-text:hover {
+  color: var(--gold);
+}
+
+.badge-picture-day {
+  height: 70px;
+  width: auto;
+  /* Assuming the picture day logo has colors, grayscale on idle, color on hover */
+  filter: grayscale(1) contrast(1.2) opacity(0.6);
+  transition: all 0.4s var(--motion-ease);
+}
+.badge-picture-day:hover {
+  filter: none;
+  transform: scale(1.05);
+}
+.about-affiliations .badge-picture-day {
+  height: 80px;
+}
