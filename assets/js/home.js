@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal } from "./ui.js?v=20260710-3";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initTiltEffect } from "./ui.js?v=20260710-3";
 
 const featuredGrid = document.getElementById("featured-grid");
 const heroImage = document.getElementById("hero-image");
@@ -209,3 +209,4 @@ initScrollReveals();
 initMagneticButtons();
 initParallax();
 initWordReveal();
+initTiltEffect();
