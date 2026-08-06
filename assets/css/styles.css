@@ -2560,31 +2560,40 @@ button.danger {
   flex-wrap: wrap;
 }
 
+/* ProWed Badge — red PNG, show grayscale by default, original color on hover */
 .badge-prowed {
   height: 70px;
   width: auto;
-  filter: invert(1) opacity(0.6);
-  transition: all 0.4s var(--motion-ease);
+  filter: grayscale(1) brightness(1.3) opacity(0.6);
+  transition: filter 0.4s var(--motion-ease), transform 0.4s var(--motion-ease), opacity 0.4s var(--motion-ease);
   display: block;
 }
+a:hover .badge-prowed,
 .badge-prowed:hover {
-  filter: invert(1) opacity(1);
-  transform: scale(1.05);
+  filter: none;
+  opacity: 1;
+  transform: scale(1.08);
 }
 .about-affiliations .badge-prowed {
   height: 80px;
 }
 
+/* MyWed Badge — black SVG logo, needs invert to show white on dark bg */
 .badge-mywed {
-  filter: invert(1) opacity(0.7);
-  transition: all 0.4s var(--motion-ease);
+  transition: filter 0.4s var(--motion-ease), transform 0.4s var(--motion-ease), opacity 0.4s var(--motion-ease);
   display: block;
 }
-.badge-mywed:hover {
-  filter: invert(1) opacity(1);
-  transform: scale(1.05);
+.badge-mywed img {
+  filter: brightness(0) invert(1) opacity(0.7);
+  transition: filter 0.4s var(--motion-ease), transform 0.4s var(--motion-ease);
+  display: block;
+}
+.badge-mywed:hover img {
+  filter: brightness(0) invert(1) opacity(1);
+  transform: scale(1.08);
 }
 
+/* Fearless Photographers */
 .fearless-honors {
   display: flex;
   flex-direction: column;
@@ -2592,14 +2601,12 @@ button.danger {
   gap: 1rem;
 }
 .badge-fearless-frame {
-  filter: grayscale(1) contrast(1.1);
   opacity: 0.75;
-  transition: all 0.4s var(--motion-ease);
+  transition: opacity 0.4s var(--motion-ease), transform 0.4s var(--motion-ease);
 }
 .badge-fearless-frame:hover {
-  filter: none;
   opacity: 1;
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 .badge-fearless-text {
   font-size: 0.75rem;
@@ -2613,16 +2620,17 @@ button.danger {
   color: var(--gold);
 }
 
+/* Picture of the Day Badge — red PNG, same treatment as ProWed */
 .badge-picture-day {
   height: 70px;
   width: auto;
-  /* Assuming the picture day logo has colors, grayscale on idle, color on hover */
-  filter: grayscale(1) contrast(1.2) opacity(0.6);
-  transition: all 0.4s var(--motion-ease);
+  filter: grayscale(1) brightness(1.3) opacity(0.6);
+  transition: filter 0.4s var(--motion-ease), transform 0.4s var(--motion-ease), opacity 0.4s var(--motion-ease);
 }
 .badge-picture-day:hover {
   filter: none;
-  transform: scale(1.05);
+  opacity: 1;
+  transform: scale(1.08);
 }
 .about-affiliations .badge-picture-day {
   height: 80px;
