@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260819-10";
+import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260819-11";
 
 const list = document.getElementById("weddings-grid");
 
@@ -48,7 +48,7 @@ async function renderWeddings() {
     albums.forEach((album) => {
       const card = document.createElement("a");
       card.className = "album-card polaroid-luxury";
-      card.href = `album/index.html?slug=${encodeURIComponent(album.slug)}`;
+      card.href = `album/?slug=${encodeURIComponent(album.slug)}`;
       const escapedTitle = escapeHTML(album.title);
       const escapedCoverUrl = escapeHTML(getOptimizedImageUrl(album.cover_url || "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=1974&auto=format&fit=crop", 800));
       const escapedAlt = escapeHTML(buildWeddingCoverAlt(album));

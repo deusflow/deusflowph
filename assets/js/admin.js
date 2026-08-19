@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-10";
+import { createStateMessage } from "./ui.js?v=20260819-11";
 
 const state = {
   selectedAlbum: null,
@@ -2275,6 +2275,24 @@ loginForm.addEventListener("submit", async (event) => {
 
 createAlbumForm.addEventListener("submit", createAlbum);
 editAlbumForm.addEventListener("submit", saveAlbumDetails);
+
+try {
+  const supabase = getSupabase();
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === "PASSWORD_RECOVERY") {
+      const newPassword = window.prompt("Supabase Recovery: Please enter your new admin password (minimum 6 characters):");
+      if (newPassword && newPassword.trim().length >= 6) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword.trim() });
+        if (error) {
+          showToast("Password update failed: " + error.message, "error");
+        } else {
+          showToast("Password updated successfully! Welcome back.", "success");
+          await boot();
+        }
+      }
+    }
+  });
+} catch (_e) {}
 
 logoutButton.addEventListener("click", async () => {
   const supabase = getSupabase();

@@ -1,3 +1,16 @@
+// Clean address bar: automatically strip /index.html from URL
+(function cleanUrlPath() {
+  try {
+    if (window.location.pathname.endsWith("/index.html")) {
+      const cleanPath = window.location.pathname.replace(/\/index\.html$/, "/") + window.location.search + window.location.hash;
+      window.history.replaceState(null, "", cleanPath);
+    } else if (window.location.pathname.endsWith("index.html")) {
+      const cleanPath = window.location.pathname.replace(/index\.html$/, "") + window.location.search + window.location.hash;
+      window.history.replaceState(null, "", cleanPath);
+    }
+  } catch (_e) {}
+})();
+
 const UADict = {
   // Навігація
   "Weddings": "Весілля",

@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260819-10";
+import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260819-11";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
@@ -110,7 +110,7 @@ function renderStoryNavigation(currentSlug, albums) {
   if (prevAlbum) {
     const prevLink = document.createElement("a");
     prevLink.className = "story-nav-link";
-    prevLink.href = `index.html?slug=${encodeURIComponent(prevAlbum.slug)}`;
+    prevLink.href = `?slug=${encodeURIComponent(prevAlbum.slug)}`;
     const escapedPrevTitle = escapeHTML(prevAlbum.title);
     prevLink.innerHTML = `
       <span class="story-nav-label">Previous story</span>
@@ -122,7 +122,7 @@ function renderStoryNavigation(currentSlug, albums) {
   if (nextAlbum) {
     const nextLink = document.createElement("a");
     nextLink.className = "story-nav-link";
-    nextLink.href = `index.html?slug=${encodeURIComponent(nextAlbum.slug)}`;
+    nextLink.href = `?slug=${encodeURIComponent(nextAlbum.slug)}`;
     const escapedNextTitle = escapeHTML(nextAlbum.title);
     nextLink.innerHTML = `
       <span class="story-nav-label">Next story</span>

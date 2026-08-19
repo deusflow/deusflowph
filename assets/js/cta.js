@@ -25,7 +25,7 @@
     const primaryHref = instagramDmUrl;
     const primaryLabel = `${ctaLabel} via Instagram`;
 
-    const contactTarget = document.getElementById("contact-block") ? "#contact-block" : (document.documentElement.dataset.root || ".") + "/index.html#contact-block";
+    const contactTarget = document.getElementById("contact-block") ? "#contact-block" : (document.documentElement.dataset.root || ".") + "/#contact-block";
 
     const wrap = document.createElement("div");
     wrap.className = "floating-cta";

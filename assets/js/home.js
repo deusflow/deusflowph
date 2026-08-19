@@ -1,4 +1,4 @@
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor } from "./ui.js?v=20260819-10";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor } from "./ui.js?v=20260819-11";
 import { fetchTestimonials, fetchFeaturedAlbums, fetchAlbumFallbackCover } from "./services/api.js";
 
 const featuredGrid = document.getElementById("featured-grid");
@@ -129,7 +129,7 @@ async function loadFeatured() {
 
       const card = document.createElement("a");
       card.className = "photo-card polaroid-luxury";
-      card.href = `weddings/album/index.html?slug=${encodeURIComponent(album.slug)}`;
+      card.href = `weddings/album/?slug=${encodeURIComponent(album.slug)}`;
       const escapedTitle = escapeHTML(album.title);
       const escapedImgUrl = escapeHTML(getOptimizedImageUrl(imageUrl, 800));
       const escapedAlt = escapeHTML(buildFeaturedAlt(album));

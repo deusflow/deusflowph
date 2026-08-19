@@ -1,5 +1,18 @@
 import { getSupabase } from "./supabase-client.js";
 
+// Clean address bar: automatically strip /index.html from URL
+(function cleanUrlPath() {
+  try {
+    if (window.location.pathname.endsWith("/index.html")) {
+      const cleanPath = window.location.pathname.replace(/\/index\.html$/, "/") + window.location.search + window.location.hash;
+      window.history.replaceState(null, "", cleanPath);
+    } else if (window.location.pathname.endsWith("index.html")) {
+      const cleanPath = window.location.pathname.replace(/index\.html$/, "") + window.location.search + window.location.hash;
+      window.history.replaceState(null, "", cleanPath);
+    }
+  } catch (_e) {}
+})();
+
 export function observeLazyImages(selector = "img[data-src]") {
   const images = Array.from(document.querySelectorAll(selector));
   if (!images.length) {
@@ -385,20 +398,21 @@ export async function applySiteSettings() {
 
     // Check if the current page should redirect
     const path = window.location.pathname;
+    const rootPath = (document.documentElement.dataset.root || ".") + "/";
     if (path.includes("/pricing/") && data.show_pricing === false) {
-      window.location.replace((document.documentElement.dataset.root || ".") + "/index.html");
+      window.location.replace(rootPath);
       return data;
     }
     if (path.includes("/weddings/") && data.show_weddings === false) {
-      window.location.replace((document.documentElement.dataset.root || ".") + "/index.html");
+      window.location.replace(rootPath);
       return data;
     }
     if (path.includes("/portfolio/") && data.show_portfolio === false) {
-      window.location.replace((document.documentElement.dataset.root || ".") + "/index.html");
+      window.location.replace(rootPath);
       return data;
     }
     if (path.includes("/about/") && data.show_about === false) {
-      window.location.replace((document.documentElement.dataset.root || ".") + "/index.html");
+      window.location.replace(rootPath);
       return data;
     }
 
