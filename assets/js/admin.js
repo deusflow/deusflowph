@@ -347,7 +347,11 @@ const defaultSiteSettings = {
 };
 
 function fillSettingsForm(content = {}) {
-  if (!settingsForm) return;
+  console.log("[Admin] fillSettingsForm called, settingsForm exists:", !!settingsForm, "content:", content);
+  if (!settingsForm) {
+    console.error("[Admin] fillSettingsForm: settingsForm element NOT FOUND in DOM!");
+    return;
+  }
   const merged = { ...defaultSiteSettings, ...(content || {}) };
   settingsShowWeddings.checked = merged.show_weddings !== false;
   settingsShowPortfolio.checked = merged.show_portfolio !== false;
@@ -366,6 +370,32 @@ function fillSettingsForm(content = {}) {
   settingsInstagramDmUrl.value = merged.instagram_dm_url || "";
   settingsTelegramUrl.value = merged.telegram_url || "";
   settingsWhatsappUrl.value = merged.whatsapp_url || "";
+  console.log("[Admin] fillSettingsForm: title=", settingsHomepageTitle?.value, "instagram=", settingsInstagramHandle?.value);
+
+  // Visible diagnostic banner
+  const tabSettings = document.getElementById("tab-settings");
+  if (tabSettings) {
+    let diag = document.getElementById("settings-diagnostic");
+    if (!diag) {
+      diag = document.createElement("div");
+      diag.id = "settings-diagnostic";
+      diag.style.cssText = "padding:12px 16px;margin:0 0 16px;border-radius:8px;font-size:13px;font-family:monospace;line-height:1.5;z-index:999;";
+      tabSettings.insertBefore(diag, tabSettings.children[1] || null);
+    }
+    const titleVal = settingsHomepageTitle?.value || "";
+    const igVal = settingsInstagramHandle?.value || "";
+    if (titleVal && igVal) {
+      diag.style.background = "rgba(34,197,94,0.15)";
+      diag.style.border = "1px solid rgba(34,197,94,0.4)";
+      diag.style.color = "#4ade80";
+      diag.textContent = `✅ Settings loaded: title="${titleVal.substring(0, 40)}…", IG="${igVal}"`;
+    } else {
+      diag.style.background = "rgba(239,68,68,0.15)";
+      diag.style.border = "1px solid rgba(239,68,68,0.4)";
+      diag.style.color = "#f87171";
+      diag.textContent = `⚠️ Settings may be empty: title="${titleVal}", IG="${igVal}". Check console.`;
+    }
+  }
 }
 
 async function saveSiteSettings(event) {
@@ -2622,27 +2652,71 @@ const translationFields = [
 function loadAllTranslationsComparative() {
   const langs = ["da", "ua", "en"];
   let populatedCount = 0;
+  let foundCount = 0;
+  let emptyCount = 0;
+  let missingElementCount = 0;
+  const sampleValues = [];
+
   langs.forEach((lang) => {
     let saved = null;
     try {
       const raw = localStorage.getItem("deusflow_custom_translations_raw_" + lang);
       if (raw) saved = JSON.parse(raw);
     } catch (_e) {}
+    console.log(`[Admin CMS] ${lang.toUpperCase()} localStorage cache: ${saved ? "EXISTS (" + Object.keys(saved).length + " keys)" : "EMPTY (using defaults)"}`);
 
     translationFields.forEach((fieldKey) => {
       const inputId = `trans-${lang}-${fieldKey}`;
       const el = document.getElementById(inputId);
       if (el) {
+        foundCount++;
         const savedVal = saved && typeof saved[fieldKey] === "string" ? saved[fieldKey].trim() : "";
         const defaultVal = translationDefaults[lang]?.[fieldKey] || "";
-        // If savedVal is non-empty use it; otherwise guarantee defaultVal is shown
-        el.value = savedVal || defaultVal;
-        populatedCount++;
+        const finalVal = savedVal || defaultVal;
+        el.value = finalVal;
+        if (finalVal) {
+          populatedCount++;
+        } else {
+          emptyCount++;
+          console.warn(`[Admin CMS] EMPTY FIELD: ${inputId} (savedVal="${savedVal}", defaultVal="${defaultVal}")`);
+        }
+        if (sampleValues.length < 6) {
+          sampleValues.push(`${inputId}="${(finalVal || "").substring(0, 30)}…"`);
+        }
+      } else {
+        missingElementCount++;
+        console.warn(`[Admin CMS] MISSING DOM ELEMENT: #${inputId}`);
       }
     });
   });
-  console.log(`[Admin CMS] loadAllTranslationsComparative: populated ${populatedCount} fields across DA, UA, EN.`);
+
+  const msg = `[Admin CMS] loadAllTranslationsComparative: found ${foundCount} DOM elements, populated ${populatedCount}, empty ${emptyCount}, missing ${missingElementCount}. Samples: ${sampleValues.join(" | ")}`;
+  console.log(msg);
+
+  // Show visible diagnostic banner on the page
+  const tabTrans = document.getElementById("tab-translations");
+  if (tabTrans) {
+    let diag = document.getElementById("translations-diagnostic");
+    if (!diag) {
+      diag = document.createElement("div");
+      diag.id = "translations-diagnostic";
+      diag.style.cssText = "padding:12px 16px;margin:0 0 16px;border-radius:8px;font-size:13px;font-family:monospace;line-height:1.5;z-index:999;";
+      tabTrans.insertBefore(diag, tabTrans.children[1] || null);
+    }
+    if (populatedCount > 0 && emptyCount === 0) {
+      diag.style.background = "rgba(34,197,94,0.15)";
+      diag.style.border = "1px solid rgba(34,197,94,0.4)";
+      diag.style.color = "#4ade80";
+      diag.textContent = `✅ All ${populatedCount} translation fields loaded. (${foundCount} DOM elements found, ${missingElementCount} missing)`;
+    } else {
+      diag.style.background = "rgba(239,68,68,0.15)";
+      diag.style.border = "1px solid rgba(239,68,68,0.4)";
+      diag.style.color = "#f87171";
+      diag.textContent = `⚠️ Translation fields: ${populatedCount} populated, ${emptyCount} EMPTY, ${missingElementCount} missing DOM. Check console for details.`;
+    }
+  }
 }
+
 
 function forceResetTranslations() {
   if (!confirm("Reset all 3 languages (DA, UA, EN) to default text? Any custom edits in localStorage will be cleared.")) {
