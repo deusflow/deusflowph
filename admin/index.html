@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/admin.css?v=20260819-11" />
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20260819-12" />
   <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="#0a0a0a">
   <link rel="apple-touch-icon" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png">
@@ -462,198 +462,572 @@
           <div class="admin-view-header">
             <div>
               <h1 class="view-title">Translations & Texts CMS</h1>
-              <p class="view-subtitle">Edit and customise every text string and phrase across all languages with instant live sync.</p>
+              <p class="view-subtitle">Side-by-side comparative editor across all 3 languages. Edit any text to instantly update the live website.</p>
             </div>
             <button id="save-translations-button" type="submit" form="translations-form" class="admin-btn primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              <span>Save Translations</span>
+              <span>Save All Translations & Texts</span>
             </button>
-          </div>
-
-          <!-- LANGUAGE SWITCHER BUTTONS -->
-          <div class="translation-lang-bar">
-            <button type="button" class="translation-lang-btn active" data-lang="da">🇩🇰 Danish (Dansk)</button>
-            <button type="button" class="translation-lang-btn" data-lang="ua">🇺🇦 Ukrainian (Українська)</button>
-            <button type="button" class="translation-lang-btn" data-lang="en">🇬🇧 English (Default)</button>
           </div>
 
           <form id="translations-form" class="admin-form">
             <!-- 1. HERO & INTRO -->
-            <div class="admin-card" style="margin-bottom: 1.5rem;">
+            <div class="admin-card" style="margin-bottom: 1.75rem;">
               <div class="card-header">
                 <h3>1. Main Hero & Subtitles</h3>
               </div>
               <div class="card-body">
-                <div class="admin-layout-2col">
-                  <div class="form-group">
-                    <label for="trans-hero-title-1">Hero Subtitle Line 1</label>
-                    <input id="trans-hero-title-1" name="hero_title_1" type="text" />
-                  </div>
-                  <div class="form-group">
-                    <label for="trans-hero-title-2">Hero Subtitle Line 2</label>
-                    <input id="trans-hero-title-2" name="hero_title_2" type="text" />
+                <!-- Field: Hero Title 1 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Hero Subtitle Line 1 (Main Punchy Phrase)</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-hero_title_1" name="da_hero_title_1" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-hero_title_1" name="ua_hero_title_1" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-hero_title_1" name="en_hero_title_1" type="text" />
+                    </div>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label for="trans-hero-desc">Hero Main Paragraph</label>
-                  <textarea id="trans-hero-desc" name="hero_desc" rows="2"></textarea>
+
+                <!-- Field: Hero Title 2 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Hero Subtitle Line 2 (Second Phrase)</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-hero_title_2" name="da_hero_title_2" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-hero_title_2" name="ua_hero_title_2" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-hero_title_2" name="en_hero_title_2" type="text" />
+                    </div>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label for="trans-hero-region">Hero Region / Badge</label>
-                  <input id="trans-hero-region" name="hero_region" type="text" />
+
+                <!-- Field: Hero Description -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Hero Main Description Paragraph</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-hero_desc" name="da_hero_desc" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-hero_desc" name="ua_hero_desc" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-hero_desc" name="en_hero_desc" rows="3"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Field: Hero Region -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Hero Region / Badge</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-hero_region" name="da_hero_region" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-hero_region" name="ua_hero_region" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-hero_region" name="en_hero_region" type="text" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- 2. DENMARK ELOPEMENTS -->
-            <div class="admin-card" style="margin-bottom: 1.5rem;">
+            <div class="admin-card" style="margin-bottom: 1.75rem;">
               <div class="card-header">
                 <h3>2. Denmark Elopements & Weddings Block</h3>
               </div>
               <div class="card-body">
-                <div class="form-group">
-                  <label for="trans-elopement-heading">Section Heading</label>
-                  <input id="trans-elopement-heading" name="elopement_heading" type="text" />
+                <!-- Field: Heading -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Section Heading</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-elopement_heading" name="da_elopement_heading" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-elopement_heading" name="ua_elopement_heading" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-elopement_heading" name="en_elopement_heading" type="text" />
+                    </div>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label for="trans-elopement-desc">Story Description</label>
-                  <textarea id="trans-elopement-desc" name="elopement_desc" rows="3"></textarea>
+
+                <!-- Field: Description -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Story Description</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-elopement_desc" name="da_elopement_desc" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-elopement_desc" name="ua_elopement_desc" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-elopement_desc" name="en_elopement_desc" rows="4"></textarea>
+                    </div>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label for="trans-elopement-locations">Locations Line</label>
-                  <input id="trans-elopement-locations" name="elopement_locations" type="text" />
+
+                <!-- Field: Locations -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Locations Line</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-elopement_locations" name="da_elopement_locations" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-elopement_locations" name="ua_elopement_locations" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-elopement_locations" name="en_elopement_locations" type="text" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- 3. BEHIND THE LENS (MEET OLEH) -->
-            <div class="admin-card" style="margin-bottom: 1.5rem;">
+            <div class="admin-card" style="margin-bottom: 1.75rem;">
               <div class="card-header">
                 <h3>3. Behind The Lens (Meet Oleh)</h3>
               </div>
               <div class="card-body">
-                <div class="form-group">
-                  <label for="trans-meet-quote">Photographer Philosophy Quote</label>
-                  <textarea id="trans-meet-quote" name="meet_quote" rows="3"></textarea>
+                <!-- Field: Quote -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Photographer Philosophy Quote</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-meet_quote" name="da_meet_quote" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-meet_quote" name="ua_meet_quote" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-meet_quote" name="en_meet_quote" rows="4"></textarea>
+                    </div>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label for="trans-meet-btn">Action Link / Button Text</label>
-                  <input id="trans-meet-btn" name="meet_btn" type="text" />
+
+                <!-- Field: Action Link -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Action Link / Button Text</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-meet_btn" name="da_meet_btn" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-meet_btn" name="ua_meet_btn" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-meet_btn" name="en_meet_btn" type="text" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- 4. TESTIMONIALS -->
-            <div class="admin-card" style="margin-bottom: 1.5rem;">
+            <div class="admin-card" style="margin-bottom: 1.75rem;">
               <div class="card-header">
                 <h3>4. Testimonials Quotes</h3>
               </div>
               <div class="card-body">
-                <div class="admin-layout-2col">
-                  <div class="form-group">
-                    <label for="trans-test-1">Oleksandr Popov Quote</label>
-                    <textarea id="trans-test-1" name="test_1" rows="3"></textarea>
+                <!-- Testimonial 1 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Oleksandr Popov (Actor) Quote</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-test_1" name="da_test_1" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-test_1" name="ua_test_1" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-test_1" name="en_test_1" rows="3"></textarea>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label for="trans-test-2">Amalie Frank Quote</label>
-                    <textarea id="trans-test-2" name="test_2" rows="3"></textarea>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Amalie Frank (Danish Castle Wedding) Quote</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-test_2" name="da_test_2" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-test_2" name="ua_test_2" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-test_2" name="en_test_2" rows="3"></textarea>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label for="trans-test-3">Volodymyr Ostapchuk Quote</label>
-                    <textarea id="trans-test-3" name="test_3" rows="3"></textarea>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Volodymyr Ostapchuk (TV Host) Quote</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-test_3" name="da_test_3" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-test_3" name="ua_test_3" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-test_3" name="en_test_3" rows="3"></textarea>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label for="trans-test-4">Jerry Heil Quote</label>
-                    <textarea id="trans-test-4" name="test_4" rows="3"></textarea>
+                </div>
+
+                <!-- Testimonial 4 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Jerry Heil (Singer-Songwriter) Quote</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-test_4" name="da_test_4" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-test_4" name="ua_test_4" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-test_4" name="en_test_4" rows="3"></textarea>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- 5. ABOUT PAGE CMS (FULL STORY & VALUES) -->
-            <div class="admin-card" style="margin-bottom: 1.5rem;">
+            <!-- 5. ABOUT PAGE CMS -->
+            <div class="admin-card" style="margin-bottom: 1.75rem;">
               <div class="card-header">
                 <h3>5. About Page Content</h3>
               </div>
               <div class="card-body">
-                <div class="form-group">
-                  <label for="trans-about-header">Header Subtitle (e.g. "Oleh Ro. Dokumentar & editorial fotografi")</label>
-                  <input id="trans-about-header" name="about_header" type="text" />
-                </div>
-                <div class="form-group">
-                  <label for="trans-about-story-1">Story Paragraph 1 (Art as a whole & 11 years)</label>
-                  <textarea id="trans-about-story-1" name="about_story_1" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="trans-about-story-2">Story Paragraph 2 (Raw sincerity & couples problem)</label>
-                  <textarea id="trans-about-story-2" name="about_story_2" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="trans-about-story-3">Story Paragraph 3 (Emergency delivery & full control)</label>
-                  <textarea id="trans-about-story-3" name="about_story_3" rows="3"></textarea>
-                </div>
-                <div class="admin-layout-2col">
-                  <div class="form-group">
-                    <label for="trans-about-values">Values & Approach</label>
-                    <textarea id="trans-about-values" name="about_values" rows="3"></textarea>
-                  </div>
-                  <div class="form-group">
-                    <label for="trans-about-background">Background Note</label>
-                    <textarea id="trans-about-background" name="about_background" rows="3"></textarea>
+                <!-- Header Subtitle -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Header Subtitle</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-about_header" name="da_about_header" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-about_header" name="ua_about_header" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-about_header" name="en_about_header" type="text" />
+                    </div>
                   </div>
                 </div>
-                <div class="admin-layout-2col">
-                  <div class="form-group">
-                    <label for="trans-about-experience">Experience Milestone Text</label>
-                    <input id="trans-about-experience" name="about_experience" type="text" />
+
+                <!-- Story 1 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Story Paragraph 1 (Art as a whole & 11 years experience)</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-about_story_1" name="da_about_story_1" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-about_story_1" name="ua_about_story_1" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-about_story_1" name="en_about_story_1" rows="4"></textarea>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label for="trans-about-awards">Awards & Recognitions Line</label>
-                    <input id="trans-about-awards" name="about_awards" type="text" />
+                </div>
+
+                <!-- Story 2 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Story Paragraph 2 (Raw sincerity & couples problem)</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-about_story_2" name="da_about_story_2" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-about_story_2" name="ua_about_story_2" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-about_story_2" name="en_about_story_2" rows="4"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Story 3 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Story Paragraph 3 (Emergency delivery & full calm control)</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-about_story_3" name="da_about_story_3" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-about_story_3" name="ua_about_story_3" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-about_story_3" name="en_about_story_3" rows="4"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Values -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Values & Approach</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-about_values" name="da_about_values" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-about_values" name="ua_about_values" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-about_values" name="en_about_values" rows="4"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Background -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Background Note (Origin & Aesthetic)</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-about_background" name="da_about_background" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-about_background" name="ua_about_background" rows="4"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-about_background" name="en_about_background" rows="4"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Experience -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Experience Milestone Text</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-about_experience" name="da_about_experience" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-about_experience" name="ua_about_experience" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-about_experience" name="en_about_experience" type="text" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Awards -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Awards & Recognitions Line</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-about_awards" name="da_about_awards" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-about_awards" name="ua_about_awards" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-about_awards" name="en_about_awards" type="text" />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- 6. DIRECT CONTACT & MESSENGERS -->
-            <div class="admin-card" style="margin-bottom: 1.5rem;">
+            <div class="admin-card" style="margin-bottom: 1.75rem;">
               <div class="card-header">
                 <h3>6. Contact Block & Messenger Templates</h3>
               </div>
               <div class="card-body">
-                <div class="form-group">
-                  <label for="trans-contact-heading">Contact Section Heading</label>
-                  <input id="trans-contact-heading" name="contact_heading" type="text" />
-                </div>
-                <div class="form-group">
-                  <label for="trans-contact-desc">Contact Subtitle Description</label>
-                  <textarea id="trans-contact-desc" name="contact_desc" rows="2"></textarea>
-                </div>
-                <div class="admin-layout-2col">
-                  <div class="form-group">
-                    <label for="trans-wa-sub">WhatsApp Pill Subtitle</label>
-                    <input id="trans-wa-sub" name="whatsapp_subtitle" type="text" />
-                  </div>
-                  <div class="form-group">
-                    <label for="trans-tg-sub">Telegram Pill Subtitle</label>
-                    <input id="trans-tg-sub" name="telegram_subtitle" type="text" />
-                  </div>
-                  <div class="form-group">
-                    <label for="trans-ig-sub">Instagram Pill Subtitle</label>
-                    <input id="trans-ig-sub" name="instagram_subtitle" type="text" />
-                  </div>
-                  <div class="form-group">
-                    <label for="trans-email-sub">Email Pill Subtitle</label>
-                    <input id="trans-email-sub" name="email_subtitle" type="text" />
+                <!-- Contact Heading -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Contact Section Heading</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-contact_heading" name="da_contact_heading" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-contact_heading" name="ua_contact_heading" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-contact_heading" name="en_contact_heading" type="text" />
+                    </div>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label for="trans-prefilled-msg">Pre-filled WhatsApp & Telegram Message Template</label>
-                  <input id="trans-prefilled-msg" name="prefilled_message" type="text" />
+
+                <!-- Contact Description -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Contact Subtitle Description</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-contact_desc" name="da_contact_desc" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-contact_desc" name="ua_contact_desc" rows="3"></textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-contact_desc" name="en_contact_desc" rows="3"></textarea>
+                    </div>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label for="trans-email-subject">Pre-filled Email Subject</label>
-                  <input id="trans-email-subject" name="email_subject" type="text" />
+
+                <!-- WhatsApp Subtitle -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">WhatsApp Pill Subtitle</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-whatsapp_subtitle" name="da_whatsapp_subtitle" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-whatsapp_subtitle" name="ua_whatsapp_subtitle" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-whatsapp_subtitle" name="en_whatsapp_subtitle" type="text" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Telegram Subtitle -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Telegram Pill Subtitle</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-telegram_subtitle" name="da_telegram_subtitle" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-telegram_subtitle" name="ua_telegram_subtitle" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-telegram_subtitle" name="en_telegram_subtitle" type="text" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pre-filled Message -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Pre-filled WhatsApp & Telegram Message Template</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-prefilled_message" name="da_prefilled_message" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-prefilled_message" name="ua_prefilled_message" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-prefilled_message" name="en_prefilled_message" type="text" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Email Subject -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Pre-filled Email Subject</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-email_subject" name="da_email_subject" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-email_subject" name="ua_email_subject" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-email_subject" name="en_email_subject" type="text" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -664,16 +1038,46 @@
                 <h3>7. Footer & Floating Banner</h3>
               </div>
               <div class="card-body">
-                <div class="form-group">
-                  <label for="trans-footer-desc">Footer Bio Description</label>
-                  <input id="trans-footer-desc" name="footer_desc" type="text" />
+                <!-- Footer Bio -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Footer Location Bio</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-footer_desc" name="da_footer_desc" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-footer_desc" name="ua_footer_desc" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-footer_desc" name="en_footer_desc" type="text" />
+                    </div>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label for="trans-floating-cta">Floating Banner Calendar Note</label>
-                  <input id="trans-floating-cta" name="floating_cta_note" type="text" />
+
+                <!-- Floating CTA -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Floating Banner Calendar Note</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-floating_cta_note" name="da_floating_cta_note" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-floating_cta_note" name="ua_floating_cta_note" type="text" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-floating_cta_note" name="en_floating_cta_note" type="text" />
+                    </div>
+                  </div>
                 </div>
+
                 <div class="form-action-bar">
-                  <button type="submit" class="admin-btn primary">Save Translations</button>
+                  <button type="submit" class="admin-btn primary">Save All Translations & Texts</button>
                   <span id="translations-status-text" class="status-msg"></span>
                 </div>
               </div>
@@ -937,6 +1341,6 @@
 
   <script src="../config.js"></script>
   <script src="../assets/js/runtime-config.js"></script>
-  <script type="module" src="../assets/js/admin.js?v=20260819-11"></script>
+  <script type="module" src="../assets/js/admin.js?v=20260819-12"></script>
 </body>
 </html>

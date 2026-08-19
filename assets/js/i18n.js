@@ -207,11 +207,11 @@ const DADict = {
 };
 
 function getDictionary(lang) {
-  let baseDict = null;
   const normalizedLang = lang === "uk" ? "ua" : lang;
-  if (normalizedLang === "ua") baseDict = UADict;
-  else if (normalizedLang === "da") baseDict = DADict;
-  else return null;
+  let baseDict = {};
+  if (normalizedLang === "ua") baseDict = { ...UADict };
+  else if (normalizedLang === "da") baseDict = { ...DADict };
+  else if (normalizedLang === "en") baseDict = {};
 
   try {
     const customRaw = localStorage.getItem("deusflow_custom_translations_" + normalizedLang);
@@ -223,7 +223,7 @@ function getDictionary(lang) {
     // Fallback to baseDict
   }
 
-  return baseDict;
+  return Object.keys(baseDict).length > 0 ? baseDict : (normalizedLang === "en" ? null : baseDict);
 }
 
 function updateMessengerLinks(lang) {

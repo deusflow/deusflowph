@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-11";
+import { createStateMessage } from "./ui.js?v=20260819-12";
 
 const state = {
   selectedAlbum: null,
@@ -2454,161 +2454,123 @@ const translationDefaults = {
   }
 };
 
-let currentTransLang = "da";
+const translationFields = [
+  "hero_title_1",
+  "hero_title_2",
+  "hero_desc",
+  "hero_region",
+  "elopement_heading",
+  "elopement_desc",
+  "elopement_locations",
+  "meet_quote",
+  "meet_btn",
+  "test_1",
+  "test_2",
+  "test_3",
+  "test_4",
+  "about_header",
+  "about_story_1",
+  "about_story_2",
+  "about_story_3",
+  "about_values",
+  "about_background",
+  "about_experience",
+  "about_awards",
+  "contact_heading",
+  "contact_desc",
+  "whatsapp_subtitle",
+  "telegram_subtitle",
+  "prefilled_message",
+  "email_subject",
+  "footer_desc",
+  "floating_cta_note"
+];
 
-function loadTranslationsForm(lang) {
-  currentTransLang = lang;
-  let saved = null;
-  try {
-    const raw = localStorage.getItem("deusflow_custom_translations_raw_" + lang);
-    if (raw) saved = JSON.parse(raw);
-  } catch (_e) {}
+function loadAllTranslationsComparative() {
+  const langs = ["da", "ua", "en"];
+  langs.forEach((lang) => {
+    let saved = null;
+    try {
+      const raw = localStorage.getItem("deusflow_custom_translations_raw_" + lang);
+      if (raw) saved = JSON.parse(raw);
+    } catch (_e) {}
 
-  const data = { ...(translationDefaults[lang] || {}), ...(saved || {}) };
+    const data = { ...(translationDefaults[lang] || {}), ...(saved || {}) };
 
-  const setVal = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.value = val || "";
-  };
-
-  setVal("trans-hero-title-1", data.hero_title_1);
-  setVal("trans-hero-title-2", data.hero_title_2);
-  setVal("trans-hero-desc", data.hero_desc);
-  setVal("trans-hero-region", data.hero_region);
-  setVal("trans-elopement-heading", data.elopement_heading);
-  setVal("trans-elopement-desc", data.elopement_desc);
-  setVal("trans-elopement-locations", data.elopement_locations);
-  setVal("trans-meet-quote", data.meet_quote);
-  setVal("trans-meet-btn", data.meet_btn);
-  setVal("trans-test-1", data.test_1);
-  setVal("trans-test-2", data.test_2);
-  setVal("trans-test-3", data.test_3);
-  setVal("trans-test-4", data.test_4);
-  setVal("trans-about-header", data.about_header);
-  setVal("trans-about-story-1", data.about_story_1);
-  setVal("trans-about-story-2", data.about_story_2);
-  setVal("trans-about-story-3", data.about_story_3);
-  setVal("trans-about-values", data.about_values);
-  setVal("trans-about-background", data.about_background);
-  setVal("trans-about-experience", data.about_experience);
-  setVal("trans-about-awards", data.about_awards);
-  setVal("trans-contact-heading", data.contact_heading);
-  setVal("trans-contact-desc", data.contact_desc);
-  setVal("trans-wa-sub", data.whatsapp_subtitle);
-  setVal("trans-tg-sub", data.telegram_subtitle);
-  setVal("trans-ig-sub", data.instagram_subtitle);
-  setVal("trans-email-sub", data.email_subtitle);
-  setVal("trans-prefilled-msg", data.prefilled_message);
-  setVal("trans-email-subject", data.email_subject);
-  setVal("trans-footer-desc", data.footer_desc);
-  setVal("trans-floating-cta", data.floating_cta_note);
+    translationFields.forEach((fieldKey) => {
+      const inputId = `trans-${lang}-${fieldKey}`;
+      const el = document.getElementById(inputId);
+      if (el) {
+        el.value = data[fieldKey] || "";
+      }
+    });
+  });
 }
 
-function saveTranslationsForm(e) {
+function saveAllTranslationsComparative(e) {
   if (e) e.preventDefault();
-  const getVal = (id) => {
-    const el = document.getElementById(id);
-    return el ? el.value.trim() : "";
-  };
+  const langs = ["da", "ua", "en"];
 
-  const rawData = {
-    hero_title_1: getVal("trans-hero-title-1"),
-    hero_title_2: getVal("trans-hero-title-2"),
-    hero_desc: getVal("trans-hero-desc"),
-    hero_region: getVal("trans-hero-region"),
-    elopement_heading: getVal("trans-elopement-heading"),
-    elopement_desc: getVal("trans-elopement-desc"),
-    elopement_locations: getVal("trans-elopement-locations"),
-    meet_quote: getVal("trans-meet-quote"),
-    meet_btn: getVal("trans-meet-btn"),
-    test_1: getVal("trans-test-1"),
-    test_2: getVal("trans-test-2"),
-    test_3: getVal("trans-test-3"),
-    test_4: getVal("trans-test-4"),
-    about_header: getVal("trans-about-header"),
-    about_story_1: getVal("trans-about-story-1"),
-    about_story_2: getVal("trans-about-story-2"),
-    about_story_3: getVal("trans-about-story-3"),
-    about_values: getVal("trans-about-values"),
-    about_background: getVal("trans-about-background"),
-    about_experience: getVal("trans-about-experience"),
-    about_awards: getVal("trans-about-awards"),
-    contact_heading: getVal("trans-contact-heading"),
-    contact_desc: getVal("trans-contact-desc"),
-    whatsapp_subtitle: getVal("trans-wa-sub"),
-    telegram_subtitle: getVal("trans-tg-sub"),
-    instagram_subtitle: getVal("trans-ig-sub"),
-    email_subtitle: getVal("trans-email-sub"),
-    prefilled_message: getVal("trans-prefilled-msg"),
-    email_subject: getVal("trans-email-subject"),
-    footer_desc: getVal("trans-footer-desc"),
-    floating_cta_note: getVal("trans-floating-cta")
-  };
+  langs.forEach((lang) => {
+    const rawData = {};
+    translationFields.forEach((fieldKey) => {
+      const inputId = `trans-${lang}-${fieldKey}`;
+      const el = document.getElementById(inputId);
+      if (el) {
+        rawData[fieldKey] = el.value.trim();
+      }
+    });
 
-  // Convert raw fields into dictionary map for i18n
-  const dictMap = {};
-  if (rawData.hero_title_1) dictMap["Not loud."] = rawData.hero_title_1;
-  if (rawData.hero_title_2) dictMap["But your photos will be."] = rawData.hero_title_2;
-  if (rawData.hero_desc) dictMap["Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day."] = rawData.hero_desc;
-  if (rawData.hero_region) dictMap["Denmark & Beyond"] = rawData.hero_region;
-  if (rawData.elopement_heading) dictMap["Marrying in Denmark?"] = rawData.elopement_heading;
-  if (rawData.elopement_desc) dictMap["Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography."] = rawData.elopement_desc;
-  if (rawData.elopement_locations) dictMap["Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark & Europe"] = rawData.elopement_locations;
-  if (rawData.meet_quote) dictMap["I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful."] = rawData.meet_quote;
-  if (rawData.meet_btn) dictMap["Meet Oleh & Philosophy"] = rawData.meet_btn;
-  if (rawData.test_1) dictMap["Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level."] = rawData.test_1;
-  if (rawData.test_2) dictMap["Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig."] = rawData.test_2;
-  if (rawData.test_3) dictMap["We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!"] = rawData.test_3;
-  if (rawData.test_4) dictMap["We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."] = rawData.test_4;
-  if (rawData.about_header) dictMap["Documentary & Editorial"] = rawData.about_header;
-  if (rawData.about_story_1) dictMap["Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now."] = rawData.about_story_1;
-  if (rawData.about_story_2) dictMap["Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me."] = rawData.about_story_2;
-  if (rawData.about_story_3) dictMap["Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us. Your wedding day? Trust me, everything is completely under control."] = rawData.about_story_3;
-  if (rawData.about_values) dictMap["I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day."] = rawData.about_values;
-  if (rawData.about_background) dictMap["Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal."] = rawData.about_background;
-  if (rawData.about_experience) dictMap["Years of experience across Denmark and Europe."] = rawData.about_experience;
-  if (rawData.about_awards) dictMap["★ Photos of the Week"] = rawData.about_awards;
-  if (rawData.contact_heading) dictMap["Let's Talk About Your Day"] = rawData.contact_heading;
-  if (rawData.contact_desc) dictMap["I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:"] = rawData.contact_desc;
-  if (rawData.whatsapp_subtitle) dictMap["Fastest for Europe & International couples"] = rawData.whatsapp_subtitle;
-  if (rawData.telegram_subtitle) dictMap["Прямий чат / Українська та English"] = rawData.telegram_subtitle;
-  if (rawData.instagram_subtitle) dictMap["Portfolio, reels & live stories"] = rawData.instagram_subtitle;
-  if (rawData.email_subtitle) dictMap["Email Direct"] = rawData.email_subtitle;
-  if (rawData.footer_desc) dictMap["Based in Denmark (Aarhus area), available across Europe."] = rawData.footer_desc;
-  if (rawData.floating_cta_note) dictMap["Calendar open for 2026-2027 weddings ·"] = rawData.floating_cta_note;
+    // Build dictionary map for i18n
+    const dictMap = {};
+    if (rawData.hero_title_1) dictMap["Not loud."] = rawData.hero_title_1;
+    if (rawData.hero_title_2) dictMap["But your photos will be."] = rawData.hero_title_2;
+    if (rawData.hero_desc) dictMap["Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day."] = rawData.hero_desc;
+    if (rawData.hero_region) dictMap["Denmark & Beyond"] = rawData.hero_region;
+    if (rawData.elopement_heading) dictMap["Marrying in Denmark?"] = rawData.elopement_heading;
+    if (rawData.elopement_desc) dictMap["Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography."] = rawData.elopement_desc;
+    if (rawData.elopement_locations) dictMap["Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark & Europe"] = rawData.elopement_locations;
+    if (rawData.meet_quote) dictMap["I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful."] = rawData.meet_quote;
+    if (rawData.meet_btn) dictMap["Meet Oleh & Philosophy"] = rawData.meet_btn;
+    if (rawData.test_1) dictMap["Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level."] = rawData.test_1;
+    if (rawData.test_2) dictMap["Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig."] = rawData.test_2;
+    if (rawData.test_3) dictMap["We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!"] = rawData.test_3;
+    if (rawData.test_4) dictMap["We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."] = rawData.test_4;
+    if (rawData.about_header) dictMap["Documentary & Editorial"] = rawData.about_header;
+    if (rawData.about_story_1) dictMap["Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now."] = rawData.about_story_1;
+    if (rawData.about_story_2) dictMap["Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me."] = rawData.about_story_2;
+    if (rawData.about_story_3) dictMap["Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us. Your wedding day? Trust me, everything is completely under control."] = rawData.about_story_3;
+    if (rawData.about_values) dictMap["I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day."] = rawData.about_values;
+    if (rawData.about_background) dictMap["Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal."] = rawData.about_background;
+    if (rawData.about_experience) dictMap["Years of experience across Denmark and Europe."] = rawData.about_experience;
+    if (rawData.about_awards) dictMap["★ Photos of the Week"] = rawData.about_awards;
+    if (rawData.contact_heading) dictMap["Let's Talk About Your Day"] = rawData.contact_heading;
+    if (rawData.contact_desc) dictMap["I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:"] = rawData.contact_desc;
+    if (rawData.whatsapp_subtitle) dictMap["Fastest for Europe & International couples"] = rawData.whatsapp_subtitle;
+    if (rawData.telegram_subtitle) dictMap["Прямий чат / Українська та English"] = rawData.telegram_subtitle;
+    if (rawData.footer_desc) dictMap["Based in Denmark (Aarhus area), available across Europe."] = rawData.footer_desc;
+    if (rawData.floating_cta_note) dictMap["Calendar open for 2026-2027 weddings ·"] = rawData.floating_cta_note;
 
-  try {
-    localStorage.setItem("deusflow_custom_translations_raw_" + currentTransLang, JSON.stringify(rawData));
-    localStorage.setItem("deusflow_custom_translations_" + currentTransLang, JSON.stringify(dictMap));
-    showToast(`Translations for ${currentTransLang.toUpperCase()} saved successfully!`, "success");
-    const statusEl = document.getElementById("translations-status-text");
-    if (statusEl) {
-      statusEl.textContent = `All ${currentTransLang.toUpperCase()} phrases saved. Changes are live on site!`;
-      setTimeout(() => { statusEl.textContent = ""; }, 4000);
-    }
-  } catch (err) {
-    showToast(`Could not save translations: ${err.message}`, "error");
+    try {
+      localStorage.setItem("deusflow_custom_translations_raw_" + lang, JSON.stringify(rawData));
+      localStorage.setItem("deusflow_custom_translations_" + lang, JSON.stringify(dictMap));
+    } catch (_e) {}
+  });
+
+  showToast("All translations (DA, UA, EN) saved and live on site!", "success");
+  const statusEl = document.getElementById("translations-status-text");
+  if (statusEl) {
+    statusEl.textContent = "All 3 languages saved successfully. Changes are live!";
+    setTimeout(() => { statusEl.textContent = ""; }, 4000);
   }
 }
 
 function setupTranslationsCMS() {
   const transForm = document.getElementById("translations-form");
-  const langBtns = document.querySelectorAll(".translation-lang-btn");
-
-  langBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      langBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      const lang = btn.getAttribute("data-lang") || "da";
-      loadTranslationsForm(lang);
-    });
-  });
-
   if (transForm) {
-    transForm.addEventListener("submit", saveTranslationsForm);
+    transForm.addEventListener("submit", saveAllTranslationsComparative);
   }
-
-  loadTranslationsForm("da");
+  loadAllTranslationsComparative();
 }
 
 setupTestimonialReorder();

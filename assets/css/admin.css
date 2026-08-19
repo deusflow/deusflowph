@@ -1104,41 +1104,101 @@ body.admin-page {
   flex: 1;
 }
 
-.translation-lang-bar {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  background: var(--admin-card);
-  border: 1px solid var(--admin-border);
-  padding: 0.4rem;
-  border-radius: var(--admin-radius);
-  flex-wrap: wrap;
+/* ==========================================================================
+   9.5 3-COLUMN PARALLEL COMPARATIVE TRANSLATION EDITOR
+   ========================================================================== */
+
+.translation-item-block {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.translation-lang-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--admin-muted);
-  padding: 0.6rem 1.25rem;
-  border-radius: var(--admin-radius-sm);
-  font-family: var(--font-sans);
-  font-size: 11px;
+.translation-item-block:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.translation-field-title {
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
+  color: var(--admin-gold);
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.translation-compare-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.translation-lang-col {
+  display: flex;
+  flex-direction: column;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  padding: 0.85rem 1rem;
   transition: all var(--motion-fast) var(--motion-ease);
 }
 
-.translation-lang-btn:hover {
-  color: var(--admin-text);
-  background: rgba(255, 255, 255, 0.03);
+.translation-lang-col.col-da {
+  border-top: 2px solid #ef4444;
 }
 
-.translation-lang-btn.active {
-  background: var(--admin-gold);
-  color: #000;
+.translation-lang-col.col-ua {
+  border-top: 2px solid #0284c7;
+}
+
+.translation-lang-col.col-en {
+  border-top: 2px solid #8b5cf6;
+}
+
+.translation-lang-col:focus-within {
+  border-color: var(--admin-border-gold);
+  background: var(--admin-card-hover);
+}
+
+.translation-col-label {
+  font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+  margin-bottom: 0.5rem;
+}
+
+.translation-lang-col input,
+.translation-lang-col textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.55;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--admin-radius-sm);
+  transition: all var(--motion-fast) var(--motion-ease);
+}
+
+.translation-lang-col input:focus,
+.translation-lang-col textarea:focus {
+  border-color: var(--admin-gold);
+  background: rgba(0, 0, 0, 0.7);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(212, 186, 149, 0.15);
+}
+
+@media (max-width: 1100px) {
+  .translation-compare-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
 }
 
 /* ==========================================================================
