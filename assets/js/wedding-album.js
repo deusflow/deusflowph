@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260819-3";
+import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260819-4";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");

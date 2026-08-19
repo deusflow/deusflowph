@@ -1,5 +1,5 @@
 const UADict = {
-  // Navigation
+  // Навігація
   "Weddings": "Весілля",
   "Pricing": "Ціни",
   "Portfolio": "Портфоліо",
@@ -11,48 +11,84 @@ const UADict = {
   "Explore Stories": "Дивитися серії",
   "Check Availability": "Перевірити дату",
   "Meet Oleh Ro": "Про Олега",
-  "Meet Oleh & Philosophy": "Про Олега та філософію",
-  "Read full story": "Читати історію",
+  "Meet Oleh & Philosophy": "Познайомитись з Олегом і моїм баченням",
+  "Read full story": "Познайомитись з Олегом і моїм баченням",
 
-  // Index Hero & Badges
-  "Not loud.": "Не гучно.",
-  "But your photos will be.": "Але ваші фото будуть.",
-  "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day.": "Тихо фіксую щирі емоції, невимушену елегантність та справжню атмосферу вашого дня.",
-  "Internationally Recognized": "Міжнародне визнання",
+  // Головний екран
+  "Not loud.": "Без гучних слів.",
+  "But your photos will be.": "Фото скажуть усе самі.",
+  "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day.": "Тихо фіксую справжні емоції, легку елегантність та той самий timeless вайб вашого дня.",
+  "Internationally Recognized": "Міжнародні нагороди",
   "Visual Stories": "Візуальні історії",
   "Featured Weddings": "Вибрані весілля",
   "Selected Work": "Вибрані роботи",
-  "Kind Words": "Теплі слова",
+  "Kind Words": "Відгуки",
   "Testimonials": "Відгуки",
   "Behind the Lens": "За кадром",
 
-  // Elopements & Destination
-  "Marrying in Denmark?": "Весілля або розпис у Данії?",
-  "Denmark & Beyond": "Данія та Європа",
-  "Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography.": "Чи плануєте ви камерний розпис у мерії Копенгагена, романтичний елопмент на острові Ерьо (Ærø) чи святкування в замку Ютландії — я гарантую спокійну, делікатну документальну зйомку та позачасові журнальні кадри.",
-  "All Denmark & Europe": "Вся Данія та Європа",
+  // Весілля в Данії (Destination & Elopements)
+  "Marrying in Denmark?": "Одружуєтесь у Данії?",
+  "Denmark & Beyond": "Данія та вся Європа",
+  "Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography.": "Камерна церемонія в ратуші Копенгагена, романтична втеча на острів Ере чи свято в замку десь у Ютландії. Хай би що ви обрали, я поруч: спокійно, непомітно, з чесною документальною зйомкою та стильними editorial кадрами.",
+  "Copenhagen": "Копенгаген",
+  "Ærø Island": "Острів Ере",
+  "Aarhus": "Орхус",
+  "Odense": "Оденсе",
+  "Aalborg": "Ольборг",
+  "All Denmark & Europe": "Уся Данія та Європа",
 
-  // Contact Block
-  "Direct Inquiry": "Прямий зв'язок",
-  "Check Availability for Your Date": "Дізнатися, чи вільна ваша дата",
-  "Ready to Secure Your Date?": "Готові забронювати дату?",
-  "Want Your Own Story?": "Хочете зберегти свою історію?",
-  "Love What You See?": "Сподобалися знімки?",
+  // За кадром (Meet Oleh)
+  "I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful.": "«Найщиріші кадри народжуються тоді, коли ви забуваєте про камеру. Я спостерігаю, ловлю живі моменти без пози і додаю легку підказку лише тоді, коли це допомагає відчути себе природно красиво».",
+
+  // Відгуки (Testimonials)
+  "Oleksandr Popov (Actor)": "Олександр Попов (Актор)",
+  "Amalie & Frederik (Aarhus, Denmark)": "Амалі Франк",
+  "Volodymyr Ostapchuk (TV Presenter)": "Володимир Остапчук (Телеведучий)",
+  "Jerry Heil (Singer & Songwriter)": "Jerry Heil (Співачка та авторка пісень)",
+  "Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level.": "«Чувак, ці кадри виглядають прямо як стоп-кадри з кіно. У тебе шалене відчуття кінематографічних деталей. Працювати на майданчику максимально легко. Топ-рівень».",
+  "Oleh has an incredible talent for capturing genuine emotions. Our wedding photos tell the perfect story of our day. Highly recommended!": "«Щойно передивились галерею, і в нас просто нема слів. Ти вловив точний вайб нашого дня. Жодних застиглих поз, тільки справжні ми. Дякуємо за цей спогад!»",
+  "We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!": "«Щойно передивились галерею, і в нас просто нема слів. Ти вловив точний вайб нашого дня. Жодних застиглих поз, тільки справжні ми. Дякуємо за цей спогад!»",
+  "We had a cozy photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic.": "«У нас була затишна зимова фотосесія, і Олег зробив увесь процес легким та комфортним. А фінальні фото — це чиста магія».",
+  "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic.": "«У нас була затишна зимова фотосесія, і Олег зробив увесь процес легким та комфортним. А фінальні фото — це чиста магія».",
+
+  // Про мене (About Page)
+  "Documentary & Editorial": "Documentary & Editorial фотографія",
+  "Values": "Цінності",
+  "Background": "Бекграунд",
+  "Experience": "Досвід",
+  "Years of experience across Denmark and Europe.": "Років досвіду зйомок у Данії та по всій Європі.",
+  "I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.": "Працюю тихо, спостерігаю чесно, підказую лише тоді, коли це дійсно потрібно. Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.",
+  "I work quietly, observe honestly, and guide only when it helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.": "Працюю тихо, спостерігаю чесно, підказую лише тоді, коли це дійсно потрібно. Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.",
+  "Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.": "Родом з України, зараз базуюся біля Орхуса. Працюю по всій Данії та Європі. Мій візуальний почерк поєднує документальну правду з editorial кадрами, тому галерея відчувається живою, елегантною і глибоко особистою.",
+  "Originally from Ukraine, now based near Aarhus. I bring 10 years of wedding photography experience across Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.": "Родом з України, зараз базуюся біля Орхуса. Працюю по всій Данії та Європі. Мій візуальний почерк поєднує документальну правду з editorial кадрами, тому галерея відчувається живою, елегантною і глибоко особистою.",
+  "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.\n\nHonestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.\n\nSome say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us.\n\nYour wedding day? Trust me, everything is completely under control.": "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.\n\nЧесно кажучи, люди почали помічати в моїх роботах те, чого не бачив навіть я сам: щирість без прикрас і моменти, які більше ніколи не повторяться. Це вирішує головну проблему пар: вам не потрібні 10 перефотошоплених світлин у напружених позах. Вам потрібна жива історія вашого дня. І з цим я справляюсь на відмінно... принаймні так кажуть мої молодята.\n\nКажуть, весілля — це стрес. А я приймав пологи у власної дружини в екстрених умовах. Без лікарні, тільки ми двоє. Тож ваш весільний день? Довіртесь, усе під повним контролем.",
+
+  // Нагороди
+  "★ Photos of the Week": "★ Фото тижня",
+  "★ Unposed Moms Moments": "★ Unposed Moms Moments",
+  "★ Happy Mother's Day 2022": "★ Щасливого Дня матері 2022",
+
+  // Прямий контакт
+  "Direct Inquiry": "Прямий контакт",
+  "Check Availability for Your Date": "Поговоримо про ваш день",
+  "Ready to Secure Your Date?": "Поговоримо про ваш день",
+  "Want Your Own Story?": "Поговоримо про ваш день",
+  "Love What You See?": "Поговоримо про ваш день",
   "Let's Talk About Your Day": "Поговоримо про ваш день",
-  "Ready to Capture Your Story?": "Готові зберегти вашу історію?",
-  "Fastest for Europe & International couples": "Найшвидший для Європи та міжнародних пар",
-  "Прямий чат / Українська та English": "Прямий чат українською та English",
-  "Portfolio, reels & live stories": "Портфоліо, рілс та живі сторіз",
-  "Email Direct": "Прямий Email",
-  "I take a limited number of weddings each year to ensure full dedication. Choose your preferred messenger below to check your date directly with me:": "Я беру обмежену кількість весіль на рік, щоб приділити кожній парі максимум уваги. Оберіть зручний месенджер нижче, щоб перевірити доступність вашої дати:",
-  "I take a limited number of weddings each year. Choose your preferred messenger below to check availability for your date:": "Я беру обмежену кількість весіль на рік. Оберіть зручний месенджер нижче, щоб перевірити доступність вашої дати:",
-  "Every wedding is unique. Choose your preferred messenger below to discuss your vision and check availability for your date:": "Кожне весілля унікальне. Оберіть зручний месенджер нижче, щоб обговорити деталі та перевірити дату:",
-  "I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:": "Я віддаю перевагу прямому людському спілкуванню. Оберіть месенджер нижче, щоб обговорити плани або просто привітатися:",
+  "Ready to Capture Your Story?": "Поговоримо про ваш день",
+  "I take a limited number of weddings each year to ensure full dedication. Choose your preferred messenger below to check your date directly with me:": "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
+  "I take a limited number of weddings each year. Choose your preferred messenger below to check availability for your date:": "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
+  "Every wedding is unique. Choose your preferred messenger below to discuss your vision and check availability for your date:": "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
+  "I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:": "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
+  "Fastest for Europe & International couples": "Найшвидше для Європи та міжнародних пар",
+  "Прямий чат / Українська та English": "Прямий чат українською та англійською",
+  "Portfolio, reels & live stories": "Портфоліо, reels і live stories",
+  "Email Direct": "Email напряму",
 
-  // Pricing Page
+  // Пакети цін
   "Investment": "Інвестиція",
   "Collections.": "Пакети послуг.",
-  "Now booking weddings across Denmark and Europe.": "Відкрито бронювання весіль у Данії та по всій Європі.",
+  "Now booking weddings across Denmark and Europe.": "Бронювання весіль на сезон 2026-2027 відкрито по всій Данії та Європі.",
   "Crafted for couples who want timeless elegance, honest storytelling, and a calm experience from planning to delivery.": "Створено для пар, які цінують позачасову елегантність, щиру історію та спокійний комфортний процес від знайомства до отримання галереї.",
   "Included in Every Collection": "Включено в кожен пакет",
   "What you always get.": "Що ви отримуєте завжди.",
@@ -66,11 +102,12 @@ const UADict = {
   "A clear process, start to finish.": "Прозорий процес від знайомства до результату.",
   "Quick answers couples ask most.": "Відповіді на часті запитання.",
 
-  // Footer
-  "Wedding & Elopement photography for modern couples in Denmark and across Europe.": "Весільна та елопмент фотографія для сучасних пар у Данії та по всій Європі.",
-  "Luxury wedding photography in Aarhus, Copenhagen, and Europe.": "Преміальна весільна фотографія в Орхусі, Копенгагені та Європі.",
-  "Based in Denmark (Aarhus area), available across Europe.": "Базуюся в Данії (Орхус), знімаю по всій Європі.",
-  "Terms & Privacy": "Умови та конфіденційність"
+  // Футер
+  "Wedding & Elopement photography for modern couples in Denmark and across Europe.": "Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі.",
+  "Luxury wedding photography in Aarhus, Copenhagen, and Europe.": "Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі.",
+  "Based in Denmark (Aarhus area), available across Europe.": "Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі.",
+  "Terms & Privacy": "Умови та приватність",
+  "All rights reserved.": "Усі права захищено."
 };
 
 const DADict = {
@@ -141,6 +178,26 @@ function getDictionary(lang) {
   return null;
 }
 
+function updateMessengerLinks(lang) {
+  if (lang === 'uk' || lang === 'ua') {
+    // WhatsApp prefilled message in Ukrainian
+    const waLink = document.querySelector('a[href*="wa.me"]');
+    if (waLink) {
+      waLink.href = "https://wa.me/4550300636?text=" + encodeURIComponent("Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?");
+    }
+    // Telegram prefilled message in Ukrainian
+    const tgLink = document.querySelector('a[href*="t.me/OflowPhotography"]');
+    if (tgLink) {
+      tgLink.href = "https://t.me/OflowPhotography?text=" + encodeURIComponent("Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?");
+    }
+    // Email mailto in Ukrainian
+    const mailLink = document.querySelector('a[href*="mailto:deuswork@icloud.com"]');
+    if (mailLink) {
+      mailLink.href = "mailto:deuswork@icloud.com?subject=" + encodeURIComponent("Запит щодо весільної фотозйомки") + "&body=" + encodeURIComponent("Привіт, Олеже!\n\nМи плануємо весілля [Дата] у [Місто/Локація].\n\nПідкажи, будь ласка, чи вільна ця дата та які є пакети послуг?\n\nЗ повагою,\n[Ваші імена]");
+    }
+  }
+}
+
 function applyTranslations() {
   const currentLang = localStorage.getItem('deusflow_lang') || 'en';
   const dict = getDictionary(currentLang);
@@ -162,11 +219,13 @@ function applyTranslations() {
 
     // Partial search match
     for (const [enText, translatedText] of Object.entries(dict)) {
-      if (text === enText || (enText.length > 8 && text.includes(enText))) {
+      if (text === enText || (enText.length > 6 && text.includes(enText))) {
         node.nodeValue = node.nodeValue.replace(enText, translatedText);
       }
     }
   }
+
+  updateMessengerLinks(currentLang);
 }
 
 function initLangSwitcher() {
@@ -174,7 +233,6 @@ function initLangSwitcher() {
   const headerInner = document.querySelector('.site-header .header-inner');
   if (!headerInner) return;
 
-  // Prevent duplicate insertion
   if (document.querySelector('.lang-switcher')) return;
 
   const toggleContainer = document.createElement('div');
