@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/admin.css?v=20260819-16" />
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20260819-17" />
   <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="#0a0a0a">
   <link rel="apple-touch-icon" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png">
@@ -464,10 +464,16 @@
               <h1 class="view-title">Translations & Texts CMS</h1>
               <p class="view-subtitle">Side-by-side comparative editor across all 3 languages. Edit any text to instantly update the live website.</p>
             </div>
-            <button id="save-translations-button" type="submit" form="translations-form" class="admin-btn primary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              <span>Save All Translations & Texts</span>
-            </button>
+            <div class="admin-btn-group">
+              <button id="reset-translations-btn" type="button" class="admin-btn ghost">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span>Force Reset Defaults</span>
+              </button>
+              <button id="save-translations-button" type="submit" form="translations-form" class="admin-btn primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span>Save All Translations & Texts</span>
+              </button>
+            </div>
           </div>
 
           <form id="translations-form" class="admin-form">
@@ -483,15 +489,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-hero_title_1" name="da_hero_title_1" type="text" / value="Stille i baggrunden." >
+                      <input id="trans-da-hero_title_1" name="da_hero_title_1" type="text" value="Stille i baggrunden." />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-hero_title_1" name="ua_hero_title_1" type="text" / value="Без гучних слів." >
+                      <input id="trans-ua-hero_title_1" name="ua_hero_title_1" type="text" value="Без гучних слів." />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-hero_title_1" name="en_hero_title_1" type="text" / value="Not loud." >
+                      <input id="trans-en-hero_title_1" name="en_hero_title_1" type="text" value="Not loud." />
                     </div>
                   </div>
                 </div>
@@ -502,15 +508,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-hero_title_2" name="da_hero_title_2" type="text" / value="Højlydt i billederne." >
+                      <input id="trans-da-hero_title_2" name="da_hero_title_2" type="text" value="Højlydt i billederne." />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-hero_title_2" name="ua_hero_title_2" type="text" / value="Фото скажуть усе самі." >
+                      <input id="trans-ua-hero_title_2" name="ua_hero_title_2" type="text" value="Фото скажуть усе самі." />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-hero_title_2" name="en_hero_title_2" type="text" / value="But your photos will be." >
+                      <input id="trans-en-hero_title_2" name="en_hero_title_2" type="text" value="But your photos will be." />
                     </div>
                   </div>
                 </div>
@@ -540,15 +546,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-hero_region" name="da_hero_region" type="text" / value="Danmark og videre" >
+                      <input id="trans-da-hero_region" name="da_hero_region" type="text" value="Danmark og videre" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-hero_region" name="ua_hero_region" type="text" / value="Данія та вся Європа" >
+                      <input id="trans-ua-hero_region" name="ua_hero_region" type="text" value="Данія та вся Європа" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-hero_region" name="en_hero_region" type="text" / value="Denmark &amp; Beyond" >
+                      <input id="trans-en-hero_region" name="en_hero_region" type="text" value="Denmark &amp; Beyond" />
                     </div>
                   </div>
                 </div>
@@ -567,15 +573,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-elopement_heading" name="da_elopement_heading" type="text" / value="Skal I giftes i Danmark?" >
+                      <input id="trans-da-elopement_heading" name="da_elopement_heading" type="text" value="Skal I giftes i Danmark?" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-elopement_heading" name="ua_elopement_heading" type="text" / value="Одружуєтесь у Данії?" >
+                      <input id="trans-ua-elopement_heading" name="ua_elopement_heading" type="text" value="Одружуєтесь у Данії?" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-elopement_heading" name="en_elopement_heading" type="text" / value="Marrying in Denmark?" >
+                      <input id="trans-en-elopement_heading" name="en_elopement_heading" type="text" value="Marrying in Denmark?" />
                     </div>
                   </div>
                 </div>
@@ -605,15 +611,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-elopement_locations" name="da_elopement_locations" type="text" / value="København · Ærø · Aarhus · Odense · Aalborg · Hele Danmark og Europa" >
+                      <input id="trans-da-elopement_locations" name="da_elopement_locations" type="text" value="København · Ærø · Aarhus · Odense · Aalborg · Hele Danmark og Europa" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-elopement_locations" name="ua_elopement_locations" type="text" / value="Копенгаген · Острів Ере · Орхус · Оденсе · Ольборг · Уся Данія та Європа" >
+                      <input id="trans-ua-elopement_locations" name="ua_elopement_locations" type="text" value="Копенгаген · Острів Ере · Орхус · Оденсе · Ольборг · Уся Данія та Європа" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-elopement_locations" name="en_elopement_locations" type="text" / value="Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark &amp; Europe" >
+                      <input id="trans-en-elopement_locations" name="en_elopement_locations" type="text" value="Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark &amp; Europe" />
                     </div>
                   </div>
                 </div>
@@ -651,15 +657,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-meet_btn" name="da_meet_btn" type="text" / value="Mød Oleh og hans filosofi →" >
+                      <input id="trans-da-meet_btn" name="da_meet_btn" type="text" value="Mød Oleh og hans filosofi →" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-meet_btn" name="ua_meet_btn" type="text" / value="Познайомитись з Олегом і моїм баченням →" >
+                      <input id="trans-ua-meet_btn" name="ua_meet_btn" type="text" value="Познайомитись з Олегом і моїм баченням →" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-meet_btn" name="en_meet_btn" type="text" / value="Meet Oleh &amp; Philosophy →" >
+                      <input id="trans-en-meet_btn" name="en_meet_btn" type="text" value="Meet Oleh &amp; Philosophy →" />
                     </div>
                   </div>
                 </div>
@@ -762,15 +768,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-about_header" name="da_about_header" type="text" / value="Oleh Ro. Dokumentar &amp; editorial fotografi" >
+                      <input id="trans-da-about_header" name="da_about_header" type="text" value="Oleh Ro. Dokumentar &amp; editorial fotografi" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-about_header" name="ua_about_header" type="text" / value="Олег Ро. Documentary &amp; Editorial фотографія" >
+                      <input id="trans-ua-about_header" name="ua_about_header" type="text" value="Олег Ро. Documentary &amp; Editorial фотографія" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-about_header" name="en_about_header" type="text" / value="Oleh Ro. Documentary &amp; Editorial Photography" >
+                      <input id="trans-en-about_header" name="en_about_header" type="text" value="Oleh Ro. Documentary &amp; Editorial Photography" />
                     </div>
                   </div>
                 </div>
@@ -876,15 +882,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-about_experience" name="da_about_experience" type="text" / value="10+ Års erfaring i Danmark og Europa." >
+                      <input id="trans-da-about_experience" name="da_about_experience" type="text" value="10+ Års erfaring i Danmark og Europa." />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-about_experience" name="ua_about_experience" type="text" / value="11+ Років досвіду зйомок у Данії та по всій Європі." >
+                      <input id="trans-ua-about_experience" name="ua_about_experience" type="text" value="11+ Років досвіду зйомок у Данії та по всій Європі." />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-about_experience" name="en_about_experience" type="text" / value="11+ Years of experience across Denmark and Europe." >
+                      <input id="trans-en-about_experience" name="en_about_experience" type="text" value="11+ Years of experience across Denmark and Europe." />
                     </div>
                   </div>
                 </div>
@@ -895,15 +901,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-about_awards" name="da_about_awards" type="text" / value="★ Ugens billeder · ★ Naturlige mor-øjeblikke · ★ Glædelig mors dag 2022" >
+                      <input id="trans-da-about_awards" name="da_about_awards" type="text" value="★ Ugens billeder · ★ Naturlige mor-øjeblikke · ★ Glædelig mors dag 2022" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-about_awards" name="ua_about_awards" type="text" / value="★ Фото тижня · ★ Unposed Moms Moments · ★ Щасливого Дня матері 2022" >
+                      <input id="trans-ua-about_awards" name="ua_about_awards" type="text" value="★ Фото тижня · ★ Unposed Moms Moments · ★ Щасливого Дня матері 2022" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-about_awards" name="en_about_awards" type="text" / value="★ Photos of the Week · ★ Unposed Moms Moments · ★ Happy Mother's Day 2022" >
+                      <input id="trans-en-about_awards" name="en_about_awards" type="text" value="★ Photos of the Week · ★ Unposed Moms Moments · ★ Happy Mother's Day 2022" />
                     </div>
                   </div>
                 </div>
@@ -922,15 +928,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-contact_heading" name="da_contact_heading" type="text" / value="Lad os tale om jeres dag" >
+                      <input id="trans-da-contact_heading" name="da_contact_heading" type="text" value="Lad os tale om jeres dag" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-contact_heading" name="ua_contact_heading" type="text" / value="Поговоримо про ваш день" >
+                      <input id="trans-ua-contact_heading" name="ua_contact_heading" type="text" value="Поговоримо про ваш день" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-contact_heading" name="en_contact_heading" type="text" / value="Let's Talk About Your Day" >
+                      <input id="trans-en-contact_heading" name="en_contact_heading" type="text" value="Let's Talk About Your Day" />
                     </div>
                   </div>
                 </div>
@@ -960,15 +966,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-whatsapp_subtitle" name="da_whatsapp_subtitle" type="text" / value="hurtigst for Europa og internationale par" >
+                      <input id="trans-da-whatsapp_subtitle" name="da_whatsapp_subtitle" type="text" value="hurtigst for Europa og internationale par" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-whatsapp_subtitle" name="ua_whatsapp_subtitle" type="text" / value="Найшвидше для Європи та міжнародних пар" >
+                      <input id="trans-ua-whatsapp_subtitle" name="ua_whatsapp_subtitle" type="text" value="Найшвидше для Європи та міжнародних пар" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-whatsapp_subtitle" name="en_whatsapp_subtitle" type="text" / value="Fastest for Europe &amp; International couples" >
+                      <input id="trans-en-whatsapp_subtitle" name="en_whatsapp_subtitle" type="text" value="Fastest for Europe &amp; International couples" />
                     </div>
                   </div>
                 </div>
@@ -979,15 +985,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-telegram_subtitle" name="da_telegram_subtitle" type="text" / value="hurtig chat, engelsk eller dansk" >
+                      <input id="trans-da-telegram_subtitle" name="da_telegram_subtitle" type="text" value="hurtig chat, engelsk eller dansk" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-telegram_subtitle" name="ua_telegram_subtitle" type="text" / value="Прямий чат українською та англійською" >
+                      <input id="trans-ua-telegram_subtitle" name="ua_telegram_subtitle" type="text" value="Прямий чат українською та англійською" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-telegram_subtitle" name="en_telegram_subtitle" type="text" / value="Direct Chat in Ukrainian &amp; English" >
+                      <input id="trans-en-telegram_subtitle" name="en_telegram_subtitle" type="text" value="Direct Chat in Ukrainian &amp; English" />
                     </div>
                   </div>
                 </div>
@@ -998,15 +1004,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-prefilled_message" name="da_prefilled_message" type="text" / value="Hej Oleh! Vi planlægger vores bryllup den [Dato] i [By/Sted]. Er denne dato ledig?" >
+                      <input id="trans-da-prefilled_message" name="da_prefilled_message" type="text" value="Hej Oleh! Vi planlægger vores bryllup den [Dato] i [By/Sted]. Er denne dato ledig?" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-prefilled_message" name="ua_prefilled_message" type="text" / value="Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?" >
+                      <input id="trans-ua-prefilled_message" name="ua_prefilled_message" type="text" value="Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-prefilled_message" name="en_prefilled_message" type="text" / value="Hi Oleh! We are planning our wedding on [Date] in [City/Venue]. Is this date available?" >
+                      <input id="trans-en-prefilled_message" name="en_prefilled_message" type="text" value="Hi Oleh! We are planning our wedding on [Date] in [City/Venue]. Is this date available?" />
                     </div>
                   </div>
                 </div>
@@ -1017,15 +1023,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-email_subject" name="da_email_subject" type="text" / value="Forespørgsel om bryllupsfotografering" >
+                      <input id="trans-da-email_subject" name="da_email_subject" type="text" value="Forespørgsel om bryllupsfotografering" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-email_subject" name="ua_email_subject" type="text" / value="Запит щодо весільної фотозйомки" >
+                      <input id="trans-ua-email_subject" name="ua_email_subject" type="text" value="Запит щодо весільної фотозйомки" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-email_subject" name="en_email_subject" type="text" / value="Wedding Photography Inquiry" >
+                      <input id="trans-en-email_subject" name="en_email_subject" type="text" value="Wedding Photography Inquiry" />
                     </div>
                   </div>
                 </div>
@@ -1044,15 +1050,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-footer_desc" name="da_footer_desc" type="text" / value="Baseret i Danmark (Aarhus-området), tilgængelig i hele Europa." >
+                      <input id="trans-da-footer_desc" name="da_footer_desc" type="text" value="Baseret i Danmark (Aarhus-området), tilgængelig i hele Europa." />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-footer_desc" name="ua_footer_desc" type="text" / value="Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі." >
+                      <input id="trans-ua-footer_desc" name="ua_footer_desc" type="text" value="Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі." />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-footer_desc" name="en_footer_desc" type="text" / value="Based in Denmark (Aarhus area), available across Europe." >
+                      <input id="trans-en-footer_desc" name="en_footer_desc" type="text" value="Based in Denmark (Aarhus area), available across Europe." />
                     </div>
                   </div>
                 </div>
@@ -1063,15 +1069,15 @@
                   <div class="translation-compare-row">
                     <div class="translation-lang-col col-da">
                       <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
-                      <input id="trans-da-floating_cta_note" name="da_floating_cta_note" type="text" / value="Kalenderen er åben for bryllupper 2026-2027 · Se alle kontaktmuligheder" >
+                      <input id="trans-da-floating_cta_note" name="da_floating_cta_note" type="text" value="Kalenderen er åben for bryllupper 2026-2027 · Se alle kontaktmuligheder" />
                     </div>
                     <div class="translation-lang-col col-ua">
                       <span class="translation-col-label">🇺🇦 Українська (UA)</span>
-                      <input id="trans-ua-floating_cta_note" name="ua_floating_cta_note" type="text" / value="Бронювання весіль на сезон 2026-2027 відкрито · Усі способи зв'язку" >
+                      <input id="trans-ua-floating_cta_note" name="ua_floating_cta_note" type="text" value="Бронювання весіль на сезон 2026-2027 відкрито · Усі способи зв'язку" />
                     </div>
                     <div class="translation-lang-col col-en">
                       <span class="translation-col-label">🇬🇧 English (EN)</span>
-                      <input id="trans-en-floating_cta_note" name="en_floating_cta_note" type="text" / value="Calendar open for 2026-2027 weddings · See all contact options" >
+                      <input id="trans-en-floating_cta_note" name="en_floating_cta_note" type="text" value="Calendar open for 2026-2027 weddings · See all contact options" />
                     </div>
                   </div>
                 </div>
@@ -1094,10 +1100,16 @@
               <h1 class="view-title">Site Settings & SEO</h1>
               <p class="view-subtitle">Control navigation visibility, search engine metadata and booking messengers.</p>
             </div>
-            <button id="save-settings-button" type="submit" form="settings-form" class="admin-btn primary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              <span>Save Settings</span>
-            </button>
+            <div class="admin-btn-group">
+              <button id="reset-settings-btn" type="button" class="admin-btn ghost">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span>Reset Settings</span>
+              </button>
+              <button id="save-settings-button" type="submit" form="settings-form" class="admin-btn primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span>Save Settings</span>
+              </button>
+            </div>
           </div>
 
           <form id="settings-form" class="admin-form">
@@ -1198,7 +1210,7 @@
                 <div class="card-body">
                   <div class="form-group">
                     <label for="settings-homepage-title">Homepage SEO Title</label>
-                    <input id="settings-homepage-title" name="homepage_title" type="text" placeholder="Oleh Ro | Wedding Photographer in Denmark" / value="Oleh Ro · Wedding Photographer | Aarhus, Denmark &amp; Europe" >
+                    <input id="settings-homepage-title" name="homepage_title" type="text" placeholder="Oleh Ro | Wedding Photographer in Denmark" value="Oleh Ro · Wedding Photographer | Aarhus, Denmark &amp; Europe" />
                   </div>
                   <div class="form-group">
                     <label for="settings-homepage-description">Homepage Meta Description</label>
@@ -1209,19 +1221,19 @@
 
                   <div class="form-group">
                     <label for="settings-instagram-handle">Instagram Handle</label>
-                    <input id="settings-instagram-handle" name="instagram_handle" type="text" placeholder="@deusflow" / value="@deusflowph" >
+                    <input id="settings-instagram-handle" name="instagram_handle" type="text" placeholder="@deusflow" value="@deusflowph" />
                   </div>
                   <div class="form-group">
                     <label for="settings-instagram-dm-url">Instagram Direct URL</label>
-                    <input id="settings-instagram-dm-url" name="instagram_dm_url" type="url" placeholder="https://ig.me/m/deusflow" / value="https://ig.me/m/deusflowph" >
+                    <input id="settings-instagram-dm-url" name="instagram_dm_url" type="url" placeholder="https:  ig.me m deusflow" value="https://ig.me/m/deusflowph" />
                   </div>
                   <div class="form-group">
                     <label for="settings-telegram-url">Telegram Link</label>
-                    <input id="settings-telegram-url" name="telegram_url" type="url" placeholder="https://t.me/OflowPhotography" / value="https://t.me/OflowPhotography" >
+                    <input id="settings-telegram-url" name="telegram_url" type="url" placeholder="https:  t.me OflowPhotography" value="https://t.me/OflowPhotography" />
                   </div>
                   <div class="form-group">
                     <label for="settings-whatsapp-url">WhatsApp Link</label>
-                    <input id="settings-whatsapp-url" name="whatsapp_url" type="url" placeholder="https://wa.me/4550300636" / value="https://wa.me/4550300636" >
+                    <input id="settings-whatsapp-url" name="whatsapp_url" type="url" placeholder="https:  wa.me 4550300636" value="https://wa.me/4550300636" />
                   </div>
 
                   <div class="form-action-bar">
@@ -1341,6 +1353,6 @@
 
   <script src="../config.js"></script>
   <script src="../assets/js/runtime-config.js"></script>
-  <script type="module" src="../assets/js/admin.js?v=20260819-16"></script>
+  <script type="module" src="../assets/js/admin.js?v=20260819-17"></script>
 </body>
 </html>

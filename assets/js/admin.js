@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-16";
+import { createStateMessage } from "./ui.js?v=20260819-17";
 
 const state = {
   selectedAlbum: null,
@@ -2629,18 +2629,39 @@ function loadAllTranslationsComparative() {
       if (raw) saved = JSON.parse(raw);
     } catch (_e) {}
 
-    const data = { ...(translationDefaults[lang] || {}), ...(saved || {}) };
-
     translationFields.forEach((fieldKey) => {
       const inputId = `trans-${lang}-${fieldKey}`;
       const el = document.getElementById(inputId);
       if (el) {
-        el.value = data[fieldKey] || "";
+        const savedVal = saved && typeof saved[fieldKey] === "string" ? saved[fieldKey].trim() : "";
+        const defaultVal = translationDefaults[lang]?.[fieldKey] || "";
+        // If savedVal is non-empty use it; otherwise guarantee defaultVal is shown
+        el.value = savedVal || defaultVal;
         populatedCount++;
       }
     });
   });
   console.log(`[Admin CMS] loadAllTranslationsComparative: populated ${populatedCount} fields across DA, UA, EN.`);
+}
+
+function forceResetTranslations() {
+  if (!confirm("Reset all 3 languages (DA, UA, EN) to default text? Any custom edits in localStorage will be cleared.")) {
+    return;
+  }
+  ["da", "ua", "en"].forEach((lang) => {
+    localStorage.removeItem("deusflow_custom_translations_raw_" + lang);
+    localStorage.removeItem("deusflow_custom_translations_" + lang);
+  });
+  loadAllTranslationsComparative();
+  showToast("All translations reset to default content!", "success");
+}
+
+function forceResetSettings() {
+  if (!confirm("Reset all Site Settings & SEO to defaults?")) {
+    return;
+  }
+  fillSettingsForm(defaultSiteSettings);
+  showToast("Site settings reset to defaults! Click Save Settings to store.", "success");
 }
 
 function saveAllTranslationsComparative(e) {
@@ -2705,6 +2726,14 @@ function setupTranslationsCMS() {
   const transForm = document.getElementById("translations-form");
   if (transForm) {
     transForm.addEventListener("submit", saveAllTranslationsComparative);
+  }
+  const resetTransBtn = document.getElementById("reset-translations-btn");
+  if (resetTransBtn) {
+    resetTransBtn.addEventListener("click", forceResetTranslations);
+  }
+  const resetSettingsBtn = document.getElementById("reset-settings-btn");
+  if (resetSettingsBtn) {
+    resetSettingsBtn.addEventListener("click", forceResetSettings);
   }
   loadAllTranslationsComparative();
 }
