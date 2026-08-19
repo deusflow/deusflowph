@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-19";
+import { createStateMessage } from "./ui.js?v=20260819-20";
 
 const state = {
   selectedAlbum: null,
@@ -340,62 +340,46 @@ const defaultSiteSettings = {
   show_session: true,
   homepage_title: "Oleh Ro · Wedding Photographer | Aarhus, Denmark & Europe",
   homepage_description: "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day in Denmark and across Europe.",
-  instagram_handle: "@deusflowph",
-  instagram_dm_url: "https://ig.me/m/deusflowph",
+  instagram_handle: "@deusflow",
+  instagram_dm_url: "https://ig.me/m/deusflow",
   telegram_url: "https://t.me/OflowPhotography",
   whatsapp_url: "https://wa.me/4550300636"
 };
 
 function fillSettingsForm(content = {}) {
-  console.log("[Admin] fillSettingsForm called, settingsForm exists:", !!settingsForm, "content:", content);
-  if (!settingsForm) {
-    console.error("[Admin] fillSettingsForm: settingsForm element NOT FOUND in DOM!");
-    return;
-  }
-  const merged = { ...defaultSiteSettings, ...(content || {}) };
-  settingsShowWeddings.checked = merged.show_weddings !== false;
-  settingsShowPortfolio.checked = merged.show_portfolio !== false;
-  settingsShowAbout.checked = merged.show_about !== false;
-  settingsShowPricing.checked = merged.show_pricing !== false;
+  if (!settingsForm) return;
 
-  settingsShowEssentials.checked = merged.show_essentials !== false;
-  settingsShowSignature.checked = merged.show_signature !== false;
-  settingsShowLuxury.checked = merged.show_luxury !== false;
-  settingsShowSession.checked = merged.show_session !== false;
+  const getVal = (key) => {
+    const val = content && typeof content[key] === "string" ? content[key].trim() : "";
+    return val || defaultSiteSettings[key] || "";
+  };
 
-  settingsHomepageTitle.value = merged.homepage_title || "";
-  settingsHomepageDescription.value = merged.homepage_description || "";
+  const getBool = (key) => {
+    if (content && typeof content[key] === "boolean") return content[key];
+    return defaultSiteSettings[key] !== false;
+  };
 
-  settingsInstagramHandle.value = merged.instagram_handle || "";
-  settingsInstagramDmUrl.value = merged.instagram_dm_url || "";
-  settingsTelegramUrl.value = merged.telegram_url || "";
-  settingsWhatsappUrl.value = merged.whatsapp_url || "";
-  console.log("[Admin] fillSettingsForm: title=", settingsHomepageTitle?.value, "instagram=", settingsInstagramHandle?.value);
+  settingsShowWeddings.checked = getBool("show_weddings");
+  settingsShowPortfolio.checked = getBool("show_portfolio");
+  settingsShowAbout.checked = getBool("show_about");
+  settingsShowPricing.checked = getBool("show_pricing");
 
-  // Visible diagnostic banner
-  const tabSettings = document.getElementById("tab-settings");
-  if (tabSettings) {
-    let diag = document.getElementById("settings-diagnostic");
-    if (!diag) {
-      diag = document.createElement("div");
-      diag.id = "settings-diagnostic";
-      diag.style.cssText = "padding:12px 16px;margin:0 0 16px;border-radius:8px;font-size:13px;font-family:monospace;line-height:1.5;z-index:999;";
-      tabSettings.insertBefore(diag, tabSettings.children[1] || null);
-    }
-    const titleVal = settingsHomepageTitle?.value || "";
-    const igVal = settingsInstagramHandle?.value || "";
-    if (titleVal && igVal) {
-      diag.style.background = "rgba(34,197,94,0.15)";
-      diag.style.border = "1px solid rgba(34,197,94,0.4)";
-      diag.style.color = "#4ade80";
-      diag.textContent = `✅ Settings loaded: title="${titleVal.substring(0, 40)}…", IG="${igVal}"`;
-    } else {
-      diag.style.background = "rgba(239,68,68,0.15)";
-      diag.style.border = "1px solid rgba(239,68,68,0.4)";
-      diag.style.color = "#f87171";
-      diag.textContent = `⚠️ Settings may be empty: title="${titleVal}", IG="${igVal}". Check console.`;
-    }
-  }
+  settingsShowEssentials.checked = getBool("show_essentials");
+  settingsShowSignature.checked = getBool("show_signature");
+  settingsShowLuxury.checked = getBool("show_luxury");
+  settingsShowSession.checked = getBool("show_session");
+
+  settingsHomepageTitle.value = getVal("homepage_title");
+  settingsHomepageDescription.value = getVal("homepage_description");
+
+  settingsInstagramHandle.value = getVal("instagram_handle");
+  settingsInstagramDmUrl.value = getVal("instagram_dm_url");
+  settingsTelegramUrl.value = getVal("telegram_url");
+  settingsWhatsappUrl.value = getVal("whatsapp_url");
+
+  // Remove diagnostic element if present
+  const diag = document.getElementById("settings-diagnostic");
+  if (diag) diag.remove();
 }
 
 async function saveSiteSettings(event) {
@@ -2690,31 +2674,8 @@ function loadAllTranslationsComparative() {
     });
   });
 
-  const msg = `[Admin CMS] loadAllTranslationsComparative: found ${foundCount} DOM elements, populated ${populatedCount}, empty ${emptyCount}, missing ${missingElementCount}. Samples: ${sampleValues.join(" | ")}`;
-  console.log(msg);
-
-  // Show visible diagnostic banner on the page
-  const tabTrans = document.getElementById("tab-translations");
-  if (tabTrans) {
-    let diag = document.getElementById("translations-diagnostic");
-    if (!diag) {
-      diag = document.createElement("div");
-      diag.id = "translations-diagnostic";
-      diag.style.cssText = "padding:12px 16px;margin:0 0 16px;border-radius:8px;font-size:13px;font-family:monospace;line-height:1.5;z-index:999;";
-      tabTrans.insertBefore(diag, tabTrans.children[1] || null);
-    }
-    if (populatedCount > 0 && emptyCount === 0) {
-      diag.style.background = "rgba(34,197,94,0.15)";
-      diag.style.border = "1px solid rgba(34,197,94,0.4)";
-      diag.style.color = "#4ade80";
-      diag.textContent = `✅ All ${populatedCount} translation fields loaded. (${foundCount} DOM elements found, ${missingElementCount} missing)`;
-    } else {
-      diag.style.background = "rgba(239,68,68,0.15)";
-      diag.style.border = "1px solid rgba(239,68,68,0.4)";
-      diag.style.color = "#f87171";
-      diag.textContent = `⚠️ Translation fields: ${populatedCount} populated, ${emptyCount} EMPTY, ${missingElementCount} missing DOM. Check console for details.`;
-    }
-  }
+  const diag = document.getElementById("translations-diagnostic");
+  if (diag) diag.remove();
 }
 
 
@@ -2815,7 +2776,7 @@ function setupTranslationsCMS() {
 /* =========================================================================
    AUTO-MIGRATION: Purge stale empty translation cache on version upgrade
    ========================================================================= */
-const ADMIN_CMS_VERSION = "20260819-19";
+const ADMIN_CMS_VERSION = "20260819-20";
 try {
   if (localStorage.getItem("deusflow_cms_version") !== ADMIN_CMS_VERSION) {
     console.log("[Admin CMS] Version upgrade detected → purging stale localStorage translation cache.");
