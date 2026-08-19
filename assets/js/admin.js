@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-18";
+import { createStateMessage } from "./ui.js?v=20260819-19";
 
 const state = {
   selectedAlbum: null,
@@ -2815,7 +2815,7 @@ function setupTranslationsCMS() {
 /* =========================================================================
    AUTO-MIGRATION: Purge stale empty translation cache on version upgrade
    ========================================================================= */
-const ADMIN_CMS_VERSION = "20260819-18";
+const ADMIN_CMS_VERSION = "20260819-19";
 try {
   if (localStorage.getItem("deusflow_cms_version") !== ADMIN_CMS_VERSION) {
     console.log("[Admin CMS] Version upgrade detected → purging stale localStorage translation cache.");
