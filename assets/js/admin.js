@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-17";
+import { createStateMessage } from "./ui.js?v=20260819-18";
 
 const state = {
   selectedAlbum: null,
@@ -2737,6 +2737,21 @@ function setupTranslationsCMS() {
   }
   loadAllTranslationsComparative();
 }
+
+/* =========================================================================
+   AUTO-MIGRATION: Purge stale empty translation cache on version upgrade
+   ========================================================================= */
+const ADMIN_CMS_VERSION = "20260819-18";
+try {
+  if (localStorage.getItem("deusflow_cms_version") !== ADMIN_CMS_VERSION) {
+    console.log("[Admin CMS] Version upgrade detected → purging stale localStorage translation cache.");
+    ["da", "ua", "en"].forEach((lang) => {
+      localStorage.removeItem("deusflow_custom_translations_raw_" + lang);
+      localStorage.removeItem("deusflow_custom_translations_" + lang);
+    });
+    localStorage.setItem("deusflow_cms_version", ADMIN_CMS_VERSION);
+  }
+} catch (_e) {}
 
 setupTestimonialReorder();
 setupTranslationsCMS();
