@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/styles.css?v=20260819-7" />
-  <link rel="stylesheet" href="../assets/css/admin.css?v=20260819-7" />
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20260819-8" />
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20260819-8" />
   <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="#0a0a0a">
   <link rel="apple-touch-icon" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png">
@@ -89,6 +89,10 @@
           <button type="button" class="admin-nav-button" data-target="tab-pricing">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             <span>Pricing CMS</span>
+          </button>
+          <button type="button" class="admin-nav-button" data-target="tab-translations">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+            <span>Translations & Texts CMS</span>
           </button>
         </nav>
 
@@ -451,6 +455,229 @@
                 </div>
               </div>
             </div>
+        <!-- ========================================== -->
+        <!-- TAB 4.5: TRANSLATIONS & TEXTS CMS          -->
+        <!-- ========================================== -->
+        <div id="tab-translations" class="admin-tab-pane">
+          <div class="admin-view-header">
+            <div>
+              <h1 class="view-title">Translations & Texts CMS</h1>
+              <p class="view-subtitle">Edit and customise every text string and phrase across all languages with instant live sync.</p>
+            </div>
+            <button id="save-translations-button" type="submit" form="translations-form" class="admin-btn primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span>Save Translations</span>
+            </button>
+          </div>
+
+          <!-- LANGUAGE SWITCHER BUTTONS -->
+          <div class="translation-lang-bar">
+            <button type="button" class="translation-lang-btn active" data-lang="da">🇩🇰 Danish (Dansk)</button>
+            <button type="button" class="translation-lang-btn" data-lang="ua">🇺🇦 Ukrainian (Українська)</button>
+            <button type="button" class="translation-lang-btn" data-lang="en">🇬🇧 English (Default)</button>
+          </div>
+
+          <form id="translations-form" class="admin-form">
+            <!-- 1. HERO & INTRO -->
+            <div class="admin-card" style="margin-bottom: 1.5rem;">
+              <div class="card-header">
+                <h3>1. Main Hero & Subtitles</h3>
+              </div>
+              <div class="card-body">
+                <div class="admin-layout-2col">
+                  <div class="form-group">
+                    <label for="trans-hero-title-1">Hero Subtitle Line 1</label>
+                    <input id="trans-hero-title-1" name="hero_title_1" type="text" />
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-hero-title-2">Hero Subtitle Line 2</label>
+                    <input id="trans-hero-title-2" name="hero_title_2" type="text" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="trans-hero-desc">Hero Main Paragraph</label>
+                  <textarea id="trans-hero-desc" name="hero_desc" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="trans-hero-region">Hero Region / Badge</label>
+                  <input id="trans-hero-region" name="hero_region" type="text" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. DENMARK ELOPEMENTS -->
+            <div class="admin-card" style="margin-bottom: 1.5rem;">
+              <div class="card-header">
+                <h3>2. Denmark Elopements & Weddings Block</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="trans-elopement-heading">Section Heading</label>
+                  <input id="trans-elopement-heading" name="elopement_heading" type="text" />
+                </div>
+                <div class="form-group">
+                  <label for="trans-elopement-desc">Story Description</label>
+                  <textarea id="trans-elopement-desc" name="elopement_desc" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="trans-elopement-locations">Locations Line</label>
+                  <input id="trans-elopement-locations" name="elopement_locations" type="text" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. BEHIND THE LENS (MEET OLEH) -->
+            <div class="admin-card" style="margin-bottom: 1.5rem;">
+              <div class="card-header">
+                <h3>3. Behind The Lens (Meet Oleh)</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="trans-meet-quote">Photographer Philosophy Quote</label>
+                  <textarea id="trans-meet-quote" name="meet_quote" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="trans-meet-btn">Action Link / Button Text</label>
+                  <input id="trans-meet-btn" name="meet_btn" type="text" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. TESTIMONIALS -->
+            <div class="admin-card" style="margin-bottom: 1.5rem;">
+              <div class="card-header">
+                <h3>4. Testimonials Quotes</h3>
+              </div>
+              <div class="card-body">
+                <div class="admin-layout-2col">
+                  <div class="form-group">
+                    <label for="trans-test-1">Oleksandr Popov Quote</label>
+                    <textarea id="trans-test-1" name="test_1" rows="3"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-test-2">Amalie Frank Quote</label>
+                    <textarea id="trans-test-2" name="test_2" rows="3"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-test-3">Volodymyr Ostapchuk Quote</label>
+                    <textarea id="trans-test-3" name="test_3" rows="3"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-test-4">Jerry Heil Quote</label>
+                    <textarea id="trans-test-4" name="test_4" rows="3"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. ABOUT PAGE CMS (FULL STORY & VALUES) -->
+            <div class="admin-card" style="margin-bottom: 1.5rem;">
+              <div class="card-header">
+                <h3>5. About Page Content</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="trans-about-header">Header Subtitle (e.g. "Oleh Ro. Dokumentar & editorial fotografi")</label>
+                  <input id="trans-about-header" name="about_header" type="text" />
+                </div>
+                <div class="form-group">
+                  <label for="trans-about-story-1">Story Paragraph 1 (Art as a whole & 11 years)</label>
+                  <textarea id="trans-about-story-1" name="about_story_1" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="trans-about-story-2">Story Paragraph 2 (Raw sincerity & couples problem)</label>
+                  <textarea id="trans-about-story-2" name="about_story_2" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="trans-about-story-3">Story Paragraph 3 (Emergency delivery & full control)</label>
+                  <textarea id="trans-about-story-3" name="about_story_3" rows="3"></textarea>
+                </div>
+                <div class="admin-layout-2col">
+                  <div class="form-group">
+                    <label for="trans-about-values">Values & Approach</label>
+                    <textarea id="trans-about-values" name="about_values" rows="3"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-about-background">Background Note</label>
+                    <textarea id="trans-about-background" name="about_background" rows="3"></textarea>
+                  </div>
+                </div>
+                <div class="admin-layout-2col">
+                  <div class="form-group">
+                    <label for="trans-about-experience">Experience Milestone Text</label>
+                    <input id="trans-about-experience" name="about_experience" type="text" />
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-about-awards">Awards & Recognitions Line</label>
+                    <input id="trans-about-awards" name="about_awards" type="text" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. DIRECT CONTACT & MESSENGERS -->
+            <div class="admin-card" style="margin-bottom: 1.5rem;">
+              <div class="card-header">
+                <h3>6. Contact Block & Messenger Templates</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="trans-contact-heading">Contact Section Heading</label>
+                  <input id="trans-contact-heading" name="contact_heading" type="text" />
+                </div>
+                <div class="form-group">
+                  <label for="trans-contact-desc">Contact Subtitle Description</label>
+                  <textarea id="trans-contact-desc" name="contact_desc" rows="2"></textarea>
+                </div>
+                <div class="admin-layout-2col">
+                  <div class="form-group">
+                    <label for="trans-wa-sub">WhatsApp Pill Subtitle</label>
+                    <input id="trans-wa-sub" name="whatsapp_subtitle" type="text" />
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-tg-sub">Telegram Pill Subtitle</label>
+                    <input id="trans-tg-sub" name="telegram_subtitle" type="text" />
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-ig-sub">Instagram Pill Subtitle</label>
+                    <input id="trans-ig-sub" name="instagram_subtitle" type="text" />
+                  </div>
+                  <div class="form-group">
+                    <label for="trans-email-sub">Email Pill Subtitle</label>
+                    <input id="trans-email-sub" name="email_subtitle" type="text" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="trans-prefilled-msg">Pre-filled WhatsApp & Telegram Message Template</label>
+                  <input id="trans-prefilled-msg" name="prefilled_message" type="text" />
+                </div>
+                <div class="form-group">
+                  <label for="trans-email-subject">Pre-filled Email Subject</label>
+                  <input id="trans-email-subject" name="email_subject" type="text" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 7. FOOTER & FLOATING CTA -->
+            <div class="admin-card">
+              <div class="card-header">
+                <h3>7. Footer & Floating Banner</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="trans-footer-desc">Footer Bio Description</label>
+                  <input id="trans-footer-desc" name="footer_desc" type="text" />
+                </div>
+                <div class="form-group">
+                  <label for="trans-floating-cta">Floating Banner Calendar Note</label>
+                  <input id="trans-floating-cta" name="floating_cta_note" type="text" />
+                </div>
+                <div class="form-action-bar">
+                  <button type="submit" class="admin-btn primary">Save Translations</button>
+                  <span id="translations-status-text" class="status-msg"></span>
+                </div>
+              </div>
+            </div>
           </form>
         </div>
 
@@ -710,6 +937,6 @@
 
   <script src="../config.js"></script>
   <script src="../assets/js/runtime-config.js"></script>
-  <script type="module" src="../assets/js/admin.js?v=20260819-7"></script>
+  <script type="module" src="../assets/js/admin.js?v=20260819-8"></script>
 </body>
 </html>

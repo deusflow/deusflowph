@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-7";
+import { createStateMessage } from "./ui.js?v=20260819-8";
 
 const state = {
   selectedAlbum: null,
@@ -2332,7 +2332,271 @@ if (settingsForm) {
   settingsForm.addEventListener("submit", saveSiteSettings);
 }
 
+/* ==========================================================================
+   TRANSLATIONS & TEXTS CMS CONTROLLER
+   ========================================================================== */
+
+const translationDefaults = {
+  da: {
+    hero_title_1: "Stille i baggrunden.",
+    hero_title_2: "Højlydt i billederne.",
+    hero_desc: "Jeg fanger ægte følelser, afslappet elegance og stemningen fra jeres dag, som varer evigt.",
+    hero_region: "Danmark og videre",
+    elopement_heading: "Skal I giftes i Danmark?",
+    elopement_desc: "En intim vielse på Københavns Rådhus. En rolig sommerdag ved havet på Ærø. Et bryllup på et slot et sted i Jylland. Uanset hvad I vælger, er jeg der stille, roligt og til stede, med ærlig dokumentation og billeder, der holder i mange år.",
+    elopement_locations: "København · Ærø · Aarhus · Odense · Aalborg · Hele Danmark og Europa",
+    meet_quote: "Jeg tror på, at de smukkeste billeder opstår, når man glemmer, at kameraet er der. Jeg holder mig i baggrunden, observerer de ægte øjeblikke, og guider kun forsigtigt, når det gør jer smukkere helt naturligt.",
+    meet_btn: "Mød Oleh og hans filosofi →",
+    test_1: "Mand, de billeder ligner scener fra en film. Du har et vildt øje for cinematiske detaljer. Super nemt at arbejde med on location også. Topklasse.",
+    test_2: "Wow, hvor ser det godt ud! Tusind tusind tak for det, kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med jer.",
+    test_3: "Vi har lige set galleriet igennem, og vi er målløse. Du fangede stemningen fra dagen helt perfekt. Ingen stive positurer, bare os, som vi er. Tak for denne erindring!",
+    test_4: "Vi havde en hyggelig vinterfotografering, og Oleh gjorde hele processen let og afslappet. De endelige billeder er ren magi.",
+    about_header: "Oleh Ro. Dokumentar & editorial fotografi",
+    about_story_1: "Mange ville skrive her om deres store kærlighed til bryllupsfotografering. Min sande passion er kunst som helhed. Bryllupper valgte simpelthen mig.",
+    about_story_2: "Helt ærligt, folk er begyndt at lægge mærke til noget i mine billeder, som jeg ikke selv så: ren ærlighed og unikke øjeblikke, der aldrig kommer igen. Det løser parrenes største problem: I skal ikke bare have ti hårdt retoucherede billeder i perfekte positurer. I skal se den ægte historie fra jeres dag. Og det klarer jeg vist ret godt... i hvert fald siger folk det.",
+    about_story_3: "Nogle siger, bryllupper er stressende. Jeg forløste selv min kones barn i en nødsituation. Intet hospital. Bare os. Jeres bryllupsdag? Stol på mig, den klarer jeg.",
+    about_values: "Jeg arbejder stille, observerer ærligt og guider kun, når det hjælper. Jeg sætter ægte følelser højere end tvungen perfektion, en gennemført æstetik uden støj, og en rolig proces, hvor I forbliver til stede i jeres dag.",
+    about_background: "Oprindeligt fra Ukraine, bor nu tæt på Aarhus. Jeg arbejder i hele Danmark og Europa. Mit visuelle sprog blander dokumentarisk sandhed med editorial billeder, så jeres galleri føles levende, elegant og dybt personligt.",
+    about_experience: "10+ Års erfaring i Danmark og Europa.",
+    about_awards: "★ Ugens billeder · ★ Naturlige mor-øjeblikke · ★ Glædelig mors dag 2022",
+    contact_heading: "Lad os tale om jeres dag",
+    contact_desc: "Jeg foretrækker direkte, personlig kontakt. Vælg den app, I er mest trygge ved, for at tale om jeres visioner, tjekke ledighed eller bare sige hej:",
+    whatsapp_subtitle: "hurtigst for Europa og internationale par",
+    telegram_subtitle: "hurtig chat, engelsk eller dansk",
+    instagram_subtitle: "portfolio, reels og live stories",
+    email_subtitle: "deuswork@icloud.com",
+    prefilled_message: "Hej Oleh! Vi planlægger vores bryllup den [Dato] i [By/Sted]. Er denne dato ledig?",
+    email_subject: "Forespørgsel om bryllupsfotografering",
+    footer_desc: "Baseret i Danmark (Aarhus-området), tilgængelig i hele Europa.",
+    floating_cta_note: "Kalenderen er åben for bryllupper 2026-2027 · Se alle kontaktmuligheder"
+  },
+  ua: {
+    hero_title_1: "Без гучних слів.",
+    hero_title_2: "Фото скажуть усе самі.",
+    hero_desc: "Тихо фіксую справжні емоції, легку елегантність та той самий timeless вайб вашого дня.",
+    hero_region: "Данія та вся Європа",
+    elopement_heading: "Одружуєтесь у Данії?",
+    elopement_desc: "Камерна церемонія в ратуші Копенгагена, романтична втеча на острів Ере чи свято в замку десь у Ютландії. Хай би що ви обрали, я поруч: спокійно, непомітно, з чесною документальною зйомкою та стильними editorial кадрами.",
+    elopement_locations: "Копенгаген · Острів Ере · Орхус · Оденсе · Ольборг · Уся Данія та Європа",
+    meet_quote: "Найщиріші кадри народжуються тоді, коли ви забуваєте про камеру. Я спостерігаю, ловлю живі моменти без пози і додаю легку підказку лише тоді, коли це допомагає відчути себе природно красиво.",
+    meet_btn: "Познайомитись з Олегом і моїм баченням →",
+    test_1: "Чувак, ці кадри виглядають прямо як стоп-кадри з кіно. У тебе шалене відчуття кінематографічних деталей. Працювати на майданчику максимально легко. Топ-рівень.",
+    test_2: "Вау, як же круто вийшло! Величезне дякую, це стовідсоткова рекомендація! Усі гості й навіть команда замку були в захваті від фотографій. Працювати з тобою було суцільним задоволенням.",
+    test_3: "Щойно передивились галерею, і в нас просто нема слів. Ти вловив точний вайб нашого дня. Жодних застиглих поз, тільки справжні ми. Дякуємо за цей спогад!",
+    test_4: "У нас була затишна зимова фотосесія, і Олег зробив увесь процес легким та комфортним. А фінальні фото — це чиста магія.",
+    about_header: "Олег Ро. Documentary & Editorial фотографія",
+    about_story_1: "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.",
+    about_story_2: "Чесно кажучи, люди почали помічати в моїх роботах те, чого не бачив навіть я сам: щирість без прикрас і моменти, які більше ніколи не повторяться. Це вирішує головну проблему пар: вам не потрібні 10 перефотошоплених світлин у напружених позах. Вам потрібна жива історія вашого дня. І з цим я справляюсь на відмінно... принаймні так кажуть мої молодята.",
+    about_story_3: "Кажуть, весілля — це стрес. А я приймав пологи у власної дружини в екстрених умовах. Без лікарні, тільки ми двоє. Тож ваш весільний день? Довіртесь, усе під повним контролем.",
+    about_values: "Працюю тихо, спостерігаю чесно, підказую лише тоді, коли це дійсно потрібно. Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.",
+    about_background: "Родом з України, зараз базуюся біля Орхуса. Працюю по всій Данії та Європі. Мій візуальний почерк поєднує документальну правду з editorial кадрами, тому галерея відчувається живою, елегантною і глибоко особистою.",
+    about_experience: "11+ Років досвіду зйомок у Данії та по всій Європі.",
+    about_awards: "★ Фото тижня · ★ Unposed Moms Moments · ★ Щасливого Дня матері 2022",
+    contact_heading: "Поговоримо про ваш день",
+    contact_desc: "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
+    whatsapp_subtitle: "Найшвидше для Європи та міжнародних пар",
+    telegram_subtitle: "Прямий чат українською та англійською",
+    instagram_subtitle: "Портфоліо, reels і live stories",
+    email_subtitle: "Email напряму",
+    prefilled_message: "Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?",
+    email_subject: "Запит щодо весільної фотозйомки",
+    footer_desc: "Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі.",
+    floating_cta_note: "Бронювання весіль на сезон 2026-2027 відкрито · Усі способи зв'язку"
+  },
+  en: {
+    hero_title_1: "Not loud.",
+    hero_title_2: "But your photos will be.",
+    hero_desc: "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day.",
+    hero_region: "Denmark & Beyond",
+    elopement_heading: "Marrying in Denmark?",
+    elopement_desc: "Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography.",
+    elopement_locations: "Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark & Europe",
+    meet_quote: "I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful.",
+    meet_btn: "Meet Oleh & Philosophy →",
+    test_1: "Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level.",
+    test_2: "Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig.",
+    test_3: "We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!",
+    test_4: "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic.",
+    about_header: "Oleh Ro. Documentary & Editorial Photography",
+    about_story_1: "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.",
+    about_story_2: "Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.",
+    about_story_3: "Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us. Your wedding day? Trust me, everything is completely under control.",
+    about_values: "I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.",
+    about_background: "Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.",
+    about_experience: "11+ Years of experience across Denmark and Europe.",
+    about_awards: "★ Photos of the Week · ★ Unposed Moms Moments · ★ Happy Mother's Day 2022",
+    contact_heading: "Let's Talk About Your Day",
+    contact_desc: "I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:",
+    whatsapp_subtitle: "Fastest for Europe & International couples",
+    telegram_subtitle: "Direct Chat in Ukrainian & English",
+    instagram_subtitle: "Portfolio, reels & live stories",
+    email_subtitle: "Email Direct",
+    prefilled_message: "Hi Oleh! We are planning our wedding on [Date] in [City/Venue]. Is this date available?",
+    email_subject: "Wedding Photography Inquiry",
+    footer_desc: "Based in Denmark (Aarhus area), available across Europe.",
+    floating_cta_note: "Calendar open for 2026-2027 weddings · See all contact options"
+  }
+};
+
+let currentTransLang = "da";
+
+function loadTranslationsForm(lang) {
+  currentTransLang = lang;
+  let saved = null;
+  try {
+    const raw = localStorage.getItem("deusflow_custom_translations_raw_" + lang);
+    if (raw) saved = JSON.parse(raw);
+  } catch (_e) {}
+
+  const data = { ...(translationDefaults[lang] || {}), ...(saved || {}) };
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || "";
+  };
+
+  setVal("trans-hero-title-1", data.hero_title_1);
+  setVal("trans-hero-title-2", data.hero_title_2);
+  setVal("trans-hero-desc", data.hero_desc);
+  setVal("trans-hero-region", data.hero_region);
+  setVal("trans-elopement-heading", data.elopement_heading);
+  setVal("trans-elopement-desc", data.elopement_desc);
+  setVal("trans-elopement-locations", data.elopement_locations);
+  setVal("trans-meet-quote", data.meet_quote);
+  setVal("trans-meet-btn", data.meet_btn);
+  setVal("trans-test-1", data.test_1);
+  setVal("trans-test-2", data.test_2);
+  setVal("trans-test-3", data.test_3);
+  setVal("trans-test-4", data.test_4);
+  setVal("trans-about-header", data.about_header);
+  setVal("trans-about-story-1", data.about_story_1);
+  setVal("trans-about-story-2", data.about_story_2);
+  setVal("trans-about-story-3", data.about_story_3);
+  setVal("trans-about-values", data.about_values);
+  setVal("trans-about-background", data.about_background);
+  setVal("trans-about-experience", data.about_experience);
+  setVal("trans-about-awards", data.about_awards);
+  setVal("trans-contact-heading", data.contact_heading);
+  setVal("trans-contact-desc", data.contact_desc);
+  setVal("trans-wa-sub", data.whatsapp_subtitle);
+  setVal("trans-tg-sub", data.telegram_subtitle);
+  setVal("trans-ig-sub", data.instagram_subtitle);
+  setVal("trans-email-sub", data.email_subtitle);
+  setVal("trans-prefilled-msg", data.prefilled_message);
+  setVal("trans-email-subject", data.email_subject);
+  setVal("trans-footer-desc", data.footer_desc);
+  setVal("trans-floating-cta", data.floating_cta_note);
+}
+
+function saveTranslationsForm(e) {
+  if (e) e.preventDefault();
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  };
+
+  const rawData = {
+    hero_title_1: getVal("trans-hero-title-1"),
+    hero_title_2: getVal("trans-hero-title-2"),
+    hero_desc: getVal("trans-hero-desc"),
+    hero_region: getVal("trans-hero-region"),
+    elopement_heading: getVal("trans-elopement-heading"),
+    elopement_desc: getVal("trans-elopement-desc"),
+    elopement_locations: getVal("trans-elopement-locations"),
+    meet_quote: getVal("trans-meet-quote"),
+    meet_btn: getVal("trans-meet-btn"),
+    test_1: getVal("trans-test-1"),
+    test_2: getVal("trans-test-2"),
+    test_3: getVal("trans-test-3"),
+    test_4: getVal("trans-test-4"),
+    about_header: getVal("trans-about-header"),
+    about_story_1: getVal("trans-about-story-1"),
+    about_story_2: getVal("trans-about-story-2"),
+    about_story_3: getVal("trans-about-story-3"),
+    about_values: getVal("trans-about-values"),
+    about_background: getVal("trans-about-background"),
+    about_experience: getVal("trans-about-experience"),
+    about_awards: getVal("trans-about-awards"),
+    contact_heading: getVal("trans-contact-heading"),
+    contact_desc: getVal("trans-contact-desc"),
+    whatsapp_subtitle: getVal("trans-wa-sub"),
+    telegram_subtitle: getVal("trans-tg-sub"),
+    instagram_subtitle: getVal("trans-ig-sub"),
+    email_subtitle: getVal("trans-email-sub"),
+    prefilled_message: getVal("trans-prefilled-msg"),
+    email_subject: getVal("trans-email-subject"),
+    footer_desc: getVal("trans-footer-desc"),
+    floating_cta_note: getVal("trans-floating-cta")
+  };
+
+  // Convert raw fields into dictionary map for i18n
+  const dictMap = {};
+  if (rawData.hero_title_1) dictMap["Not loud."] = rawData.hero_title_1;
+  if (rawData.hero_title_2) dictMap["But your photos will be."] = rawData.hero_title_2;
+  if (rawData.hero_desc) dictMap["Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day."] = rawData.hero_desc;
+  if (rawData.hero_region) dictMap["Denmark & Beyond"] = rawData.hero_region;
+  if (rawData.elopement_heading) dictMap["Marrying in Denmark?"] = rawData.elopement_heading;
+  if (rawData.elopement_desc) dictMap["Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography."] = rawData.elopement_desc;
+  if (rawData.elopement_locations) dictMap["Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark & Europe"] = rawData.elopement_locations;
+  if (rawData.meet_quote) dictMap["I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful."] = rawData.meet_quote;
+  if (rawData.meet_btn) dictMap["Meet Oleh & Philosophy"] = rawData.meet_btn;
+  if (rawData.test_1) dictMap["Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level."] = rawData.test_1;
+  if (rawData.test_2) dictMap["Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig."] = rawData.test_2;
+  if (rawData.test_3) dictMap["We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!"] = rawData.test_3;
+  if (rawData.test_4) dictMap["We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."] = rawData.test_4;
+  if (rawData.about_header) dictMap["Documentary & Editorial"] = rawData.about_header;
+  if (rawData.about_story_1) dictMap["Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now."] = rawData.about_story_1;
+  if (rawData.about_story_2) dictMap["Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me."] = rawData.about_story_2;
+  if (rawData.about_story_3) dictMap["Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us. Your wedding day? Trust me, everything is completely under control."] = rawData.about_story_3;
+  if (rawData.about_values) dictMap["I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day."] = rawData.about_values;
+  if (rawData.about_background) dictMap["Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal."] = rawData.about_background;
+  if (rawData.about_experience) dictMap["Years of experience across Denmark and Europe."] = rawData.about_experience;
+  if (rawData.about_awards) dictMap["★ Photos of the Week"] = rawData.about_awards;
+  if (rawData.contact_heading) dictMap["Let's Talk About Your Day"] = rawData.contact_heading;
+  if (rawData.contact_desc) dictMap["I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:"] = rawData.contact_desc;
+  if (rawData.whatsapp_subtitle) dictMap["Fastest for Europe & International couples"] = rawData.whatsapp_subtitle;
+  if (rawData.telegram_subtitle) dictMap["Прямий чат / Українська та English"] = rawData.telegram_subtitle;
+  if (rawData.instagram_subtitle) dictMap["Portfolio, reels & live stories"] = rawData.instagram_subtitle;
+  if (rawData.email_subtitle) dictMap["Email Direct"] = rawData.email_subtitle;
+  if (rawData.footer_desc) dictMap["Based in Denmark (Aarhus area), available across Europe."] = rawData.footer_desc;
+  if (rawData.floating_cta_note) dictMap["Calendar open for 2026-2027 weddings ·"] = rawData.floating_cta_note;
+
+  try {
+    localStorage.setItem("deusflow_custom_translations_raw_" + currentTransLang, JSON.stringify(rawData));
+    localStorage.setItem("deusflow_custom_translations_" + currentTransLang, JSON.stringify(dictMap));
+    showToast(`Translations for ${currentTransLang.toUpperCase()} saved successfully!`, "success");
+    const statusEl = document.getElementById("translations-status-text");
+    if (statusEl) {
+      statusEl.textContent = `All ${currentTransLang.toUpperCase()} phrases saved. Changes are live on site!`;
+      setTimeout(() => { statusEl.textContent = ""; }, 4000);
+    }
+  } catch (err) {
+    showToast(`Could not save translations: ${err.message}`, "error");
+  }
+}
+
+function setupTranslationsCMS() {
+  const transForm = document.getElementById("translations-form");
+  const langBtns = document.querySelectorAll(".translation-lang-btn");
+
+  langBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      langBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const lang = btn.getAttribute("data-lang") || "da";
+      loadTranslationsForm(lang);
+    });
+  });
+
+  if (transForm) {
+    transForm.addEventListener("submit", saveTranslationsForm);
+  }
+
+  loadTranslationsForm("da");
+}
+
 setupTestimonialReorder();
+setupTranslationsCMS();
 
 applyPhotoViewMode();
 updateOrderControlsState();

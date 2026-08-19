@@ -194,9 +194,23 @@ const DADict = {
 };
 
 function getDictionary(lang) {
-  if (lang === "uk" || lang === "ua") return UADict;
-  if (lang === "da") return DADict;
-  return null;
+  let baseDict = null;
+  const normalizedLang = lang === "uk" ? "ua" : lang;
+  if (normalizedLang === "ua") baseDict = UADict;
+  else if (normalizedLang === "da") baseDict = DADict;
+  else return null;
+
+  try {
+    const customRaw = localStorage.getItem("deusflow_custom_translations_" + normalizedLang);
+    if (customRaw) {
+      const customDict = JSON.parse(customRaw);
+      return { ...baseDict, ...customDict };
+    }
+  } catch (_e) {
+    // Fallback to baseDict
+  }
+
+  return baseDict;
 }
 
 function updateMessengerLinks(lang) {
