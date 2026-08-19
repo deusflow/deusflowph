@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-15";
+import { createStateMessage } from "./ui.js?v=20260819-16";
 
 const state = {
   selectedAlbum: null,
@@ -305,15 +305,18 @@ async function loadPricingContentAdmin() {
   const { data, error } = await supabase.from("pricing_content").select("*").eq("id", 1).maybeSingle();
 
   if (error) {
+    console.warn("[Admin] Pricing content query warning:", error.message);
     setUploadStatus(`Could not load Pricing content: ${error.message}`, 0, "error");
     setPricingStatus(`Could not load Pricing content: ${error.message}`, "error");
     fillPricingForm(defaults);
+    fillSettingsForm(defaultSiteSettings);
     return;
   }
 
   const resolved = data;
   if (!resolved) {
     fillPricingForm(defaults);
+    fillSettingsForm(defaultSiteSettings);
     setUploadStatus("Pricing content row is missing (id=1). Add it once in Supabase SQL Editor.", 0, "error");
     setPricingStatus("Missing row in pricing_content (id=1). Run seed SQL once.", "error");
     return;
@@ -323,6 +326,7 @@ async function loadPricingContentAdmin() {
   fillPricingForm({ ...defaults, ...resolved });
   fillSettingsForm(resolved);
   setPricingStatus("Pricing content loaded.");
+  console.log("[Admin] Loaded settings and pricing content from DB:", resolved);
 }
 
 const defaultSiteSettings = {
@@ -2617,6 +2621,7 @@ const translationFields = [
 
 function loadAllTranslationsComparative() {
   const langs = ["da", "ua", "en"];
+  let populatedCount = 0;
   langs.forEach((lang) => {
     let saved = null;
     try {
@@ -2631,9 +2636,11 @@ function loadAllTranslationsComparative() {
       const el = document.getElementById(inputId);
       if (el) {
         el.value = data[fieldKey] || "";
+        populatedCount++;
       }
     });
   });
+  console.log(`[Admin CMS] loadAllTranslationsComparative: populated ${populatedCount} fields across DA, UA, EN.`);
 }
 
 function saveAllTranslationsComparative(e) {
