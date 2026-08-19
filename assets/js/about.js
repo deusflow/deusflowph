@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage, initScrollReveals, getOptimizedImageUrl } from "./ui.js?v=20260819-21";
+import { createStateMessage, initScrollReveals, getOptimizedImageUrl, initSmartHeader } from "./ui.js?v=20260819-26";
 
 const photoNode = document.getElementById("about-photo");
 const storyNode = document.getElementById("about-story");
@@ -136,9 +136,9 @@ async function loadAbout() {
 }
 
 loadAbout().then(() => {
+  initSmartHeader();
   initScrollReveals();
   if (typeof window.applyTranslations === "function") {
     window.applyTranslations();
   }
 });
-

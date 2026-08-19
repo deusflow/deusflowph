@@ -214,9 +214,16 @@ function getDictionary(lang) {
   else if (normalizedLang === "en") baseDict = {};
 
   try {
-    const customRaw = localStorage.getItem("deusflow_custom_translations_" + normalizedLang);
-    if (customRaw) {
-      const customDict = JSON.parse(customRaw);
+    const cacheRaw = localStorage.getItem("deusflow_i18n_cache_" + normalizedLang);
+    if (cacheRaw) {
+      const cache = JSON.parse(cacheRaw);
+      if (cache?.dict_map && typeof cache.dict_map === "object") {
+        return { ...baseDict, ...cache.dict_map };
+      }
+    }
+    const legacyRaw = localStorage.getItem("deusflow_custom_translations_" + normalizedLang);
+    if (legacyRaw) {
+      const customDict = JSON.parse(legacyRaw);
       return { ...baseDict, ...customDict };
     }
   } catch (_e) {
@@ -320,8 +327,61 @@ function applyTranslations() {
   }
 }
 
+// Background Supabase Revalidation (Stale-While-Revalidate with 5-minute TTL)
+async function revalidateTranslationsFromSupabase() {
+  const currentLang = localStorage.getItem("deusflow_lang") || "en";
+  const normalizedLang = currentLang === "uk" ? "ua" : currentLang;
+  if (normalizedLang === "en") return;
+
+  const config = window.APP_CONFIG;
+  if (!config || !config.SUPABASE_URL || !config.SUPABASE_ANON_KEY) return;
+
+  const cacheKey = "deusflow_i18n_cache_" + normalizedLang;
+  let cached = null;
+  try {
+    const raw = localStorage.getItem(cacheKey);
+    if (raw) cached = JSON.parse(raw);
+  } catch (_e) {}
+
+  const now = Date.now();
+  // 5-minute TTL: skip network request if cache was validated within last 5 minutes
+  if (cached && cached.checked_at && (now - cached.checked_at < 5 * 60 * 1000)) {
+    return;
+  }
+
+  try {
+    const url = `${config.SUPABASE_URL}/rest/v1/site_translations?lang=eq.${normalizedLang}&select=dict_map,updated_at`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: config.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${config.SUPABASE_ANON_KEY}`
+      }
+    });
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || !rows[0]) return;
+
+    const remote = rows[0];
+    if (!cached || cached.updated_at !== remote.updated_at) {
+      localStorage.setItem(cacheKey, JSON.stringify({
+        dict_map: remote.dict_map || {},
+        updated_at: remote.updated_at,
+        checked_at: now
+      }));
+      // Live apply without full page reload
+      applyTranslations();
+    } else {
+      cached.checked_at = now;
+      localStorage.setItem(cacheKey, JSON.stringify(cached));
+    }
+  } catch (_err) {
+    // Network failure: silently remain on local cache
+  }
+}
+
 // Make globally accessible
 window.applyTranslations = applyTranslations;
+window.revalidateTranslationsFromSupabase = revalidateTranslationsFromSupabase;
 
 function initLangSwitcher() {
   const currentLang = localStorage.getItem("deusflow_lang") || "en";
@@ -363,8 +423,10 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     initLangSwitcher();
     applyTranslations();
+    revalidateTranslationsFromSupabase();
   });
 } else {
   initLangSwitcher();
   applyTranslations();
+  revalidateTranslationsFromSupabase();
 }

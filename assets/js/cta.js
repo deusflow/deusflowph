@@ -36,18 +36,6 @@
 
     document.body.appendChild(wrap);
 
-    const header = document.querySelector(".site-header");
-    if (!header) {
-      return;
-    }
-
-    const mobileBar = document.createElement("div");
-    mobileBar.className = "mobile-sticky-cta";
-    mobileBar.innerHTML = `
-      <a class="mobile-sticky-cta-button" href="${primaryHref}" target="_blank" rel="noopener noreferrer">${primaryLabel}</a>
-    `;
-    document.body.appendChild(mobileBar);
-
     const ctaNode = document.getElementById("global-chat-cta");
     const noteNode = document.getElementById("global-chat-note");
     ctaNode?.addEventListener("click", async () => {

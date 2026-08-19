@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-21";
+import { createStateMessage } from "./ui.js?v=20260819-26";
 
 const state = {
   selectedAlbum: null,
@@ -2601,6 +2601,40 @@ const translationDefaults = {
   }
 };
 
+export const translationSourceMap = {
+  hero_title_1: "Not loud.",
+  hero_title_2: "But your photos will be.",
+  hero_desc: "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day.",
+  hero_region: "Denmark & Beyond",
+  elopement_heading: "Marrying in Denmark?",
+  elopement_desc: "Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography.",
+  elopement_locations: "Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark & Europe",
+  meet_quote: "I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful.",
+  meet_btn: "Meet Oleh & Philosophy",
+  test_1: "Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level.",
+  test_2: "Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig.",
+  test_3: "We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!",
+  test_4: "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic.",
+  about_header: "Documentary & Editorial",
+  about_story_1: "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.",
+  about_story_2: "Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.",
+  about_story_3: "Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us. Your wedding day? Trust me, everything is completely under control.",
+  about_values: "I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.",
+  about_background: "Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.",
+  about_experience: "Years of experience across Denmark and Europe.",
+  about_awards: "★ Photos of the Week",
+  contact_heading: "Let's Talk About Your Day",
+  contact_desc: "I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:",
+  whatsapp_subtitle: "Fastest for Europe & International couples",
+  telegram_subtitle: "Прямий чат / Українська та English",
+  footer_desc: "Based in Denmark (Aarhus area), available across Europe.",
+  floating_cta_note: "Calendar open for 2026-2027 weddings ·"
+};
+
+export function getSourceEnglishText(fieldKey) {
+  return translationSourceMap[fieldKey] || null;
+}
+
 const translationFields = [
   "hero_title_1",
   "hero_title_2",
@@ -2633,43 +2667,38 @@ const translationFields = [
   "floating_cta_note"
 ];
 
-function loadAllTranslationsComparative() {
+async function loadAllTranslationsComparative() {
   const langs = ["da", "ua", "en"];
-  let populatedCount = 0;
-  let foundCount = 0;
-  let emptyCount = 0;
-  let missingElementCount = 0;
-  const sampleValues = [];
+  const supabase = getSupabase();
+
+  let dbTranslations = {};
+  try {
+    const { data, error } = await supabase.from("site_translations").select("lang, raw_data");
+    if (!error && Array.isArray(data)) {
+      data.forEach((row) => {
+        if (row?.lang && row?.raw_data) {
+          dbTranslations[row.lang] = row.raw_data;
+        }
+      });
+    }
+  } catch (_e) {}
 
   langs.forEach((lang) => {
-    let saved = null;
-    try {
-      const raw = localStorage.getItem("deusflow_custom_translations_raw_" + lang);
-      if (raw) saved = JSON.parse(raw);
-    } catch (_e) {}
-    console.log(`[Admin CMS] ${lang.toUpperCase()} localStorage cache: ${saved ? "EXISTS (" + Object.keys(saved).length + " keys)" : "EMPTY (using defaults)"}`);
+    let saved = dbTranslations[lang] || null;
+    if (!saved) {
+      try {
+        const raw = localStorage.getItem("deusflow_custom_translations_raw_" + lang);
+        if (raw) saved = JSON.parse(raw);
+      } catch (_e) {}
+    }
 
     translationFields.forEach((fieldKey) => {
       const inputId = `trans-${lang}-${fieldKey}`;
       const el = document.getElementById(inputId);
       if (el) {
-        foundCount++;
         const savedVal = saved && typeof saved[fieldKey] === "string" ? saved[fieldKey].trim() : "";
         const defaultVal = translationDefaults[lang]?.[fieldKey] || "";
-        const finalVal = savedVal || defaultVal;
-        el.value = finalVal;
-        if (finalVal) {
-          populatedCount++;
-        } else {
-          emptyCount++;
-          console.warn(`[Admin CMS] EMPTY FIELD: ${inputId} (savedVal="${savedVal}", defaultVal="${defaultVal}")`);
-        }
-        if (sampleValues.length < 6) {
-          sampleValues.push(`${inputId}="${(finalVal || "").substring(0, 30)}…"`);
-        }
-      } else {
-        missingElementCount++;
-        console.warn(`[Admin CMS] MISSING DOM ELEMENT: #${inputId}`);
+        el.value = savedVal || defaultVal;
       }
     });
   });
@@ -2678,17 +2707,37 @@ function loadAllTranslationsComparative() {
   if (diag) diag.remove();
 }
 
-
-function forceResetTranslations() {
-  if (!confirm("Reset all 3 languages (DA, UA, EN) to default text? Any custom edits in localStorage will be cleared.")) {
+async function forceResetTranslations() {
+  if (!confirm("Reset all 3 languages (DA, UA, EN) to default text? Any custom edits in the database will be overwritten with defaults.")) {
     return;
   }
-  ["da", "ua", "en"].forEach((lang) => {
-    localStorage.removeItem("deusflow_custom_translations_raw_" + lang);
-    localStorage.removeItem("deusflow_custom_translations_" + lang);
-  });
-  loadAllTranslationsComparative();
-  showToast("All translations reset to default content!", "success");
+  const langs = ["da", "ua", "en"];
+  const supabase = getSupabase();
+
+  try {
+    for (const lang of langs) {
+      const defaultRaw = translationDefaults[lang] || {};
+      const defaultDict = {};
+      Object.entries(defaultRaw).forEach(([k, v]) => {
+        const src = getSourceEnglishText(k);
+        if (src && v) defaultDict[src] = v;
+      });
+
+      await supabase.rpc("merge_site_translations", {
+        p_lang: lang,
+        p_raw_data: defaultRaw,
+        p_dict_map: defaultDict
+      });
+
+      localStorage.removeItem("deusflow_i18n_cache_" + lang);
+      localStorage.removeItem("deusflow_custom_translations_raw_" + lang);
+      localStorage.removeItem("deusflow_custom_translations_" + lang);
+    }
+    await loadAllTranslationsComparative();
+    showToast("All translations reset to default content in database!", "success");
+  } catch (err) {
+    showToast(`Could not reset translations: ${err.message}`, "error");
+  }
 }
 
 function forceResetSettings() {
@@ -2699,61 +2748,109 @@ function forceResetSettings() {
   showToast("Site settings reset to defaults! Click Save Settings to store.", "success");
 }
 
-function saveAllTranslationsComparative(e) {
-  if (e) e.preventDefault();
+async function saveTranslationsPayload(cardsToProcess) {
   const langs = ["da", "ua", "en"];
+  const supabase = getSupabase();
 
-  langs.forEach((lang) => {
+  for (const lang of langs) {
     const rawData = {};
-    translationFields.forEach((fieldKey) => {
-      const inputId = `trans-${lang}-${fieldKey}`;
-      const el = document.getElementById(inputId);
-      if (el) {
-        rawData[fieldKey] = el.value.trim();
-      }
+    const dictMap = {};
+
+    cardsToProcess.forEach((card) => {
+      const inputs = card.querySelectorAll("input, textarea");
+      inputs.forEach((el) => {
+        const id = el.id || "";
+        const prefix = `trans-${lang}-`;
+        if (id.startsWith(prefix)) {
+          const fieldKey = id.replace(prefix, "");
+          const val = el.value.trim();
+          rawData[fieldKey] = val;
+
+          const sourceText = getSourceEnglishText(fieldKey);
+          if (sourceText && val) {
+            dictMap[sourceText] = val;
+          }
+        }
+      });
     });
 
-    // Build dictionary map for i18n
-    const dictMap = {};
-    if (rawData.hero_title_1) dictMap["Not loud."] = rawData.hero_title_1;
-    if (rawData.hero_title_2) dictMap["But your photos will be."] = rawData.hero_title_2;
-    if (rawData.hero_desc) dictMap["Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day."] = rawData.hero_desc;
-    if (rawData.hero_region) dictMap["Denmark & Beyond"] = rawData.hero_region;
-    if (rawData.elopement_heading) dictMap["Marrying in Denmark?"] = rawData.elopement_heading;
-    if (rawData.elopement_desc) dictMap["Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography."] = rawData.elopement_desc;
-    if (rawData.elopement_locations) dictMap["Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark & Europe"] = rawData.elopement_locations;
-    if (rawData.meet_quote) dictMap["I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful."] = rawData.meet_quote;
-    if (rawData.meet_btn) dictMap["Meet Oleh & Philosophy"] = rawData.meet_btn;
-    if (rawData.test_1) dictMap["Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level."] = rawData.test_1;
-    if (rawData.test_2) dictMap["Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig."] = rawData.test_2;
-    if (rawData.test_3) dictMap["We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!"] = rawData.test_3;
-    if (rawData.test_4) dictMap["We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."] = rawData.test_4;
-    if (rawData.about_header) dictMap["Documentary & Editorial"] = rawData.about_header;
-    if (rawData.about_story_1) dictMap["Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now."] = rawData.about_story_1;
-    if (rawData.about_story_2) dictMap["Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me."] = rawData.about_story_2;
-    if (rawData.about_story_3) dictMap["Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us. Your wedding day? Trust me, everything is completely under control."] = rawData.about_story_3;
-    if (rawData.about_values) dictMap["I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day."] = rawData.about_values;
-    if (rawData.about_background) dictMap["Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal."] = rawData.about_background;
-    if (rawData.about_experience) dictMap["Years of experience across Denmark and Europe."] = rawData.about_experience;
-    if (rawData.about_awards) dictMap["★ Photos of the Week"] = rawData.about_awards;
-    if (rawData.contact_heading) dictMap["Let's Talk About Your Day"] = rawData.contact_heading;
-    if (rawData.contact_desc) dictMap["I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:"] = rawData.contact_desc;
-    if (rawData.whatsapp_subtitle) dictMap["Fastest for Europe & International couples"] = rawData.whatsapp_subtitle;
-    if (rawData.telegram_subtitle) dictMap["Прямий чат / Українська та English"] = rawData.telegram_subtitle;
-    if (rawData.footer_desc) dictMap["Based in Denmark (Aarhus area), available across Europe."] = rawData.footer_desc;
-    if (rawData.floating_cta_note) dictMap["Calendar open for 2026-2027 weddings ·"] = rawData.floating_cta_note;
+    const { error } = await supabase.rpc("merge_site_translations", {
+      p_lang: lang,
+      p_raw_data: rawData,
+      p_dict_map: dictMap
+    });
 
-    try {
-      localStorage.setItem("deusflow_custom_translations_raw_" + lang, JSON.stringify(rawData));
-      localStorage.setItem("deusflow_custom_translations_" + lang, JSON.stringify(dictMap));
-    } catch (_e) {}
-  });
+    if (error) throw error;
 
-  showToast("All translations (DA, UA, EN) saved and live on site!", "success");
-  const statusEl = document.getElementById("translations-status-text");
-  if (statusEl) {
-    statusEl.textContent = "All 3 languages saved successfully. Changes are live!";
-    setTimeout(() => { statusEl.textContent = ""; }, 4000);
+    localStorage.removeItem("deusflow_i18n_cache_" + lang);
+    localStorage.removeItem("deusflow_custom_translations_raw_" + lang);
+    localStorage.removeItem("deusflow_custom_translations_" + lang);
+  }
+}
+
+async function saveAllTranslationsComparative(e) {
+  if (e) e.preventDefault();
+  const saveBtn = document.getElementById("save-translations-button");
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+  }
+
+  try {
+    const allCards = Array.from(document.querySelectorAll("#translations-form .admin-card"));
+    await saveTranslationsPayload(allCards);
+    showToast("All translations saved to database and live on site!", "success");
+    const statusEl = document.getElementById("translations-status-text");
+    if (statusEl) {
+      statusEl.textContent = "All 3 languages saved successfully to Supabase!";
+      setTimeout(() => { statusEl.textContent = ""; }, 4000);
+    }
+  } catch (err) {
+    showToast(`Could not save translations: ${err.message}`, "error");
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save All Translations & Texts";
+    }
+  }
+}
+
+async function saveSpecificBlock(blockCard, btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `
+      <svg class="admin-spinner" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      <span>Saving...</span>
+    `;
+  }
+
+  try {
+    await saveTranslationsPayload([blockCard]);
+    if (btn) {
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>✓ Saved</span>
+      `;
+      btn.classList.add("success");
+      setTimeout(() => {
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Save Block</span>
+        `;
+        btn.classList.remove("success");
+        btn.disabled = false;
+      }, 2500);
+    }
+    showToast("Block translations saved to database!", "success");
+  } catch (err) {
+    if (btn) {
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>⚠ Error</span>
+      `;
+      btn.disabled = false;
+    }
+    showToast(`Failed to save block: ${err.message}`, "error");
   }
 }
 
@@ -2770,23 +2867,21 @@ function setupTranslationsCMS() {
   if (resetSettingsBtn) {
     resetSettingsBtn.addEventListener("click", forceResetSettings);
   }
+
+  // Setup per-block Save buttons
+  document.querySelectorAll(".btn-save-block").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const card = btn.closest(".admin-card");
+      if (card) {
+        await saveSpecificBlock(card, btn);
+      }
+    });
+  });
+
   loadAllTranslationsComparative();
 }
-
-/* =========================================================================
-   AUTO-MIGRATION: Purge stale empty translation cache on version upgrade
-   ========================================================================= */
-const ADMIN_CMS_VERSION = "20260819-21";
-try {
-  if (localStorage.getItem("deusflow_cms_version") !== ADMIN_CMS_VERSION) {
-    console.log("[Admin CMS] Version upgrade detected → purging stale localStorage translation cache.");
-    ["da", "ua", "en"].forEach((lang) => {
-      localStorage.removeItem("deusflow_custom_translations_raw_" + lang);
-      localStorage.removeItem("deusflow_custom_translations_" + lang);
-    });
-    localStorage.setItem("deusflow_cms_version", ADMIN_CMS_VERSION);
-  }
-} catch (_e) {}
 
 setupTestimonialReorder();
 setupTranslationsCMS();

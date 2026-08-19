@@ -575,3 +575,46 @@ export function initCustomCursor() {
     });
   });
 }
+
+export function initSmartHeader() {
+  const header = document.querySelector('.site-header');
+  if (!header) return;
+
+  let lastScrollY = window.pageYOffset || document.documentElement.scrollTop;
+  let ticking = false;
+
+  const onScroll = () => {
+    const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+    // Add glass background once scrolled past top
+    if (currentScrollY > 15) {
+      header.classList.add('is-scrolled');
+    } else {
+      header.classList.remove('is-scrolled');
+    }
+
+    // Auto-hide when scrolling down past hero, auto-reveal on scroll up
+    if (currentScrollY > 100) {
+      if (currentScrollY > lastScrollY + 6) {
+        // Scrolling DOWN
+        header.classList.add('is-hidden');
+      } else if (currentScrollY < lastScrollY - 6) {
+        // Scrolling UP
+        header.classList.remove('is-hidden');
+      }
+    } else {
+      header.classList.remove('is-hidden');
+    }
+
+    lastScrollY = Math.max(0, currentScrollY);
+    ticking = false;
+  };
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(onScroll);
+      ticking = true;
+    }
+  }, { passive: true });
+}
+
