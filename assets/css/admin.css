@@ -259,10 +259,29 @@ body.admin-page {
 
 .admin-workspace.hidden,
 .admin-login-card.hidden,
-.admin-tab-pane.hidden,
 .admin-album-studio.hidden,
 .admin-cover-preview.hidden {
   display: none !important;
+}
+
+.admin-tab-pane {
+  display: none !important;
+}
+
+.admin-tab-pane.active {
+  display: block !important;
+  animation: adminTabFadeIn 0.25s var(--motion-ease);
+}
+
+@keyframes adminTabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .admin-sidebar {
@@ -609,6 +628,15 @@ body.admin-page {
    7. ALBUMS LIST & ALBUM ROWS
    ========================================================================== */
 
+.admin-noscript-banner {
+  background: var(--admin-danger-bg);
+  border: 1px solid var(--admin-danger);
+  color: var(--admin-danger);
+  padding: 1rem;
+  text-align: center;
+  font-weight: 500;
+}
+
 .album-list {
   display: flex;
   flex-direction: column;
@@ -625,6 +653,7 @@ body.admin-page {
   border-radius: var(--admin-radius-sm);
   transition: all var(--motion-fast) var(--motion-ease);
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .album-row:hover {
@@ -636,7 +665,7 @@ body.admin-page {
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex: 1;
+  flex: 1 1 240px;
   min-width: 0;
 }
 
@@ -661,6 +690,7 @@ body.admin-page {
 
 .album-meta-stack {
   min-width: 0;
+  flex: 1;
 }
 
 .album-meta-stack h4 {
@@ -680,6 +710,7 @@ body.admin-page {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .status-badge {
@@ -689,6 +720,7 @@ body.admin-page {
   padding: 0.15rem 0.45rem;
   border-radius: 3px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .status-badge.published {
@@ -706,8 +738,29 @@ body.admin-page {
 .album-actions-wrap {
   display: flex;
   align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.move-to-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.move-to-input {
+  width: 48px !important;
+  padding: 0.35rem 0.4rem !important;
+  font-size: 11px !important;
+  text-align: center;
+}
+
+.album-order-controls,
+.photo-order-controls {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
 }
 
 /* ==========================================================================
