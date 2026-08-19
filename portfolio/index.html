@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet" />
   <script src="../assets/js/i18n.js?v=20260429-2" defer></script>
-  <link rel="stylesheet" href="../assets/css/styles.css?v=20260806-2" />
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20260819-1" />
 
   <link rel="manifest" href="../manifest.json">
     <meta name="theme-color" content="#FAF9F6">
@@ -59,15 +59,29 @@
     </section>
 
     <section class="section container narrow" style="padding-top: 0;">
-      <div id="contact-block" class="panel content-panel" style="text-align: center; border: 1px solid var(--gold); background: var(--surface);">
-        <h2 style="margin-bottom: 1rem; font-size: 2rem;">Love what you see?</h2>
-        <p style="margin-bottom: 2rem; color: var(--gold); font-size: 1.1rem; max-width: 500px; margin-left: auto; margin-right: auto;">
-          Every wedding is unique. Message me to discuss your vision and check availability for your date.
+      <div id="contact-block" class="contact-panel" style="text-align: center;">
+        <p class="eyebrow" style="margin-bottom: 0.5rem;">Direct Inquiry</p>
+        <h2 style="font-size: clamp(2.2rem, 4vw, 3rem); margin-bottom: 1rem;">Love What You See?</h2>
+        <p style="font-size: 1.05rem; line-height: 1.7; color: var(--text-muted); max-width: 600px; margin: 0 auto 2.5rem;">
+          Every wedding is unique. Choose your preferred messenger below to discuss your vision and check availability for your date:
         </p>
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-          <a class="cta" href="https://instagram.com/deusflow" target="_blank" rel="noopener noreferrer">Instagram</a>
-          <a class="cta" data-runtime-link="telegram" href="https://t.me/OflowPhotography" target="_blank" rel="noopener noreferrer">Telegram</a>
-          <a class="cta" data-runtime-link="whatsapp" href="https://wa.me/4550300636" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <div class="smart-contact-grid">
+          <a class="contact-pill" href="https://wa.me/4550300636?text=Hi%20Oleh!%20We%20are%20planning%20our%20wedding%20on%20[Date]%20in%20[City/Venue].%20Is%20this%20date%20available?" target="_blank" rel="noopener noreferrer">
+            <span class="contact-pill-title">WhatsApp</span>
+            <span class="contact-pill-subtitle">Fastest for Europe & International couples</span>
+          </a>
+          <a class="contact-pill" href="https://t.me/OflowPhotography?text=Hi%20Oleh!%20We%20are%20planning%20our%20wedding%20on%20[Date]%20in%20[City/Venue].%20Is%20this%20date%20available?" target="_blank" rel="noopener noreferrer">
+            <span class="contact-pill-title">Telegram</span>
+            <span class="contact-pill-subtitle">Прямой чат для клиентов из СНГ</span>
+          </a>
+          <a class="contact-pill" href="https://instagram.com/deusflow" target="_blank" rel="noopener noreferrer">
+            <span class="contact-pill-title">Instagram DM</span>
+            <span class="contact-pill-subtitle">Portfolio, reels & live stories</span>
+          </a>
+          <a class="contact-pill" href="mailto:deuswork@icloud.com?subject=Wedding%20Photography%20Inquiry&body=Hi%20Oleh,%0A%0AWe%20are%20planning%20our%20wedding%20on%20[Date]%20in%20[City/Venue].%0A%0ACould%20you%20please%20let%20us%20know%20your%20availability%20and%20packages?%0A%0ABest%20regards,%0A[Your%20Names]" target="_blank" rel="noopener noreferrer">
+            <span class="contact-pill-title">Email Direct</span>
+            <span class="contact-pill-subtitle">deuswork@icloud.com</span>
+          </a>
         </div>
       </div>
     </section>
@@ -78,13 +92,14 @@
       <div class="footer-logo">Oleh Ro</div>
       <p>Luxury wedding photography in Aarhus, Copenhagen, and Europe.</p>
       <div class="footer-links">
+        <a href="https://wa.me/4550300636" target="_blank" rel="noopener noreferrer">WhatsApp</a>
         <a href="https://instagram.com/deusflow" target="_blank" rel="noopener noreferrer">Instagram</a>
         <a data-runtime-link="telegram" href="https://t.me/OflowPhotography" target="_blank" rel="noopener noreferrer">Telegram</a>
-        <a data-runtime-link="whatsapp" href="https://wa.me/4550300636" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a href="mailto:deuswork@icloud.com">Email</a>
         <a href="../about/index.html">About</a>
+        <a href="../pricing/index.html">Pricing</a>
         <a href="../legal/index.html">Terms & Privacy</a>
       </div>
-      <p class="footer-creator">Site crafted by <span>Deusflow</span></p>
       <small>&copy; 2026 Oleh Ro Photography. All rights reserved.</small>
     </div>
   </footer>
@@ -102,6 +117,6 @@
   <script src="../assets/js/seo.js"></script>
   <script src="../assets/js/runtime-config.js"></script>
   <script src="../assets/js/cta.js?v=20260422"></script>
-  <script type="module" src="../assets/js/portfolio.js?v=20260806-2"></script>
+  <script type="module" src="../assets/js/portfolio.js?v=20260819-1"></script>
 </body>
 </html>

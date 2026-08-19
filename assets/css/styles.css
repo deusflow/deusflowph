@@ -2635,6 +2635,112 @@ a:hover .badge-prowed,
   opacity: 1;
   transform: scale(1.08);
 }
-.about-affiliations .badge-picture-day {
-  height: 80px;
+/* Elopement & Destination Feature Card */
+.elopement-feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: clamp(2rem, 5vw, 3.5rem);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
 }
+.elopement-feature-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gold);
+}
+.destination-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.dest-tag {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: rgba(212, 186, 149, 0.08);
+  border: 1px solid rgba(212, 186, 149, 0.25);
+  color: var(--gold);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+/* Meet Photographer Mini-Box */
+.meet-photographer-box {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: clamp(2rem, 4vw, 3rem);
+  border-radius: 4px;
+}
+@media (max-width: 768px) {
+  .meet-photographer-box {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+}
+.meet-photo-wrap {
+  flex-shrink: 0;
+}
+.meet-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold);
+  filter: contrast(1.05);
+}
+
+/* Smart Contact Pills Grid */
+.smart-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin-top: 2rem;
+  text-align: left;
+}
+.contact-pill {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: all 0.35s var(--motion-ease);
+  text-decoration: none;
+}
+.contact-pill:hover {
+  background: rgba(212, 186, 149, 0.06);
+  border-color: var(--gold);
+  transform: translateY(-3px);
+}
+.contact-pill-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 0.3rem;
+}
+.contact-pill-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Subtle photo card hover (replaces harsh 3D tilt) */
+.photo-card {
+  transition: transform 0.4s var(--motion-ease), box-shadow 0.4s var(--motion-ease);
+}
+.photo-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+

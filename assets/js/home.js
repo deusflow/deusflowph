@@ -1,4 +1,4 @@
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initTiltEffect, initCustomCursor } from "./ui.js?v=20260806-2";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor } from "./ui.js?v=20260819-1";
 import { fetchTestimonials, fetchFeaturedAlbums, fetchAlbumFallbackCover } from "./services/api.js";
 
 const featuredGrid = document.getElementById("featured-grid");
@@ -7,21 +7,25 @@ const testimonialsGrid = document.getElementById("testimonials-grid");
 
 const fallbackTestimonials = [
   {
+    name: "Amalie & Frederik (Aarhus, Denmark)",
+    quote:
+      "Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig, Oleh!"
+  },
+  {
     name: "Volodymyr Ostapchuk (TV Presenter)",
-    quote: "Oleh has an incredible talent for capturing genuine emotions. Our wedding photos tell the perfect story of our day. Highly recommended!"
+    quote: "Oleh has an incredible talent for capturing genuine emotions. Our photos tell the perfect story of our day. Calm, unobtrusive, highly recommended!"
+  },
+  {
+    name: "Elena & Marcus (Copenhagen Elopement)",
+    quote: "We travelled from Munich to elope in Copenhagen. Oleh guided us through the most aesthetic corners of the city. The photos look like a Vogue editorial!"
   },
   {
     name: "Jerry Heil (Singer & Songwriter)",
-    quote: "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."
+    quote: "We had a cozy photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."
   },
   {
     name: "Oleksandr Popov (Actor)",
     quote: "I worked with Oleh on a shoot for my TV series. He is an absolute professional with a great eye for cinematic detail."
-  },
-  {
-    name: "Amalie Frank",
-    quote:
-      "Wow, hvor ser det godt ud! Tusind tusind tak for det - kaempe anbefaling! Der har virkelig vaeret stor ros for alle billederne fra alle gaester og slottet ogsaa. Det har vaeret fantastisk at have arbejdet med jer."
   }
 ];
 
@@ -160,5 +164,4 @@ initScrollReveals();
 initMagneticButtons();
 initParallax();
 initWordReveal();
-initTiltEffect();
 initCustomCursor();
