@@ -353,6 +353,7 @@ h3,
   margin: 0.5rem auto 1.1rem;
   font-size: clamp(2.5rem, 7vw, 6.3rem);
   line-height: 0.95;
+  min-height: 2.85em;
   max-width: 900px;
   font-style: italic;
 }
@@ -1949,6 +1950,7 @@ button.danger {
 
   .hero h1 {
     line-height: 1;
+    min-height: 3em;
   }
 
   .hero-copy {
