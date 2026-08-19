@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-13";
+import { createStateMessage } from "./ui.js?v=20260819-14";
 
 const state = {
   selectedAlbum: null,
@@ -325,25 +325,43 @@ async function loadPricingContentAdmin() {
   setPricingStatus("Pricing content loaded.");
 }
 
-function fillSettingsForm(content) {
+const defaultSiteSettings = {
+  show_weddings: true,
+  show_portfolio: true,
+  show_about: true,
+  show_pricing: true,
+  show_essentials: true,
+  show_signature: true,
+  show_luxury: true,
+  show_session: true,
+  homepage_title: "Oleh Ro · Wedding Photographer | Aarhus, Denmark & Europe",
+  homepage_description: "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day in Denmark and across Europe.",
+  instagram_handle: "@deusflowph",
+  instagram_dm_url: "https://ig.me/m/deusflowph",
+  telegram_url: "https://t.me/OflowPhotography",
+  whatsapp_url: "https://wa.me/4550300636"
+};
+
+function fillSettingsForm(content = {}) {
   if (!settingsForm) return;
-  settingsShowWeddings.checked = content.show_weddings !== false;
-  settingsShowPortfolio.checked = content.show_portfolio !== false;
-  settingsShowAbout.checked = content.show_about !== false;
-  settingsShowPricing.checked = content.show_pricing !== false;
+  const merged = { ...defaultSiteSettings, ...(content || {}) };
+  settingsShowWeddings.checked = merged.show_weddings !== false;
+  settingsShowPortfolio.checked = merged.show_portfolio !== false;
+  settingsShowAbout.checked = merged.show_about !== false;
+  settingsShowPricing.checked = merged.show_pricing !== false;
 
-  settingsShowEssentials.checked = content.show_essentials !== false;
-  settingsShowSignature.checked = content.show_signature !== false;
-  settingsShowLuxury.checked = content.show_luxury !== false;
-  settingsShowSession.checked = content.show_session !== false;
+  settingsShowEssentials.checked = merged.show_essentials !== false;
+  settingsShowSignature.checked = merged.show_signature !== false;
+  settingsShowLuxury.checked = merged.show_luxury !== false;
+  settingsShowSession.checked = merged.show_session !== false;
 
-  settingsHomepageTitle.value = content.homepage_title || "";
-  settingsHomepageDescription.value = content.homepage_description || "";
+  settingsHomepageTitle.value = merged.homepage_title || "";
+  settingsHomepageDescription.value = merged.homepage_description || "";
 
-  settingsInstagramHandle.value = content.instagram_handle || "";
-  settingsInstagramDmUrl.value = content.instagram_dm_url || "";
-  settingsTelegramUrl.value = content.telegram_url || "";
-  settingsWhatsappUrl.value = content.whatsapp_url || "";
+  settingsInstagramHandle.value = merged.instagram_handle || "";
+  settingsInstagramDmUrl.value = merged.instagram_dm_url || "";
+  settingsTelegramUrl.value = merged.telegram_url || "";
+  settingsWhatsappUrl.value = merged.whatsapp_url || "";
 }
 
 async function saveSiteSettings(event) {
@@ -2243,6 +2261,18 @@ async function uploadPhotos(files) {
   }
 }
 
+function restoreActiveTab() {
+  const savedTabId = localStorage.getItem("deusflow_admin_active_tab") || (window.location.hash ? window.location.hash.replace("#", "") : "tab-albums");
+  const matchingBtn = document.querySelector(`.admin-nav-button[data-target="${savedTabId}"]`);
+  const targetPane = document.getElementById(savedTabId);
+  if (matchingBtn && targetPane) {
+    document.querySelectorAll(".admin-nav-button").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".admin-tab-pane").forEach((p) => p.classList.remove("active"));
+    matchingBtn.classList.add("active");
+    targetPane.classList.add("active");
+  }
+}
+
 function setupTabSwitching() {
   const navButtons = document.querySelectorAll(".admin-nav-button");
   const tabPanes = document.querySelectorAll(".admin-tab-pane");
@@ -2262,6 +2292,17 @@ function setupTabSwitching() {
       if (selectedAlbumPanel) {
         selectedAlbumPanel.classList.add("hidden");
       }
+      try {
+        localStorage.setItem("deusflow_admin_active_tab", targetId);
+        window.location.hash = targetId;
+      } catch (_e) {}
+
+      if (targetId === "tab-translations") {
+        loadAllTranslationsComparative();
+      }
+      if (targetId === "tab-settings") {
+        fillSettingsForm(state.pricingContent || defaultSiteSettings);
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   });
@@ -2278,6 +2319,8 @@ function setupTabSwitching() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
+
+  restoreActiveTab();
 }
 
 function setupDropzone() {
@@ -2322,9 +2365,18 @@ async function boot() {
       return;
     }
 
+    // Always pre-populate forms with robust defaults
+    fillSettingsForm(defaultSiteSettings);
+    loadAllTranslationsComparative();
+
     await loadAlbums();
     await loadAboutContent();
     await loadPricingContentAdmin();
+    
+    // Refresh with freshly loaded DB data
+    fillSettingsForm(state.pricingContent || defaultSiteSettings);
+    loadAllTranslationsComparative();
+    restoreActiveTab();
   } catch (error) {
     loginError.textContent = error.message;
     setAuthView(false);
