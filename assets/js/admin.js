@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-6";
+import { createStateMessage } from "./ui.js?v=20260819-7";
 
 const state = {
   selectedAlbum: null,
@@ -200,38 +200,29 @@ function showToast(message, type = "success") {
   if (!container) {
     container = document.createElement("div");
     container.id = "toast-container";
-    container.style.position = "fixed";
-    container.style.top = "24px";
-    container.style.right = "24px";
-    container.style.zIndex = "99999";
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.gap = "12px";
-    container.style.pointerEvents = "none";
+    container.className = "admin-toast-container";
     document.body.appendChild(container);
   }
 
   const toast = document.createElement("div");
-  toast.className = `admin-toast toast-${type}`;
-  toast.style.pointerEvents = "auto";
+  toast.className = `admin-toast ${type}`;
 
   let iconSvg = "";
   if (type === "success") {
-    iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--admin-accent);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+    iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--admin-emerald); flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
   } else if (type === "error") {
-    iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+    iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--admin-danger); flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
   } else {
-    iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--admin-muted);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+    iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--admin-gold); flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
   }
 
   toast.innerHTML = `
     <div class="toast-icon">${iconSvg}</div>
-    <div class="toast-message" style="word-break: break-word;"></div>
-    <button class="toast-close-btn">&times;</button>
+    <div class="toast-message" style="word-break: break-word; flex: 1;"></div>
+    <button class="toast-close-btn" type="button">&times;</button>
   `;
   
   toast.querySelector(".toast-message").textContent = message;
-
   container.appendChild(toast);
 
   setTimeout(() => {
@@ -1128,7 +1119,7 @@ function setAuthView(isLoggedIn) {
 function showAlbumDetails(album) {
   state.selectedAlbum = album;
   selectedAlbumName.textContent = album.title;
-  state.selectedAlbumMetaBase = `${album.type} | ${formatDate(album.date)} | slug: ${album.slug}`;
+  state.selectedAlbumMetaBase = `${album.type.toUpperCase()} · ${formatDate(album.date)} · slug: ${album.slug}`;
   selectedAlbumMeta.textContent = state.selectedAlbumMetaBase;
   editTitleInput.value = album.title || "";
   editDateInput.value = album.date || "";
@@ -1145,11 +1136,10 @@ function showAlbumDetails(album) {
   if (editCoverInput) {
     editCoverInput.value = "";
   }
+  document.querySelectorAll(".admin-tab-pane").forEach((pane) => pane.classList.remove("active"));
   selectedAlbumPanel.classList.remove("hidden");
-  focusAlbumWorkflowSection("edit");
-  setSectionOpen(albumsSection, true);
-  setSectionOpen(createAlbumSection, false);
-  setUploadStatus("No upload in progress.", 0);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  setUploadStatus("Ready for upload.", 0);
 }
 
 async function requireSession() {
@@ -1288,50 +1278,58 @@ async function loadAlbums() {
 
     const info = document.createElement("div");
     info.className = "album-info-wrap";
-    const orderText = album.type === "wedding" && weddingIndex >= 0 ? ` | order: ${weddingIndex + 1}` : "";
+    const orderText = album.type === "wedding" && weddingIndex >= 0 ? ` · Pos: ${weddingIndex + 1}` : "";
     const coverHtml = album.cover_url ? `<img src="${escapeHTML(album.cover_url)}" class="album-list-thumb" alt="cover" />` : `<div class="album-list-thumb empty">No Cover</div>`;
+    const statusClass = album.visible ? "published" : "draft";
+    const statusLabel = album.visible ? "Published" : "Draft";
     info.innerHTML = `
       ${coverHtml}
-      <div>
-        <strong>${escapeHTML(album.title)}</strong><br />
-        <span class="photo-subtitle">${escapeHTML(album.type.toUpperCase())} | ${formatDate(album.date)} | ${escapeHTML(album.slug)}${orderText}</span>
+      <div class="album-meta-stack">
+        <h4>${escapeHTML(album.title)}</h4>
+        <div class="album-meta-sub">
+          <span class="status-badge ${statusClass}">${statusLabel}</span>
+          <span>${escapeHTML(album.type.toUpperCase())} · ${formatDate(album.date)}${orderText}</span>
+        </div>
       </div>
     `;
 
-    const visibility = document.createElement("label");
-    visibility.className = "visibility-toggle";
-    visibility.innerHTML = `<input type="checkbox" ${album.visible ? "checked" : ""} /> Published`;
-    const checkbox = visibility.querySelector("input");
-    checkbox.addEventListener("change", async () => {
-      const { error: updateError } = await supabase
-        .from("albums")
-        .update({ visible: checkbox.checked })
-        .eq("id", album.id);
-
-      if (updateError) {
-        checkbox.checked = !checkbox.checked;
-        setUploadStatus(updateError.message, 0, "error");
-      }
-    });
-
     const actions = document.createElement("div");
-    actions.style.display = "flex";
-    actions.style.gap = "0.5rem";
-    actions.style.flexWrap = "wrap";
+    actions.className = "album-actions-wrap";
 
     const openButton = document.createElement("button");
     openButton.type = "button";
-    openButton.className = "ghost";
-    openButton.textContent = "Open";
+    openButton.className = "admin-btn ghost small";
+    openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg> Manage Studio`;
     openButton.addEventListener("click", () => {
       showAlbumDetails(album);
       loadPhotos(album.id);
     });
 
+    const togglePublishBtn = document.createElement("button");
+    togglePublishBtn.type = "button";
+    togglePublishBtn.className = "admin-btn ghost small";
+    togglePublishBtn.textContent = album.visible ? "Unpublish" : "Publish";
+    togglePublishBtn.addEventListener("click", async () => {
+      const nextVisible = !album.visible;
+      const { error: updateError } = await supabase
+        .from("albums")
+        .update({ visible: nextVisible })
+        .eq("id", album.id);
+
+      if (updateError) {
+        showToast(updateError.message, "error");
+      } else {
+        album.visible = nextVisible;
+        showToast(`Album "${album.title}" ${nextVisible ? "published" : "set to draft"}.`, "success");
+        await loadAlbums();
+      }
+    });
+
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
-    deleteButton.className = "danger";
-    deleteButton.textContent = "Delete";
+    deleteButton.className = "admin-btn danger small";
+    deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+    deleteButton.title = "Delete Album";
     deleteButton.addEventListener("click", async () => {
       const confirmed = window.confirm(`Delete album "${album.title}" and all related photos?`);
       if (!confirmed) {
@@ -1345,13 +1343,15 @@ async function loadAlbums() {
           selectedAlbumPanel.classList.add("hidden");
         }
         await loadAlbums();
-        setUploadStatus("Album deleted.", 100);
+        showToast("Album deleted.", "success");
       } catch (deleteError) {
-        setUploadStatus(`Could not delete album: ${deleteError.message}`, 0, "error");
+        showToast(`Could not delete album: ${deleteError.message}`, "error");
       }
     });
 
     actions.appendChild(openButton);
+    actions.appendChild(togglePublishBtn);
+    actions.appendChild(deleteButton);
 
     if (album.type === "wedding" && weddingIndex >= 0) {
       const upButton = document.createElement("button");
@@ -2184,15 +2184,23 @@ function setupTabSwitching() {
       if (targetPane) {
         targetPane.classList.add("active");
       }
-      if (selectedAlbumPanel && targetId !== "tab-portfolio") {
+      if (selectedAlbumPanel) {
         selectedAlbumPanel.classList.add("hidden");
       }
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
   });
 
   if (closeAlbumBtn && selectedAlbumPanel) {
     closeAlbumBtn.addEventListener("click", () => {
       selectedAlbumPanel.classList.add("hidden");
+      const activeNav = document.querySelector(".admin-nav-button.active");
+      const targetId = activeNav ? activeNav.getAttribute("data-target") : "tab-albums";
+      const targetPane = document.getElementById(targetId);
+      if (targetPane) {
+        targetPane.classList.add("active");
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
 }

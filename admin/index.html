@@ -4,478 +4,712 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://firnyacuwvxsolxljqxu.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://firnyacuwvxsolxljqxu.supabase.co https://images.unsplash.com https://mywed.com; connect-src 'self' https://firnyacuwvxsolxljqxu.supabase.co https://esm.sh; script-src 'self' https://esm.sh; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://www.fearlessphotographers.com;">
-  <title>Admin | Oleh Ro</title>
+  <title>Studio Management Admin | Oleh Ro</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/styles.css?v=20260819-6" />
-  <link rel="stylesheet" href="../assets/css/admin.css?v=20260423" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20260819-7" />
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20260819-7" />
   <link rel="manifest" href="../manifest.json">
-  <meta name="theme-color" content="#FAF9F6">
+  <meta name="theme-color" content="#0a0a0a">
   <link rel="apple-touch-icon" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png">
 </head>
 <body class="admin-page">
   <noscript>
-    <div style="background: #000; color: #fff; padding: 2rem; text-align: center; border-bottom: 1px solid #333;">
-      <p style="margin:0; font-family: sans-serif;">JavaScript is disabled. The site may not load dynamic pricing or photos properly. Please enable JavaScript for the full experience.</p>
+    <div class="admin-noscript-banner">
+      <p>JavaScript is disabled. The admin dashboard requires JavaScript to connect to Supabase.</p>
     </div>
   </noscript>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="menu-link" href="../index.html">Public Site</a>
-      <a class="logo" href="../index.html">Oleh Ro</a>
-      <button id="logout-button" class="menu-link" type="button">Logout</button>
+
+  <!-- DEDICATED ADMIN TOPBAR (Zero conflict with public header) -->
+  <header class="admin-topbar">
+    <div class="admin-topbar-brand">
+      <a class="admin-topbar-logo" href="../index.html">Oleh Ro</a>
+      <span class="admin-topbar-badge">Studio Admin</span>
+      <span class="admin-status-indicator" id="supabase-status-pill" title="Connected to Supabase Cloud">
+        <span class="status-dot"></span> Live
+      </span>
+    </div>
+    <div class="admin-topbar-actions">
+      <a class="admin-topbar-link" href="../index.html" target="_blank" rel="noopener noreferrer">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        <span>View Live Site</span>
+      </a>
+      <button id="logout-button" class="admin-topbar-btn danger" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Sign Out</span>
+      </button>
     </div>
   </header>
-  <main class="admin-dashboard-layout">
-    <section id="login-panel" class="panel narrow">
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--admin-accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; stroke: var(--admin-accent);"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <h1>Admin Access</h1>
-      <p style="color: var(--admin-muted); font-size: 0.85rem; margin-bottom: 2rem;">Sign in using your Supabase credentials.</p>
-      <form id="login-form">
-        <div class="form-row">
-          <label for="email">Email</label>
-          <input id="email" name="email" type="email" required autocomplete="email" placeholder="hello@olehro.com" />
+
+  <!-- MAIN ADMIN CONTAINER -->
+  <main class="admin-main">
+    <!-- AUTH / SIGN IN PANEL -->
+    <section id="login-panel" class="admin-login-card">
+      <div class="login-header">
+        <div class="login-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </div>
-        <div class="form-row" style="margin-bottom: 1.5rem;">
+        <h1>Studio Management</h1>
+        <p>Sign in using your Supabase credentials to manage weddings, portfolio, pricing and site settings.</p>
+      </div>
+      <form id="login-form" class="admin-form">
+        <div class="form-group">
+          <label for="email">Admin Email</label>
+          <input id="email" name="email" type="email" required autocomplete="email" placeholder="admin@olehro.com" />
+        </div>
+        <div class="form-group">
           <label for="password">Password</label>
-          <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="•••••••••" />
+          <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••••••" />
         </div>
-        <button class="primary" type="submit" style="width: 100%;">Sign In</button>
+        <button class="admin-btn primary full" type="submit">Sign In to Dashboard</button>
       </form>
-      <p id="login-error" style="color:var(--admin-danger); font-size: 0.85rem; margin-top: 1rem;"></p>
+      <div id="login-error" class="admin-login-error"></div>
     </section>
-    <!-- NEW DASHBOARD WRAPPER -->
-    <div id="dashboard-panel" class="hidden">
+
+    <!-- DASHBOARD WORKSPACE (Visible upon login) -->
+    <div id="dashboard-panel" class="admin-workspace hidden">
+      <!-- STICKY SIDEBAR NAVIGATION -->
       <aside class="admin-sidebar" id="admin-sidebar">
+        <div class="sidebar-group-title">Content Studio</div>
         <nav class="admin-nav-menu">
           <button type="button" class="admin-nav-button active" data-target="tab-albums">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            Weddings & Albums
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Weddings & Albums</span>
           </button>
           <button type="button" class="admin-nav-button" data-target="tab-portfolio" id="sidebar-portfolio-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-            Signature Portfolio
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            <span>Signature Portfolio</span>
           </button>
           <button type="button" class="admin-nav-button" data-target="tab-about">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            About Page CMS
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>About Page CMS</span>
           </button>
           <button type="button" class="admin-nav-button" data-target="tab-pricing">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Pricing CMS
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Pricing CMS</span>
           </button>
+        </nav>
+
+        <div class="sidebar-group-title" style="margin-top: 1.75rem;">System & SEO</div>
+        <nav class="admin-nav-menu">
           <button type="button" class="admin-nav-button" data-target="tab-settings">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Site Settings
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Site Settings & SEO</span>
           </button>
         </nav>
       </aside>
+
+      <!-- DYNAMIC CONTENT WORKSPACE -->
       <div class="admin-content-area" id="admin-content">
-        <!-- ========== ALBUMS TAB ========== -->
+        <!-- ========================================== -->
+        <!-- TAB 1: WEDDINGS & ALBUMS                   -->
+        <!-- ========================================== -->
         <div id="tab-albums" class="admin-tab-pane active">
-          <div class="admin-header-row">
-            <h2>Weddings & Albums</h2>
-            <button id="show-create-album-btn" class="primary" onclick="document.getElementById('create-album-section').scrollIntoView({behavior:'smooth'})" style="width: auto;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              New Album
+          <div class="admin-view-header">
+            <div>
+              <h1 class="view-title">Weddings & Albums</h1>
+              <p class="view-subtitle">Manage wedding galleries, publish status, cover photos and presentation order.</p>
+            </div>
+            <button id="show-create-album-btn" class="admin-btn primary" onclick="document.getElementById('create-album-section').scrollIntoView({behavior:'smooth'})">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>Create New Album</span>
             </button>
           </div>
 
-          <!-- QUICK STATS DASHBOARD -->
-          <div class="stats-grid" id="admin-stats-grid">
-            <div class="stat-card">
-              <span class="stat-label">Total Albums</span>
-              <span class="stat-value" id="stat-total-albums">-</span>
+          <!-- QUICK METRICS BAR -->
+          <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+              <span class="stat-num" id="stat-total-albums">-</span>
+              <span class="stat-title">Total Albums</span>
             </div>
-            <div class="stat-card">
-              <span class="stat-label">Published</span>
-              <span class="stat-value" id="stat-published-albums">-</span>
+            <div class="admin-stat-card">
+              <span class="stat-num text-emerald" id="stat-published-albums">-</span>
+              <span class="stat-title">Published</span>
             </div>
-            <div class="stat-card">
-              <span class="stat-label">Drafts</span>
-              <span class="stat-value" id="stat-draft-albums">-</span>
+            <div class="admin-stat-card">
+              <span class="stat-num text-amber" id="stat-draft-albums">-</span>
+              <span class="stat-title">Drafts</span>
             </div>
           </div>
 
-          <div class="admin-grid" id="albums-main-grid">
-            <article class="panel">
-              <div id="albums-section" class="admin-section">
-                <div class="admin-card-header"><h3>All Albums</h3></div>
-                <div class="admin-section-body">
-                  <p>Create, publish, open, and reorder wedding albums.</p>
-                  <div class="album-order-controls" style="display: none;">
-                    <button id="apply-album-order-button" type="button" class="primary" disabled>Save album order</button>
-                    <button id="clear-album-order-button" type="button" class="ghost" disabled>Clear staged album moves</button>
-                  </div>
-                  <p class="upload-note">Album order affects `/weddings` and home Featured Stories.</p>
-                  <div id="albums-list" class="album-list"></div>
+          <!-- ALBUMS MAIN WORKSPACE (2-Column Grid) -->
+          <div class="admin-layout-2col">
+            <!-- LEFT: ALBUMS LIST -->
+            <div class="admin-card" id="albums-section">
+              <div class="card-header">
+                <h3>All Wedding Albums</h3>
+                <div class="album-order-controls" style="display: none;">
+                  <button id="apply-album-order-button" type="button" class="admin-btn primary small" disabled>Save Order</button>
+                  <button id="clear-album-order-button" type="button" class="admin-btn ghost small" disabled>Cancel</button>
                 </div>
               </div>
-            </article>
-            <article class="panel">
-              <div id="create-album-section" class="admin-section">
-                <div class="admin-card-header"><h3>Create Album</h3></div>
-                <div class="admin-section-body">
-                  <form id="create-album-form">
-                    <div class="form-row">
-                      <label for="title">Title</label>
-                      <input id="title" name="title" type="text" required />
-                    </div>
-                    <div class="form-row">
-                      <label for="slug">Slug (optional)</label>
-                      <input id="slug" name="slug" type="text" placeholder="will-be-generated-if-empty" />
-                    </div>
-                    <div class="form-row">
-                      <label for="type">Type</label>
-                      <select id="type" name="type" required>
-                        <option value="wedding">wedding</option>
-                      </select>
-                      <small class="upload-note">Portfolio album is managed from Signature Portfolio to keep one source.</small>
-                    </div>
-                    <div class="form-row">
-                      <label for="date">Date</label>
-                      <input id="date" name="date" type="date" />
-                    </div>
-                    <div class="form-row">
-                      <label for="description">Description (optional)</label>
-                      <textarea id="description" name="description" rows="3" placeholder="Short story mood, place, or couple vibe..."></textarea>
-                    </div>
-                    <div class="form-row">
-                      <label for="cover">Cover image (JPEG/WEBP/PNG)</label>
-                      <input id="cover" name="cover" type="file" accept="image/*" required />
-                    </div>
-                    <button type="submit" class="primary">Create Album</button>
-                  </form>
-                </div>
+              <div class="card-body">
+                <p class="section-hint">Drag albums to reorder. Order on this page directly sets the sequence on the public site and Featured Stories.</p>
+                <div id="albums-list" class="album-list"></div>
               </div>
-            </article>
-          </div>
-        </div>
-        <!-- ========== PORTFOLIO TAB ========== -->
-        <div id="tab-portfolio" class="admin-tab-pane">
-          <div class="admin-header-row">
-            <h2>Signature Portfolio</h2>
-          </div>
-          <article class="panel" style="margin-bottom: 1.5rem;">
-            <p>Open your main portfolio manager to upload and sort signature photos. If missing, it is created automatically.</p>
-            <div class="admin-quick-actions">
-              <button id="open-portfolio-manager-button" type="button" class="primary">Open Portfolio Manager</button>
-              <a class="ghost admin-link-button" href="../portfolio/index.html" target="_blank" rel="noopener noreferrer">Open Public Portfolio Page</a>
             </div>
-            <p id="portfolio-quick-note" class="upload-note" style="margin-top:0.7rem;"></p>
-          </article>
-        </div>
-        <!-- ========== ABOUT TAB ========== -->
-        <div id="tab-about" class="admin-tab-pane">
-          <div class="admin-header-row">
-            <h2>About Page CMS</h2>
-          </div>
-          <article class="panel" style="margin-bottom:1.5rem;">
-            <div id="about-cms-section" class="admin-section">
-              <div class="admin-card-header"><h3>Content & Testimonials</h3></div>
-              <div class="admin-section-body">
-                <p>Edit your About page story and testimonials. Layout on public page: photo on the left, story on the right.</p>
-                <form id="about-form">
-                  <div class="form-row">
-                    <label>Current portrait</label>
-                    <img id="about-photo-preview" class="admin-cover-preview hidden" src="" alt="About portrait preview" />
+
+            <!-- RIGHT: CREATE ALBUM FORM -->
+            <div class="admin-card" id="create-album-section">
+              <div class="card-header">
+                <h3>Create New Album</h3>
+              </div>
+              <div class="card-body">
+                <form id="create-album-form" class="admin-form">
+                  <div class="form-group">
+                    <label for="title">Album Title (e.g. "Amalie & Frederik")</label>
+                    <input id="title" name="title" type="text" required placeholder="Couple names or location" />
                   </div>
-                  <div class="form-row">
-                    <label for="about-photo">Replace portrait photo (optional)</label>
+                  <div class="form-group">
+                    <label for="slug">URL Slug (Optional)</label>
+                    <input id="slug" name="slug" type="text" placeholder="amalie-and-frederik" />
+                    <small class="form-hint">Auto-generated from title if left blank.</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="type">Album Category</label>
+                    <select id="type" name="type" required>
+                      <option value="wedding">Wedding Story</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="date">Wedding Date</label>
+                    <input id="date" name="date" type="date" />
+                  </div>
+                  <div class="form-group">
+                    <label for="description">Story Mood / Location Description</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Intimate seaside wedding on Ærø Island..."></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="cover">Cover Photo (JPEG, WEBP, PNG)</label>
+                    <input id="cover" name="cover" type="file" accept="image/*" required />
+                  </div>
+                  <button type="submit" class="admin-btn primary full">Publish New Album</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: SIGNATURE PORTFOLIO                 -->
+        <!-- ========================================== -->
+        <div id="tab-portfolio" class="admin-tab-pane">
+          <div class="admin-view-header">
+            <div>
+              <h1 class="view-title">Signature Portfolio</h1>
+              <p class="view-subtitle">Curate and order your finest hero photographs featured on the public Portfolio page.</p>
+            </div>
+          </div>
+          <div class="admin-card">
+            <div class="card-body">
+              <p>The Signature Portfolio operates as a single curated collection. Open the manager below to upload, sort, or replace signature highlights.</p>
+              <div class="admin-btn-group" style="margin-top: 1.5rem;">
+                <button id="open-portfolio-manager-button" type="button" class="admin-btn primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                  <span>Open Portfolio Studio</span>
+                </button>
+                <a class="admin-btn ghost" href="../portfolio/index.html" target="_blank" rel="noopener noreferrer">
+                  <span>Open Public Portfolio Page ↗</span>
+                </a>
+              </div>
+              <p id="portfolio-quick-note" class="form-hint" style="margin-top: 1rem;"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: ABOUT PAGE CMS                      -->
+        <!-- ========================================== -->
+        <div id="tab-about" class="admin-tab-pane">
+          <div class="admin-view-header">
+            <div>
+              <h1 class="view-title">About Page CMS</h1>
+              <p class="view-subtitle">Manage your biography, values, experience milestones, portrait, and testimonials.</p>
+            </div>
+            <button id="save-about-button" type="submit" form="about-form" class="admin-btn primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span>Save About Page</span>
+            </button>
+          </div>
+
+          <form id="about-form" class="admin-form">
+            <div class="admin-layout-2col">
+              <!-- COLUMN 1: PORTRAIT & PHILOSOPHY -->
+              <div class="admin-card">
+                <div class="card-header">
+                  <h3>Portrait & Philosophy</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label>Current Portrait</label>
+                    <div class="portrait-preview-box">
+                      <img id="about-photo-preview" class="admin-cover-preview hidden" src="" alt="About portrait preview" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="about-photo">Replace Portrait Image</label>
                     <input id="about-photo" name="about-photo" type="file" accept="image/*" />
                   </div>
-                  <div class="form-row">
-                    <label for="about-story">Main story</label>
-                    <textarea id="about-story" name="about-story" rows="10" required></textarea>
+                  <div class="form-group">
+                    <label for="about-values">Values & Approach</label>
+                    <textarea id="about-values" name="about-values" rows="4" placeholder="I work quietly, observe honestly..."></textarea>
                   </div>
-                  <div class="form-row">
-                    <label for="about-values">Values and approach</label>
-                    <textarea id="about-values" name="about-values" rows="4"></textarea>
+                  <div class="form-group">
+                    <label for="about-personal">Personal Note & Location</label>
+                    <textarea id="about-personal" name="about-personal" rows="4" placeholder="Originally from Ukraine, now based near Aarhus..."></textarea>
                   </div>
-                  <div class="form-row">
-                    <label for="about-personal">Personal note</label>
-                    <textarea id="about-personal" name="about-personal" rows="4"></textarea>
-                  </div>
-                  <h3 style="margin-top:2rem">Testimonials</h3>
-                  <div class="form-row" data-testimonial-index="0">
-                    <div class="testimonial-move-controls">
-                      <button id="testimonial-1-up" type="button" class="ghost">Move Up</button>
-                      <button id="testimonial-1-down" type="button" class="ghost">Move Down</button>
-                    </div>
-                    <label for="testimonial-1-name">Testimonial 1 - Name</label>
-                    <input id="testimonial-1-name" type="text" />
-                    <label for="testimonial-1-quote">Testimonial 1 - Quote</label>
-                    <textarea id="testimonial-1-quote" rows="3"></textarea>
-                  </div>
-                  <div class="form-row" data-testimonial-index="1">
-                    <div class="testimonial-move-controls">
-                      <button id="testimonial-2-up" type="button" class="ghost">Move Up</button>
-                      <button id="testimonial-2-down" type="button" class="ghost">Move Down</button>
-                    </div>
-                    <label for="testimonial-2-name">Testimonial 2 - Name</label>
-                    <input id="testimonial-2-name" type="text" />
-                    <label for="testimonial-2-quote">Testimonial 2 - Quote</label>
-                    <textarea id="testimonial-2-quote" rows="3"></textarea>
-                  </div>
-                  <div class="form-row" data-testimonial-index="2">
-                    <div class="testimonial-move-controls">
-                      <button id="testimonial-3-up" type="button" class="ghost">Move Up</button>
-                      <button id="testimonial-3-down" type="button" class="ghost">Move Down</button>
-                    </div>
-                    <label for="testimonial-3-name">Testimonial 3 - Name</label>
-                    <input id="testimonial-3-name" type="text" />
-                    <label for="testimonial-3-quote">Testimonial 3 - Quote</label>
-                    <textarea id="testimonial-3-quote" rows="3"></textarea>
-                  </div>
-                  <div class="form-row" data-testimonial-index="3">
-                    <div class="testimonial-move-controls">
-                      <button id="testimonial-4-up" type="button" class="ghost">Move Up</button>
-                      <button id="testimonial-4-down" type="button" class="ghost">Move Down</button>
-                    </div>
-                    <label for="testimonial-4-name">Testimonial 4 - Name</label>
-                    <input id="testimonial-4-name" type="text" />
-                    <label for="testimonial-4-quote">Testimonial 4 - Quote</label>
-                    <textarea id="testimonial-4-quote" rows="3"></textarea>
-                  </div>
-                  <button id="save-about-button" type="submit" class="primary">Save About Page</button>
-                  <a class="ghost admin-link-button" href="../about/index.html" target="_blank" rel="noopener noreferrer">Open Public About Page</a>
-                  <p id="about-status-text" class="upload-note" style="margin-top:0.7rem;"></p>
-                </form>
+                </div>
               </div>
-            </div>
-          </article>
-        </div>
-        <!-- ========== PRICING TAB ========== -->
-        <div id="tab-pricing" class="admin-tab-pane">
-          <div class="admin-header-row">
-            <h2>Pricing CMS</h2>
-          </div>
-          <article class="panel" style="margin-bottom:1.5rem;">
-            <div id="pricing-cms-section" class="admin-section">
-              <div class="admin-card-header"><h3>Collections Pricing</h3></div>
-              <div class="admin-section-body">
-                <p>Update package prices and travel note used on the public Pricing page.</p>
-                <form id="pricing-form">
-                  <div class="form-row">
-                    <label for="pricing-currency">Currency</label>
-                    <input id="pricing-currency" name="pricing-currency" type="text" maxlength="8" required />
-                  </div>
-                  <div class="form-row">
-                    <label for="pricing-essentials">Essentials price</label>
-                    <input id="pricing-essentials" name="pricing-essentials" type="number" min="0" step="1" required />
-                  </div>
-                  <div class="form-row">
-                    <label for="pricing-signature">Signature price</label>
-                    <input id="pricing-signature" name="pricing-signature" type="number" min="0" step="1" required />
-                  </div>
-                  <div class="form-row">
-                    <label for="pricing-luxury">Luxury price</label>
-                    <input id="pricing-luxury" name="pricing-luxury" type="number" min="0" step="1" required />
-                  </div>
-                  <div class="form-row">
-                    <label for="pricing-session">Individual session price</label>
-                    <input id="pricing-session" name="pricing-session" type="number" min="0" step="1" required />
-                  </div>
-                  <div class="form-row">
-                    <label for="pricing-travel-note">Travel note</label>
-                    <textarea id="pricing-travel-note" name="pricing-travel-note" rows="3"></textarea>
-                  </div>
-                  <button id="save-pricing-button" type="submit" class="primary">Save Pricing</button>
-                  <a class="ghost admin-link-button" href="../pricing/index.html" target="_blank" rel="noopener noreferrer">Open Public Pricing Page</a>
-                  <p id="pricing-status-text" class="upload-note" style="margin-top:0.7rem;"></p>
-                </form>
-              </div>
-            </div>
-          </article>
-        </div>
-        <!-- ========== SETTINGS TAB ========== -->
-        <div id="tab-settings" class="admin-tab-pane">
-          <div class="admin-header-row">
-            <h2>Site Settings</h2>
-            <button id="save-settings-button" type="submit" form="settings-form" class="primary" style="width: auto;">Save Settings</button>
-          </div>
-          <form id="settings-form">
-            <div class="admin-grid" style="grid-template-columns: 1fr 1fr; align-items: start;">
-              <article class="panel">
-                <div class="admin-section">
-                  <div class="admin-card-header"><h3>Navigation & Pricing Toggles</h3></div>
-                  <div class="admin-section-body">
-                    <p style="margin-bottom: 1.5rem;">Hide navigation links, redirect disabled page requests, or show/hide individual pricing collections.</p>
-                    
-                    <h4 style="margin-top: 0; color: var(--admin-accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;">Public Navigation Tabs</h4>
-                    <div class="form-row-checkbox">
-                      <label class="checkbox-label">
-                        <input type="checkbox" id="settings-show-weddings" name="show_weddings" checked />
-                        Show Weddings Page
-                      </label>
-                    </div>
-                    <div class="form-row-checkbox">
-                      <label class="checkbox-label">
-                        <input type="checkbox" id="settings-show-portfolio" name="show_portfolio" checked />
-                        Show Portfolio Page
-                      </label>
-                    </div>
-                    <div class="form-row-checkbox">
-                      <label class="checkbox-label">
-                        <input type="checkbox" id="settings-show-about" name="show_about" checked />
-                        Show About Page
-                      </label>
-                    </div>
-                    <div class="form-row-checkbox" style="margin-bottom: 2rem;">
-                      <label class="checkbox-label">
-                        <input type="checkbox" id="settings-show-pricing" name="show_pricing" checked />
-                        Show Pricing Page
-                      </label>
-                    </div>
 
-                    <h4 style="color: var(--admin-accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;">Pricing Packages</h4>
-                    <div class="form-row-checkbox">
-                      <label class="checkbox-label">
-                        <input type="checkbox" id="settings-show-essentials" name="show_essentials" checked />
-                        Show Essentials Collection
-                      </label>
+              <!-- COLUMN 2: MAIN STORY -->
+              <div class="admin-card">
+                <div class="card-header">
+                  <h3>Main Biography / Story</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="about-story">Full Story</label>
+                    <textarea id="about-story" name="about-story" rows="18" required placeholder="Write your full story and philosophy..."></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TESTIMONIALS SECTION -->
+            <div class="admin-card" style="margin-top: 1.5rem;">
+              <div class="card-header">
+                <h3>Client Testimonials & Endorsements</h3>
+              </div>
+              <div class="card-body">
+                <div class="testimonials-admin-grid">
+                  <div class="testimonial-admin-card" data-testimonial-index="0">
+                    <div class="testimonial-card-top">
+                      <span class="testimonial-num">#1</span>
+                      <div class="testimonial-move-controls">
+                        <button id="testimonial-1-up" type="button" class="admin-btn ghost micro" title="Move Up">↑</button>
+                        <button id="testimonial-1-down" type="button" class="admin-btn ghost micro" title="Move Down">↓</button>
+                      </div>
                     </div>
-                    <div class="form-row-checkbox">
-                      <label class="checkbox-label">
-                        <input type="checkbox" id="settings-show-signature" name="show_signature" checked />
-                        Show Signature Collection
-                      </label>
+                    <div class="form-group">
+                      <label for="testimonial-1-name">Author Name & Role</label>
+                      <input id="testimonial-1-name" type="text" placeholder="Oleksandr Popov (Actor)" />
                     </div>
-                    <div class="form-row-checkbox">
-                      <label class="checkbox-label">
-                        <input type="checkbox" id="settings-show-luxury" name="show_luxury" checked />
-                        Show Luxury Collection
-                      </label>
+                    <div class="form-group">
+                      <label for="testimonial-1-quote">Quote</label>
+                      <textarea id="testimonial-1-quote" rows="4" placeholder="Review text..."></textarea>
                     </div>
-                    <div class="form-row-checkbox">
-                      <label class="checkbox-label">
-                        <input type="checkbox" id="settings-show-session" name="show_session" checked />
-                        Show Individual Session
-                      </label>
+                  </div>
+
+                  <div class="testimonial-admin-card" data-testimonial-index="1">
+                    <div class="testimonial-card-top">
+                      <span class="testimonial-num">#2</span>
+                      <div class="testimonial-move-controls">
+                        <button id="testimonial-2-up" type="button" class="admin-btn ghost micro" title="Move Up">↑</button>
+                        <button id="testimonial-2-down" type="button" class="admin-btn ghost micro" title="Move Down">↓</button>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="testimonial-2-name">Author Name & Role</label>
+                      <input id="testimonial-2-name" type="text" placeholder="Amalie Frank" />
+                    </div>
+                    <div class="form-group">
+                      <label for="testimonial-2-quote">Quote</label>
+                      <textarea id="testimonial-2-quote" rows="4" placeholder="Review text..."></textarea>
+                    </div>
+                  </div>
+
+                  <div class="testimonial-admin-card" data-testimonial-index="2">
+                    <div class="testimonial-card-top">
+                      <span class="testimonial-num">#3</span>
+                      <div class="testimonial-move-controls">
+                        <button id="testimonial-3-up" type="button" class="admin-btn ghost micro" title="Move Up">↑</button>
+                        <button id="testimonial-3-down" type="button" class="admin-btn ghost micro" title="Move Down">↓</button>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="testimonial-3-name">Author Name & Role</label>
+                      <input id="testimonial-3-name" type="text" placeholder="Volodymyr Ostapchuk (TV Presenter)" />
+                    </div>
+                    <div class="form-group">
+                      <label for="testimonial-3-quote">Quote</label>
+                      <textarea id="testimonial-3-quote" rows="4" placeholder="Review text..."></textarea>
+                    </div>
+                  </div>
+
+                  <div class="testimonial-admin-card" data-testimonial-index="3">
+                    <div class="testimonial-card-top">
+                      <span class="testimonial-num">#4</span>
+                      <div class="testimonial-move-controls">
+                        <button id="testimonial-4-up" type="button" class="admin-btn ghost micro" title="Move Up">↑</button>
+                        <button id="testimonial-4-down" type="button" class="admin-btn ghost micro" title="Move Down">↓</button>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="testimonial-4-name">Author Name & Role</label>
+                      <input id="testimonial-4-name" type="text" placeholder="Jerry Heil (Singer & Songwriter)" />
+                    </div>
+                    <div class="form-group">
+                      <label for="testimonial-4-quote">Quote</label>
+                      <textarea id="testimonial-4-quote" rows="4" placeholder="Review text..."></textarea>
                     </div>
                   </div>
                 </div>
-              </article>
 
-              <article class="panel">
-                <div class="admin-section">
-                  <div class="admin-card-header"><h3>SEO & SMM Configuration</h3></div>
-                  <div class="admin-section-body">
-                    <p style="margin-bottom: 1.5rem;">Configure your homepage metadata keywords and SMM booking handles.</p>
-                    
-                    <div class="form-row">
-                      <label for="settings-homepage-title">Homepage SEO Title</label>
-                      <input id="settings-homepage-title" name="homepage_title" type="text" placeholder="Oleh Ro | Wedding Photographer in Denmark" />
-                      <small class="upload-note">Browser tab title and search results header.</small>
-                    </div>
-                    <div class="form-row">
-                      <label for="settings-homepage-description">Homepage Meta Description</label>
-                      <textarea id="settings-homepage-description" name="homepage_description" rows="3" placeholder="Luxury wedding photography in Denmark by Oleh Ro..."></textarea>
-                      <small class="upload-note">Under 160 characters recommended to fit search engine snippet lengths.</small>
-                    </div>
-                    <div class="form-row">
-                      <label for="settings-instagram-handle">Instagram Handle</label>
-                      <input id="settings-instagram-handle" name="instagram_handle" type="text" placeholder="@deusflow" />
-                    </div>
-                    <div class="form-row">
-                      <label for="settings-instagram-dm-url">Instagram DM URL</label>
-                      <input id="settings-instagram-dm-url" name="instagram_dm_url" type="url" placeholder="https://ig.me/m/deusflow" />
-                    </div>
-                    <div class="form-row">
-                      <label for="settings-telegram-url">Telegram Contact URL</label>
-                      <input id="settings-telegram-url" name="telegram_url" type="url" placeholder="https://t.me/deusflow" />
-                    </div>
-                    <div class="form-row">
-                      <label for="settings-whatsapp-url">WhatsApp Contact URL</label>
-                      <input id="settings-whatsapp-url" name="whatsapp_url" type="url" placeholder="https://wa.me/4512345678" />
-                    </div>
-                  </div>
+                <div class="form-action-bar">
+                  <button type="submit" class="admin-btn primary">Save All Changes</button>
+                  <a class="admin-btn ghost" href="../about/index.html" target="_blank" rel="noopener noreferrer">View Public About Page ↗</a>
+                  <span id="about-status-text" class="status-msg"></span>
                 </div>
-              </article>
-            </div>
-            <div style="text-align: center; margin-top: 1rem;">
-              <p id="settings-status-text" class="upload-note" style="margin-top: 0.7rem; font-size: 0.95rem;"></p>
+              </div>
             </div>
           </form>
         </div>
-        <!-- ========== SELECTED ALBUM OVERLAY/SECTION ========== -->
-        <article id="selected-album-panel" class="panel hidden" style="margin-top:1.5rem; position: relative;">
-          <!-- Close button -->
-          <button type="button" class="danger" id="close-album-btn" style="position:absolute; top: 1.25rem; right: 1.25rem; width: auto; font-size: 10px;">Close Album</button>
-          <h3 id="selected-album-name">Album</h3>
-          <p id="selected-album-meta"></p>
-          <div id="album-edit-section" class="admin-section">
-            <div class="admin-card-header"><h3>Edit Album</h3></div>
-            <div class="admin-section-body">
-              <form id="edit-album-form">
-                <div class="form-row">
-                  <label for="edit-title">Album title</label>
-                  <input id="edit-title" name="title" type="text" required />
+
+        <!-- ========================================== -->
+        <!-- TAB 4: PRICING CMS                         -->
+        <!-- ========================================== -->
+        <div id="tab-pricing" class="admin-tab-pane">
+          <div class="admin-view-header">
+            <div>
+              <h1 class="view-title">Pricing & Collections CMS</h1>
+              <p class="view-subtitle">Configure wedding package investment tiers, currency, and travel policies.</p>
+            </div>
+            <button id="save-pricing-button" type="submit" form="pricing-form" class="admin-btn primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span>Save Pricing</span>
+            </button>
+          </div>
+
+          <form id="pricing-form" class="admin-form">
+            <div class="admin-card">
+              <div class="card-header">
+                <h3>Package Investment Amounts</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group" style="max-width: 240px; margin-bottom: 2rem;">
+                  <label for="pricing-currency">Display Currency Symbol</label>
+                  <input id="pricing-currency" name="pricing-currency" type="text" maxlength="8" required placeholder="DKK" />
                 </div>
-                <div class="form-row">
-                  <label for="edit-date">Date</label>
-                  <input id="edit-date" name="date" type="date" />
+
+                <div class="pricing-cards-grid">
+                  <!-- ESSENTIALS -->
+                  <div class="pricing-admin-card">
+                    <span class="package-tag">Tier 1</span>
+                    <h4>Essentials Collection</h4>
+                    <p class="package-desc">Civil elopements & intimate ceremonies.</p>
+                    <div class="form-group">
+                      <label for="pricing-essentials">Price Amount</label>
+                      <input id="pricing-essentials" name="pricing-essentials" type="number" min="0" step="1" required />
+                    </div>
+                  </div>
+
+                  <!-- SIGNATURE -->
+                  <div class="pricing-admin-card highlight">
+                    <span class="package-tag gold">Most Popular</span>
+                    <h4>Signature Collection</h4>
+                    <p class="package-desc">Full story from prep to first dance.</p>
+                    <div class="form-group">
+                      <label for="pricing-signature">Price Amount</label>
+                      <input id="pricing-signature" name="pricing-signature" type="number" min="0" step="1" required />
+                    </div>
+                  </div>
+
+                  <!-- LUXURY -->
+                  <div class="pricing-admin-card">
+                    <span class="package-tag">Tier 3</span>
+                    <h4>Luxury Weekend</h4>
+                    <p class="package-desc">Multi-day castle celebrations.</p>
+                    <div class="form-group">
+                      <label for="pricing-luxury">Price Amount</label>
+                      <input id="pricing-luxury" name="pricing-luxury" type="number" min="0" step="1" required />
+                    </div>
+                  </div>
+
+                  <!-- INDIVIDUAL SESSION -->
+                  <div class="pricing-admin-card">
+                    <span class="package-tag">Add-on</span>
+                    <h4>Individual Session</h4>
+                    <p class="package-desc">Editorial portraits & couple shoots.</p>
+                    <div class="form-group">
+                      <label for="pricing-session">Price Amount</label>
+                      <input id="pricing-session" name="pricing-session" type="number" min="0" step="1" required />
+                    </div>
+                  </div>
                 </div>
-                <div class="form-row">
-                  <label for="edit-description">Description</label>
-                  <textarea id="edit-description" name="description" rows="3" placeholder="Short wedding story description..."></textarea>
+
+                <div class="form-group" style="margin-top: 2rem;">
+                  <label for="pricing-travel-note">Travel & Booking Policy Note</label>
+                  <textarea id="pricing-travel-note" name="pricing-travel-note" rows="3" placeholder="Travel within Aarhus included. Across Denmark and Europe based on travel expenses..."></textarea>
                 </div>
-                <div class="form-row">
-                  <label>Current cover</label>
-                  <img id="edit-cover-preview" class="admin-cover-preview hidden" src="" alt="Album cover preview" />
-                  <small class="upload-note">Upload a new file below to replace the current album cover.</small>
+
+                <div class="form-action-bar">
+                  <button type="submit" class="admin-btn primary">Save Pricing Changes</button>
+                  <a class="admin-btn ghost" href="../pricing/index.html" target="_blank" rel="noopener noreferrer">Open Public Pricing Page ↗</a>
+                  <span id="pricing-status-text" class="status-msg"></span>
                 </div>
-                <div class="form-row">
-                  <label for="edit-cover">Replace cover image (optional)</label>
-                  <input id="edit-cover" name="cover" type="file" accept="image/*" />
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: SITE SETTINGS & SEO                 -->
+        <!-- ========================================== -->
+        <div id="tab-settings" class="admin-tab-pane">
+          <div class="admin-view-header">
+            <div>
+              <h1 class="view-title">Site Settings & SEO</h1>
+              <p class="view-subtitle">Control navigation visibility, search engine metadata and booking messengers.</p>
+            </div>
+            <button id="save-settings-button" type="submit" form="settings-form" class="admin-btn primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span>Save Settings</span>
+            </button>
+          </div>
+
+          <form id="settings-form" class="admin-form">
+            <div class="admin-layout-2col">
+              <!-- LEFT: NAVIGATION & PRICING VISIBILITY -->
+              <div class="admin-card">
+                <div class="card-header">
+                  <h3>Public Page Visibility</h3>
                 </div>
-                <button id="save-album-button" type="submit" class="primary">Save Album Details</button>
-              </form>
+                <div class="card-body">
+                  <p class="section-hint">Toggle visibility of public sections on the main site header.</p>
+                  
+                  <div class="switch-row">
+                    <div>
+                      <span class="switch-label">Weddings Section</span>
+                      <span class="switch-desc">Show / Hide Weddings in public header</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="settings-show-weddings" name="show_weddings" checked />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="switch-row">
+                    <div>
+                      <span class="switch-label">Portfolio Section</span>
+                      <span class="switch-desc">Show / Hide Signature Portfolio</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="settings-show-portfolio" name="show_portfolio" checked />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="switch-row">
+                    <div>
+                      <span class="switch-label">About Page</span>
+                      <span class="switch-desc">Show / Hide About me page</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="settings-show-about" name="show_about" checked />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="switch-row">
+                    <div>
+                      <span class="switch-label">Pricing Section</span>
+                      <span class="switch-desc">Show / Hide Investment & Pricing</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="settings-show-pricing" name="show_pricing" checked />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="sidebar-group-title" style="margin-top: 2rem; margin-bottom: 1rem;">Pricing Tier Visibility</div>
+
+                  <div class="switch-row">
+                    <span class="switch-label">Essentials Package</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="settings-show-essentials" name="show_essentials" checked />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="switch-row">
+                    <span class="switch-label">Signature Package</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="settings-show-signature" name="show_signature" checked />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="switch-row">
+                    <span class="switch-label">Luxury Weekend</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="settings-show-luxury" name="show_luxury" checked />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="switch-row">
+                    <span class="switch-label">Individual Session</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="settings-show-session" name="show_session" checked />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RIGHT: SEO & MESSENGERS -->
+              <div class="admin-card">
+                <div class="card-header">
+                  <h3>SEO & Booking Messengers</h3>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="settings-homepage-title">Homepage SEO Title</label>
+                    <input id="settings-homepage-title" name="homepage_title" type="text" placeholder="Oleh Ro | Wedding Photographer in Denmark" />
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-homepage-description">Homepage Meta Description</label>
+                    <textarea id="settings-homepage-description" name="homepage_description" rows="3" placeholder="Luxury wedding photography in Denmark by Oleh Ro..."></textarea>
+                  </div>
+
+                  <div class="sidebar-group-title" style="margin-top: 1.5rem; margin-bottom: 1rem;">Direct Contact Channels</div>
+
+                  <div class="form-group">
+                    <label for="settings-instagram-handle">Instagram Handle</label>
+                    <input id="settings-instagram-handle" name="instagram_handle" type="text" placeholder="@deusflow" />
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-instagram-dm-url">Instagram Direct URL</label>
+                    <input id="settings-instagram-dm-url" name="instagram_dm_url" type="url" placeholder="https://ig.me/m/deusflow" />
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-telegram-url">Telegram Link</label>
+                    <input id="settings-telegram-url" name="telegram_url" type="url" placeholder="https://t.me/OflowPhotography" />
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-whatsapp-url">WhatsApp Link</label>
+                    <input id="settings-whatsapp-url" name="whatsapp_url" type="url" placeholder="https://wa.me/4550300636" />
+                  </div>
+
+                  <div class="form-action-bar">
+                    <button type="submit" class="admin-btn primary">Save All Settings</button>
+                    <span id="settings-status-text" class="status-msg"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- DEDICATED PHOTO STUDIO (Selected Album)    -->
+        <!-- ========================================== -->
+        <div id="selected-album-panel" class="admin-album-studio hidden">
+          <!-- BREADCRUMB & TOP ACTIONS -->
+          <div class="studio-topbar">
+            <button type="button" class="admin-btn ghost small" id="close-album-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              <span>Back to All Albums</span>
+            </button>
+            <div class="studio-album-info">
+              <h2 id="selected-album-name">Album Studio</h2>
+              <p id="selected-album-meta"></p>
             </div>
           </div>
-          <div id="album-upload-section" class="admin-section">
-            <div class="admin-card-header"><h3>Upload Photos</h3></div>
-            <div class="admin-section-body">
-              <div class="form-row">
-                <label for="photo-upload-input">Upload photos</label>
-                <input id="photo-upload-input" type="file" accept="image/*" multiple />
-                <small class="upload-note">Photos start uploading automatically after you select or drop files.</small>
+
+          <!-- 2-COLUMN STUDIO WORKSPACE -->
+          <div class="admin-layout-2col" style="margin-top: 1.5rem;">
+            <!-- LEFT: ALBUM DETAILS & COVER -->
+            <div class="admin-card" id="album-edit-section">
+              <div class="card-header">
+                <h3>Album Details & Cover</h3>
               </div>
-              <div id="photo-dropzone" class="dropzone">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg><br/>
-                Drag and drop high-res photos here
+              <div class="card-body">
+                <form id="edit-album-form" class="admin-form">
+                  <div class="form-group">
+                    <label for="edit-title">Album Title</label>
+                    <input id="edit-title" name="title" type="text" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="edit-date">Date</label>
+                    <input id="edit-date" name="date" type="date" />
+                  </div>
+                  <div class="form-group">
+                    <label for="edit-description">Description</label>
+                    <textarea id="edit-description" name="description" rows="3"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>Current Album Cover</label>
+                    <div class="album-cover-box">
+                      <img id="edit-cover-preview" class="admin-cover-preview hidden" src="" alt="Album cover preview" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="edit-cover">Replace Cover Photo</label>
+                    <input id="edit-cover" name="cover" type="file" accept="image/*" />
+                  </div>
+                  <button id="save-album-button" type="submit" class="admin-btn primary full">Update Album Details</button>
+                </form>
               </div>
-              <div id="upload-status" class="upload-status" aria-live="polite">
-                <div id="upload-status-text">No upload in progress.</div>
-                <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                  <div id="upload-progress-bar" class="upload-progress-bar"></div>
+            </div>
+
+            <!-- RIGHT: DRAG & DROP PHOTO UPLOAD -->
+            <div class="admin-card" id="album-upload-section">
+              <div class="card-header">
+                <h3>Upload High-Res Photos</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <input id="photo-upload-input" type="file" accept="image/*" multiple style="display: none;" />
+                </div>
+                <div id="photo-dropzone" class="admin-dropzone" onclick="document.getElementById('photo-upload-input').click()">
+                  <div class="dropzone-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                  </div>
+                  <h4>Drag and drop photos here</h4>
+                  <p>or click to browse from your computer (Multiple files supported)</p>
+                </div>
+                
+                <div id="upload-status" class="admin-upload-status" aria-live="polite">
+                  <div id="upload-status-text">Ready for upload.</div>
+                  <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div id="upload-progress-bar" class="upload-progress-bar"></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          <div id="album-sort-section" class="admin-section">
-            <div class="admin-card-header"><h3>Sort and Manage Photos</h3></div>
-            <div class="admin-section-body">
-              <p class="upload-note">Drag and drop photos to reorder instantly, or jump positions using the inputs.</p>
-              <div class="photo-view-controls">
-                <button id="compact-view-button" type="button" class="ghost">Compact Sort View</button>
-                <button id="detailed-view-button" type="button" class="ghost">Detailed View</button>
+
+          <!-- PHOTO SORT & GALLERY MATRIX -->
+          <div class="admin-card" id="album-sort-section" style="margin-top: 1.5rem;">
+            <div class="card-header flex-between">
+              <h3>Photo Gallery & Order Management</h3>
+              <div class="photo-controls-row">
+                <div class="photo-view-controls">
+                  <button id="compact-view-button" type="button" class="admin-btn ghost micro active">Compact Matrix</button>
+                  <button id="detailed-view-button" type="button" class="admin-btn ghost micro">Detailed Grid</button>
+                </div>
+                <div class="photo-order-controls" style="display: none;">
+                  <button id="apply-order-button" type="button" class="admin-btn primary small" disabled>Save Order</button>
+                  <button id="clear-order-button" type="button" class="admin-btn ghost small" disabled>Cancel</button>
+                </div>
               </div>
-              <div class="photo-order-controls" style="display: none;">
-                <button id="apply-order-button" type="button" class="primary" disabled>Save order changes</button>
-                <button id="clear-order-button" type="button" class="ghost" disabled>Clear staged changes</button>
-              </div>
-              <div id="photos-list" class="album-list"></div>
+            </div>
+            <div class="card-body">
+              <p class="section-hint">Drag photo cards to reposition, or enter exact number in the position badge.</p>
+              <div id="photos-list" class="photos-grid compact-photo-grid"></div>
             </div>
           </div>
-        </article>
+        </div>
+
       </div>
     </div>
   </main>
+
   <script src="../config.js"></script>
   <script src="../assets/js/runtime-config.js"></script>
-  <script type="module" src="../assets/js/admin.js?v=20260427"></script>
+  <script type="module" src="../assets/js/admin.js?v=20260819-7"></script>
 </body>
 </html>
