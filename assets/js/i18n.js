@@ -194,13 +194,13 @@ const DADict = {
 };
 
 function getDictionary(lang) {
-  if (lang === 'uk' || lang === 'ua') return UADict;
-  if (lang === 'da') return DADict;
+  if (lang === "uk" || lang === "ua") return UADict;
+  if (lang === "da") return DADict;
   return null;
 }
 
 function updateMessengerLinks(lang) {
-  if (lang === 'uk' || lang === 'ua') {
+  if (lang === "uk" || lang === "ua") {
     const waLink = document.querySelector('a[href*="wa.me"]');
     if (waLink) {
       waLink.href = "https://wa.me/4550300636?text=" + encodeURIComponent("Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?");
@@ -216,66 +216,74 @@ function updateMessengerLinks(lang) {
   }
 }
 
-export function applyTranslations() {
-  const currentLang = localStorage.getItem('deusflow_lang') || 'en';
+let isTranslating = false;
+
+function applyTranslations() {
+  if (isTranslating) return;
+  const currentLang = localStorage.getItem("deusflow_lang") || "en";
   const dict = getDictionary(currentLang);
   if (!dict) return;
 
-  document.documentElement.lang = currentLang === 'ua' ? 'uk' : currentLang;
+  isTranslating = true;
+  try {
+    document.documentElement.lang = currentLang === "ua" ? "uk" : currentLang;
 
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-  let node;
-  while ((node = walker.nextNode())) {
-    const text = node.nodeValue.trim();
-    if (!text) continue;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    while ((node = walker.nextNode())) {
+      const text = node.nodeValue.trim();
+      if (!text) continue;
 
-    // Direct exact match
-    if (dict[text]) {
-      node.nodeValue = node.nodeValue.replace(text, dict[text]);
-      continue;
-    }
+      // Direct exact match
+      if (dict[text]) {
+        node.nodeValue = node.nodeValue.replace(text, dict[text]);
+        continue;
+      }
 
-    // Partial search match
-    for (const [enText, translatedText] of Object.entries(dict)) {
-      if (text === enText || (enText.length > 5 && text.includes(enText))) {
-        node.nodeValue = node.nodeValue.replace(enText, translatedText);
+      // Partial search match
+      for (const [enText, translatedText] of Object.entries(dict)) {
+        if (text === enText || (enText.length > 5 && text.includes(enText))) {
+          node.nodeValue = node.nodeValue.replace(enText, translatedText);
+        }
       }
     }
-  }
 
-  updateMessengerLinks(currentLang);
+    updateMessengerLinks(currentLang);
+  } finally {
+    isTranslating = false;
+  }
 }
 
-// Make globally available
+// Make globally accessible
 window.applyTranslations = applyTranslations;
 
 function initLangSwitcher() {
-  const currentLang = localStorage.getItem('deusflow_lang') || 'en';
-  const headerInner = document.querySelector('.site-header .header-inner');
+  const currentLang = localStorage.getItem("deusflow_lang") || "en";
+  const headerInner = document.querySelector(".site-header .header-inner");
   if (!headerInner) return;
 
-  if (document.querySelector('.lang-switcher')) return;
+  if (document.querySelector(".lang-switcher")) return;
 
-  const toggleContainer = document.createElement('div');
-  toggleContainer.className = 'lang-switcher';
+  const toggleContainer = document.createElement("div");
+  toggleContainer.className = "lang-switcher";
 
   const languages = [
-    { code: 'en', label: 'EN', title: 'English' },
-    { code: 'ua', label: 'UA', title: 'Українська' },
-    { code: 'da', label: 'DA', title: 'Dansk' }
+    { code: "en", label: "EN", title: "English" },
+    { code: "ua", label: "UA", title: "Українська" },
+    { code: "da", label: "DA", title: "Dansk" }
   ];
 
   languages.forEach((lang) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = `lang-btn ${currentLang === lang.code ? 'is-active' : ''}`;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `lang-btn ${currentLang === lang.code ? "is-active" : ""}`;
     btn.textContent = lang.label;
     btn.title = lang.title;
 
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener("click", (e) => {
       e.preventDefault();
       if (currentLang === lang.code) return;
-      localStorage.setItem('deusflow_lang', lang.code);
+      localStorage.setItem("deusflow_lang", lang.code);
       location.reload();
     });
 
@@ -285,27 +293,12 @@ function initLangSwitcher() {
   headerInner.appendChild(toggleContainer);
 }
 
-// Observe dynamic content insertions (e.g. from Supabase / loadAbout)
-function setupDynamicTranslationObserver() {
-  const observer = new MutationObserver(() => {
-    applyTranslations();
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: false
-  });
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
     initLangSwitcher();
     applyTranslations();
-    setupDynamicTranslationObserver();
   });
 } else {
   initLangSwitcher();
   applyTranslations();
-  setupDynamicTranslationObserver();
 }

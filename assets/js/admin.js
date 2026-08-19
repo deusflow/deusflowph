@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-5";
+import { createStateMessage } from "./ui.js?v=20260819-6";
 
 const state = {
   selectedAlbum: null,
