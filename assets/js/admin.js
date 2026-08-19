@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-12";
+import { createStateMessage } from "./ui.js?v=20260819-13";
 
 const state = {
   selectedAlbum: null,
@@ -1694,6 +1694,12 @@ async function loadPhotos(albumId) {
     badge.className = "photo-card-badge";
     badge.textContent = `#${index + 1}`;
 
+    // Drag Handle Grip
+    const dragHandle = document.createElement("div");
+    dragHandle.className = "photo-drag-handle";
+    dragHandle.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>`;
+    dragHandle.title = "Drag to reorder";
+
     // Delete Button
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
@@ -1808,6 +1814,39 @@ async function loadPhotos(albumId) {
       setUploadStatus("Album cover updated.", 100);
     });
 
+    // Quick move Left / Right buttons
+    const moveLeftBtn = document.createElement("button");
+    moveLeftBtn.type = "button";
+    moveLeftBtn.className = "photo-card-arrow-btn";
+    moveLeftBtn.title = "Move Left (←)";
+    moveLeftBtn.innerHTML = "←";
+    moveLeftBtn.disabled = index === 0;
+    moveLeftBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const cards = Array.from(photosList.querySelectorAll(".photo-card-premium"));
+      const currentIdx = cards.indexOf(row);
+      if (currentIdx > 0) {
+        photosList.insertBefore(row, cards[currentIdx - 1]);
+        await saveNewPhotoDOMOrder();
+      }
+    });
+
+    const moveRightBtn = document.createElement("button");
+    moveRightBtn.type = "button";
+    moveRightBtn.className = "photo-card-arrow-btn";
+    moveRightBtn.title = "Move Right (→)";
+    moveRightBtn.innerHTML = "→";
+    moveRightBtn.disabled = index === photos.length - 1;
+    moveRightBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const cards = Array.from(photosList.querySelectorAll(".photo-card-premium"));
+      const currentIdx = cards.indexOf(row);
+      if (currentIdx < cards.length - 1) {
+        photosList.insertBefore(row, cards[currentIdx + 1].nextSibling);
+        await saveNewPhotoDOMOrder();
+      }
+    });
+
     // Position input
     const posInput = document.createElement("input");
     posInput.type = "number";
@@ -1843,7 +1882,10 @@ async function loadPhotos(albumId) {
       }
     });
 
+    info.appendChild(dragHandle);
     info.appendChild(coverBtn);
+    info.appendChild(moveLeftBtn);
+    info.appendChild(moveRightBtn);
     info.appendChild(posInput);
 
     // Drag-and-drop Events
@@ -1918,20 +1960,16 @@ async function createAlbum(event) {
     return;
   }
 
-  if (coverFile && coverFile.size > 10 * 1024 * 1024) {
-    setUploadStatus("Cover image exceeds 10MB limit. Please compress it first.", 0, "error");
-    return;
-  }
-
-  setUploadStatus("Creating album...", 20);
+  setUploadStatus("Optimizing cover & creating album...", 20);
 
   const slug = slugInputValue ? slugify(slugInputValue) : slugify(`${title}-${Date.now()}`);
   const displayOrder = type === "wedding" ? getWeddingAlbumsSorted().length + 1 : 1;
-  const extension = coverFile.name.split(".").pop() || "jpg";
-  const coverPath = `covers/${slug}-${Date.now()}.${extension}`;
 
   try {
-    const coverUrl = await uploadToPhotosBucket(coverFile, coverPath);
+    const optimizedCover = await compressImageFile(coverFile, 2400, 0.85);
+    const extension = optimizedCover.name.split(".").pop() || "webp";
+    const coverPath = `covers/${slug}-${Date.now()}.${extension}`;
+    const coverUrl = await uploadToPhotosBucket(optimizedCover, coverPath);
 
     const payload = {
       slug,
@@ -2003,23 +2041,18 @@ async function saveAlbumDetails(event) {
 
   saveAlbumButton.disabled = true;
   saveAlbumButton.textContent = "Saving...";
-  setUploadStatus("Saving album details...", 30);
+  setUploadStatus("Saving album details...", 25);
 
   const supabase = getSupabase();
   const previousCoverUrl = state.selectedAlbum.cover_url || null;
   let nextCoverUrl = previousCoverUrl;
 
-  if (nextCoverFile && nextCoverFile.size > 10 * 1024 * 1024) {
-    setUploadStatus("Cover image exceeds 10MB limit. Please compress it first.", 0, "error");
-    return;
-  }
-
   if (nextCoverFile) {
-    const extension = nextCoverFile.name.split(".").pop() || "jpg";
-    const coverPath = `covers/${state.selectedAlbum.slug}-${Date.now()}.${extension}`;
     try {
-      setUploadStatus("Uploading new cover...", 55);
-      nextCoverUrl = await uploadToPhotosBucket(nextCoverFile, coverPath);
+      const optimizedCover = await compressImageFile(nextCoverFile, 2400, 0.85);
+      const extension = optimizedCover.name.split(".").pop() || "webp";
+      const coverPath = `covers/${state.selectedAlbum.slug}-${Date.now()}.${extension}`;
+      nextCoverUrl = await uploadToPhotosBucket(optimizedCover, coverPath);
       if (editCoverPreview) {
         editCoverPreview.src = nextCoverUrl;
         editCoverPreview.classList.remove("hidden");
@@ -2074,6 +2107,62 @@ async function saveAlbumDetails(event) {
   setUploadStatus("Album details saved.", 100);
 }
 
+/* ==========================================================================
+   IMAGE COMPRESSION & OPTIMIZATION UTILITY
+   ========================================================================== */
+
+async function compressImageFile(file, maxDimension = 2560, quality = 0.85) {
+  if (!file || !file.type.startsWith("image/") || file.type === "image/svg+xml" || file.type === "image/gif") {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Try webp first, fallback to jpeg
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+            const compressedFile = new File([blob], cleanName, { type: "image/webp" });
+            resolve(compressedFile);
+          },
+          "image/webp",
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 async function uploadPhotos(files) {
   if (!state.selectedAlbum) {
     setUploadStatus("Open an album first.", 0, "error");
@@ -2091,25 +2180,8 @@ async function uploadPhotos(files) {
     return;
   }
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-  const tooLargeFiles = imageFiles.filter((file) => file.size > MAX_FILE_SIZE);
-  const allowedFiles = imageFiles.filter((file) => file.size <= MAX_FILE_SIZE);
-
-  if (tooLargeFiles.length > 0) {
-    if (allowedFiles.length === 0) {
-      setUploadStatus(`All selected files exceed the 10MB limit (e.g., ${tooLargeFiles[0].name}). Please compress them first.`, 0, "error");
-      return;
-    } else {
-      setUploadStatus(`Skipping ${tooLargeFiles.length} file(s) exceeding 10MB. Uploading remaining ${allowedFiles.length} file(s)...`, 0, "error");
-      // Let the user see the warning for a second before continuing
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-    }
-  }
-
-  const filesToUpload = allowedFiles;
-
   const supabase = getSupabase();
-  const total = filesToUpload.length;
+  const total = imageFiles.length;
   let uploaded = 0;
   let failed = 0;
 
@@ -2120,18 +2192,22 @@ async function uploadPhotos(files) {
 
   let order = startOrder;
   setUploadBusy(true);
-  setUploadStatus(`Uploading 0/${total} photos...`, 0);
+  setUploadStatus(`Preparing & optimizing 0/${total} photos...`, 0);
 
-  for (const file of filesToUpload) {
+  for (let i = 0; i < total; i++) {
+    const originalFile = imageFiles[i];
     const completed = uploaded + failed;
-    const startedPercent = total > 0 ? (completed / total) * 100 : 0;
-    setUploadStatus(`Uploading ${completed + 1}/${total}: ${file.name}`, startedPercent);
-
-    const extension = file.name.split(".").pop() || "jpg";
-    const path = `albums/${state.selectedAlbum.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+    const progressPercent = total > 0 ? (completed / total) * 100 : 0;
+    setUploadStatus(`Optimizing & uploading ${i + 1}/${total}: ${originalFile.name}`, progressPercent);
 
     try {
-      const publicUrl = await uploadToPhotosBucket(file, path);
+      // Automatic client-side compression (converts 15-30MB camera originals to crisp 350KB WebP)
+      const optimizedFile = await compressImageFile(originalFile, 2560, 0.85);
+
+      const extension = optimizedFile.name.split(".").pop() || "webp";
+      const path = `albums/${state.selectedAlbum.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+
+      const publicUrl = await uploadToPhotosBucket(optimizedFile, path);
       const { error } = await supabase.from("photos").insert({
         album_id: state.selectedAlbum.id,
         url: publicUrl,
@@ -2148,7 +2224,7 @@ async function uploadPhotos(files) {
       order += 1;
     } catch (err) {
       failed += 1;
-      console.error(`Upload failed for ${file.name}:`, err);
+      console.error(`Upload failed for ${originalFile.name}:`, err);
     }
 
     const done = uploaded + failed;
@@ -2160,7 +2236,8 @@ async function uploadPhotos(files) {
   setUploadBusy(false);
 
   if (failed === 0) {
-    setUploadStatus(`Upload complete. ${uploaded}/${total} photos uploaded.`, 100);
+    setUploadStatus(`Upload complete! ${uploaded}/${total} photos compressed and added.`, 100);
+    showToast(`Successfully added ${uploaded} photo(s) to album!`, "success");
   } else {
     setUploadStatus(`Upload finished with issues: ${uploaded} uploaded, ${failed} failed.`, 100, "error");
   }
