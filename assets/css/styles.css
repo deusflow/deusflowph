@@ -175,9 +175,13 @@ h3,
   color: var(--gold);
 }
 
-.header-inner .menu-link[href*="pricing"] {
+.header-inner > .menu-link:first-of-type {
+  justify-self: start;
+}
+
+.header-inner > .menu-link:last-of-type {
   justify-self: end;
-  margin-right: 3rem;
+  margin-right: 7.5rem;
 }
 
 .lang-switcher {
@@ -1825,17 +1829,18 @@ button.danger {
     line-height: 1.1;
   }
 
-  .header-inner .menu-link[href*="weddings"] {
+  .header-inner > .menu-link:first-of-type {
     grid-area: nav-left;
     justify-self: start;
     align-self: center;
+    margin: 0;
   }
 
-  .header-inner .menu-link[href*="pricing"] {
+  .header-inner > .menu-link:last-of-type {
     grid-area: nav-right;
     justify-self: end;
     align-self: center;
-    margin-right: 0;
+    margin: 0;
   }
 
   .lang-switcher {
