@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-8";
+import { createStateMessage } from "./ui.js?v=20260819-9";
 
 const state = {
   selectedAlbum: null,
@@ -1351,12 +1351,11 @@ async function loadAlbums() {
 
     actions.appendChild(openButton);
     actions.appendChild(togglePublishBtn);
-    actions.appendChild(deleteButton);
 
     if (album.type === "wedding" && weddingIndex >= 0) {
       const upButton = document.createElement("button");
       upButton.type = "button";
-      upButton.className = "ghost";
+      upButton.className = "admin-btn ghost small";
       upButton.textContent = "Up";
       upButton.disabled = weddingIndex === 0;
       upButton.addEventListener("click", async () => {
@@ -1369,7 +1368,7 @@ async function loadAlbums() {
 
       const downButton = document.createElement("button");
       downButton.type = "button";
-      downButton.className = "ghost";
+      downButton.className = "admin-btn ghost small";
       downButton.textContent = "Down";
       downButton.disabled = weddingIndex === weddingAlbumsCurrent.length - 1;
       downButton.addEventListener("click", async () => {
@@ -1393,7 +1392,7 @@ async function loadAlbums() {
 
       const moveButton = document.createElement("button");
       moveButton.type = "button";
-      moveButton.className = "ghost";
+      moveButton.className = "admin-btn ghost small";
       moveButton.textContent = "Set";
 
       const moveAlbumToPosition = async () => {
@@ -1429,7 +1428,6 @@ async function loadAlbums() {
     actions.appendChild(deleteButton);
 
     row.appendChild(info);
-    row.appendChild(visibility);
     row.appendChild(actions);
     albumsList.appendChild(row);
   });
