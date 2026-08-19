@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage, initScrollReveals, getOptimizedImageUrl } from "./ui.js?v=20260819-4";
+import { createStateMessage, initScrollReveals, getOptimizedImageUrl } from "./ui.js?v=20260819-5";
 
 const photoNode = document.getElementById("about-photo");
 const storyNode = document.getElementById("about-story");
@@ -137,5 +137,8 @@ async function loadAbout() {
 
 loadAbout().then(() => {
   initScrollReveals();
+  if (typeof window.applyTranslations === "function") {
+    window.applyTranslations();
+  }
 });
 

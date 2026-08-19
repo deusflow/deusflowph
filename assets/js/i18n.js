@@ -43,16 +43,30 @@ const UADict = {
   // Відгуки (Testimonials)
   "Oleksandr Popov (Actor)": "Олександр Попов (Актор)",
   "Amalie & Frederik (Aarhus, Denmark)": "Амалі Франк",
+  "Amalie Frank": "Амалі Франк",
   "Volodymyr Ostapchuk (TV Presenter)": "Володимир Остапчук (Телеведучий)",
   "Jerry Heil (Singer & Songwriter)": "Jerry Heil (Співачка та авторка пісень)",
   "Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level.": "«Чувак, ці кадри виглядають прямо як стоп-кадри з кіно. У тебе шалене відчуття кінематографічних деталей. Працювати на майданчику максимально легко. Топ-рівень».",
   "Oleh has an incredible talent for capturing genuine emotions. Our wedding photos tell the perfect story of our day. Highly recommended!": "«Щойно передивились галерею, і в нас просто нема слів. Ти вловив точний вайб нашого дня. Жодних застиглих поз, тільки справжні ми. Дякуємо за цей спогад!»",
   "We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!": "«Щойно передивились галерею, і в нас просто нема слів. Ти вловив точний вайб нашого дня. Жодних застиглих поз, тільки справжні ми. Дякуємо за цей спогад!»",
+  "Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig.": "«Вау, як же круто вийшло! Величезне дякую, це стовідсоткова рекомендація! Усі гості й навіть команда замку були в захваті від фотографій. Працювати з тобою було суцільним задоволенням».",
+  "Wow, hvor ser det godt ud! Tusind tusind tak for det - kaempe anbefaling! Der har virkelig vaeret stor ros for alle billederne fra alle gaester og slottet ogsaa. Det har vaeret fantastisk at have arbejdet med jer.": "«Вау, як же круто вийшло! Величезне дякую, це стовідсоткова рекомендація! Усі гості й навіть команда замку були в захваті від фотографій. Працювати з тобою було суцільним задоволенням».",
   "We had a cozy photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic.": "«У нас була затишна зимова фотосесія, і Олег зробив увесь процес легким та комфортним. А фінальні фото — це чиста магія».",
   "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic.": "«У нас була затишна зимова фотосесія, і Олег зробив увесь процес легким та комфортним. А фінальні фото — це чиста магія».",
 
-  // Про мене (About Page)
+  // Про мене (About Page - Paragraph by Paragraph)
   "Documentary & Editorial": "Documentary & Editorial фотографія",
+  "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.": "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.",
+  "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me.": "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.",
+  "Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.": "Чесно кажучи, люди почали помічати в моїх роботах те, чого не бачив навіть я сам: щирість без прикрас і моменти, які більше ніколи не повторяться. Це вирішує головну проблему пар: вам не потрібні 10 перефотошоплених світлин у напружених позах. Вам потрібна жива історія вашого дня. І з цим я справляюсь на відмінно... принаймні так кажуть мої молодята.",
+  "Honestly, people started noticing things in my photos that I did not even see myself - raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in perfect poses. You want to see the real story of your day in these photos. And I handle that perfectly... or so they tell me.": "Чесно кажучи, люди почали помічати в моїх роботах те, чого не бачив навіть я сам: щирість без прикрас і моменти, які більше ніколи не повторяться. Це вирішує головну проблему пар: вам не потрібні 10 перефотошоплених світлин у напружених позах. Вам потрібна жива історія вашого дня. І з цим я справляюсь на відмінно... принаймні так кажуть мої молодята.",
+  "Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just us.": "Кажуть, весілля — це стрес. А я приймав пологи у власної дружини в екстрених умовах. Без лікарні, тільки ми двоє.",
+  "Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us.": "Кажуть, весілля — це стрес. А я приймав пологи у власної дружини в екстрених умовах. Без лікарні, тільки ми двоє.",
+  "Your wedding day? Trust me, I've got this.": "Тож ваш весільний день? Довіртесь, усе під повним контролем.",
+  "Your wedding day? Trust me, everything is completely under control.": "Тож ваш весільний день? Довіртесь, усе під повним контролем.",
+  "\"I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.\"": "«Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.»",
+  "\"Real over perfect - love as it feels.\"": "«Справжнє важливіше за ідеальне — любов такою, якою вона відчувається.»",
+  "\"Real over perfect — love as it feels.\"": "«Справжнє важливіше за ідеальне — любов такою, якою вона відчувається.»",
   "Values": "Цінності",
   "Background": "Бекграунд",
   "Experience": "Досвід",
@@ -60,8 +74,8 @@ const UADict = {
   "I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.": "Працюю тихо, спостерігаю чесно, підказую лише тоді, коли це дійсно потрібно. Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.",
   "I work quietly, observe honestly, and guide only when it helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.": "Працюю тихо, спостерігаю чесно, підказую лише тоді, коли це дійсно потрібно. Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.",
   "Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.": "Родом з України, зараз базуюся біля Орхуса. Працюю по всій Данії та Європі. Мій візуальний почерк поєднує документальну правду з editorial кадрами, тому галерея відчувається живою, елегантною і глибоко особистою.",
+  "Originally from Ukraine, now based near Aarhus. I work across Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.": "Родом з України, зараз базуюся біля Орхуса. Працюю по всій Данії та Європі. Мій візуальний почерк поєднує документальну правду з editorial кадрами, тому галерея відчувається живою, елегантною і глибоко особистою.",
   "Originally from Ukraine, now based near Aarhus. I bring 10 years of wedding photography experience across Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.": "Родом з України, зараз базуюся біля Орхуса. Працюю по всій Данії та Європі. Мій візуальний почерк поєднує документальну правду з editorial кадрами, тому галерея відчувається живою, елегантною і глибоко особистою.",
-  "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.\n\nHonestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.\n\nSome say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us.\n\nYour wedding day? Trust me, everything is completely under control.": "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.\n\nЧесно кажучи, люди почали помічати в моїх роботах те, чого не бачив навіть я сам: щирість без прикрас і моменти, які більше ніколи не повторяться. Це вирішує головну проблему пар: вам не потрібні 10 перефотошоплених світлин у напружених позах. Вам потрібна жива історія вашого дня. І з цим я справляюсь на відмінно... принаймні так кажуть мої молодята.\n\nКажуть, весілля — це стрес. А я приймав пологи у власної дружини в екстрених умовах. Без лікарні, тільки ми двоє. Тож ваш весільний день? Довіртесь, усе під повним контролем.",
 
   // Нагороди
   "★ Photos of the Week": "★ Фото тижня",
@@ -84,6 +98,13 @@ const UADict = {
   "Прямий чат / Українська та English": "Прямий чат українською та англійською",
   "Portfolio, reels & live stories": "Портфоліо, reels і live stories",
   "Email Direct": "Email напряму",
+
+  // Floating CTA & Banner
+  "Check availability via Instagram": "Перевірити вільні дати через Instagram",
+  "Calendar open for 2026-2027 weddings": "Бронювання весіль на сезон 2026-2027 відкрито",
+  "Calendar open for 2026-2027 weddings ·": "Бронювання весіль на сезон 2026-2027 відкрито ·",
+  "See all contact options": "Усі способи зв'язку",
+  "Check availability": "Перевірити дату",
 
   // Пакети цін
   "Investment": "Інвестиція",
@@ -180,17 +201,14 @@ function getDictionary(lang) {
 
 function updateMessengerLinks(lang) {
   if (lang === 'uk' || lang === 'ua') {
-    // WhatsApp prefilled message in Ukrainian
     const waLink = document.querySelector('a[href*="wa.me"]');
     if (waLink) {
       waLink.href = "https://wa.me/4550300636?text=" + encodeURIComponent("Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?");
     }
-    // Telegram prefilled message in Ukrainian
     const tgLink = document.querySelector('a[href*="t.me/OflowPhotography"]');
     if (tgLink) {
       tgLink.href = "https://t.me/OflowPhotography?text=" + encodeURIComponent("Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?");
     }
-    // Email mailto in Ukrainian
     const mailLink = document.querySelector('a[href*="mailto:deuswork@icloud.com"]');
     if (mailLink) {
       mailLink.href = "mailto:deuswork@icloud.com?subject=" + encodeURIComponent("Запит щодо весільної фотозйомки") + "&body=" + encodeURIComponent("Привіт, Олеже!\n\nМи плануємо весілля [Дата] у [Місто/Локація].\n\nПідкажи, будь ласка, чи вільна ця дата та які є пакети послуг?\n\nЗ повагою,\n[Ваші імена]");
@@ -198,7 +216,7 @@ function updateMessengerLinks(lang) {
   }
 }
 
-function applyTranslations() {
+export function applyTranslations() {
   const currentLang = localStorage.getItem('deusflow_lang') || 'en';
   const dict = getDictionary(currentLang);
   if (!dict) return;
@@ -219,7 +237,7 @@ function applyTranslations() {
 
     // Partial search match
     for (const [enText, translatedText] of Object.entries(dict)) {
-      if (text === enText || (enText.length > 6 && text.includes(enText))) {
+      if (text === enText || (enText.length > 5 && text.includes(enText))) {
         node.nodeValue = node.nodeValue.replace(enText, translatedText);
       }
     }
@@ -227,6 +245,9 @@ function applyTranslations() {
 
   updateMessengerLinks(currentLang);
 }
+
+// Make globally available
+window.applyTranslations = applyTranslations;
 
 function initLangSwitcher() {
   const currentLang = localStorage.getItem('deusflow_lang') || 'en';
@@ -264,12 +285,27 @@ function initLangSwitcher() {
   headerInner.appendChild(toggleContainer);
 }
 
+// Observe dynamic content insertions (e.g. from Supabase / loadAbout)
+function setupDynamicTranslationObserver() {
+  const observer = new MutationObserver(() => {
+    applyTranslations();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: false
+  });
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     initLangSwitcher();
     applyTranslations();
+    setupDynamicTranslationObserver();
   });
 } else {
   initLangSwitcher();
   applyTranslations();
+  setupDynamicTranslationObserver();
 }

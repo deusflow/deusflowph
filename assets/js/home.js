@@ -1,4 +1,4 @@
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor } from "./ui.js?v=20260819-4";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor } from "./ui.js?v=20260819-5";
 import { fetchTestimonials, fetchFeaturedAlbums, fetchAlbumFallbackCover } from "./services/api.js";
 
 const featuredGrid = document.getElementById("featured-grid");
@@ -158,8 +158,11 @@ async function loadFeatured() {
   }
 }
 
-loadFeatured();
-loadTestimonials();
+Promise.all([loadFeatured(), loadTestimonials()]).then(() => {
+  if (typeof window.applyTranslations === "function") {
+    window.applyTranslations();
+  }
+});
 initScrollReveals();
 initMagneticButtons();
 initParallax();
