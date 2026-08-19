@@ -1,7 +1,7 @@
 (function applyRuntimeConfig() {
   try {
     const config = window.APP_CONFIG || {};
-    const faviconUrl = config.FAVICON_URL || "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png?v=20260819-20";
+    const faviconUrl = config.FAVICON_URL || "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png?v=20260819-21";
 
     let favicon = document.querySelector("link[rel='icon']");
     if (!favicon) {

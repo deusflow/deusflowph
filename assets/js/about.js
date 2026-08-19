@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage, initScrollReveals, getOptimizedImageUrl } from "./ui.js?v=20260819-20";
+import { createStateMessage, initScrollReveals, getOptimizedImageUrl } from "./ui.js?v=20260819-21";
 
 const photoNode = document.getElementById("about-photo");
 const storyNode = document.getElementById("about-story");

@@ -249,29 +249,68 @@ function applyTranslations() {
   if (isTranslating) return;
   const currentLang = localStorage.getItem("deusflow_lang") || "en";
   const dict = getDictionary(currentLang);
-  if (!dict) return;
 
   isTranslating = true;
   try {
     document.documentElement.lang = currentLang === "ua" ? "uk" : currentLang;
 
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    // Exclude script, style, noscript, textarea, code elements
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function (n) {
+          const parent = n.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          const tag = parent.tagName.toUpperCase();
+          if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEXTAREA" || tag === "CODE") {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      },
+      false
+    );
+
     let node;
     while ((node = walker.nextNode())) {
-      const text = node.nodeValue.trim();
+      // Store untouched source text on initial encounter
+      if (typeof node._i18nOriginal !== "string") {
+        node._i18nOriginal = node.nodeValue;
+      }
+
+      const original = node._i18nOriginal;
+      const text = original.trim();
       if (!text) continue;
 
-      // Direct exact match
-      if (dict[text]) {
-        node.nodeValue = node.nodeValue.replace(text, dict[text]);
+      if (!dict || currentLang === "en") {
+        // Restore pristine English
+        if (node.nodeValue !== original) {
+          node.nodeValue = original;
+        }
         continue;
       }
 
-      // Partial search match
+      // Direct exact match
+      if (dict[text]) {
+        node.nodeValue = original.replace(text, dict[text]);
+        continue;
+      }
+
+      // Exact substring search match (computed strictly from original untouched text)
+      let translated = original;
+      let matched = false;
       for (const [enText, translatedText] of Object.entries(dict)) {
-        if (text === enText || (enText.length > 5 && text.includes(enText))) {
-          node.nodeValue = node.nodeValue.replace(enText, translatedText);
+        if (enText && enText.length > 3 && original.includes(enText)) {
+          translated = translated.split(enText).join(translatedText);
+          matched = true;
         }
+      }
+
+      if (matched) {
+        node.nodeValue = translated;
+      } else if (node.nodeValue !== original) {
+        node.nodeValue = original;
       }
     }
 

@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260819-20";
+import { createStateMessage } from "./ui.js?v=20260819-21";
 
 const state = {
   selectedAlbum: null,
@@ -2514,7 +2514,7 @@ const translationDefaults = {
     test_2: "Wow, hvor ser det godt ud! Tusind tusind tak for det, kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med jer.",
     test_3: "Vi har lige set galleriet igennem, og vi er målløse. Du fangede stemningen fra dagen helt perfekt. Ingen stive positurer, bare os, som vi er. Tak for denne erindring!",
     test_4: "Vi havde en hyggelig vinterfotografering, og Oleh gjorde hele processen let og afslappet. De endelige billeder er ren magi.",
-    about_header: "Oleh Ro. Dokumentar & editorial fotografi",
+    about_header: "Dokumentar & editorial fotografi",
     about_story_1: "Mange ville skrive her om deres store kærlighed til bryllupsfotografering. Min sande passion er kunst som helhed. Bryllupper valgte simpelthen mig.",
     about_story_2: "Helt ærligt, folk er begyndt at lægge mærke til noget i mine billeder, som jeg ikke selv så: ren ærlighed og unikke øjeblikke, der aldrig kommer igen. Det løser parrenes største problem: I skal ikke bare have ti hårdt retoucherede billeder i perfekte positurer. I skal se den ægte historie fra jeres dag. Og det klarer jeg vist ret godt... i hvert fald siger folk det.",
     about_story_3: "Nogle siger, bryllupper er stressende. Jeg forløste selv min kones barn i en nødsituation. Intet hospital. Bare os. Jeres bryllupsdag? Stol på mig, den klarer jeg.",
@@ -2547,10 +2547,10 @@ const translationDefaults = {
     test_2: "Вау, як же круто вийшло! Величезне дякую, це стовідсоткова рекомендація! Усі гості й навіть команда замку були в захваті від фотографій. Працювати з тобою було суцільним задоволенням.",
     test_3: "Щойно передивились галерею, і в нас просто нема слів. Ти вловив точний вайб нашого дня. Жодних застиглих поз, тільки справжні ми. Дякуємо за цей спогад!",
     test_4: "У нас була затишна зимова фотосесія, і Олег зробив увесь процес легким та комфортним. А фінальні фото — це чиста магія.",
-    about_header: "Олег Ро. Documentary & Editorial фотографія",
+    about_header: "Documentary & Editorial фотографія",
     about_story_1: "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.",
     about_story_2: "Чесно кажучи, люди почали помічати в моїх роботах те, чого не бачив навіть я сам: щирість без прикрас і моменти, які більше ніколи не повторяться. Це вирішує головну проблему пар: вам не потрібні 10 перефотошоплених світлин у напружених позах. Вам потрібна жива історія вашого дня. І з цим я справляюсь на відмінно... принаймні так кажуть мої молодята.",
-    about_story_3: "Кажуть, весілля — це стрес. А я приймав пологи у власної дружини в екстрених умовах. Без лікарні, тільки ми двоє. Тож ваш весільний день? Довіртесь, усе під повним контролем.",
+    about_story_3: "Кажуть, весілля — це стрес. А я приймав пологи у власной дружини в екстрених умовах. Без лікарні, тільки ми двоє. Тож ваш весільний день? Довіртесь, усе під повним контролем.",
     about_values: "Працюю тихо, спостерігаю чесно, підказую лише тоді, коли це дійсно потрібно. Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.",
     about_background: "Родом з України, зараз базуюся біля Орхуса. Працюю по всій Данії та Європі. Мій візуальний почерк поєднує документальну правду з editorial кадрами, тому галерея відчувається живою, елегантною і глибоко особистою.",
     about_experience: "11+ Років досвіду зйомок у Данії та по всій Європі.",
@@ -2580,7 +2580,7 @@ const translationDefaults = {
     test_2: "Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig.",
     test_3: "We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!",
     test_4: "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic.",
-    about_header: "Oleh Ro. Documentary & Editorial Photography",
+    about_header: "Documentary & Editorial",
     about_story_1: "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.",
     about_story_2: "Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.",
     about_story_3: "Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us. Your wedding day? Trust me, everything is completely under control.",
@@ -2776,7 +2776,7 @@ function setupTranslationsCMS() {
 /* =========================================================================
    AUTO-MIGRATION: Purge stale empty translation cache on version upgrade
    ========================================================================= */
-const ADMIN_CMS_VERSION = "20260819-20";
+const ADMIN_CMS_VERSION = "20260819-21";
 try {
   if (localStorage.getItem("deusflow_cms_version") !== ADMIN_CMS_VERSION) {
     console.log("[Admin CMS] Version upgrade detected → purging stale localStorage translation cache.");
