@@ -29,3 +29,9 @@ node_modules/
 # OS/editor
 .DS_Store
 .idea/
+
+# Assistant internal debug and troubleshooting vaults
+DEV_DEBUG_LEDGER.md
+TROUBLESHOOTING_LEDGER.md
+*LEDGER*.md
+

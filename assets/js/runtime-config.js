@@ -1,18 +1,21 @@
 (function applyRuntimeConfig() {
   try {
     const config = window.APP_CONFIG || {};
-    if (!config.FAVICON_URL) {
-      return;
-    }
+    const faviconUrl = config.FAVICON_URL || "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png?v=20260819-20";
 
     let favicon = document.querySelector("link[rel='icon']");
     if (!favicon) {
       favicon = document.createElement("link");
       favicon.rel = "icon";
+      favicon.type = "image/png";
       document.head.appendChild(favicon);
     }
+    favicon.href = faviconUrl;
 
-    favicon.href = config.FAVICON_URL;
+    let appleIcon = document.querySelector("link[rel='apple-touch-icon']");
+    if (appleIcon) {
+      appleIcon.href = faviconUrl;
+    }
 
     const linkBindings = [
       { key: "TELEGRAM_URL", selector: "[data-runtime-link='telegram']" },
