@@ -177,16 +177,30 @@ function renderAbout(content) {
 
 async function loadAbout() {
   try {
+    const cached = JSON.parse(localStorage.getItem("deusflow_about_cache") || "null");
+    if (cached) {
+      renderAbout(cached);
+    }
+  } catch (_e) {}
+
+  try {
     const supabase = getSupabase();
     const { data, error } = await supabase.from("about_content").select("*").eq("id", 1).maybeSingle();
     if (error) {
       throw error;
     }
-    renderAbout(data || fallback);
+    if (data) {
+      localStorage.setItem("deusflow_about_cache", JSON.stringify(data));
+      renderAbout(data);
+    } else {
+      renderAbout(fallback);
+    }
   } catch (error) {
-    renderAbout(fallback);
-    if (testimonialsGrid) {
-      testimonialsGrid.prepend(createStateMessage(`Live About content unavailable. Showing fallback. ${error.message}`));
+    if (!localStorage.getItem("deusflow_about_cache")) {
+      renderAbout(fallback);
+      if (testimonialsGrid) {
+        testimonialsGrid.prepend(createStateMessage(`Live About content unavailable. Showing fallback. ${error.message}`));
+      }
     }
   }
 }

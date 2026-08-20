@@ -171,11 +171,25 @@ function applyContactFromConfig() {
 
 async function loadPricingContent() {
   let resolved = { ...fallbackPricing };
+  try {
+    const cached = JSON.parse(localStorage.getItem("deusflow_pricing_cache") || "null");
+    if (cached) {
+      applyPackagePrices(cached);
+      applyTravelNote(cached);
+      applyServiceSchema(cached);
+      applyUpdatedAt(cached);
+      if (cached.show_essentials === false) hidePackage("essentials");
+      if (cached.show_signature === false) hidePackage("signature");
+      if (cached.show_luxury === false) hidePackage("luxury");
+      if (cached.show_session === false) hidePackage("session");
+    }
+  } catch (_e) {}
+
   const supabase = getSupabase();
   const { data, error } = await supabase.from("pricing_content").select("*").eq("id", 1).maybeSingle();
 
   if (error) {
-    if (travelNoteNode) {
+    if (travelNoteNode && !localStorage.getItem("deusflow_pricing_cache")) {
       const hint = error?.code === "42501" || String(error?.message || "").toLowerCase().includes("permission")
         ? "Live pricing unavailable (DB access denied). Check pricing_content grants/RLS in Supabase."
         : `Live pricing unavailable. Showing fallback. ${error.message}`;
@@ -183,8 +197,7 @@ async function loadPricingContent() {
     }
   } else if (data) {
     resolved = { ...resolved, ...data };
-
-    // Hide individual packages if configured false
+    localStorage.setItem("deusflow_pricing_cache", JSON.stringify(resolved));
     if (data.show_essentials === false) hidePackage("essentials");
     if (data.show_signature === false) hidePackage("signature");
     if (data.show_luxury === false) hidePackage("luxury");

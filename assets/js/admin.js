@@ -530,6 +530,7 @@ async function savePricingContent(event) {
     }
 
     state.pricingContent = result.data;
+    localStorage.setItem("deusflow_pricing_cache", JSON.stringify(result.data));
     fillPricingForm({ ...getDefaultPricingPayload(), ...result.data });
     setUploadStatus("Pricing page saved.", 100);
     setPricingStatus("Pricing page saved.");
@@ -811,6 +812,7 @@ async function saveAboutContent(event) {
     }
 
     state.aboutContent = data;
+    localStorage.setItem("deusflow_about_cache", JSON.stringify(data));
     state.portraitRemoved = false;
     fillAboutForm({ ...getDefaultAboutPayload(), ...data, testimonials: normalizeTestimonials(data.testimonials) });
     if (aboutPhotoInput) {
