@@ -389,8 +389,10 @@ window.revalidateTranslationsFromSupabase = revalidateTranslationsFromSupabase;
 
 function initLangSwitcher() {
   const currentLang = localStorage.getItem("deusflow_lang") || "en";
+  const headerRight = document.querySelector(".site-header .header-nav-right");
   const headerInner = document.querySelector(".site-header .header-inner");
-  if (!headerInner) return;
+  const targetParent = headerRight || headerInner;
+  if (!targetParent) return;
 
   if (document.querySelector(".lang-switcher")) return;
 
@@ -420,7 +422,11 @@ function initLangSwitcher() {
     toggleContainer.appendChild(btn);
   });
 
-  headerInner.appendChild(toggleContainer);
+  if (headerRight) {
+    headerRight.insertBefore(toggleContainer, headerRight.firstChild);
+  } else {
+    headerInner.appendChild(toggleContainer);
+  }
 }
 
 if (document.readyState === "loading") {
