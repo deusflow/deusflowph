@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260820-10";
+import { createStateMessage } from "./ui.js?v=20260820-13";
 
 const state = {
   selectedAlbum: null,
@@ -669,9 +669,12 @@ async function loadAboutContent() {
   const { data, error } = await supabase.from("about_content").select("*").eq("id", 1).maybeSingle();
 
   if (error) {
+    console.warn("[Admin] Could not load About content:", error.message);
     setUploadStatus(`Could not load About content: ${error.message}`, 0, "error");
     setAboutStatus(`Could not load About content: ${error.message}`, "error");
-    fillAboutForm(defaults);
+    if (!state.aboutContent) {
+      fillAboutForm(defaults);
+    }
     return;
   }
 
@@ -2541,10 +2544,6 @@ async function boot() {
       return;
     }
 
-    // Pre-populate forms with robust defaults
-    fillSettingsForm(defaultSiteSettings);
-    loadAllTranslationsComparative();
-
     try {
       await loadAlbums();
     } catch (e) {
@@ -2566,9 +2565,12 @@ async function boot() {
       showToast("Pricing content could not be loaded: " + e.message, "error");
     }
     
-    // Refresh with freshly loaded DB data
-    fillSettingsForm(state.pricingContent || defaultSiteSettings);
-    loadAllTranslationsComparative();
+    try {
+      await loadAllTranslationsComparative();
+    } catch (e) {
+      console.warn("[Admin Boot] Failed to load translations:", e);
+    }
+
     restoreActiveTab();
   } catch (error) {
     console.error("[Admin Boot] Fatal error:", error);
@@ -2602,34 +2604,36 @@ editAlbumForm.addEventListener("submit", saveAlbumDetails);
 
 try {
   const supabase = getSupabase();
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-      if (session) {
-        setAuthView(true);
-        await boot();
-      }
-    } else if (event === "INITIAL_SESSION") {
-      if (session) {
-        setAuthView(true);
-        await boot();
-      } else {
-        setAuthView(false);
-      }
-    } else if (event === "SIGNED_OUT") {
-      setAuthView(false);
-    }
-    if (event === "PASSWORD_RECOVERY") {
-      const newPassword = window.prompt("Supabase Recovery: Please enter your new admin password (minimum 6 characters):");
-      if (newPassword && newPassword.trim().length >= 6) {
-        const { error } = await supabase.auth.updateUser({ password: newPassword.trim() });
-        if (error) {
-          showToast("Password update failed: " + error.message, "error");
-        } else {
-          showToast("Password updated successfully! Welcome back.", "success");
+  supabase.auth.onAuthStateChange((event, session) => {
+    setTimeout(async () => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        if (session) {
+          setAuthView(true);
           await boot();
         }
+      } else if (event === "INITIAL_SESSION") {
+        if (session) {
+          setAuthView(true);
+          await boot();
+        } else {
+          setAuthView(false);
+        }
+      } else if (event === "SIGNED_OUT") {
+        setAuthView(false);
       }
-    }
+      if (event === "PASSWORD_RECOVERY") {
+        const newPassword = window.prompt("Supabase Recovery: Please enter your new admin password (minimum 6 characters):");
+        if (newPassword && newPassword.trim().length >= 6) {
+          const { error } = await supabase.auth.updateUser({ password: newPassword.trim() });
+          if (error) {
+            showToast("Password update failed: " + error.message, "error");
+          } else {
+            showToast("Password updated successfully! Welcome back.", "success");
+            await boot();
+          }
+        }
+      }
+    }, 0);
   });
 } catch (_e) {}
 
@@ -3262,21 +3266,19 @@ applyPhotoViewMode();
 updateOrderControlsState();
 updateAlbumOrderControlsState();
 
-// Fallback: if onAuthStateChange hasn't fired within 12s, try booting directly
-setTimeout(async () => {
-  if (!_bootRunning) {
-    try {
-      const supabase = getSupabase();
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) {
-        setAuthView(true);
-        await boot();
-      } else {
-        setAuthView(false);
-      }
-    } catch (e) {
-      console.warn("[Admin] Fallback boot failed:", e);
+// Immediate session verification on load
+(async () => {
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase.auth.getSession();
+    if (data?.session) {
+      setAuthView(true);
+      await boot();
+    } else {
       setAuthView(false);
     }
+  } catch (e) {
+    console.warn("[Admin] Init check failed:", e);
+    setAuthView(false);
   }
-}, 12000);
+})();
