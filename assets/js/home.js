@@ -203,7 +203,7 @@ function initPortalZoom() {
 
     heroImg.style.transform = `translate3d(0, ${yOffset}%, 0) scale(${scale})`;
 
-    const textOpacity = Math.max(0, 1 - currentProgress * 3.6);
+    const textOpacity = Math.max(0, 1 - currentProgress * 2.5);
     const splitDistance = isMobile ? 180 : 320;
     const leftX = -currentProgress * splitDistance;
     const rightX = currentProgress * splitDistance;
@@ -219,9 +219,8 @@ function initPortalZoom() {
     }
 
     if (heroActions) {
-      heroActions.style.transform = `translate3d(0, ${currentProgress * 50}px, 0)`;
-      heroActions.style.opacity = Math.max(0, 1 - currentProgress * 4.0);
-      heroActions.style.pointerEvents = textOpacity < 0.1 ? "none" : "auto";
+      heroActions.style.pointerEvents = "auto";
+      heroActions.style.opacity = "1";
     }
 
     if (heroOverlay) {
@@ -237,6 +236,18 @@ function initPortalZoom() {
     } else {
       isRunning = false;
     }
+  }
+
+  // Smooth click for Check Availability anchor
+  const checkAvailBtn = document.querySelector('.hero-actions a[href="#contact-block"]');
+  if (checkAvailBtn) {
+    checkAvailBtn.addEventListener("click", (e) => {
+      const contactBlock = document.getElementById("contact-block");
+      if (contactBlock) {
+        e.preventDefault();
+        contactBlock.scrollIntoView({ behavior: "smooth" });
+      }
+    });
   }
 
   window.addEventListener("scroll", onScroll, { passive: true });
