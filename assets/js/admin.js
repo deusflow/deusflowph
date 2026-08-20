@@ -3164,9 +3164,13 @@ async function saveTranslationsPayload(cardsToProcess) {
       const existingRaw = JSON.parse(localStorage.getItem("deusflow_custom_translations_raw_" + lang) || "{}");
       const merged = { ...existingRaw, ...rawData };
       localStorage.setItem("deusflow_custom_translations_raw_" + lang, JSON.stringify(merged));
+      localStorage.setItem("deusflow_i18n_cache_" + lang, JSON.stringify({
+        dict_map: dictMap,
+        raw_data: merged,
+        updated_at: new Date().toISOString(),
+        checked_at: Date.now()
+      }));
     } catch (_e) {}
-
-    localStorage.removeItem("deusflow_i18n_cache_" + lang);
   }
 }
 

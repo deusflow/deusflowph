@@ -210,6 +210,86 @@ const DADict = {
   "Terms & Privacy": "Vilkår & Privatliv"
 };
 
+const rawDefaults = {
+  en: {
+    hero_title_1: "Not loud.",
+    hero_title_2: "But your photos will be.",
+    hero_desc: "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day.",
+    hero_region: "Denmark & Beyond",
+    elopement_heading: "Marrying in Denmark?",
+    elopement_desc: "Whether you are planning an intimate civil elopement at Copenhagen City Hall, a romantic seaside escape on Ærø Island, or a castle celebration in Jutland — I provide a calm, discreet documentary presence and timeless editorial photography.",
+    elopement_locations: "Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark & Europe",
+    meet_quote: "I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful.",
+    meet_btn: "Meet Oleh & Philosophy →",
+    contact_heading: "Let's Talk About Your Day",
+    contact_desc: "I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:",
+    whatsapp_subtitle: "Fastest for Europe & International couples",
+    telegram_subtitle: "Direct Chat in Ukrainian & English",
+    instagram_subtitle: "Portfolio, reels & live stories",
+    email_subtitle: "Email Direct",
+    footer_desc: "Based in Denmark (Aarhus area), available across Europe.",
+    floating_cta_note: "Calendar open for 2026-2027 weddings · See all contact options"
+  },
+  ua: {
+    hero_title_1: "Тихо створюю те,",
+    hero_title_2: "що відчувається гучно.",
+    hero_desc: "Тихо фіксую справжні емоції, легку елегантність та той самий timeless вайб вашого дня.",
+    hero_region: "Данія та вся Європа",
+    elopement_heading: "Одружуєтесь у Данії?",
+    elopement_desc: "Камерна церемонія в ратуші Копенгагена, романтична втеча на острів Ере чи свято в замку десь у Ютландії. Хай би що ви обрали, я поруч: спокійно, непомітно, з чесною документальною зйомкою та стильними editorial кадрами.",
+    elopement_locations: "Копенгаген · Острів Ере · Орхус · Оденсе · Ольборг · Уся Данія та Європа",
+    meet_quote: "Найщиріші кадри народжуються тоді, коли ви забуваєте про камеру. Я спостерігаю, ловлю живі моменти без пози і додаю легку підказку лише тоді, коли це допомагає відчути себе природно красиво.",
+    meet_btn: "Познайомитись з Олегом і моїм баченням →",
+    contact_heading: "Поговоримо про ваш день",
+    contact_desc: "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
+    whatsapp_subtitle: "Найшвидше для Європи та міжнародних пар",
+    telegram_subtitle: "Прямий чат українською та англійською",
+    instagram_subtitle: "Портфоліо, reels і live stories",
+    email_subtitle: "Email напряму",
+    footer_desc: "Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі.",
+    floating_cta_note: "Бронювання весіль на сезон 2026-2027 відкрито · Усі способи зв'язку"
+  },
+  da: {
+    hero_title_1: "Jeg skaber stille det,",
+    hero_title_2: "der føles stort.",
+    hero_desc: "Jeg fanger ægte følelser, afslappet elegance og stemningen fra jeres dag, som varer evigt.",
+    hero_region: "Danmark og videre",
+    elopement_heading: "Skal I giftes i Danmark?",
+    elopement_desc: "En intim vielse på Københavns Rådhus. En rolig sommerdag ved havet på Ærø. Et bryllup på et slot et sted i Jylland. Uanset hvad I vælger, er jeg der stille, roligt og til stede, med ærlig dokumentation og billeder, der holder i mange år.",
+    elopement_locations: "København · Ærø · Aarhus · Odense · Aalborg · Hele Danmark og Europa",
+    meet_quote: "Jeg tror på, at de smukkeste billeder opstår, når man glemmer, at kameraet er der. Jeg holder mig i baggrunden, observerer de ægte øjeblikke, og guider kun forsigtigt, når det gør jer smukkere helt naturligt.",
+    meet_btn: "Mød Oleh og hans filosofi →",
+    contact_heading: "Lad os tale om jeres dag",
+    contact_desc: "Jeg foretrækker direkte, personlig kontakt. Vælg den app, I er mest trygge ved, for at tale om jeres visioner, tjekke ledighed eller bare sige hej:",
+    whatsapp_subtitle: "hurtigst for Europa og internationale par",
+    telegram_subtitle: "hurtig chat, engelsk eller dansk",
+    instagram_subtitle: "portfolio, reels og live stories",
+    email_subtitle: "deuswork@icloud.com",
+    footer_desc: "Baseret i Danmark (Aarhus-området), tilgængelig i hele Europa.",
+    floating_cta_note: "Kalenderen er åben for bryllupper 2026-2027 · Se alle kontaktmuligheder"
+  }
+};
+
+function getRawData(lang) {
+  const normalizedLang = lang === "uk" ? "ua" : lang;
+  const base = rawDefaults[normalizedLang] || rawDefaults.en;
+  try {
+    const cacheRaw = localStorage.getItem("deusflow_i18n_cache_" + normalizedLang);
+    if (cacheRaw) {
+      const cache = JSON.parse(cacheRaw);
+      if (cache?.raw_data && typeof cache.raw_data === "object") {
+        return { ...base, ...cache.raw_data };
+      }
+    }
+    const legacyRaw = localStorage.getItem("deusflow_custom_translations_raw_" + normalizedLang);
+    if (legacyRaw) {
+      const customRaw = JSON.parse(legacyRaw);
+      return { ...base, ...customRaw };
+    }
+  } catch (_e) {}
+  return base;
+}
+
 function getDictionary(lang) {
   const normalizedLang = lang === "uk" ? "ua" : lang;
   let baseDict = {};
@@ -259,13 +339,23 @@ let isTranslating = false;
 function applyTranslations() {
   if (isTranslating) return;
   const currentLang = localStorage.getItem("deusflow_lang") || "en";
+  const normalizedLang = currentLang === "uk" ? "ua" : currentLang;
   const dict = getDictionary(currentLang);
+  const rawData = getRawData(currentLang);
 
   isTranslating = true;
   try {
-    document.documentElement.lang = currentLang === "ua" ? "uk" : currentLang;
+    document.documentElement.lang = normalizedLang === "ua" ? "uk" : normalizedLang;
 
-    // Exclude script, style, noscript, textarea, code elements
+    // 1. Direct key-based attributes [data-i18n-key] (Always 100% reliable for dynamic CMS text)
+    document.querySelectorAll("[data-i18n-key]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-key");
+      if (rawData && rawData[key]) {
+        el.textContent = rawData[key];
+      }
+    });
+
+    // 2. TreeWalker for generic dictionary translation
     const walker = document.createTreeWalker(
       document.body,
       NodeFilter.SHOW_TEXT,
@@ -273,6 +363,9 @@ function applyTranslations() {
         acceptNode: function (n) {
           const parent = n.parentElement;
           if (!parent) return NodeFilter.FILTER_REJECT;
+          if (parent.hasAttribute("data-i18n-key") || parent.closest("[data-i18n-key]")) {
+            return NodeFilter.FILTER_REJECT;
+          }
           const tag = parent.tagName.toUpperCase();
           if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEXTAREA" || tag === "CODE") {
             return NodeFilter.FILTER_REJECT;
@@ -294,7 +387,7 @@ function applyTranslations() {
       const text = original.trim();
       if (!text) continue;
 
-      if (!dict || currentLang === "en") {
+      if (!dict || normalizedLang === "en") {
         // Restore pristine English
         if (node.nodeValue !== original) {
           node.nodeValue = original;
@@ -325,7 +418,7 @@ function applyTranslations() {
       }
     }
 
-    updateMessengerLinks(currentLang);
+    updateMessengerLinks(normalizedLang);
   } finally {
     isTranslating = false;
   }
@@ -335,7 +428,6 @@ function applyTranslations() {
 async function revalidateTranslationsFromSupabase() {
   const currentLang = localStorage.getItem("deusflow_lang") || "en";
   const normalizedLang = currentLang === "uk" ? "ua" : currentLang;
-  if (normalizedLang === "en") return;
 
   const config = window.APP_CONFIG;
   if (!config || !config.SUPABASE_URL || !config.SUPABASE_ANON_KEY) return;
@@ -354,7 +446,7 @@ async function revalidateTranslationsFromSupabase() {
   }
 
   try {
-    const url = `${config.SUPABASE_URL}/rest/v1/site_translations?lang=eq.${normalizedLang}&select=dict_map,updated_at`;
+    const url = `${config.SUPABASE_URL}/rest/v1/site_translations?lang=eq.${normalizedLang}&select=dict_map,raw_data,updated_at`;
     const res = await fetch(url, {
       headers: {
         apikey: config.SUPABASE_ANON_KEY,
@@ -369,6 +461,7 @@ async function revalidateTranslationsFromSupabase() {
     if (!cached || cached.updated_at !== remote.updated_at) {
       localStorage.setItem(cacheKey, JSON.stringify({
         dict_map: remote.dict_map || {},
+        raw_data: remote.raw_data || {},
         updated_at: remote.updated_at,
         checked_at: now
       }));

@@ -10,7 +10,7 @@ const personalNode = document.getElementById("about-personal");
 const testimonialsGrid = document.getElementById("testimonials-grid");
 
 const fallback = {
-  photo_url: "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg",
+  photo_url: "",
   story:
     "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.\n\nHonestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.\n\nSome say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us.\n\nYour wedding day? Trust me, everything is completely under control.",
   values_text:
@@ -118,14 +118,21 @@ function renderAbout(content) {
 
   if (photoNode) {
     if (hasPortrait) {
+      photoNode.onload = () => {
+        photoNode.style.opacity = "1";
+      };
       photoNode.src = getOptimizedImageUrl(about.photo_url, 1200);
       photoNode.setAttribute("data-lightbox-src", about.photo_url);
       photoNode.style.display = "block";
       photoNode.style.cursor = "zoom-in";
+      if (photoNode.complete && photoNode.naturalWidth > 0) {
+        photoNode.style.opacity = "1";
+      }
     } else {
       photoNode.removeAttribute("src");
       photoNode.removeAttribute("data-lightbox-src");
       photoNode.style.display = "none";
+      photoNode.style.opacity = "0";
     }
   }
 
