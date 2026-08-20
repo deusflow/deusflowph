@@ -186,6 +186,15 @@ function setupTestimonialReorder() {
   updateTestimonialMoveButtons();
 }
 
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    )
+  ]);
+}
+
 function escapeHTML(str) {
   if (!str) return "";
   return str
@@ -1227,7 +1236,7 @@ function showAlbumDetails(album) {
 async function requireSession() {
   const supabase = getSupabase();
   try {
-    const { data, error } = await supabase.auth.getSession();
+    const { data, error } = await withTimeout(supabase.auth.getSession(), 5000, "getSession");
     if (error) {
       console.warn("[Admin Auth] Session error:", error.message);
       setAuthView(false);
@@ -2612,7 +2621,14 @@ try {
 
 logoutButton.addEventListener("click", async () => {
   const supabase = getSupabase();
-  await supabase.auth.signOut();
+  try {
+    await withTimeout(supabase.auth.signOut(), 4000, "signOut");
+  } catch (err) {
+    console.warn("[Admin Auth] signOut timed out, forcing local logout:", err);
+    try {
+      localStorage.removeItem("sb-firnyacuwvxsolxljqxu-auth-token");
+    } catch (_e) {}
+  }
   state.selectedAlbum = null;
   selectedAlbumPanel.classList.add("hidden");
   setAuthView(false);
@@ -3024,7 +3040,16 @@ async function saveTranslationsPayload(cardsToProcess) {
   const langs = ["da", "ua", "en"];
   const supabase = getSupabase();
 
-  const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+  let sessionData = null;
+  let sessionErr = null;
+  try {
+    const res = await withTimeout(supabase.auth.getSession(), 5000, "getSession");
+    sessionData = res?.data;
+    sessionErr = res?.error;
+  } catch (timeoutErr) {
+    showToast("Session check timed out — try refreshing the page", "error");
+    throw timeoutErr;
+  }
   if (sessionErr || !sessionData?.session) {
     showToast("You are not logged in or your session expired. Please log in again to save.", "error");
     setAuthView(false);
