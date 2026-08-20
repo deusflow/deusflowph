@@ -70,6 +70,7 @@ const UADict = {
 
   // Про мене (About Page - Paragraph by Paragraph)
   "Documentary & Editorial": "Documentary & Editorial фотографія",
+  "Moments & Behind the Scenes": "Миті та за кадром",
   "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.": "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.",
   "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me.": "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.",
   "Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.": "Чесно кажучи, люди почали помічати в моїх роботах те, чого не бачив навіть я сам: щирість без прикрас і моменти, які більше ніколи не повторяться. Це вирішує головну проблему пар: вам не потрібні 10 перефотошоплених світлин у напружених позах. Вам потрібна жива історія вашого дня. І з цим я справляюсь на відмінно... принаймні так кажуть мої молодята.",
@@ -173,6 +174,7 @@ const DADict = {
   "Kind Words": "Kundeanbefalinger",
   "Testimonials": "Anbefalinger",
   "Behind the Lens": "Bag kameraet",
+  "Moments & Behind the Scenes": "Øjeblikke & bag kulisserne",
 
   // Elopements
   "Marrying in Denmark?": "Skal I giftes i Danmark?",

@@ -132,6 +132,11 @@ function renderAbout(content) {
   if (galleryContainer) {
     galleryContainer.innerHTML = "";
     if (hasGallery) {
+      const header = document.createElement("div");
+      header.className = "about-gallery-header";
+      header.innerHTML = `<span class="about-gallery-tag">Moments &amp; Behind the Scenes</span>`;
+      galleryContainer.appendChild(header);
+
       const grid = document.createElement("div");
       grid.className = "about-gallery-grid";
       about.gallery_photos.forEach((photo) => {
@@ -139,7 +144,7 @@ function renderAbout(content) {
         thumb.className = "about-gallery-thumb";
         thumb.href = "#";
         thumb.setAttribute("data-lightbox-src", photo.url);
-        const caption = photo.caption || "Oleh Ro - behind the scenes";
+        const caption = photo.caption || "Oleh Ro - moments";
         thumb.innerHTML = `<img src="${escapeHTML(getOptimizedImageUrl(photo.url, 400))}" alt="${escapeHTML(caption)}" loading="lazy" decoding="async" />`;
         grid.appendChild(thumb);
       });
@@ -148,7 +153,7 @@ function renderAbout(content) {
   }
 
   if (photoPanel) {
-    if (hasPortrait || hasGallery) {
+    if (hasPortrait) {
       photoPanel.style.display = "block";
       photoPanel.closest(".editorial-grid")?.classList.remove("no-photo");
     } else {

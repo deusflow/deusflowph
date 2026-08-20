@@ -1177,16 +1177,30 @@ h3,
   opacity: 0.96;
 }
 
-/* Personal & Family Mini-Gallery Under Main Portrait */
+/* Personal & Family Mini-Gallery Under Story */
 .about-gallery-container {
-  margin-top: 0.65rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(212, 186, 149, 0.2);
   width: 100%;
+}
+
+.about-gallery-header {
+  margin-bottom: 0.75rem;
+}
+
+.about-gallery-tag {
+  font-family: var(--font-serif, "Cormorant Garamond", Georgia, serif);
+  font-size: 1rem;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--gold, #c5a880);
 }
 
 .about-gallery-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  gap: 0.65rem;
   width: 100%;
 }
 
@@ -1194,6 +1208,7 @@ h3,
   position: relative;
   aspect-ratio: 1 / 1;
   overflow: hidden;
+  border-radius: 3px;
   border: 1px solid var(--border);
   cursor: zoom-in;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
@@ -1202,9 +1217,9 @@ h3,
 }
 
 .about-gallery-thumb:hover {
-  transform: scale(1.08);
+  transform: translateY(-3px) scale(1.04);
   border-color: var(--gold);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 10px rgba(197, 168, 128, 0.3);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(197, 168, 128, 0.25);
   z-index: 5;
 }
 
@@ -1214,12 +1229,19 @@ h3,
   object-fit: cover;
   display: block;
   transition: filter 0.3s ease, transform 0.35s ease;
-  filter: grayscale(12%) contrast(1.05);
+  filter: grayscale(8%) contrast(1.05);
 }
 
 .about-gallery-thumb:hover img {
   filter: grayscale(0%) contrast(1.12);
-  transform: scale(1.04);
+  transform: scale(1.05);
+}
+
+@media (max-width: 759px) {
+  .about-gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.45rem;
+  }
 }
 
 .editorial-grid.no-photo {
