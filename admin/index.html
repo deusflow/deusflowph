@@ -9,13 +9,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/admin.css?v=20260820-01" />
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20260820-02" />
   <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="#0a0a0a">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20260820-01" />
-  <link rel="icon" type="image/png" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.jpg?v=20260820-01" />
-  <link rel="shortcut icon" href="/favicon.ico?v=20260820-01" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260820-01" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20260820-02" />
+  <link rel="icon" type="image/png" href="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.jpg?v=20260820-02" />
+  <link rel="shortcut icon" href="/favicon.ico?v=20260820-02" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260820-02" />
 </head>
 <body class="admin-page">
   <noscript>
@@ -253,6 +253,10 @@
                     <label>Current Portrait</label>
                     <div class="portrait-preview-box">
                       <img id="about-photo-preview" class="admin-cover-preview hidden" src="" alt="About portrait preview" />
+                      <button id="remove-about-photo-button" type="button" class="admin-btn danger small hidden" style="margin-top: 0.6rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        <span>Remove Portrait</span>
+                      </button>
                     </div>
                   </div>
                   <div class="form-group">
@@ -266,6 +270,14 @@
                   <div class="form-group">
                     <label for="about-personal">Personal Note & Location</label>
                     <textarea id="about-personal" name="about-personal" rows="4" placeholder="Originally from Ukraine, now based near Aarhus..."></textarea>
+                  </div>
+                  <div class="form-group" style="margin-top: 1.5rem; padding-top: 1.2rem; border-top: 1px solid var(--admin-border);">
+                    <label>Personal &amp; Family Mini-Gallery (Behind the scenes)</label>
+                    <p class="form-help" style="font-size: 0.8rem; color: var(--admin-muted); margin-bottom: 0.8rem;">
+                      Add photos of yourself, family, or behind-the-scenes. They appear under your main photo on the About page with hover-zoom and full-screen lightbox preview.
+                    </p>
+                    <input id="about-gallery-input" type="file" accept="image/*" multiple style="margin-bottom: 0.8rem;" />
+                    <div id="about-gallery-admin-grid" class="about-gallery-admin-grid"></div>
                   </div>
                 </div>
               </div>
@@ -1364,6 +1376,9 @@
             <div class="card-header flex-between">
               <h3>Photo Gallery & Order Management</h3>
               <div class="photo-controls-row">
+                <button id="optimize-album-photos-btn" type="button" class="admin-btn ghost micro" title="Compress heavy photos to WebP to make the album load up to 50x faster">
+                  ⚡ Optimize All Photos (WebP)
+                </button>
                 <div class="photo-view-controls">
                   <button id="compact-view-button" type="button" class="admin-btn ghost micro active">Compact Matrix</button>
                   <button id="detailed-view-button" type="button" class="admin-btn ghost micro">Detailed Grid</button>
@@ -1387,6 +1402,6 @@
 
   <script src="../config.js"></script>
   <script src="../assets/js/runtime-config.js"></script>
-  <script type="module" src="../assets/js/admin.js?v=20260820-01"></script>
+  <script type="module" src="../assets/js/admin.js?v=20260820-02"></script>
 </body>
 </html>

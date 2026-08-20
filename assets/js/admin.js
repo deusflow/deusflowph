@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260820-01";
+import { createStateMessage } from "./ui.js?v=20260820-02";
 
 const state = {
   selectedAlbum: null,
@@ -21,7 +21,10 @@ const state = {
   pendingMoves: new Map(),
   pendingAlbumMoves: new Map(),
   albumReorderInProgress: false,
-  moveSequence: 0
+  moveSequence: 0,
+  portraitRemoved: false,
+  aboutGalleryPhotos: [],
+  optimizingPhotos: false
 };
 
 const loginPanel = document.getElementById("login-panel");
@@ -54,6 +57,7 @@ const clearOrderButton = document.getElementById("clear-order-button");
 const applyAlbumOrderButton = document.getElementById("apply-album-order-button");
 const clearAlbumOrderButton = document.getElementById("clear-album-order-button");
 const openPortfolioManagerButton = document.getElementById("open-portfolio-manager-button");
+const optimizeAlbumPhotosBtn = document.getElementById("optimize-album-photos-btn");
 const portfolioQuickNote = document.getElementById("portfolio-quick-note");
 const typeInput = document.getElementById("type");
 const titleInput = document.getElementById("title");
@@ -67,7 +71,10 @@ const aboutCmsSection = document.getElementById("about-cms-section");
 const aboutForm = document.getElementById("about-form");
 const saveAboutButton = document.getElementById("save-about-button");
 const aboutPhotoPreview = document.getElementById("about-photo-preview");
+const removeAboutPhotoButton = document.getElementById("remove-about-photo-button");
 const aboutPhotoInput = document.getElementById("about-photo");
+const aboutGalleryInput = document.getElementById("about-gallery-input");
+const aboutGalleryAdminGrid = document.getElementById("about-gallery-admin-grid");
 const aboutStoryInput = document.getElementById("about-story");
 const aboutValuesInput = document.getElementById("about-values");
 const aboutPersonalInput = document.getElementById("about-personal");
@@ -554,7 +561,8 @@ function getDefaultAboutPayload() {
         quote:
           "Wow, hvor ser det godt ud! Tusind tusind tak for det - kaempe anbefaling! Der har virkelig vaeret stor ros for alle billederne fra alle gaester og slottet ogsaa. Det har vaeret fantastisk at have arbejdet med jer."
       }
-    ]
+    ],
+    gallery_photos: []
   };
 }
 
@@ -570,6 +578,28 @@ function normalizeTestimonials(raw) {
   return normalized.length > 0 ? normalized : getDefaultAboutPayload().testimonials;
 }
 
+function renderAboutGalleryAdminGrid() {
+  if (!aboutGalleryAdminGrid) return;
+  aboutGalleryAdminGrid.innerHTML = "";
+
+  if (!state.aboutGalleryPhotos || !state.aboutGalleryPhotos.length) {
+    aboutGalleryAdminGrid.innerHTML = `<p style="grid-column: 1 / -1; font-size: 0.8rem; color: var(--admin-muted); margin: 0.2rem 0;">No personal/family photos added yet.</p>`;
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  state.aboutGalleryPhotos.forEach((photo, index) => {
+    const item = document.createElement("div");
+    item.className = "about-gallery-admin-item";
+    item.innerHTML = `
+      <img src="${escapeHTML(photo.url)}" alt="${escapeHTML(photo.caption || 'Personal photo')}" loading="lazy" />
+      <button type="button" class="about-gallery-admin-delete" data-index="${index}" title="Remove photo">✕</button>
+    `;
+    fragment.appendChild(item);
+  });
+  aboutGalleryAdminGrid.appendChild(fragment);
+}
+
 function fillAboutForm(content) {
   if (!aboutForm) {
     return;
@@ -579,15 +609,25 @@ function fillAboutForm(content) {
   aboutValuesInput.value = normalizeMultilineText(content.values_text);
   aboutPersonalInput.value = normalizeMultilineText(content.personal_text);
 
+  state.portraitRemoved = false;
   if (aboutPhotoPreview) {
     if (content.photo_url) {
       aboutPhotoPreview.src = content.photo_url;
       aboutPhotoPreview.classList.remove("hidden");
+      if (removeAboutPhotoButton) {
+        removeAboutPhotoButton.classList.remove("hidden");
+      }
     } else {
       aboutPhotoPreview.src = "";
       aboutPhotoPreview.classList.add("hidden");
+      if (removeAboutPhotoButton) {
+        removeAboutPhotoButton.classList.add("hidden");
+      }
     }
   }
+
+  state.aboutGalleryPhotos = Array.isArray(content.gallery_photos) ? content.gallery_photos.slice() : [];
+  renderAboutGalleryAdminGrid();
 
   const testimonials = normalizeTestimonials(content.testimonials);
   testimonialFields.forEach((field, index) => {
@@ -683,11 +723,14 @@ async function saveAboutContent(event) {
 
   try {
     if (nextPhotoFile) {
-      const extension = nextPhotoFile.name.split(".").pop() || "jpg";
+      const optimized = await compressImageFile(nextPhotoFile, 2400, 0.85);
+      const extension = optimized.name.split(".").pop() || "webp";
       const path = `about/portrait-${Date.now()}.${extension}`;
       setUploadStatus("Uploading About portrait...", 55);
       setAboutStatus("Uploading About portrait...");
-      nextPhotoUrl = await uploadToPhotosBucket(nextPhotoFile, path);
+      nextPhotoUrl = await uploadToPhotosBucket(optimized, path);
+    } else if (state.portraitRemoved) {
+      nextPhotoUrl = null;
     }
 
     const payload = {
@@ -696,6 +739,7 @@ async function saveAboutContent(event) {
       values_text: valuesText || null,
       personal_text: personalText || null,
       testimonials,
+      gallery_photos: state.aboutGalleryPhotos || [],
       updated_at: new Date().toISOString()
     };
 
@@ -723,7 +767,7 @@ async function saveAboutContent(event) {
 
     const data = result.data;
 
-    if (nextPhotoFile && previousPhotoUrl && previousPhotoUrl !== nextPhotoUrl) {
+    if (previousPhotoUrl && previousPhotoUrl !== nextPhotoUrl) {
       const previousPath = storagePathFromPublicUrl(previousPhotoUrl);
       if (previousPath) {
         const cleanup = await supabase.storage.from("photos").remove([previousPath]);
@@ -734,6 +778,7 @@ async function saveAboutContent(event) {
     }
 
     state.aboutContent = data;
+    state.portraitRemoved = false;
     fillAboutForm({ ...getDefaultAboutPayload(), ...data, testimonials: normalizeTestimonials(data.testimonials) });
     if (aboutPhotoInput) {
       aboutPhotoInput.value = "";
@@ -743,13 +788,13 @@ async function saveAboutContent(event) {
     }
     setUploadStatus("About page saved.", 100);
     setAboutStatus("About page saved.");
+    showToast("About page saved successfully!", "success");
   } catch (error) {
-    setUploadStatus(`Could not save About page: ${error.message}`, 0, "error");
-    setAboutStatus(`Could not save About page: ${error.message}`, "error");
+    setUploadStatus(`About save failed: ${error.message}`, 0, "error");
+    setAboutStatus(`About save failed: ${error.message}`, "error");
+    showToast(`Error saving About page: ${error.message}`, "error");
   } finally {
     saveAboutButton.disabled = false;
-    saveAboutButton.textContent = "Save About Page";
-  }
 }
 
 function setSectionOpen(section, isOpen) {
@@ -2279,6 +2324,95 @@ async function uploadPhotos(files) {
   }
 }
 
+async function optimizeAlbumPhotos() {
+  if (!state.selectedAlbum) {
+    setUploadStatus("Open an album first.", 0, "error");
+    return;
+  }
+
+  if (state.optimizingPhotos || state.uploadInProgress) {
+    setUploadStatus("Process already in progress.", 0, "error");
+    return;
+  }
+
+  const photos = state.selectedAlbumPhotos || [];
+  if (!photos.length) {
+    showToast("No photos in this album to optimize.", "error");
+    return;
+  }
+
+  const confirmed = confirm(
+    `Optimize ${photos.length} photos in "${state.selectedAlbum.title}"?\n\nThis will convert all uncompressed/heavy images into crisp, modern WebP format (max 2400px, 85% quality), making the album load up to 50x faster.`
+  );
+  if (!confirmed) return;
+
+  state.optimizingPhotos = true;
+  setUploadBusy(true);
+  setUploadStatus(`Analyzing and optimizing ${photos.length} photos...`, 0);
+
+  const supabase = getSupabase();
+  let optimizedCount = 0;
+  let skippedCount = 0;
+  let failedCount = 0;
+  let totalSavedBytes = 0;
+
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i];
+    const progress = Math.round(((i + 1) / photos.length) * 100);
+    setUploadStatus(`Optimizing photo ${i + 1}/${photos.length}...`, progress);
+
+    try {
+      const res = await fetch(photo.url);
+      const blob = await res.blob();
+      const originalSize = blob.size;
+
+      // If already WebP and < 450KB, skip re-encoding
+      if (photo.url.endsWith(".webp") && originalSize < 450 * 1024) {
+        skippedCount++;
+        continue;
+      }
+
+      const file = new File([blob], `photo-${photo.id}.jpg`, { type: blob.type || "image/jpeg" });
+      const optimized = await compressImageFile(file, 2400, 0.85);
+
+      if (optimized.size >= originalSize && photo.url.endsWith(".webp")) {
+        skippedCount++;
+        continue;
+      }
+
+      const path = `albums/${state.selectedAlbum.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+      const newUrl = await uploadToPhotosBucket(optimized, path);
+
+      const { error: updateErr } = await supabase
+        .from("photos")
+        .update({ url: newUrl })
+        .eq("id", photo.id);
+
+      if (updateErr) throw updateErr;
+
+      const oldPath = storagePathFromPublicUrl(photo.url);
+      if (oldPath && oldPath !== path) {
+        await supabase.storage.from("photos").remove([oldPath]);
+      }
+
+      totalSavedBytes += Math.max(0, originalSize - optimized.size);
+      optimizedCount++;
+    } catch (err) {
+      console.error(`Failed to optimize photo ${photo.id}:`, err);
+      failedCount++;
+    }
+  }
+
+  await loadPhotos(state.selectedAlbum.id);
+  state.optimizingPhotos = false;
+  setUploadBusy(false);
+
+  const savedMB = (totalSavedBytes / (1024 * 1024)).toFixed(1);
+  const msg = `Optimization complete! ${optimizedCount} optimized (${savedMB} MB saved), ${skippedCount} already optimal${failedCount ? `, ${failedCount} failed` : ""}.`;
+  setUploadStatus(msg, 100);
+  showToast(msg, "success");
+}
+
 function restoreActiveTab() {
   const savedTabId = localStorage.getItem("deusflow_admin_active_tab") || (window.location.hash ? window.location.hash.replace("#", "") : "tab-albums");
   const matchingBtn = document.querySelector(`.admin-nav-button[data-target="${savedTabId}"]`);
@@ -2480,6 +2614,102 @@ if (clearAlbumOrderButton) {
 if (openPortfolioManagerButton) {
   openPortfolioManagerButton.addEventListener("click", async () => {
     await openPortfolioManager();
+  });
+}
+
+if (optimizeAlbumPhotosBtn) {
+  optimizeAlbumPhotosBtn.addEventListener("click", optimizeAlbumPhotos);
+}
+
+if (removeAboutPhotoButton) {
+  removeAboutPhotoButton.addEventListener("click", () => {
+    state.portraitRemoved = true;
+    if (aboutPhotoPreview) {
+      aboutPhotoPreview.src = "";
+      aboutPhotoPreview.classList.add("hidden");
+    }
+    removeAboutPhotoButton.classList.add("hidden");
+    if (aboutPhotoInput) {
+      aboutPhotoInput.value = "";
+    }
+    setAboutStatus("Portrait marked for removal. Click 'Save About Page' to apply.");
+    showToast("Portrait removed from preview. Remember to save.", "default");
+  });
+}
+
+if (aboutPhotoInput) {
+  aboutPhotoInput.addEventListener("change", () => {
+    if (aboutPhotoInput.files?.[0]) {
+      state.portraitRemoved = false;
+      const file = aboutPhotoInput.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (aboutPhotoPreview) {
+          aboutPhotoPreview.src = e.target.result;
+          aboutPhotoPreview.classList.remove("hidden");
+        }
+        if (removeAboutPhotoButton) {
+          removeAboutPhotoButton.classList.remove("hidden");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+if (aboutGalleryInput) {
+  aboutGalleryInput.addEventListener("change", async (event) => {
+    const files = Array.from(event.target.files || []).filter((file) => file.type.startsWith("image/"));
+    if (!files.length) {
+      return;
+    }
+
+    setAboutStatus(`Compressing and uploading ${files.length} gallery photo(s)...`);
+    setUploadStatus(`Compressing and uploading ${files.length} gallery photo(s)...`, 20);
+
+    for (let i = 0; i < files.length; i++) {
+      const originalFile = files[i];
+      try {
+        const optimized = await compressImageFile(originalFile, 1920, 0.85);
+        const extension = optimized.name.split(".").pop() || "webp";
+        const path = `about/gallery-${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+        const url = await uploadToPhotosBucket(optimized, path);
+
+        if (!Array.isArray(state.aboutGalleryPhotos)) {
+          state.aboutGalleryPhotos = [];
+        }
+
+        state.aboutGalleryPhotos.push({
+          id: `g_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          url,
+          caption: ""
+        });
+      } catch (err) {
+        console.error(`Failed to upload gallery photo ${originalFile.name}:`, err);
+      }
+    }
+
+    aboutGalleryInput.value = "";
+    renderAboutGalleryAdminGrid();
+    setAboutStatus(`Added ${files.length} gallery photo(s). Click 'Save About Page' to apply.`);
+    setUploadStatus(`Gallery photos ready. Click 'Save About Page' to save.`, 100);
+    showToast(`Added ${files.length} personal/family photo(s).`, "success");
+  });
+}
+
+if (aboutGalleryAdminGrid) {
+  aboutGalleryAdminGrid.addEventListener("click", (event) => {
+    const deleteBtn = event.target.closest(".about-gallery-admin-delete");
+    if (!deleteBtn) {
+      return;
+    }
+
+    const index = parseInt(deleteBtn.dataset.index, 10);
+    if (!isNaN(index) && index >= 0 && index < state.aboutGalleryPhotos.length) {
+      state.aboutGalleryPhotos.splice(index, 1);
+      renderAboutGalleryAdminGrid();
+      setAboutStatus("Photo removed. Click 'Save About Page' to apply.");
+    }
   });
 }
 

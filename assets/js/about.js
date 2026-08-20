@@ -1,7 +1,9 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage, initScrollReveals, getOptimizedImageUrl, initSmartHeader } from "./ui.js?v=20260820-01";
+import { createStateMessage, initScrollReveals, getOptimizedImageUrl, initSmartHeader, setupLightbox, escapeHTML } from "./ui.js?v=20260820-02";
 
 const photoNode = document.getElementById("about-photo");
+const photoPanel = document.querySelector(".about-photo-panel");
+const galleryContainer = document.getElementById("about-gallery-container");
 const storyNode = document.getElementById("about-story");
 const valuesNode = document.getElementById("about-values");
 const personalNode = document.getElementById("about-personal");
@@ -33,7 +35,8 @@ const fallback = {
       name: "Jerry Heil (Singer & Songwriter)",
       quote: "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."
     }
-  ]
+  ],
+  gallery_photos: []
 };
 
 function normalizeMultilineText(value) {
@@ -106,11 +109,52 @@ function renderAbout(content) {
   const about = {
     ...fallback,
     ...content,
-    testimonials: normalizeTestimonials(content?.testimonials)
+    testimonials: normalizeTestimonials(content?.testimonials),
+    gallery_photos: Array.isArray(content?.gallery_photos) ? content.gallery_photos : []
   };
 
-  if (photoNode && about.photo_url) {
-    photoNode.src = getOptimizedImageUrl(about.photo_url, 1200);
+  const hasPortrait = Boolean(about.photo_url);
+  const hasGallery = about.gallery_photos.length > 0;
+
+  if (photoNode) {
+    if (hasPortrait) {
+      photoNode.src = getOptimizedImageUrl(about.photo_url, 1200);
+      photoNode.setAttribute("data-lightbox-src", about.photo_url);
+      photoNode.style.display = "block";
+      photoNode.style.cursor = "zoom-in";
+    } else {
+      photoNode.removeAttribute("src");
+      photoNode.removeAttribute("data-lightbox-src");
+      photoNode.style.display = "none";
+    }
+  }
+
+  if (galleryContainer) {
+    galleryContainer.innerHTML = "";
+    if (hasGallery) {
+      const grid = document.createElement("div");
+      grid.className = "about-gallery-grid";
+      about.gallery_photos.forEach((photo) => {
+        const thumb = document.createElement("a");
+        thumb.className = "about-gallery-thumb";
+        thumb.href = "#";
+        thumb.setAttribute("data-lightbox-src", photo.url);
+        const caption = photo.caption || "Oleh Ro - behind the scenes";
+        thumb.innerHTML = `<img src="${escapeHTML(getOptimizedImageUrl(photo.url, 400))}" alt="${escapeHTML(caption)}" loading="lazy" decoding="async" />`;
+        grid.appendChild(thumb);
+      });
+      galleryContainer.appendChild(grid);
+    }
+  }
+
+  if (photoPanel) {
+    if (hasPortrait || hasGallery) {
+      photoPanel.style.display = "block";
+      photoPanel.closest(".editorial-grid")?.classList.remove("no-photo");
+    } else {
+      photoPanel.style.display = "none";
+      photoPanel.closest(".editorial-grid")?.classList.add("no-photo");
+    }
   }
   
   renderRichText(storyNode, about.story);
@@ -138,6 +182,7 @@ async function loadAbout() {
 loadAbout().then(() => {
   initSmartHeader();
   initScrollReveals();
+  setupLightbox();
   if (typeof window.applyTranslations === "function") {
     window.applyTranslations();
   }

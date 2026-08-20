@@ -40,6 +40,7 @@ create table if not exists public.about_content (
   values_text text,
   personal_text text,
   testimonials jsonb not null default '[]'::jsonb,
+  gallery_photos jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
 

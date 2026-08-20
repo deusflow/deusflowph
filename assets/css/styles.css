@@ -1093,13 +1093,71 @@ h3,
 
 .about-photo-panel {
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
+  border-radius: 0;
 }
 
 .about-photo {
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
+  display: block;
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.about-photo:hover {
+  opacity: 0.96;
+}
+
+/* Personal & Family Mini-Gallery Under Main Portrait */
+.about-gallery-container {
+  margin-top: 0.65rem;
+  width: 100%;
+}
+
+.about-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.about-gallery-thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: zoom-in;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  background: var(--surface);
+  display: block;
+}
+
+.about-gallery-thumb:hover {
+  transform: scale(1.08);
+  border-color: var(--gold);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 10px rgba(197, 168, 128, 0.3);
+  z-index: 5;
+}
+
+.about-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: filter 0.3s ease, transform 0.35s ease;
+  filter: grayscale(12%) contrast(1.05);
+}
+
+.about-gallery-thumb:hover img {
+  filter: grayscale(0%) contrast(1.12);
+  transform: scale(1.04);
+}
+
+.editorial-grid.no-photo {
+  grid-template-columns: 1fr !important;
+  max-width: 780px;
+  margin-inline: auto;
 }
 
 .about-story-panel {

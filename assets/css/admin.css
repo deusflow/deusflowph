@@ -1451,3 +1451,72 @@ body.admin-page {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   ABOUT GALLERY ADMIN GRID & OPTIMIZER STYLES
+   ========================================================================== */
+
+.about-gallery-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.about-gallery-admin-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+}
+
+.about-gallery-admin-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.about-gallery-admin-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+}
+
+.about-gallery-admin-delete:hover {
+  background: #ff4757;
+  color: #fff;
+  border-color: #ff4757;
+  transform: scale(1.1);
+}
+
+#optimize-album-photos-btn {
+  color: var(--admin-gold);
+  border-color: rgba(197, 168, 128, 0.35);
+  background: rgba(197, 168, 128, 0.08);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+#optimize-album-photos-btn:hover {
+  background: rgba(197, 168, 128, 0.2);
+  border-color: var(--admin-gold);
+  transform: translateY(-1px);
+}
+

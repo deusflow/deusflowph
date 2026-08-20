@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, renderOrderedMasonry, initScrollReveals, setupLightbox, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260820-01";
+import { observeLazyImages, createStateMessage, renderOrderedMasonry, initScrollReveals, setupLightbox, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260820-02";
 
 const grid = document.getElementById("portfolio-grid");
 let portfolioNodes = [];
@@ -89,7 +89,7 @@ async function renderPortfolio() {
       const escapedOriginalUrl = escapeHTML(photo.url);
       item.innerHTML = `
         <div class="photo-media" style="cursor: zoom-in;">
-          <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${buildPortfolioAlt(index)}" loading="lazy" />
+          <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${buildPortfolioAlt(index)}" loading="lazy" decoding="async" />
         </div>
       `;
       nodes.push(item);

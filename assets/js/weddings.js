@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260820-01";
+import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260820-02";
 
 const list = document.getElementById("weddings-grid");
 
@@ -55,7 +55,7 @@ async function renderWeddings() {
       card.innerHTML = `
         <div class="polaroid-inner">
           <div class="photo-media">
-            <img data-src="${escapedCoverUrl}" alt="${escapedAlt}" loading="lazy" />
+            <img data-src="${escapedCoverUrl}" alt="${escapedAlt}" loading="lazy" decoding="async" />
           </div>
           <div class="polaroid-footer">
             <h3 class="photo-title">${escapedTitle}</h3>

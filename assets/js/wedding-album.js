@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260820-01";
+import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260820-02";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
@@ -230,7 +230,7 @@ async function renderAlbum() {
       const escapedUrl = escapeHTML(getOptimizedImageUrl(photo.url, 800));
       const escapedOriginalUrl = escapeHTML(photo.url);
       const escapedAlt = escapeHTML(buildAlbumPhotoAlt(album, index));
-      item.innerHTML = `<img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${escapedAlt}" loading="lazy" />`;
+      item.innerHTML = `<img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${escapedAlt}" loading="lazy" decoding="async" />`;
       nodes.push(item);
     });
 
