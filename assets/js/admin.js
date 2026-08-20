@@ -2943,10 +2943,17 @@ async function loadAllTranslationsComparative() {
       data.forEach((row) => {
         if (row?.lang && row?.raw_data) {
           dbTranslations[row.lang] = row.raw_data;
+          try {
+            localStorage.setItem("deusflow_custom_translations_raw_" + row.lang, JSON.stringify(row.raw_data));
+          } catch (_e) {}
         }
       });
+    } else if (error) {
+      console.warn("[Admin CMS] Failed to fetch site_translations from DB:", error);
     }
-  } catch (_e) {}
+  } catch (err) {
+    console.warn("[Admin CMS] Error fetching site_translations:", err);
+  }
 
   langs.forEach((lang) => {
     let saved = dbTranslations[lang] || null;
@@ -3047,9 +3054,14 @@ async function saveTranslationsPayload(cardsToProcess) {
 
     if (error) throw error;
 
+    // Retain merged rawData in local storage as a reliable secondary cache
+    try {
+      const existingRaw = JSON.parse(localStorage.getItem("deusflow_custom_translations_raw_" + lang) || "{}");
+      const merged = { ...existingRaw, ...rawData };
+      localStorage.setItem("deusflow_custom_translations_raw_" + lang, JSON.stringify(merged));
+    } catch (_e) {}
+
     localStorage.removeItem("deusflow_i18n_cache_" + lang);
-    localStorage.removeItem("deusflow_custom_translations_raw_" + lang);
-    localStorage.removeItem("deusflow_custom_translations_" + lang);
   }
 }
 
