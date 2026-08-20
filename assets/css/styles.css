@@ -322,7 +322,7 @@ h3,
   position: relative;
   z-index: 2;
   text-align: center;
-  padding-top: clamp(70px, 12vh, 110px);
+  padding-top: clamp(170px, 22vh, 210px);
   padding-bottom: clamp(2rem, 5vh, 4rem);
 }
 

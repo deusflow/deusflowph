@@ -1,7 +1,7 @@
 (function applyRuntimeConfig() {
   try {
     const config = window.APP_CONFIG || {};
-    const faviconUrl = config.FAVICON_URL || "/favicon.png?v=20260819-27";
+    const faviconUrl = config.FAVICON_URL || "/favicon.png?v=20260820-01";
 
     let favicon = document.querySelector("link[rel='icon']");
     if (!favicon) {
