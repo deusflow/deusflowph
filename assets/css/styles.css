@@ -2074,11 +2074,11 @@ button.danger {
   }
 
   .hero {
-    min-height: 80vh;
+    min-height: 85vh;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 100px;
+    padding-top: 290px;
     padding-bottom: 2rem;
   }
 
@@ -2099,15 +2099,15 @@ button.danger {
   }
 
   .hero-actions {
-    order: 1 !important; /* Buttons on TOP (raised up) */
+    order: 1 !important; /* Buttons on TOP */
     display: flex !important;
     flex-direction: row !important;
     justify-content: center !important;
     align-items: center !important;
     gap: 1.4rem !important;
     flex-wrap: wrap !important;
-    margin-top: 1rem !important;
-    margin-bottom: 1.5rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 1.4rem !important;
     transform: none !important;
     width: 100% !important;
     max-width: 100% !important;

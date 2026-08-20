@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260820-04";
+import { createStateMessage } from "./ui.js?v=20260820-05";
 
 const state = {
   selectedAlbum: null,
@@ -792,9 +792,10 @@ async function saveAboutContent(event) {
   } catch (error) {
     setUploadStatus(`About save failed: ${error.message}`, 0, "error");
     setAboutStatus(`About save failed: ${error.message}`, "error");
-    showToast(`Error saving About page: ${error.message}`, "error");
   } finally {
     saveAboutButton.disabled = false;
+    saveAboutButton.textContent = "Save About Page";
+  }
 }
 
 function setSectionOpen(section, isOpen) {
@@ -2865,7 +2866,7 @@ const translationDefaults = {
   }
 };
 
-export const translationSourceMap = {
+const translationSourceMap = {
   hero_title_1: "Not loud.",
   hero_title_2: "But your photos will be.",
   hero_desc: "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day.",
@@ -2895,7 +2896,7 @@ export const translationSourceMap = {
   floating_cta_note: "Calendar open for 2026-2027 weddings ·"
 };
 
-export function getSourceEnglishText(fieldKey) {
+function getSourceEnglishText(fieldKey) {
   return translationSourceMap[fieldKey] || null;
 }
 
