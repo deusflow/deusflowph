@@ -1,4 +1,4 @@
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor, initSmartHeader } from "./ui.js?v=20260820-03";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor, initSmartHeader } from "./ui.js?v=20260820-04";
 import { fetchTestimonials, fetchFeaturedAlbums, fetchAlbumFallbackCover } from "./services/api.js";
 
 const featuredGrid = document.getElementById("featured-grid");

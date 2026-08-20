@@ -2074,12 +2074,12 @@ button.danger {
   }
 
   .hero {
-    min-height: 85vh;
+    min-height: 80vh;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding-top: 55px;
-    padding-bottom: 3rem;
+    padding-top: 100px;
+    padding-bottom: 2rem;
   }
 
   .hero-content {
@@ -2090,7 +2090,7 @@ button.danger {
 
   .hero-copy {
     display: flex !important;
-    flex-direction: column !important; /* Mobile: h1 on top, buttons below */
+    flex-direction: column !important;
     align-items: center !important;
     text-align: center !important;
     padding: 0.5rem 1rem !important;
@@ -2098,27 +2098,27 @@ button.danger {
     margin: 0 auto !important;
   }
 
-  .hero-copy h1 {
-    order: 1 !important;
-    margin-top: 2.6rem !important;
-    margin-bottom: 0.8rem !important;
-  }
-
   .hero-actions {
-    order: 2 !important;
+    order: 1 !important; /* Buttons on TOP (raised up) */
     display: flex !important;
     flex-direction: row !important;
     justify-content: center !important;
     align-items: center !important;
-    gap: 1.6rem !important;
+    gap: 1.4rem !important;
     flex-wrap: wrap !important;
-    margin-top: clamp(4.8rem, 11.5vh, 6.2rem) !important;
-    margin-bottom: 0 !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1.5rem !important;
     transform: none !important;
     width: 100% !important;
     max-width: 100% !important;
     margin-inline: auto !important;
     padding: 0 !important;
+  }
+
+  .hero-copy h1 {
+    order: 2 !important; /* Heading BELOW buttons */
+    margin-top: 0 !important;
+    margin-bottom: 1rem !important;
   }
 
   .hero-actions .cta-editorial {

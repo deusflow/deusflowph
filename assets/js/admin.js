@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260820-03";
+import { createStateMessage } from "./ui.js?v=20260820-04";
 
 const state = {
   selectedAlbum: null,
@@ -1225,12 +1225,21 @@ function showAlbumDetails(album) {
 
 async function requireSession() {
   const supabase = getSupabase();
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    throw error;
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn("[Admin Auth] Session error:", error.message);
+      setAuthView(false);
+      return null;
+    }
+    const hasSession = Boolean(data?.session);
+    setAuthView(hasSession);
+    return data?.session || null;
+  } catch (err) {
+    console.warn("[Admin Auth] Failed to check session:", err);
+    setAuthView(false);
+    return null;
   }
-  setAuthView(Boolean(data.session));
-  return data.session;
 }
 
 async function loadAlbums() {
@@ -2517,21 +2526,38 @@ async function boot() {
       return;
     }
 
-    // Always pre-populate forms with robust defaults
+    // Pre-populate forms with robust defaults
     fillSettingsForm(defaultSiteSettings);
     loadAllTranslationsComparative();
 
-    await loadAlbums();
-    await loadAboutContent();
-    await loadPricingContentAdmin();
+    try {
+      await loadAlbums();
+    } catch (e) {
+      console.warn("[Admin Boot] Failed to load albums:", e);
+      showToast("Albums could not be loaded: " + e.message, "error");
+    }
+
+    try {
+      await loadAboutContent();
+    } catch (e) {
+      console.warn("[Admin Boot] Failed to load about content:", e);
+      showToast("About content could not be loaded: " + e.message, "error");
+    }
+
+    try {
+      await loadPricingContentAdmin();
+    } catch (e) {
+      console.warn("[Admin Boot] Failed to load pricing content:", e);
+      showToast("Pricing content could not be loaded: " + e.message, "error");
+    }
     
     // Refresh with freshly loaded DB data
     fillSettingsForm(state.pricingContent || defaultSiteSettings);
     loadAllTranslationsComparative();
     restoreActiveTab();
   } catch (error) {
+    console.error("[Admin Boot] Fatal error:", error);
     loginError.textContent = error.message;
-    setAuthView(false);
   }
 }
 
@@ -2560,6 +2586,14 @@ editAlbumForm.addEventListener("submit", saveAlbumDetails);
 try {
   const supabase = getSupabase();
   supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
+      if (session) {
+        setAuthView(true);
+        await boot();
+      }
+    } else if (event === "SIGNED_OUT") {
+      setAuthView(false);
+    }
     if (event === "PASSWORD_RECOVERY") {
       const newPassword = window.prompt("Supabase Recovery: Please enter your new admin password (minimum 6 characters):");
       if (newPassword && newPassword.trim().length >= 6) {
