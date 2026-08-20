@@ -3024,6 +3024,13 @@ async function saveTranslationsPayload(cardsToProcess) {
   const langs = ["da", "ua", "en"];
   const supabase = getSupabase();
 
+  const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+  if (sessionErr || !sessionData?.session) {
+    showToast("You are not logged in or your session expired. Please log in again to save.", "error");
+    setAuthView(false);
+    throw new Error("Authentication required. Please log in again.");
+  }
+
   for (const lang of langs) {
     const rawData = {};
     const dictMap = {};
@@ -3046,13 +3053,56 @@ async function saveTranslationsPayload(cardsToProcess) {
       });
     });
 
-    const { error } = await supabase.rpc("merge_site_translations", {
-      p_lang: lang,
-      p_raw_data: rawData,
-      p_dict_map: dictMap
-    });
+    let savedSuccessfully = false;
 
-    if (error) throw error;
+    // 1. Try RPC merge with timeout
+    try {
+      const rpcPromise = supabase.rpc("merge_site_translations", {
+        p_lang: lang,
+        p_raw_data: rawData,
+        p_dict_map: dictMap
+      });
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("RPC Timeout")), 6000));
+      const { error } = await Promise.race([rpcPromise, timeoutPromise]);
+      if (!error) {
+        savedSuccessfully = true;
+      } else {
+        console.warn(`[Admin CMS] RPC merge failed for ${lang}:`, error.message);
+      }
+    } catch (rpcErr) {
+      console.warn(`[Admin CMS] RPC exception for ${lang}:`, rpcErr.message);
+    }
+
+    // 2. Direct table fallback if RPC was rejected or timed out
+    if (!savedSuccessfully) {
+      try {
+        const { data: existingRow } = await supabase
+          .from("site_translations")
+          .select("raw_data, dict_map")
+          .eq("lang", lang)
+          .maybeSingle();
+
+        const mergedRaw = { ...(existingRow?.raw_data || {}), ...rawData };
+        const mergedDict = { ...(existingRow?.dict_map || {}), ...dictMap };
+
+        const { error: upsertErr } = await supabase
+          .from("site_translations")
+          .upsert({
+            lang,
+            raw_data: mergedRaw,
+            dict_map: mergedDict,
+            updated_at: new Date().toISOString()
+          });
+
+        if (upsertErr) {
+          throw new Error(`Direct upsert failed for ${lang}: ${upsertErr.message}`);
+        }
+        savedSuccessfully = true;
+      } catch (upsertErr) {
+        console.error(`[Admin CMS] Fallback upsert failed for ${lang}:`, upsertErr);
+        throw upsertErr;
+      }
+    }
 
     // Retain merged rawData in local storage as a reliable secondary cache
     try {
@@ -3083,6 +3133,7 @@ async function saveAllTranslationsComparative(e) {
       setTimeout(() => { statusEl.textContent = ""; }, 4000);
     }
   } catch (err) {
+    console.error("[Admin CMS] Error saving all translations:", err);
     showToast(`Could not save translations: ${err.message}`, "error");
   } finally {
     if (saveBtn) {
@@ -3120,14 +3171,28 @@ async function saveSpecificBlock(blockCard, btn) {
     }
     showToast("Block translations saved to database!", "success");
   } catch (err) {
+    console.error("[Admin CMS] Error saving block:", err);
     if (btn) {
       btn.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span>⚠ Error</span>
       `;
-      btn.disabled = false;
+      setTimeout(() => {
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Save Block</span>
+        `;
+        btn.disabled = false;
+      }, 3000);
     }
     showToast(`Failed to save block: ${err.message}`, "error");
+  } finally {
+    // Failsafe: Ensure button is never permanently locked
+    setTimeout(() => {
+      if (btn && btn.disabled) {
+        btn.disabled = false;
+      }
+    }, 4000);
   }
 }
 
