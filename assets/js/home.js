@@ -158,6 +158,92 @@ async function loadFeatured() {
   }
 }
 
+function initPortalZoom() {
+  const track = document.getElementById("hero-portal-track");
+  const heroImg = document.getElementById("hero-image");
+  const heroTitleLeft = document.querySelector(".hero-title-left");
+  const heroTitleRight = document.querySelector(".hero-title-right");
+  const heroActions = document.querySelector(".hero-actions");
+  const heroCopy = document.querySelector(".hero-copy");
+  const heroOverlay = document.querySelector(".hero-overlay");
+  const ribbon = document.querySelector(".hero-tagline-ribbon");
+
+  if (!track || !heroImg) return;
+
+  let currentProgress = 0;
+  let targetProgress = 0;
+  let isRunning = false;
+
+  function onScroll() {
+    const rect = track.getBoundingClientRect();
+    const scrollDistance = track.offsetHeight - window.innerHeight;
+    if (scrollDistance <= 0) return;
+
+    const scrolled = -rect.top;
+    targetProgress = Math.max(0, Math.min(1, scrolled / scrollDistance));
+
+    if (!isRunning) {
+      isRunning = true;
+      requestAnimationFrame(render);
+    }
+  }
+
+  function render() {
+    // Smooth inertial lerp
+    currentProgress += (targetProgress - currentProgress) * 0.16;
+
+    if (Math.abs(targetProgress - currentProgress) < 0.001) {
+      currentProgress = targetProgress;
+    }
+
+    const isMobile = window.innerWidth <= 759;
+    const maxScale = isMobile ? 2.2 : 2.8;
+    const scale = 1.05 + currentProgress * maxScale;
+    const yOffset = -currentProgress * (isMobile ? 5 : 3.5);
+
+    heroImg.style.transform = `translate3d(0, ${yOffset}%, 0) scale(${scale})`;
+
+    const textOpacity = Math.max(0, 1 - currentProgress * 3.6);
+    const splitDistance = isMobile ? 180 : 320;
+    const leftX = -currentProgress * splitDistance;
+    const rightX = currentProgress * splitDistance;
+
+    if (heroTitleLeft) {
+      heroTitleLeft.style.transform = `translate3d(${leftX}px, 0, 0)`;
+      heroTitleLeft.style.opacity = textOpacity;
+    }
+
+    if (heroTitleRight) {
+      heroTitleRight.style.transform = `translate3d(${rightX}px, 0, 0)`;
+      heroTitleRight.style.opacity = textOpacity;
+    }
+
+    if (heroActions) {
+      heroActions.style.transform = `translate3d(0, ${currentProgress * 50}px, 0)`;
+      heroActions.style.opacity = Math.max(0, 1 - currentProgress * 4.0);
+      heroActions.style.pointerEvents = textOpacity < 0.1 ? "none" : "auto";
+    }
+
+    if (heroOverlay) {
+      heroOverlay.style.opacity = Math.max(0.18, 1 - currentProgress * 1.5);
+    }
+
+    if (ribbon) {
+      ribbon.style.opacity = Math.max(0, 1 - currentProgress * 4.5);
+    }
+
+    if (currentProgress !== targetProgress) {
+      requestAnimationFrame(render);
+    } else {
+      isRunning = false;
+    }
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+  onScroll();
+}
+
 Promise.all([loadFeatured(), loadTestimonials()]).then(() => {
   if (typeof window.applyTranslations === "function") {
     window.applyTranslations();
@@ -165,7 +251,7 @@ Promise.all([loadFeatured(), loadTestimonials()]).then(() => {
 });
 initScrollReveals();
 initMagneticButtons();
-initParallax();
+initPortalZoom();
 initWordReveal();
 initCustomCursor();
 initSmartHeader();
