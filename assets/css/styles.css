@@ -2083,7 +2083,7 @@ button.danger {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: clamp(370px, 46dvh, 395px);
+    padding-top: 310px;
     padding-bottom: 2rem;
   }
 
@@ -2094,41 +2094,41 @@ button.danger {
   }
 
   .hero-copy {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-    padding: 0.5rem 1rem !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0.5rem 1rem;
+    max-width: 100%;
+    margin: 0 auto;
   }
 
   .hero-actions {
-    order: 1 !important; /* Buttons on TOP */
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: center !important;
-    align-items: center !important;
-    gap: 1.4rem !important;
-    flex-wrap: wrap !important;
-    margin-top: 0 !important;
-    margin-bottom: 1.4rem !important;
-    transform: none !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-inline: auto !important;
-    padding: 0 !important;
+    order: 1; /* Buttons on TOP (at flower hedges) */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1.4rem;
+    flex-wrap: wrap;
+    margin-top: 0;
+    margin-bottom: 1.4rem;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+    padding: 0;
   }
 
   .hero-copy h1 {
-    order: 2 !important; /* Heading BELOW buttons */
-    margin-top: 0 !important;
-    margin-bottom: 1rem !important;
+    order: 2; /* Heading BELOW buttons */
+    margin-top: 0;
+    margin-bottom: 1rem;
   }
 
   .hero-actions .cta-editorial {
-    width: auto !important;
-    max-width: none !important;
+    width: auto;
+    max-width: none;
     font-size: 10px;
     letter-spacing: 0.18em;
     padding: 0.35rem 0 0.45rem;
