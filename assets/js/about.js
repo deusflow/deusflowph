@@ -105,13 +105,37 @@ function renderTestimonials(list) {
   testimonialsGrid.appendChild(fragment);
 }
 
+let currentAboutState = null;
+
 function renderAbout(content) {
+  if (content) currentAboutState = content;
   const about = {
     ...fallback,
-    ...content,
-    testimonials: normalizeTestimonials(content?.testimonials),
-    gallery_photos: Array.isArray(content?.gallery_photos) ? content.gallery_photos : []
+    ...(content || currentAboutState),
+    testimonials: normalizeTestimonials((content || currentAboutState)?.testimonials),
+    gallery_photos: Array.isArray((content || currentAboutState)?.gallery_photos) ? (content || currentAboutState).gallery_photos : []
   };
+
+  const currentLang = localStorage.getItem("deusflow_lang") || "en";
+  const normalizedLang = currentLang === "uk" ? "ua" : currentLang;
+  const rawData = (typeof window.getRawData === "function") ? window.getRawData(normalizedLang) : null;
+
+  let storyText = about.story;
+  let valuesText = about.values_text;
+  let personalText = about.personal_text;
+
+  if (rawData) {
+    if (rawData.about_story_1 || rawData.about_story_2 || rawData.about_story_3) {
+      const combined = [rawData.about_story_1, rawData.about_story_2, rawData.about_story_3].filter(Boolean).join("\n\n");
+      if (combined) storyText = combined;
+    }
+    if (rawData.about_values) {
+      valuesText = rawData.about_values;
+    }
+    if (rawData.about_background) {
+      personalText = rawData.about_background;
+    }
+  }
 
   const hasPortrait = Boolean(about.photo_url);
   const hasGallery = about.gallery_photos.length > 0;
@@ -169,11 +193,24 @@ function renderAbout(content) {
     }
   }
   
-  renderRichText(storyNode, about.story);
-  renderRichText(valuesNode, about.values_text);
-  renderRichText(personalNode, about.personal_text);
+  renderRichText(storyNode, storyText);
+  renderRichText(valuesNode, valuesText);
+  renderRichText(personalNode, personalText);
   renderTestimonials(about.testimonials);
 }
+
+window.renderAboutPage = (forcedContent) => {
+  if (forcedContent) {
+    renderAbout(forcedContent);
+  } else {
+    try {
+      const cached = JSON.parse(localStorage.getItem("deusflow_about_cache") || "null");
+      renderAbout(cached || currentAboutState);
+    } catch (_e) {
+      renderAbout(currentAboutState);
+    }
+  }
+};
 
 async function loadAbout() {
   try {

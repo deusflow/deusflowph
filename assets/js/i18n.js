@@ -221,6 +221,19 @@ const rawDefaults = {
     elopement_locations: "Copenhagen · Ærø Island · Aarhus · Odense · Aalborg · All Denmark & Europe",
     meet_quote: "I believe the most meaningful photos happen when you forget the camera is there. I stay quiet, watch the unposed moments unfold, and step in with gentle direction only when it makes you feel effortlessly beautiful.",
     meet_btn: "Meet Oleh & Philosophy →",
+    about_header: "Documentary & Editorial",
+    about_tagline: "Wedding Photographer in Denmark & Europe",
+    about_story_1: "Many would write here about their deep love for wedding photography, but my true passion is art as a whole. Weddings simply chose me... and I fell so deeply in love with the process that I have been doing this for over 11 years now.",
+    about_story_2: "Honestly, people started noticing things in my photos that I did not even see myself — raw sincerity and unique, unrepeatable moments. This solves the biggest problem for couples: you do not just want 10 heavily retouched pictures in tense, stiff poses. You want to see the real, breathing story of your day. And I handle that with ease... or at least that is what my couples tell me.",
+    about_story_3: "Some say weddings are stressful. I delivered my wife's baby in an emergency. No hospital. Just the two of us. Your wedding day? Trust me, everything is completely under control.",
+    about_quote: "I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.",
+    about_values_title: "Values",
+    about_values: "I work quietly, observe honestly, and guide only when it truly helps. I value real emotion over forced perfection, premium aesthetics over noise, and a calm process that lets you stay present in your day.",
+    about_background_title: "Background",
+    about_background: "Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.",
+    about_experience_title: "Experience",
+    about_experience: "Years of capturing love stories across Denmark & Europe",
+    about_awards: "★ Photos of the Week · ★ Unposed Moms Moments · ★ Happy Mother's Day 2022",
     contact_heading: "Let's Talk About Your Day",
     contact_desc: "I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:",
     whatsapp_subtitle: "Fastest for Europe & International couples",
@@ -240,6 +253,19 @@ const rawDefaults = {
     elopement_locations: "Копенгаген · Острів Ере · Орхус · Оденсе · Ольборг · Уся Данія та Європа",
     meet_quote: "Найщиріші кадри народжуються тоді, коли ви забуваєте про камеру. Я спостерігаю, ловлю живі моменти без пози і додаю легку підказку лише тоді, коли це допомагає відчути себе природно красиво.",
     meet_btn: "Познайомитись з Олегом і моїм баченням →",
+    about_header: "Documentary & Editorial фотографія",
+    about_tagline: "Весільний фотограф у Данії та Європі",
+    about_story_1: "Хтось написав би тут довгий текст про велику любов суто до весільної фотографії, але моя справжня пристрасть — це мистецтво взагалі. Просто так вийшло, що весілля обрали мене самі... а я тільки за і настільки кайфонув від цього, що ось уже 11 років у справі.",
+    about_story_2: "Чесно кажучи, люди почали помічати в моїх роботах те, чого не бачив навіть я сам: щирість без прикрас і моменти, які більше ніколи не повторяться. Це вирішує головну проблему пар: вам не потрібні 10 перефотошоплених світлин у напружених позах. Вам потрібна жива історія вашого дня. І з цим я справляюсь на відмінно... принаймні так кажуть мої молодята.",
+    about_story_3: "Кажуть, весілля — це стрес. А я приймав пологи у власної дружини в екстрених умовах. Без лікарні, тільки ми двоє. Тож ваш весільний день? Довіртесь, усе під повним контролем.",
+    about_quote: "Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.",
+    about_values_title: "Цінності",
+    about_values: "Працюю тихо, спостерігаю чесно, підказую лише тоді, коли це дійсно потрібно. Ціную справжній нерв більше за штучну ідеальність, преміальну естетику без зайвого візуального шуму і спокійний процес, у якому ви просто проживаєте свій день.",
+    about_background_title: "Бекграунд",
+    about_background: "Родом з України, зараз базуюся біля Орхуса. Працюю по всій Данії та Європі. Мій візуальний почерк поєднує документальну правду з editorial кадрами, тому галерея відчувається живою, елегантною і глибоко особистою.",
+    about_experience_title: "Досвід",
+    about_experience: "Років збереження історій кохання по всій Данії та Європі",
+    about_awards: "★ Фото тижня · ★ Unposed Moms Moments · ★ Щасливого Дня матері 2022",
     contact_heading: "Поговоримо про ваш день",
     contact_desc: "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
     whatsapp_subtitle: "Найшвидше для Європи та міжнародних пар",
@@ -259,6 +285,19 @@ const rawDefaults = {
     elopement_locations: "København · Ærø · Aarhus · Odense · Aalborg · Hele Danmark og Europa",
     meet_quote: "Jeg tror på, at de smukkeste billeder opstår, når man glemmer, at kameraet er der. Jeg holder mig i baggrunden, observerer de ægte øjeblikke, og guider kun forsigtigt, når det gør jer smukkere helt naturligt.",
     meet_btn: "Mød Oleh og hans filosofi →",
+    about_header: "Dokumentar & editorial fotografi",
+    about_tagline: "Bryllupsfotograf i Danmark & Europa",
+    about_story_1: "Mange ville skrive her om deres store kærlighed til bryllupsfotografering. Min sande passion er kunst som helhed. Bryllupper valgte simpelthen mig.",
+    about_story_2: "Helt ærligt, folk er begyndt at lægge mærke til noget i mine billeder, som jeg ikke selv så: ren ærlighed og unikke øjeblikke, der aldrig kommer igen. Det løser parrenes største problem: I skal ikke bare have ti hårdt retoucherede billeder i perfekte positurer. I skal se den ægte historie fra jeres dag. Og det klarer jeg vist ret godt... i hvert fald siger folk det.",
+    about_story_3: "Nogle siger, bryllupper er stressende. Jeg forløste selv min kones barn i en nødsituation. Intet hospital. Bare os. Jeres bryllupsdag? Stol på mig, den klarer jeg.",
+    about_quote: "Jeg sætter ægte følelser højere end tvungen perfektion, en gennemført æstetik uden støj, og en rolig proces, hvor I forbliver til stede i jeres dag.",
+    about_values_title: "Værdier",
+    about_values: "Jeg arbejder stille, observerer ærligt og guider kun, når det hjælper. Jeg sætter ægte følelser højere end tvungen perfektion, en gennemført æstetik uden støj, og en rolig proces, hvor I forbliver til stede i jeres dag.",
+    about_background_title: "Baggrund",
+    about_background: "Oprindeligt fra Ukraine, bor nu tæt på Aarhus. Jeg arbejder i hele Danmark og Europa. Mit visuelle sprog blander dokumentarisk sandhed med editorial billeder, så jeres galleri føles levende, elegant og dybt personligt.",
+    about_experience_title: "Erfaring",
+    about_experience: "År med at fange kærlighedshistorier i Danmark & Europa",
+    about_awards: "★ Ugens billeder · ★ Naturlige mor-øjeblikke · ★ Glædelig mors dag 2022",
     contact_heading: "Lad os tale om jeres dag",
     contact_desc: "Jeg foretrækker direkte, personlig kontakt. Vælg den app, I er mest trygge ved, for at tale om jeres visioner, tjekke ledighed eller bare sige hej:",
     whatsapp_subtitle: "hurtigst for Europa og internationale par",
@@ -363,7 +402,7 @@ function applyTranslations() {
         acceptNode: function (n) {
           const parent = n.parentElement;
           if (!parent) return NodeFilter.FILTER_REJECT;
-          if (parent.hasAttribute("data-i18n-key") || parent.closest("[data-i18n-key]")) {
+          if (parent.hasAttribute("data-i18n-key") || parent.closest("[data-i18n-key], .about-rich-text, [data-i18n-managed]")) {
             return NodeFilter.FILTER_REJECT;
           }
           const tag = parent.tagName.toUpperCase();
@@ -479,6 +518,7 @@ async function revalidateTranslationsFromSupabase() {
 // Make globally accessible
 window.applyTranslations = applyTranslations;
 window.revalidateTranslationsFromSupabase = revalidateTranslationsFromSupabase;
+window.getRawData = getRawData;
 
 function initLangSwitcher() {
   const currentLang = localStorage.getItem("deusflow_lang") || "en";
