@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260820-09";
+import { createStateMessage } from "./ui.js?v=20260820-10";
 
 const state = {
   selectedAlbum: null,
@@ -2766,8 +2766,8 @@ if (settingsForm) {
 
 const translationDefaults = {
   da: {
-    hero_title_1: "Stille i baggrunden.",
-    hero_title_2: "Højlydt i billederne.",
+    hero_title_1: "Jeg skaber stille det,",
+    hero_title_2: "der føles stort.",
     hero_desc: "Jeg fanger ægte følelser, afslappet elegance og stemningen fra jeres dag, som varer evigt.",
     hero_region: "Danmark og videre",
     elopement_heading: "Skal I giftes i Danmark?",
@@ -2799,8 +2799,8 @@ const translationDefaults = {
     floating_cta_note: "Kalenderen er åben for bryllupper 2026-2027 · Se alle kontaktmuligheder"
   },
   ua: {
-    hero_title_1: "Без гучних слів.",
-    hero_title_2: "Фото скажуть усе самі.",
+    hero_title_1: "Тихо створюю те,",
+    hero_title_2: "що відчувається гучно.",
     hero_desc: "Тихо фіксую справжні емоції, легку елегантність та той самий timeless вайб вашого дня.",
     hero_region: "Данія та вся Європа",
     elopement_heading: "Одружуєтесь у Данії?",

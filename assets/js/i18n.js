@@ -29,8 +29,8 @@ const UADict = {
   "Read full story": "Познайомитись з Олегом і моїм баченням",
 
   // Головний екран
-  "Not loud.": "Без гучних слів.",
-  "But your photos will be.": "Фото скажуть усе самі.",
+  "Not loud.": "Тихо створюю те,",
+  "But your photos will be.": "що відчувається гучно.",
   "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day.": "Тихо фіксую справжні емоції, легку елегантність та той самий timeless вайб вашого дня.",
   "Internationally Recognized": "Міжнародні нагороди",
   "Visual Stories": "Візуальні історії",
@@ -163,8 +163,8 @@ const DADict = {
   "Read full story": "Læs hele historien",
 
   // Index Hero & Badges
-  "Not loud.": "Ikke højlydt.",
-  "But your photos will be.": "Men det vil dine billeder være.",
+  "Not loud.": "Jeg skaber stille det,",
+  "But your photos will be.": "der føles stort.",
   "Quietly capturing honest emotion, effortless elegance, and the timeless feeling of your day.": "Fanger stille de ægte følelser, ubesværet elegance og den tidløse stemning af jeres dag.",
   "Internationally Recognized": "Internationalt anerkendt",
   "Visual Stories": "Visuelle historier",
