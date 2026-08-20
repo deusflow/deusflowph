@@ -2083,7 +2083,7 @@ button.danger {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 290px;
+    padding-top: clamp(370px, 46dvh, 395px);
     padding-bottom: 2rem;
   }
 
