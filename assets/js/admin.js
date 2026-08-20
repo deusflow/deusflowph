@@ -762,6 +762,17 @@ async function saveAboutContent(event) {
       .select("*")
       .maybeSingle();
 
+    if (result.error && result.error.message?.includes("gallery_photos")) {
+      console.warn("[Admin] gallery_photos column not in DB schema yet, saving without gallery_photos");
+      const { gallery_photos, ...corePayload } = payload;
+      result = await supabase
+        .from("about_content")
+        .update(corePayload)
+        .eq("id", 1)
+        .select("*")
+        .maybeSingle();
+    }
+
     if (result.error) {
       throw result.error;
     }
@@ -772,6 +783,16 @@ async function saveAboutContent(event) {
         .insert({ id: 1, ...payload })
         .select("*")
         .single();
+
+      if (result.error && result.error.message?.includes("gallery_photos")) {
+        const { gallery_photos, ...corePayload } = payload;
+        result = await supabase
+          .from("about_content")
+          .insert({ id: 1, ...corePayload })
+          .select("*")
+          .single();
+      }
+
       if (result.error) {
         throw result.error;
       }
