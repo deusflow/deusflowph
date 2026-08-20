@@ -1236,7 +1236,7 @@ function showAlbumDetails(album) {
 async function requireSession() {
   const supabase = getSupabase();
   try {
-    const { data, error } = await withTimeout(supabase.auth.getSession(), 5000, "getSession");
+    const { data, error } = await supabase.auth.getSession();
     if (error) {
       console.warn("[Admin Auth] Session error:", error.message);
       setAuthView(false);
@@ -3040,16 +3040,7 @@ async function saveTranslationsPayload(cardsToProcess) {
   const langs = ["da", "ua", "en"];
   const supabase = getSupabase();
 
-  let sessionData = null;
-  let sessionErr = null;
-  try {
-    const res = await withTimeout(supabase.auth.getSession(), 5000, "getSession");
-    sessionData = res?.data;
-    sessionErr = res?.error;
-  } catch (timeoutErr) {
-    showToast("Session check timed out — try refreshing the page", "error");
-    throw timeoutErr;
-  }
+  const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
   if (sessionErr || !sessionData?.session) {
     showToast("You are not logged in or your session expired. Please log in again to save.", "error");
     setAuthView(false);
@@ -3256,4 +3247,3 @@ setupTranslationsCMS();
 applyPhotoViewMode();
 updateOrderControlsState();
 updateAlbumOrderControlsState();
-boot();
