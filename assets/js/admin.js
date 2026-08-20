@@ -2529,10 +2529,15 @@ function setupDropzone() {
   });
 }
 
+let _bootRunning = false;
+
 async function boot() {
+  if (_bootRunning) return;
+  _bootRunning = true;
   try {
     const session = await requireSession();
     if (!session) {
+      _bootRunning = false;
       return;
     }
 
@@ -2568,6 +2573,8 @@ async function boot() {
   } catch (error) {
     console.error("[Admin Boot] Fatal error:", error);
     loginError.textContent = error.message;
+  } finally {
+    _bootRunning = false;
   }
 }
 
@@ -2596,10 +2603,17 @@ editAlbumForm.addEventListener("submit", saveAlbumDetails);
 try {
   const supabase = getSupabase();
   supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
+    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
       if (session) {
         setAuthView(true);
         await boot();
+      }
+    } else if (event === "INITIAL_SESSION") {
+      if (session) {
+        setAuthView(true);
+        await boot();
+      } else {
+        setAuthView(false);
       }
     } else if (event === "SIGNED_OUT") {
       setAuthView(false);
@@ -3247,3 +3261,22 @@ setupTranslationsCMS();
 applyPhotoViewMode();
 updateOrderControlsState();
 updateAlbumOrderControlsState();
+
+// Fallback: if onAuthStateChange hasn't fired within 12s, try booting directly
+setTimeout(async () => {
+  if (!_bootRunning) {
+    try {
+      const supabase = getSupabase();
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        setAuthView(true);
+        await boot();
+      } else {
+        setAuthView(false);
+      }
+    } catch (e) {
+      console.warn("[Admin] Fallback boot failed:", e);
+      setAuthView(false);
+    }
+  }
+}, 12000);
