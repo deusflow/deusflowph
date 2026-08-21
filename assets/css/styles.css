@@ -812,8 +812,10 @@ h3,
   aspect-ratio: auto;
   min-height: 260px;
   background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 #portfolio-grid .photo-media img {
@@ -3526,10 +3528,10 @@ button.danger {
   line-height: 1.4;
 }
 
-/* Cinematic Focus Portfolio Grid & Story Connection */
+/* Option 1: Champagne Gold Full Light Focus (100% Brightness Always, Zero Dimming) */
 .photo-card {
   position: relative;
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: none !important;
   transform-origin: center center;
 }
@@ -3540,29 +3542,35 @@ button.danger {
   content: none !important;
 }
 
-/* Desktop Only: subtle focus and elegant scale without trapping the cursor */
+/* Desktop: 100% Brightness always + Elegant Champagne Elevation & Aura */
 @media (hover: hover) and (pointer: fine) and (min-width: 760px) {
-  #portfolio-grid:has(.photo-card:hover) .photo-card {
-    opacity: 0.84;
-    transition: opacity 0.35s ease, transform 0.35s ease;
+  #portfolio-grid .photo-card {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  #portfolio-grid:has(.photo-card:hover) .photo-card:hover {
-    opacity: 1;
-    transform: scale(1.045);
-    z-index: 15;
+  #portfolio-grid .photo-card:hover {
+    transform: scale(1.035);
+    z-index: 20;
     cursor: zoom-in;
+  }
+
+  #portfolio-grid .photo-card:hover .photo-media {
+    border-color: rgba(212, 186, 149, 0.65);
+    box-shadow: 0 0 24px rgba(212, 186, 149, 0.12);
   }
 }
 
-/* Mobile & Touch: completely disable dimming and scaling so scrolling is clean and fast */
+/* Mobile & Touch: 100% clean, crisp and static */
 @media (max-width: 759px), (hover: none) {
   #portfolio-grid .photo-card,
-  #portfolio-grid:hover .photo-card,
-  #portfolio-grid:has(.photo-card:hover) .photo-card {
-    opacity: 1 !important;
-    filter: none !important;
+  #portfolio-grid .photo-card:hover {
     transform: none !important;
+    opacity: 1 !important;
+  }
+
+  #portfolio-grid .photo-card:hover .photo-media {
+    border-color: var(--border) !important;
+    box-shadow: none !important;
   }
 }
 
