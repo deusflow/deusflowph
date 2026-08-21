@@ -760,7 +760,7 @@ h3,
   height: 100%;
   object-fit: cover;
   transform: scale(1);
-  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
 
@@ -768,7 +768,6 @@ h3,
   position: relative;
 }
 
-.photo-card::after,
 .album-card::after {
   content: "";
   position: absolute;
@@ -841,12 +840,14 @@ h3,
   contain-intrinsic-size: 0 260px;
 }
 
-.photo-card:hover .photo-media img,
+.photo-card:hover .photo-media img {
+  transform: scale(1.14);
+}
+
 .album-card:hover .photo-media img {
   transform: scale(1.04);
 }
 
-.photo-card:hover::after,
 .album-card:hover::after {
   opacity: 1;
 }
@@ -3534,8 +3535,14 @@ button.danger {
 #portfolio-grid:hover .photo-card:hover {
   opacity: 1;
   filter: none;
-  transform: scale(1.018);
+  transform: scale(1.02);
   z-index: 5;
+}
+
+#portfolio-grid .photo-card::after,
+#portfolio-grid .photo-media::after {
+  display: none !important;
+  content: none !important;
 }
 
 .portfolio-story-badge {
