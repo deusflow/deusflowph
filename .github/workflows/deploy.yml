@@ -28,27 +28,50 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Ensure config.js exists from secret
+      - name: Ensure config.js exists
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+          INSTAGRAM_HANDLE: ${{ secrets.INSTAGRAM_HANDLE }}
+          HERO_IMAGE_URL: ${{ secrets.HERO_IMAGE_URL }}
+          FAVICON_URL: ${{ secrets.FAVICON_URL }}
+          SITE_NAME: ${{ secrets.SITE_NAME }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          DEFAULT_OG_IMAGE: ${{ secrets.DEFAULT_OG_IMAGE }}
+          CTA_LABEL: ${{ secrets.CTA_LABEL }}
+          AVAILABILITY_NOTE: ${{ secrets.AVAILABILITY_NOTE }}
+          INSTAGRAM_DM_URL: ${{ secrets.INSTAGRAM_DM_URL }}
+          TELEGRAM_URL: ${{ secrets.TELEGRAM_URL }}
+          WHATSAPP_URL: ${{ secrets.WHATSAPP_URL }}
+          BRIEF_TEMPLATE: ${{ secrets.BRIEF_TEMPLATE }}
         run: |
-          cat > config.js << 'EOF'
-          window.APP_CONFIG = {
-            SUPABASE_URL: "${{ secrets.SUPABASE_URL }}",
-            SUPABASE_ANON_KEY: "${{ secrets.SUPABASE_ANON_KEY }}",
-            CONTACT_EMAIL: "${{ secrets.CONTACT_EMAIL }}",
-            INSTAGRAM_HANDLE: "${{ secrets.INSTAGRAM_HANDLE }}",
-            HERO_IMAGE_URL: "${{ secrets.HERO_IMAGE_URL }}",
-            FAVICON_URL: "${{ secrets.FAVICON_URL }}",
-            SITE_NAME: "${{ secrets.SITE_NAME }}",
-            SITE_URL: "${{ secrets.SITE_URL || 'https://deusflow.dk' }}",
-            DEFAULT_OG_IMAGE: "${{ secrets.DEFAULT_OG_IMAGE }}",
-            CTA_LABEL: "${{ secrets.CTA_LABEL }}",
-            AVAILABILITY_NOTE: "${{ secrets.AVAILABILITY_NOTE }}",
-            INSTAGRAM_DM_URL: "${{ secrets.INSTAGRAM_DM_URL }}",
-            TELEGRAM_URL: "${{ secrets.TELEGRAM_URL }}",
-            WHATSAPP_URL: "${{ secrets.WHATSAPP_URL }}",
-            BRIEF_TEMPLATE: "${{ secrets.BRIEF_TEMPLATE }}"
-          };
-          EOF
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            node -e '
+              const fs = require("fs");
+              const config = {
+                SUPABASE_URL: process.env.SUPABASE_URL || "https://firnyacuwvxsolxljqxu.supabase.co",
+                SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || "sb_publishable_SJdi_NBh14MvubT-K1Vv4g_Ht4Ko_nl",
+                CONTACT_EMAIL: process.env.CONTACT_EMAIL || "deuswork@icloud.com",
+                INSTAGRAM_HANDLE: process.env.INSTAGRAM_HANDLE || "@deusflow",
+                HERO_IMAGE_URL: process.env.HERO_IMAGE_URL || "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg",
+                FAVICON_URL: process.env.FAVICON_URL || "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png",
+                SITE_NAME: process.env.SITE_NAME || "Oleh Ro Photography",
+                SITE_URL: process.env.SITE_URL || "https://deusflow.dk",
+                DEFAULT_OG_IMAGE: process.env.DEFAULT_OG_IMAGE || "",
+                CTA_LABEL: process.env.CTA_LABEL || "Check availability",
+                AVAILABILITY_NOTE: process.env.AVAILABILITY_NOTE || "",
+                INSTAGRAM_DM_URL: process.env.INSTAGRAM_DM_URL || "https://ig.me/m/deusflow",
+                TELEGRAM_URL: process.env.TELEGRAM_URL || "https://t.me/OflowPhotography",
+                WHATSAPP_URL: process.env.WHATSAPP_URL || "https://wa.me/4550300636",
+                BRIEF_TEMPLATE: process.env.BRIEF_TEMPLATE || "Hi Oleh! Wedding inquiry:\n- Date:\n- City:\n- Format (wedding/elopement/session):\n- Budget range:\n- Guest count:\n- Link to inspiration:",
+                ENABLE_IMAGE_TRANSFORMATION: false
+              };
+              fs.writeFileSync("config.js", "window.APP_CONFIG = " + JSON.stringify(config, null, 2) + ";\n");
+            '
+          elif [ -f "config.example.js" ] && [ ! -f "config.js" ]; then
+            cp config.example.js config.js
+          fi
 
       - name: Build static multilingual pages
         run: node scripts/build-i18n.mjs
