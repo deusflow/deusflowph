@@ -3519,14 +3519,131 @@ button.danger {
   line-height: 1.4;
 }
 
-/* Subtle photo card hover (replaces harsh 3D tilt) */
+/* Cinematic Focus Portfolio Grid & Story Connection */
 .photo-card {
-  transition: transform 0.4s var(--motion-ease), box-shadow 0.4s var(--motion-ease);
+  position: relative;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: none !important;
 }
 
-.photo-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+#portfolio-grid:hover .photo-card {
+  opacity: 0.65;
+  filter: grayscale(12%) contrast(0.96);
+}
+
+#portfolio-grid:hover .photo-card:hover {
+  opacity: 1;
+  filter: none;
+  transform: scale(1.018);
+  z-index: 5;
+}
+
+.portfolio-story-badge {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  opacity: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 186, 149, 0.4);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  pointer-events: auto;
+  white-space: nowrap;
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease, border-color 0.2s ease;
+  z-index: 10;
+}
+
+.portfolio-story-badge:hover {
+  background: rgba(212, 186, 149, 0.25);
+  border-color: var(--gold);
+  color: #fff;
+}
+
+.portfolio-story-badge .badge-icon {
+  color: var(--gold);
+  font-size: 0.8rem;
+}
+
+.photo-card:hover .portfolio-story-badge {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Lightbox Story Connection Button */
+.lightbox-story-btn {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 105;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 18, 18, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--gold);
+  color: #fff;
+  padding: 9px 20px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.lightbox-story-btn:hover {
+  background: var(--gold);
+  color: #0a0a0a;
+  transform: translateX(-50%) scale(1.03);
+}
+
+.lightbox-story-btn.is-visible {
+  display: inline-flex;
+}
+
+/* Admin Photo Card Story Selector */
+.photo-card-story-wrap {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.photo-card-story-select {
+  width: 100%;
+  background: #181818;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.photo-card-story-select:hover,
+.photo-card-story-select:focus {
+  border-color: var(--gold);
+  color: #fff;
+  outline: none;
+}
+
+.photo-card-story-select.has-link {
+  border-color: rgba(212, 186, 149, 0.6);
+  color: var(--gold);
+  background: rgba(212, 186, 149, 0.06);
 }
 
 /* Gentle Breathing Pill Button (All Stories CTA) */

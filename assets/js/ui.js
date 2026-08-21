@@ -163,6 +163,12 @@ export function setupLightbox() {
   const nextButton = lightbox.querySelector("[data-lightbox-next]");
   const pinButton = lightbox.querySelector("[data-lightbox-pin]");
   const counter = lightbox.querySelector(".lightbox-counter");
+  let storyBtn = lightbox.querySelector(".lightbox-story-btn");
+  if (!storyBtn) {
+    storyBtn = document.createElement("a");
+    storyBtn.className = "lightbox-story-btn";
+    lightbox.appendChild(storyBtn);
+  }
   let currentIndex = -1;
   let touchStartX = 0;
 
@@ -196,6 +202,16 @@ export function setupLightbox() {
     image.src = src;
     if (counter) {
       counter.textContent = `${currentIndex + 1} / ${items.length}`;
+    }
+
+    const storyTitle = trigger.getAttribute("data-story-title");
+    const storyUrl = trigger.getAttribute("data-story-url");
+    if (storyTitle && storyUrl && storyBtn) {
+      storyBtn.href = storyUrl;
+      storyBtn.innerHTML = `<span>✦ From "${escapeHTML(storyTitle)}" · View Full Story →</span>`;
+      storyBtn.classList.add("is-visible");
+    } else if (storyBtn) {
+      storyBtn.classList.remove("is-visible");
     }
 
     const hasMultiple = items.length > 1;
@@ -246,6 +262,9 @@ export function setupLightbox() {
     image.src = "";
     if (counter) {
       counter.textContent = "";
+    }
+    if (storyBtn) {
+      storyBtn.classList.remove("is-visible");
     }
     currentIndex = -1;
     document.body.style.overflow = "";

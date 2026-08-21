@@ -27,6 +27,13 @@ function buildPortfolioAlt(index) {
   return `Wedding portfolio photo in Denmark by Oleh Ro, image ${index + 1}`;
 }
 
+function getStoryUrl(slug) {
+  const isDa = window.location.pathname.includes("/da/");
+  const isUk = window.location.pathname.includes("/uk/");
+  const langPrefix = isDa ? "/da" : (isUk ? "/uk" : "");
+  return `${langPrefix}/weddings/album/?slug=${encodeURIComponent(slug)}`;
+}
+
 async function renderPortfolio() {
   if (!grid) {
     return;
@@ -66,19 +73,34 @@ async function renderPortfolio() {
 
     const albumId = albums[0].id;
 
-    const { data: photos, error: photosError } = await supabase
-      .from("photos")
-      .select("url")
-      .eq("album_id", albumId)
-      .order("display_order", { ascending: true });
+    // Fetch photos and wedding albums in parallel
+    const [photosRes, weddingAlbumsRes] = await Promise.all([
+      supabase
+        .from("photos")
+        .select("id, url, linked_album_id")
+        .eq("album_id", albumId)
+        .order("display_order", { ascending: true }),
+      supabase
+        .from("albums")
+        .select("id, title, slug")
+        .eq("type", "wedding")
+    ]);
 
-    if (photosError) {
-      throw photosError;
+    if (photosRes.error) {
+      throw photosRes.error;
     }
 
+    const photos = photosRes.data;
     if (!photos || photos.length === 0) {
       grid.appendChild(createStateMessage("This portfolio album has no photos yet."));
       return;
+    }
+
+    const weddingMap = new Map();
+    if (weddingAlbumsRes.data) {
+      weddingAlbumsRes.data.forEach((w) => {
+        weddingMap.set(w.id, { title: w.title, slug: w.slug });
+      });
     }
 
     const nodes = [];
@@ -87,9 +109,27 @@ async function renderPortfolio() {
       item.className = "photo-card reveal-up";
       const escapedUrl = escapeHTML(getOptimizedImageUrl(photo.url, 800));
       const escapedOriginalUrl = escapeHTML(photo.url);
+
+      const linkedWedding = photo.linked_album_id ? weddingMap.get(photo.linked_album_id) : null;
+      let storyBadgeHtml = "";
+      let storyDataAttrs = "";
+
+      if (linkedWedding && linkedWedding.slug) {
+        const storyUrl = getStoryUrl(linkedWedding.slug);
+        const storyTitle = linkedWedding.title || "Wedding Story";
+        storyDataAttrs = `data-story-title="${escapeHTML(storyTitle)}" data-story-url="${escapeHTML(storyUrl)}"`;
+        storyBadgeHtml = `
+          <a class="portfolio-story-badge" href="${escapeHTML(storyUrl)}" title="View full wedding story: ${escapeHTML(storyTitle)}" onclick="event.stopPropagation();">
+            <span class="badge-icon">✦</span>
+            <span>${escapeHTML(storyTitle)} →</span>
+          </a>
+        `;
+      }
+
       item.innerHTML = `
         <div class="photo-media" style="cursor: zoom-in;">
-          <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${buildPortfolioAlt(index)}" loading="lazy" decoding="async" />
+          <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" ${storyDataAttrs} alt="${buildPortfolioAlt(index)}" loading="lazy" decoding="async" />
+          ${storyBadgeHtml}
         </div>
       `;
       nodes.push(item);
@@ -109,4 +149,3 @@ renderPortfolio().then(() => {
   initScrollReveals();
   setupLightbox();
 });
-

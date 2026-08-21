@@ -29,8 +29,11 @@ create table if not exists public.photos (
   width integer,
   height integer,
   display_order integer not null default 1,
+  linked_album_id uuid references public.albums(id) on delete set null,
   created_at timestamptz not null default now()
 );
+
+alter table public.photos add column if not exists linked_album_id uuid references public.albums(id) on delete set null;
 
 -- Singleton page content for About route
 create table if not exists public.about_content (
