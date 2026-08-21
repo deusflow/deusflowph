@@ -1667,7 +1667,7 @@ async function persistPhotoOrder(reorderedPhotos, supabaseClient = null) {
       display_order: row.display_order
     }));
 
-    const { error: upsertError } = await supabase.from("photos").upsert(upsertPayload);
+    const { error: upsertError } = await supabase.from("photos").upsert(upsertPayload, { onConflict: "id" });
     if (!upsertError) {
       state.selectedAlbumPhotos = normalized;
       return true;
@@ -2406,15 +2406,21 @@ async function uploadPhotos(files) {
   setUploadBusy(true);
   setUploadStatus(`Preparing & optimizing 0/${total} photos...`, 0);
 
+  // Pre-allocate tasks and deterministic display_order indices upfront
+  const uploadTasks = imageFiles.map((file, i) => ({
+    file,
+    index: i,
+    assignedOrder: startOrder + i
+  }));
+
   // 3-Concurrency parallel upload pool
   const CONCURRENCY = 3;
-  let nextFileIndex = 0;
 
   async function processUploadWorker() {
-    while (nextFileIndex < total) {
-      const currentIndex = nextFileIndex++;
-      const originalFile = imageFiles[currentIndex];
-      const assignedOrder = startOrder + currentIndex;
+    while (uploadTasks.length > 0) {
+      const task = uploadTasks.shift();
+      if (!task) break;
+      const { file: originalFile, index: currentIndex, assignedOrder } = task;
 
       const progressPercent = total > 0 ? ((uploaded + failed) / total) * 100 : 0;
       setUploadStatus(`Optimizing & uploading (${currentIndex + 1}/${total}): ${originalFile.name}`, progressPercent);
@@ -3421,6 +3427,7 @@ updateAlbumOrderControlsState();
 window.bootAdmin = boot;
 window.openPortfolioManager = openPortfolioManager;
 window.loadAlbums = loadAlbums;
+window.saveNewPhotoDOMOrder = saveNewPhotoDOMOrder;
 
 (async () => {
   try {
