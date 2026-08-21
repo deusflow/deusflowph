@@ -375,11 +375,27 @@ function updateMessengerLinks(lang) {
   }
 }
 
+function getActiveLanguage() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const langParam = params.get("lang");
+    if (langParam) {
+      const lower = langParam.toLowerCase();
+      if (lower === "da" || lower === "dk") return "da";
+      if (lower === "uk" || lower === "ua") return "ua";
+      if (lower === "en") return "en";
+    }
+  } catch (_e) {}
+  const stored = localStorage.getItem("deusflow_lang");
+  if (stored === "uk") return "ua";
+  return stored || "en";
+}
+
 let isTranslating = false;
 
 function applyTranslations() {
   if (isTranslating) return;
-  const currentLang = localStorage.getItem("deusflow_lang") || "en";
+  const currentLang = getActiveLanguage();
   const normalizedLang = currentLang === "uk" ? "ua" : currentLang;
   const dict = getDictionary(currentLang);
   const rawData = getRawData(currentLang);
@@ -467,7 +483,7 @@ function applyTranslations() {
 
 // Background Supabase Revalidation (Stale-While-Revalidate with 5-minute TTL)
 async function revalidateTranslationsFromSupabase() {
-  const currentLang = localStorage.getItem("deusflow_lang") || "en";
+  const currentLang = getActiveLanguage();
   const normalizedLang = currentLang === "uk" ? "ua" : currentLang;
 
   const config = window.APP_CONFIG;
@@ -521,9 +537,10 @@ async function revalidateTranslationsFromSupabase() {
 window.applyTranslations = applyTranslations;
 window.revalidateTranslationsFromSupabase = revalidateTranslationsFromSupabase;
 window.getRawData = getRawData;
+window.getActiveLanguage = getActiveLanguage;
 
 function initLangSwitcher() {
-  const currentLang = localStorage.getItem("deusflow_lang") || "en";
+  const currentLang = getActiveLanguage();
   const headerRight = document.querySelector(".site-header .header-nav-right");
   const headerInner = document.querySelector(".site-header .header-inner");
   const targetParent = headerRight || headerInner;
@@ -550,8 +567,19 @@ function initLangSwitcher() {
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       if (currentLang === lang.code) return;
-      localStorage.setItem("deusflow_lang", lang.code);
-      location.reload();
+      const targetCode = lang.code === "ua" ? "uk" : lang.code;
+      localStorage.setItem("deusflow_lang", targetCode);
+      try {
+        const url = new URL(window.location.href);
+        if (targetCode === "en") {
+          url.searchParams.delete("lang");
+        } else {
+          url.searchParams.set("lang", targetCode);
+        }
+        window.location.href = url.toString();
+      } catch (_err) {
+        location.reload();
+      }
     });
 
     toggleContainer.appendChild(btn);

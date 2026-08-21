@@ -45,7 +45,7 @@ if (missing.length > 0) {
 
 const htmlChecks = [
   { file: "index.html", includes: ["assets/css/styles.css", "assets/js/home.js", "assets/js/seo.js", "assets/js/cta.js", "<link rel=\"canonical\"", "og:title"] },
-  { file: "about/index.html", includes: ["../assets/js/about.js", "../assets/js/seo.js", "../assets/js/cta.js", "Testimonials", "<link rel=\"canonical\""] },
+  { file: "about/index.html", includes: ["../assets/js/about.js", "../assets/js/seo.js", "../assets/js/cta.js", "Values", "<link rel=\"canonical\""] },
   { file: "portfolio/index.html", includes: ["../assets/js/portfolio.js", "../assets/js/seo.js", "../assets/js/cta.js", "<link rel=\"canonical\""] },
   { file: "weddings/index.html", includes: ["../assets/js/weddings.js", "../assets/js/seo.js", "../assets/js/cta.js", "<link rel=\"canonical\""] },
   { file: "weddings/album/index.html", includes: ["../../assets/js/wedding-album.js", "../../assets/js/seo.js", "../../assets/js/cta.js", "id=\"lightbox\"", "<link rel=\"canonical\""] },
