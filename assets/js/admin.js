@@ -2651,6 +2651,13 @@ function setupTabSwitching() {
 }
 
 function setupDropzone() {
+  dropzone.addEventListener("click", (event) => {
+    // Avoid re-triggering if the click originated from an internal input
+    if (event.target !== photoUploadInput) {
+      photoUploadInput.click();
+    }
+  });
+
   dropzone.addEventListener("dragover", (event) => {
     event.preventDefault();
     if (!state.uploadInProgress) {
@@ -2683,6 +2690,13 @@ function setupDropzone() {
     await uploadPhotos(files);
     photoUploadInput.value = "";
   });
+
+  const showCreateAlbumBtn = document.getElementById("show-create-album-btn");
+  if (showCreateAlbumBtn) {
+    showCreateAlbumBtn.addEventListener("click", () => {
+      document.getElementById("create-album-section")?.scrollIntoView({ behavior: "smooth" });
+    });
+  }
 }
 
 let _bootRunning = false;
