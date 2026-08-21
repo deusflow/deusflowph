@@ -1812,7 +1812,7 @@ async function loadPhotos(albumId) {
 
   const { data: photos, error } = await supabase
     .from("photos")
-    .select("id, url, display_order")
+    .select("id, url, display_order, linked_album_id")
     .eq("album_id", albumId)
     .order("display_order", { ascending: true });
 
@@ -2093,6 +2093,40 @@ async function loadPhotos(albumId) {
     row.appendChild(badge);
     row.appendChild(deleteBtn);
     row.appendChild(info);
+
+    // If portfolio album, allow linking each photo to a specific wedding story
+    if (state.selectedAlbum && (state.selectedAlbum.type === "portfolio" || state.selectedAlbum.slug === "portfolio-main")) {
+      const weddingAlbums = (state.albums || []).filter((a) => a.type === "wedding");
+      const storyWrap = document.createElement("div");
+      storyWrap.className = "photo-card-story-wrap";
+      const storySelect = document.createElement("select");
+      storySelect.className = `photo-card-story-select ${photo.linked_album_id ? "has-link" : ""}`;
+      storySelect.title = "Link this portfolio photo to a full wedding story";
+      storySelect.innerHTML = `<option value="">✦ No linked story</option>` +
+        weddingAlbums.map((a) => `<option value="${a.id}" ${photo.linked_album_id === a.id ? "selected" : ""}>✦ Story: ${escapeHTML(a.title)}</option>`).join("");
+
+      storySelect.addEventListener("change", async (e) => {
+        e.stopPropagation();
+        const val = storySelect.value || null;
+        setUploadStatus("Linking story...", 30);
+        const { error: linkErr } = await supabase
+          .from("photos")
+          .update({ linked_album_id: val })
+          .eq("id", photo.id);
+
+        if (linkErr) {
+          setUploadStatus(`Error updating story link: ${linkErr.message}`, 0, "error");
+          return;
+        }
+        photo.linked_album_id = val;
+        storySelect.classList.toggle("has-link", Boolean(val));
+        setUploadStatus("Linked wedding story updated!", 100);
+      });
+
+      storyWrap.appendChild(storySelect);
+      row.appendChild(storyWrap);
+    }
+
     photosList.appendChild(row);
   });
 }
