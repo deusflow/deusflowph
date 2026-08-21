@@ -6,7 +6,7 @@ window.APP_CONFIG = {
   HERO_IMAGE_URL: "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg",
   FAVICON_URL: "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png",
   SITE_NAME: "Oleh Ro Photography",
-  SITE_URL: "https://deusflow.github.io/deusflowph",
+  SITE_URL: "https://deusflow.dk",
   DEFAULT_OG_IMAGE: "",
   CTA_LABEL: "Check availability",
   AVAILABILITY_NOTE: "",

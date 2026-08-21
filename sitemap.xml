@@ -2,101 +2,101 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://deusflow.github.io/deusflowph/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/?lang=uk" />
+    <loc>https://deusflow.dk/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/?lang=uk" />
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/portfolio/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/portfolio/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/portfolio/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/portfolio/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/portfolio/?lang=uk" />
+    <loc>https://deusflow.dk/portfolio/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/portfolio/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/portfolio/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/portfolio/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/portfolio/?lang=uk" />
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/weddings/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/weddings/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/weddings/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/weddings/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/weddings/?lang=uk" />
+    <loc>https://deusflow.dk/weddings/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/weddings/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/weddings/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/weddings/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/weddings/?lang=uk" />
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/weddings/album/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/weddings/album/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/weddings/album/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/weddings/album/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/weddings/album/?lang=uk" />
+    <loc>https://deusflow.dk/weddings/album/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/weddings/album/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/weddings/album/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/weddings/album/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/weddings/album/?lang=uk" />
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/pricing/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/pricing/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/pricing/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/pricing/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/pricing/?lang=uk" />
+    <loc>https://deusflow.dk/pricing/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/pricing/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/pricing/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/pricing/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/pricing/?lang=uk" />
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/about/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/about/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/about/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/about/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/about/?lang=uk" />
+    <loc>https://deusflow.dk/about/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/about/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/about/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/about/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/about/?lang=uk" />
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/locations/aarhus/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/locations/aarhus/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/locations/aarhus/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/locations/aarhus/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/locations/aarhus/?lang=uk" />
+    <loc>https://deusflow.dk/locations/aarhus/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/aarhus/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/aarhus/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/locations/aarhus/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/locations/aarhus/?lang=uk" />
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/locations/copenhagen/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/locations/copenhagen/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/locations/copenhagen/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/locations/copenhagen/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/locations/copenhagen/?lang=uk" />
+    <loc>https://deusflow.dk/locations/copenhagen/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/copenhagen/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/copenhagen/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/locations/copenhagen/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/locations/copenhagen/?lang=uk" />
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/locations/odense/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/locations/odense/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/locations/odense/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/locations/odense/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/locations/odense/?lang=uk" />
+    <loc>https://deusflow.dk/locations/odense/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/odense/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/odense/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/locations/odense/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/locations/odense/?lang=uk" />
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/locations/aalborg/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/locations/aalborg/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/locations/aalborg/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/locations/aalborg/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/locations/aalborg/?lang=uk" />
+    <loc>https://deusflow.dk/locations/aalborg/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/aalborg/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/aalborg/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/locations/aalborg/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/locations/aalborg/?lang=uk" />
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://deusflow.github.io/deusflowph/legal/</loc>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.github.io/deusflowph/legal/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.github.io/deusflowph/legal/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.github.io/deusflowph/legal/?lang=da" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.github.io/deusflowph/legal/?lang=uk" />
+    <loc>https://deusflow.dk/legal/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/legal/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/legal/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/legal/?lang=da" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/legal/?lang=uk" />
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
