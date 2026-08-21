@@ -811,16 +811,32 @@ h3,
 
 #portfolio-grid .photo-media {
   aspect-ratio: auto;
-  background: transparent;
+  min-height: 260px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 #portfolio-grid .photo-media img {
+  width: 100%;
   height: auto;
   object-fit: contain;
+  display: block;
+  content-visibility: auto;
 }
 
 #album-grid .masonry-item {
-  background: transparent;
+  min-height: 260px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+#album-grid .masonry-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  content-visibility: auto;
 }
 
 .photo-card:hover .photo-media img,

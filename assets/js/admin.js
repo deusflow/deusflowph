@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage } from "./ui.js?v=20260820-13";
+import { createStateMessage, getOptimizedImageUrl } from "./ui.js?v=20260820-13";
 
 const state = {
   selectedAlbum: null,
@@ -1653,23 +1653,44 @@ async function persistPhotoOrder(reorderedPhotos, supabaseClient = null) {
   const normalized = reorderedPhotos.map((photo, index) => ({ ...photo, display_order: index + 1 }));
   const changedRows = normalized.filter((photo) => oldOrder.get(photo.id) !== photo.display_order);
 
-  const promises = changedRows.map((row) =>
-    supabase
-      .from("photos")
-      .update({ display_order: row.display_order })
-      .eq("id", row.id)
-  );
-
-  if (promises.length === 0) {
+  if (changedRows.length === 0) {
     state.selectedAlbumPhotos = normalized;
     return true;
   }
 
-  const results = await Promise.all(promises);
-  const failed = results.find((r) => r.error);
-  if (failed) {
-    setUploadStatus(`Could not reorder photos: ${failed.error.message}`, 0, "error");
-    return false;
+  // 1. Fast Path: Single-request bulk upsert for all changed photos
+  try {
+    const upsertPayload = changedRows.map((row) => ({
+      id: row.id,
+      album_id: state.selectedAlbum.id,
+      url: row.url,
+      display_order: row.display_order
+    }));
+
+    const { error: upsertError } = await supabase.from("photos").upsert(upsertPayload);
+    if (!upsertError) {
+      state.selectedAlbumPhotos = normalized;
+      return true;
+    }
+    console.warn("[Admin] Bulk upsert fallback:", upsertError.message);
+  } catch (upsertEx) {
+    console.warn("[Admin] Bulk upsert error, using chunked updates:", upsertEx);
+  }
+
+  // 2. Safe Fallback: Chunked updates (batch size 8) to prevent connection flooding
+  const CHUNK_SIZE = 8;
+  for (let i = 0; i < changedRows.length; i += CHUNK_SIZE) {
+    const chunk = changedRows.slice(i, i + CHUNK_SIZE);
+    const results = await Promise.all(
+      chunk.map((row) =>
+        supabase.from("photos").update({ display_order: row.display_order }).eq("id", row.id)
+      )
+    );
+    const failed = results.find((r) => r.error);
+    if (failed) {
+      setUploadStatus(`Could not reorder photos: ${failed.error.message}`, 0, "error");
+      return false;
+    }
   }
 
   state.selectedAlbumPhotos = normalized;
@@ -1822,9 +1843,10 @@ async function loadPhotos(albumId) {
     const media = document.createElement("div");
     media.className = "photo-card-media";
     const img = document.createElement("img");
-    img.src = photo.url;
+    img.src = getOptimizedImageUrl(photo.url, 400);
     img.alt = `Photo ${index + 1}`;
     img.loading = "lazy";
+    img.decoding = "async";
     media.appendChild(img);
 
     // Order indicator Badge
@@ -2249,11 +2271,66 @@ async function saveAlbumDetails(event) {
    IMAGE COMPRESSION & OPTIMIZATION UTILITY
    ========================================================================== */
 
+let imageCompressorWorker = null;
+let workerMsgId = 1;
+const pendingWorkerRequests = new Map();
+
+function getCompressorWorker() {
+  if (!imageCompressorWorker && typeof Worker !== "undefined") {
+    try {
+      imageCompressorWorker = new Worker("../assets/js/workers/image-compressor.worker.js");
+      imageCompressorWorker.onmessage = function (e) {
+        const { id, success, blob, name, error } = e.data;
+        const cb = pendingWorkerRequests.get(id);
+        if (cb) {
+          pendingWorkerRequests.delete(id);
+          if (success && blob) {
+            const compressedFile = new File([blob], name || "photo.webp", { type: "image/webp" });
+            cb.resolve(compressedFile);
+          } else {
+            cb.reject(new Error(error || "Worker compression failed"));
+          }
+        }
+      };
+      imageCompressorWorker.onerror = function (err) {
+        console.warn("[Worker] Compression error:", err);
+      };
+    } catch (err) {
+      console.warn("[Worker] Could not initialize compressor worker:", err);
+      imageCompressorWorker = null;
+    }
+  }
+  return imageCompressorWorker;
+}
+
+async function compressImageViaWorker(file, maxDimension = 2560, quality = 0.85) {
+  const worker = getCompressorWorker();
+  if (!worker) {
+    return null;
+  }
+  return new Promise((resolve, reject) => {
+    const id = workerMsgId++;
+    pendingWorkerRequests.set(id, { resolve, reject });
+    worker.postMessage({ id, file, maxDimension, quality });
+  });
+}
+
 async function compressImageFile(file, maxDimension = 2560, quality = 0.85) {
   if (!file || !file.type.startsWith("image/") || file.type === "image/svg+xml" || file.type === "image/gif") {
     return file;
   }
 
+  // 1. Off-thread Web Worker compression (zero Main Thread freezing)
+  try {
+    const workerResult = await compressImageViaWorker(file, maxDimension, quality);
+    if (workerResult) {
+      return workerResult;
+    }
+  } catch (workerErr) {
+    console.warn("[Compressor] Worker fallback:", workerErr.message);
+  }
+
+  // 2. Main-thread fallback if Web Worker / OffscreenCanvas unavailable
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -2278,7 +2355,6 @@ async function compressImageFile(file, maxDimension = 2560, quality = 0.85) {
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Try webp first, fallback to jpeg
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -2286,8 +2362,7 @@ async function compressImageFile(file, maxDimension = 2560, quality = 0.85) {
               return;
             }
             const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-            const compressedFile = new File([blob], cleanName, { type: "image/webp" });
-            resolve(compressedFile);
+            resolve(new File([blob], cleanName, { type: "image/webp" }));
           },
           "image/webp",
           quality
@@ -2328,47 +2403,54 @@ async function uploadPhotos(files) {
       ? Math.max(...state.selectedAlbumPhotos.map((photo) => photo.display_order || 0)) + 1
       : 1;
 
-  let order = startOrder;
   setUploadBusy(true);
   setUploadStatus(`Preparing & optimizing 0/${total} photos...`, 0);
 
-  for (let i = 0; i < total; i++) {
-    const originalFile = imageFiles[i];
-    const completed = uploaded + failed;
-    const progressPercent = total > 0 ? (completed / total) * 100 : 0;
-    setUploadStatus(`Optimizing & uploading ${i + 1}/${total}: ${originalFile.name}`, progressPercent);
+  // 3-Concurrency parallel upload pool
+  const CONCURRENCY = 3;
+  let nextFileIndex = 0;
 
-    try {
-      // Automatic client-side compression (converts 15-30MB camera originals to crisp 350KB WebP)
-      const optimizedFile = await compressImageFile(originalFile, 2560, 0.85);
+  async function processUploadWorker() {
+    while (nextFileIndex < total) {
+      const currentIndex = nextFileIndex++;
+      const originalFile = imageFiles[currentIndex];
+      const assignedOrder = startOrder + currentIndex;
 
-      const extension = optimizedFile.name.split(".").pop() || "webp";
-      const path = `albums/${state.selectedAlbum.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+      const progressPercent = total > 0 ? ((uploaded + failed) / total) * 100 : 0;
+      setUploadStatus(`Optimizing & uploading (${currentIndex + 1}/${total}): ${originalFile.name}`, progressPercent);
 
-      const publicUrl = await uploadToPhotosBucket(optimizedFile, path);
-      const { error } = await supabase.from("photos").insert({
-        album_id: state.selectedAlbum.id,
-        url: publicUrl,
-        display_order: order,
-        width: null,
-        height: null
-      });
+      try {
+        const optimizedFile = await compressImageFile(originalFile, 2560, 0.85);
+        const extension = optimizedFile.name.split(".").pop() || "webp";
+        const path = `albums/${state.selectedAlbum.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
 
-      if (error) {
-        throw error;
+        const publicUrl = await uploadToPhotosBucket(optimizedFile, path);
+        const { error } = await supabase.from("photos").insert({
+          album_id: state.selectedAlbum.id,
+          url: publicUrl,
+          display_order: assignedOrder,
+          width: null,
+          height: null
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        uploaded += 1;
+      } catch (err) {
+        failed += 1;
+        console.error(`Upload failed for ${originalFile.name}:`, err);
       }
 
-      uploaded += 1;
-      order += 1;
-    } catch (err) {
-      failed += 1;
-      console.error(`Upload failed for ${originalFile.name}:`, err);
+      const done = uploaded + failed;
+      const percent = total > 0 ? (done / total) * 100 : 100;
+      setUploadStatus(`Uploaded ${uploaded}/${total}${failed ? `, failed ${failed}` : ""}`, percent, failed ? "error" : "default");
     }
-
-    const done = uploaded + failed;
-    const percent = total > 0 ? (done / total) * 100 : 100;
-    setUploadStatus(`Uploaded ${uploaded}/${total}${failed ? `, failed ${failed}` : ""}`, percent, failed ? "error" : "default");
   }
+
+  const workerPromises = Array.from({ length: Math.min(CONCURRENCY, total) }, () => processUploadWorker());
+  await Promise.all(workerPromises);
 
   await loadPhotos(state.selectedAlbum.id);
   setUploadBusy(false);
@@ -2378,6 +2460,7 @@ async function uploadPhotos(files) {
     showToast(`Successfully added ${uploaded} photo(s) to album!`, "success");
   } else {
     setUploadStatus(`Upload finished with issues: ${uploaded} uploaded, ${failed} failed.`, 100, "error");
+    showToast(`Upload finished: ${uploaded} succeeded, ${failed} failed.`, "error");
   }
 }
 
