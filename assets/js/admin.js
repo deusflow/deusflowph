@@ -1493,7 +1493,7 @@ async function loadAlbums() {
       downButton.type = "button";
       downButton.className = "admin-btn ghost small";
       downButton.textContent = "Down";
-      downButton.disabled = weddingIndex === weddingAlbumsCurrent.length - 1;
+      downButton.disabled = weddingIndex === weddingAlbums.length - 1;
       downButton.addEventListener("click", async () => {
         const sibling = row.nextSibling;
         if (sibling && sibling.classList.contains("album-row")) {
@@ -1509,9 +1509,9 @@ async function loadAlbums() {
       moveInput.type = "number";
       moveInput.className = "move-to-input album-move-input";
       moveInput.min = "1";
-      moveInput.max = String(weddingAlbumsCurrent.length);
+      moveInput.max = String(weddingAlbums.length);
       moveInput.placeholder = "#";
-      moveInput.title = `Move album to position 1-${weddingAlbumsCurrent.length}`;
+      moveInput.title = `Move album to position 1-${weddingAlbums.length}`;
 
       const moveButton = document.createElement("button");
       moveButton.type = "button";
@@ -1519,7 +1519,7 @@ async function loadAlbums() {
       moveButton.textContent = "Set";
 
       const moveAlbumToPosition = async () => {
-        const pos = parseTargetPosition(moveInput.value, weddingAlbumsCurrent.length);
+        const pos = parseTargetPosition(moveInput.value, weddingAlbums.length);
         if (pos === null) return;
         const targetRow = albumsList.children[pos];
         if (targetRow && targetRow !== row) {
