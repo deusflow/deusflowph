@@ -2,8 +2,18 @@
   try {
     const config = window.APP_CONFIG || {};
     const siteUrl = (config.SITE_URL || window.location.origin).replace(/\/$/, "");
-    const canonicalPath = window.location.pathname + window.location.search;
-    const canonicalUrl = `${siteUrl}${canonicalPath}`;
+
+    // Strip tracking params from canonical — only keep content-meaningful params (slug, lang)
+    const rawParams = new URLSearchParams(window.location.search);
+    const cleanParams = new URLSearchParams();
+    const trackingPrefixes = ["utm_", "fbclid", "gclid", "igshid", "mc_", "ref", "_ga", "hsCtaTracking"];
+    for (const [key, value] of rawParams) {
+      if (!trackingPrefixes.some((prefix) => key.toLowerCase().startsWith(prefix))) {
+        cleanParams.set(key, value);
+      }
+    }
+    const cleanSearch = cleanParams.toString() ? `?${cleanParams.toString()}` : "";
+    const canonicalUrl = `${siteUrl}${window.location.pathname}${cleanSearch}`;
 
     const canonical = document.querySelector("link[rel='canonical']");
     if (canonical) {
@@ -69,3 +79,18 @@ window.injectDynamicSchema = function(type, data) {
     console.warn("Failed to inject dynamic schema", err);
   }
 };
+
+// Global image error fallback — gracefully hide broken images instead of showing browser's broken-file icon
+document.addEventListener("error", function (e) {
+  if (e.target.tagName === "IMG" && !e.target.dataset.fallbackApplied) {
+    e.target.dataset.fallbackApplied = "true";
+    e.target.style.opacity = "0";
+    e.target.style.minHeight = "0";
+
+    // If inside a photo-card or masonry-item, collapse the container gracefully
+    const card = e.target.closest(".photo-card, .masonry-item, .photo-media");
+    if (card) {
+      card.style.display = "none";
+    }
+  }
+}, true);

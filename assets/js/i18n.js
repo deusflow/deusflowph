@@ -376,6 +376,7 @@ function updateMessengerLinks(lang) {
 }
 
 function getActiveLanguage() {
+  // 1. Explicit ?lang= query parameter (highest priority — user just clicked switcher)
   try {
     const params = new URLSearchParams(window.location.search);
     const langParam = params.get("lang");
@@ -386,6 +387,22 @@ function getActiveLanguage() {
       if (lower === "en") return "en";
     }
   } catch (_e) {}
+
+  // 2. URL pathname: /da/... → Danish, /uk/... → Ukrainian
+  try {
+    const pathLang = window.location.pathname.split("/").filter(Boolean)[0];
+    if (pathLang === "da") return "da";
+    if (pathLang === "uk") return "ua";
+  } catch (_e) {}
+
+  // 3. <html lang="..."> attribute (set at build time by static generator)
+  try {
+    const htmlLang = document.documentElement.lang?.toLowerCase();
+    if (htmlLang === "da") return "da";
+    if (htmlLang === "uk" || htmlLang === "ua") return "ua";
+  } catch (_e) {}
+
+  // 4. localStorage (user's previous explicit choice)
   const stored = localStorage.getItem("deusflow_lang");
   if (stored === "uk") return "ua";
   return stored || "en";
