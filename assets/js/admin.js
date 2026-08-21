@@ -532,11 +532,20 @@ async function savePricingContent(event) {
     state.pricingContent = result.data;
     localStorage.setItem("deusflow_pricing_cache", JSON.stringify(result.data));
     fillPricingForm({ ...getDefaultPricingPayload(), ...result.data });
+
+    // Also save multilingual text cards inside pricing form if present
+    const pricingTransCards = Array.from(pricingForm.querySelectorAll(".admin-card")).filter((c) => c.querySelector("input[id^='trans-'], textarea[id^='trans-']"));
+    if (pricingTransCards.length > 0) {
+      await saveTranslationsPayload(pricingTransCards);
+    }
+
     setUploadStatus("Pricing page saved.", 100);
     setPricingStatus("Pricing page saved.");
+    showToast("Pricing packages and texts saved successfully!", "success");
   } catch (error) {
     setUploadStatus(`Could not save Pricing page: ${error.message}`, 0, "error");
     setPricingStatus(`Could not save Pricing page: ${error.message}`, "error");
+    showToast(`Could not save pricing: ${error.message}`, "error");
   } finally {
     savePricingButton.disabled = false;
     savePricingButton.textContent = "Save Pricing";
@@ -3043,7 +3052,64 @@ const translationDefaults = {
     prefilled_message: "Hej Oleh! Vi planlægger vores bryllup den [Dato] i [By/Sted]. Er denne dato ledig?",
     email_subject: "Forespørgsel om bryllupsfotografering",
     footer_desc: "Baseret i Danmark (Aarhus-området), tilgængelig i hele Europa.",
-    floating_cta_note: "Kalenderen er åben for bryllupper 2026-2027 · Se alle kontaktmuligheder"
+    floating_cta_note: "Kalenderen er åben for bryllupper 2026-2027 · Se alle kontaktmuligheder",
+
+    // Pricing: Included & Add-ons
+    pricing_included_eyebrow: "Inkluderet i alle pakker",
+    pricing_included_title: "Hvad I altid modtager.",
+    pricing_included_1: "Forudgående planlægningssamtale og rådgivning om tidsplan",
+    pricing_included_2: "Signatur-farvegraduering og omhyggelig udvælgelse",
+    pricing_included_3: "Privat online galleri i fuld opløsning",
+    pricing_included_4: "Rettigheder til personlig brug, deling og print",
+    pricing_addons_eyebrow: "Tilkøb",
+    pricing_addons_title: "Populære tilkøb.",
+    pricing_addon_1: "Ekstra timer til længere bryllupper",
+    pricing_addon_2: "Hurtig levering af udvalgte højdepunkter",
+    pricing_addon_3: "Hjælp til eksklusive fine-art prints",
+    pricing_addon_4: "Flere dages dækning i Danmark og Europa",
+
+    // Pricing: How I Work
+    pricing_process_eyebrow: "Sådan arbejder jeg",
+    pricing_process_title: "En gennemskuelig proces fra start til slut.",
+    pricing_step1_title: "1. Første snak",
+    pricing_step1_desc: "Vi starter med en kort samtale for at forstå jeres dag, stemning og forventninger.",
+    pricing_step2_title: "2. Det rette match",
+    pricing_step2_desc: "Vi mærker efter, om jeg er den rette fotograf for jer, og om stilen passer.",
+    pricing_step3_title: "3. Booking og forudbetaling",
+    pricing_step3_desc: "For at reservere jeres dato sender jeg aftale og betalingsoplysninger.",
+    pricing_step4_title: "4. Bryllupsdagen",
+    pricing_step4_desc: "Jeg dokumenterer dagen stille og naturligt, og guider kun, når det hjælper.",
+    pricing_step5_title: "5. Levering til tiden",
+    pricing_step5_desc: "I modtager jeres færdige galleri inden for den aftalte tidsramme.",
+
+    // Pricing: FAQ
+    pricing_faq_eyebrow: "FAQ",
+    pricing_faq_title: "Svar på de mest almindelige spørgsmål.",
+    pricing_faq_q1: "Hvornår skal vi booke?",
+    pricing_faq_a1: "De fleste par booker 6-12 måneder i forvejen. Populære sommerdatoer i Danmark bliver oftest booket først.",
+    pricing_faq_q2: "Rejser du rundt?",
+    pricing_faq_a2: "Ja. Jeg bor nær Aarhus og arbejder i hele Danmark og Europa. Rejsebetingelser aftales altid inden booking.",
+    pricing_faq_q3: "Hvad hvis det regner?",
+    pricing_faq_a3: "Regn er aldrig et problem. Jeg tilpasser mig altid med backup-locations og lys, så jeres billeder bliver fantastiske uanset vejret.",
+    pricing_faq_q4: "Hvordan fungerer booking og betaling?",
+    pricing_faq_a4: "For at reservere datoen betales et depositum på 50%. De resterende 50% betales på bryllupsdagen.",
+    pricing_faq_q5: "Gemmer du backup af billederne?",
+    pricing_faq_a5: "Ja. Jeg gemmer en sikkerhedskopi af jeres billeder i 1 år efter levering.",
+    pricing_faq_q6: "Hvordan modtager vi billederne?",
+    pricing_faq_a6: "I får billeder i fuld opløsning i et skygalleri uden komprimering, samt et privat link, der er nemt at dele med familie og venner.",
+    pricing_faq_q7: "Hvad med ophavsret og brug af billederne?",
+    pricing_faq_a7: "I må frit bruge og printe billederne til personlig brug. Kommerciel brug eller publikationer aftales særskilt.",
+    pricing_social_proof: "Udtalelser fra tidligere par deles i mine Instagram stories og highlights. På anmodning kan jeg også sende private anmeldelser.",
+
+    // Pricing: Process Stories
+    pricing_stories_eyebrow: "Erfaringer fra virkeligheden",
+    pricing_stories_title: "Sådan håndterer jeg uforudsete øjeblikke.",
+    pricing_story1_title: "Vind og vejr bliver en del af historien",
+    pricing_story1_desc: "Når vinden er smuk, bruger vi bevægelsen til filmiske billeder. Bliver det for voldsomt, rykker vi ind på hotellet eller restauranten og skaber eksklusive editorial portrætter.",
+    pricing_story2_title: "Reportage først, vejledning når det behøves",
+    pricing_story2_desc: "Min grundstil er dokumentarisk. Jeg holder mig i baggrunden og fanger dagen naturligt, men hjælper altid med posering, når det er tid til portrætter.",
+    pricing_story3_title: "Tydelig tidsplan og levering",
+    pricing_story3_desc: "Jeres redigerede billeder leveres inden for 4 uger uden forsinkelse, i fuld opløsning via skyarkiv og privat gallerilink."
   },
   ua: {
     hero_title_1: "Тихо створюю те,",
@@ -3076,7 +3142,64 @@ const translationDefaults = {
     prefilled_message: "Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?",
     email_subject: "Запит щодо весільної фотозйомки",
     footer_desc: "Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі.",
-    floating_cta_note: "Бронювання весіль на сезон 2026-2027 відкрито · Усі способи зв'язку"
+    floating_cta_note: "Бронювання весіль на сезон 2026-2027 відкрито · Усі способи зв'язку",
+
+    // Pricing: Included & Add-ons
+    pricing_included_eyebrow: "Включено в кожну серію",
+    pricing_included_title: "Що ви завжди отримуєте.",
+    pricing_included_1: "Попередня консультація та допомога з таймінгом дня",
+    pricing_included_2: "Авторська колористика та ретельна селекція кадрів",
+    pricing_included_3: "Приватна онлайн-галерея у повній роздільній здатності",
+    pricing_included_4: "Права на особисте використання для друку та соцмереж",
+    pricing_addons_eyebrow: "Додаткові опції",
+    pricing_addons_title: "Популярні доповнення.",
+    pricing_addon_1: "Додаткові години зйомки для тривалих свят",
+    pricing_addon_2: "Термінова віддача хайлайтів",
+    pricing_addon_3: "Підготовка та допомога з преміальним fine-art друком",
+    pricing_addon_4: "Багатоденна зйомка весіль по Данії та Європі",
+
+    // Pricing: How I Work
+    pricing_process_eyebrow: "Як я працюю",
+    pricing_process_title: "Прозорий процес від знайомства до результату.",
+    pricing_step1_title: "1. Знайомство та перший чат",
+    pricing_step1_desc: "Починаємо з короткої розмови в чаті, щоб зрозуміти формат вашого дня, настрій та очікування.",
+    pricing_step2_title: "2. Взаємний метч",
+    pricing_step2_desc: "Чесно розуміємо, чи я ваш фотограф і чи збігається наше відчуття естетики та стилю.",
+    pricing_step3_title: "3. Бронювання та передоплата",
+    pricing_step3_desc: "Щоб зафіксувати дату за вами, я надсилаю деталі бронювання та реквізити для передоплати.",
+    pricing_step4_title: "4. Зйомка весільного дня",
+    pricing_step4_desc: "Документую день тихо й природно, спрямовуючи лише тоді, коли це дійсно потрібно для красивих кадрів.",
+    pricing_step5_title: "5. Вчасна віддача результату",
+    pricing_step5_desc: "Ви отримуєте готову стильну галерею у чітко обумовлені терміни без затримок.",
+
+    // Pricing: FAQ
+    pricing_faq_eyebrow: "FAQ",
+    pricing_faq_title: "Відповіді на часті запитання.",
+    pricing_faq_q1: "Коли варто бронювати дату?",
+    pricing_faq_a1: "Більшість пар бронюють за 6–12 місяців. Популярні літні дати в Данії зазвичай бронюють першими.",
+    pricing_faq_q2: "Чи виїжджаєте ви в інші міста та країни?",
+    pricing_faq_a2: "Так. Я базуюся біля Орхуса та знімаю по всій Данії та Європі. Умови проїзду завжди узгоджуються до бронювання.",
+    pricing_faq_q3: "Що робити, якщо піде дощ?",
+    pricing_faq_a3: "Дощ — це не проблема. Я завжди маю запасні локації та варіанти зі світлом, щоб ваша серія вийшла ідеальною за будь-якої погоди.",
+    pricing_faq_q4: "Як відбувається бронювання та оплата?",
+    pricing_faq_a4: "Для фіксації дати вноситься передоплата 50%. Решта 50% сплачується в день весілля.",
+    pricing_faq_q5: "Чи зберігаються резервні копії фотографій?",
+    pricing_faq_a5: "Так. Я зберігаю резервний архів ваших фотографій протягом 1 року після віддачі.",
+    pricing_faq_q6: "Як ми отримаємо готові фото?",
+    pricing_faq_a6: "Ви отримуєте файли у максимальній якості в хмарній галереї без стиснення + зручне приватне посилання для перегляду та пересилання близьким.",
+    pricing_faq_q7: "Як щодо авторських прав та використання?",
+    pricing_faq_a7: "Ви можете вільно друкувати фото та ділитися ними в соцмережах для особистого користування. Комерційне використання чи публікації узгоджуються окремо.",
+    pricing_social_proof: "Відгуки моїх молодят я публікую в Instagram Stories та Highlights. За запитом можу надіслати додаткові рекомендації.",
+
+    // Pricing: Process Stories
+    pricing_stories_eyebrow: "Історії зі зйомок",
+    pricing_stories_title: "Як я вирішую реальні моменти весільного дня.",
+    pricing_story1_title: "Вітер і погода стають частиною історії",
+    pricing_story1_desc: "Коли вітер гарний, ми використовуємо цей рух для кінематографічних кадрів. Якщо стає некомфортно — переміщуємося в ресторан чи готель і створюємо преміальні editorial портрети зі світлом.",
+    pricing_story2_title: "Спершу репортаж, підказка — коли потрібно",
+    pricing_story2_desc: "Мій базовий стиль — документальний. Я тихо супроводжую пару й спостерігаю, не заважаючи святу, але завжди м'яко скеровую для стильних журнальних портретів.",
+    pricing_story3_title: "Чіткі терміни та віддача",
+    pricing_story3_desc: "Готова оброблена серія віддається рівно за 4 тижні без жодних затримок, у повній роздільній здатності через хмару з приватним посиланням."
   },
   en: {
     hero_title_1: "Not loud.",
@@ -3109,7 +3232,64 @@ const translationDefaults = {
     prefilled_message: "Hi Oleh! We are planning our wedding on [Date] in [City/Venue]. Is this date available?",
     email_subject: "Wedding Photography Inquiry",
     footer_desc: "Based in Denmark (Aarhus area), available across Europe.",
-    floating_cta_note: "Calendar open for 2026-2027 weddings · See all contact options"
+    floating_cta_note: "Calendar open for 2026-2027 weddings · See all contact options",
+
+    // Pricing: Included & Add-ons
+    pricing_included_eyebrow: "Included in Every Collection",
+    pricing_included_title: "What you always get.",
+    pricing_included_1: "Pre-wedding planning chat and timeline guidance",
+    pricing_included_2: "Signature color grading and careful curation",
+    pricing_included_3: "Private online gallery in full resolution",
+    pricing_included_4: "Personal-use rights for sharing and printing",
+    pricing_addons_eyebrow: "Add-ons",
+    pricing_addons_title: "Popular upgrades.",
+    pricing_addon_1: "Extra coverage hours for longer celebrations",
+    pricing_addon_2: "Rush delivery for highlight moments",
+    pricing_addon_3: "Premium fine-art print support on request",
+    pricing_addon_4: "Multi-day wedding coverage in Denmark and Europe",
+
+    // Pricing: How I Work
+    pricing_process_eyebrow: "How I Work",
+    pricing_process_title: "A clear process, start to finish.",
+    pricing_step1_title: "1. First chat",
+    pricing_step1_desc: "We start with a short conversation in chat to understand your day, your vibe, and your expectations.",
+    pricing_step2_title: "2. Fit check",
+    pricing_step2_desc: "We decide honestly if I am the right photographer for you and if our style connection feels right.",
+    pricing_step3_title: "3. Booking and prepayment",
+    pricing_step3_desc: "To secure your date, I send the booking details and prepayment instructions.",
+    pricing_step4_title: "4. Wedding day coverage",
+    pricing_step4_desc: "I document the day quietly and naturally, with direction only when it helps.",
+    pricing_step5_title: "5. Delivery on time",
+    pricing_step5_desc: "You receive your edited gallery within the promised delivery timeline.",
+
+    // Pricing: FAQ
+    pricing_faq_eyebrow: "FAQ",
+    pricing_faq_title: "Quick answers couples ask most.",
+    pricing_faq_q1: "When should we book?",
+    pricing_faq_a1: "Most couples book 6-12 months ahead. Peak summer dates in Denmark are usually reserved first.",
+    pricing_faq_q2: "Do you travel?",
+    pricing_faq_a2: "Yes. I am based near Aarhus and travel across Denmark and Europe. Travel terms are always clarified before booking.",
+    pricing_faq_q3: "What if it rains?",
+    pricing_faq_a3: "Rain is never a problem. I always adapt with backup location ideas and lighting approaches to keep your gallery strong.",
+    pricing_faq_q4: "How does booking and payment work?",
+    pricing_faq_a4: "To reserve your date, a 50% prepayment is required. The remaining 50% is paid on the wedding day.",
+    pricing_faq_q5: "Do you keep backup copies?",
+    pricing_faq_a5: "Yes. I keep a backup archive of your photos for 1 year after delivery.",
+    pricing_faq_q6: "How do we receive the photos?",
+    pricing_faq_a6: "You get full-resolution files in a cloud archive without compression, plus a private preview link that is easy to share with friends and family.",
+    pricing_faq_q7: "What about copyright and usage?",
+    pricing_faq_a7: "You can use your photos for personal use and sharing. Commercial or publication usage is discussed and approved separately.",
+    pricing_social_proof: "Client feedback is shared in my Instagram stories and highlights. On request, I can also send private reviews from past couples.",
+
+    // Pricing: Process Stories
+    pricing_stories_eyebrow: "Process Stories",
+    pricing_stories_title: "How I solve real wedding-day moments.",
+    pricing_story1_title: "Wind and weather become part of the story",
+    pricing_story1_desc: "When wind feels beautiful, we use that movement for cinematic frames. If conditions become uncomfortable, we move to your restaurant or hotel and create luxury editorial portraits with flash or ambient atmosphere.",
+    pricing_story2_title: "Reportage first, guidance when needed",
+    pricing_story2_desc: "My base style is documentary. I quietly direct the couple and watch the day like a hidden agent, while still helping with posing when it is time for frame-worthy portraits.",
+    pricing_story3_title: "Clear timeline and delivery",
+    pricing_story3_desc: "Your edited photos are delivered in 4 weeks with no delay, in full resolution via cloud archive plus a private preview link for easy sharing."
   }
 };
 
@@ -3140,7 +3320,60 @@ const translationSourceMap = {
   whatsapp_subtitle: "Fastest for Europe & International couples",
   telegram_subtitle: "Прямий чат / Українська та English",
   footer_desc: "Based in Denmark (Aarhus area), available across Europe.",
-  floating_cta_note: "Calendar open for 2026-2027 weddings ·"
+  floating_cta_note: "Calendar open for 2026-2027 weddings ·",
+
+  pricing_included_eyebrow: "Included in Every Collection",
+  pricing_included_title: "What you always get.",
+  pricing_included_1: "Pre-wedding planning chat and timeline guidance",
+  pricing_included_2: "Signature color grading and careful curation",
+  pricing_included_3: "Private online gallery in full resolution",
+  pricing_included_4: "Personal-use rights for sharing and printing",
+  pricing_addons_eyebrow: "Add-ons",
+  pricing_addons_title: "Popular upgrades.",
+  pricing_addon_1: "Extra coverage hours for longer celebrations",
+  pricing_addon_2: "Rush delivery for highlight moments",
+  pricing_addon_3: "Premium fine-art print support on request",
+  pricing_addon_4: "Multi-day wedding coverage in Denmark and Europe",
+
+  pricing_process_eyebrow: "How I Work",
+  pricing_process_title: "A clear process, start to finish.",
+  pricing_step1_title: "1. First chat",
+  pricing_step1_desc: "We start with a short conversation in chat to understand your day, your vibe, and your expectations.",
+  pricing_step2_title: "2. Fit check",
+  pricing_step2_desc: "We decide honestly if I am the right photographer for you and if our style connection feels right.",
+  pricing_step3_title: "3. Booking and prepayment",
+  pricing_step3_desc: "To secure your date, I send the booking details and prepayment instructions.",
+  pricing_step4_title: "4. Wedding day coverage",
+  pricing_step4_desc: "I document the day quietly and naturally, with direction only when it helps.",
+  pricing_step5_title: "5. Delivery on time",
+  pricing_step5_desc: "You receive your edited gallery within the promised delivery timeline.",
+
+  pricing_faq_eyebrow: "FAQ",
+  pricing_faq_title: "Quick answers couples ask most.",
+  pricing_faq_q1: "When should we book?",
+  pricing_faq_a1: "Most couples book 6-12 months ahead. Peak summer dates in Denmark are usually reserved first.",
+  pricing_faq_q2: "Do you travel?",
+  pricing_faq_a2: "Yes. I am based near Aarhus and travel across Denmark and Europe. Travel terms are always clarified before booking.",
+  pricing_faq_q3: "What if it rains?",
+  pricing_faq_a3: "Rain is never a problem. I always adapt with backup location ideas and lighting approaches to keep your gallery strong.",
+  pricing_faq_q4: "How does booking and payment work?",
+  pricing_faq_a4: "To reserve your date, a 50% prepayment is required. The remaining 50% is paid on the wedding day.",
+  pricing_faq_q5: "Do you keep backup copies?",
+  pricing_faq_a5: "Yes. I keep a backup archive of your photos for 1 year after delivery.",
+  pricing_faq_q6: "How do we receive the photos?",
+  pricing_faq_a6: "You get full-resolution files in a cloud archive without compression, plus a private preview link that is easy to share with friends and family.",
+  pricing_faq_q7: "What about copyright and usage?",
+  pricing_faq_a7: "You can use your photos for personal use and sharing. Commercial or publication usage is discussed and approved separately.",
+  pricing_social_proof: "Client feedback is shared in my Instagram stories and highlights. On request, I can also send private reviews from past couples.",
+
+  pricing_stories_eyebrow: "Process Stories",
+  pricing_stories_title: "How I solve real wedding-day moments.",
+  pricing_story1_title: "Wind and weather become part of the story",
+  pricing_story1_desc: "When wind feels beautiful, we use that movement for cinematic frames. If conditions become uncomfortable, we move to your restaurant or hotel and create luxury editorial portraits with flash or ambient atmosphere.",
+  pricing_story2_title: "Reportage first, guidance when needed",
+  pricing_story2_desc: "My base style is documentary. I quietly direct the couple and watch the day like a hidden agent, while still helping with posing when it is time for frame-worthy portraits.",
+  pricing_story3_title: "Clear timeline and delivery",
+  pricing_story3_desc: "Your edited photos are delivered in 4 weeks with no delay, in full resolution via cloud archive plus a private preview link for easy sharing."
 };
 
 function getSourceEnglishText(fieldKey) {
@@ -3176,7 +3409,58 @@ const translationFields = [
   "prefilled_message",
   "email_subject",
   "footer_desc",
-  "floating_cta_note"
+  "floating_cta_note",
+
+  // Pricing Fields
+  "pricing_included_eyebrow",
+  "pricing_included_title",
+  "pricing_included_1",
+  "pricing_included_2",
+  "pricing_included_3",
+  "pricing_included_4",
+  "pricing_addons_eyebrow",
+  "pricing_addons_title",
+  "pricing_addon_1",
+  "pricing_addon_2",
+  "pricing_addon_3",
+  "pricing_addon_4",
+  "pricing_process_eyebrow",
+  "pricing_process_title",
+  "pricing_step1_title",
+  "pricing_step1_desc",
+  "pricing_step2_title",
+  "pricing_step2_desc",
+  "pricing_step3_title",
+  "pricing_step3_desc",
+  "pricing_step4_title",
+  "pricing_step4_desc",
+  "pricing_step5_title",
+  "pricing_step5_desc",
+  "pricing_faq_eyebrow",
+  "pricing_faq_title",
+  "pricing_faq_q1",
+  "pricing_faq_a1",
+  "pricing_faq_q2",
+  "pricing_faq_a2",
+  "pricing_faq_q3",
+  "pricing_faq_a3",
+  "pricing_faq_q4",
+  "pricing_faq_a4",
+  "pricing_faq_q5",
+  "pricing_faq_a5",
+  "pricing_faq_q6",
+  "pricing_faq_a6",
+  "pricing_faq_q7",
+  "pricing_faq_a7",
+  "pricing_social_proof",
+  "pricing_stories_eyebrow",
+  "pricing_stories_title",
+  "pricing_story1_title",
+  "pricing_story1_desc",
+  "pricing_story2_title",
+  "pricing_story2_desc",
+  "pricing_story3_title",
+  "pricing_story3_desc"
 ];
 
 async function loadAllTranslationsComparative() {

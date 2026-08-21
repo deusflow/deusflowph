@@ -462,13 +462,561 @@
                   <label for="pricing-travel-note">Travel & Booking Policy Note</label>
                   <textarea id="pricing-travel-note" name="pricing-travel-note" rows="3" placeholder="Travel within Aarhus included. Across Denmark and Europe based on travel expenses..."></textarea>
                 </div>
+              </div>
+            </div>
 
-                <div class="form-action-bar">
-                  <button type="submit" class="admin-btn primary">Save Pricing Changes</button>
-                  <a class="admin-btn ghost" href="../pricing/" target="_blank" rel="noopener noreferrer">Open Public Pricing Page ↗</a>
-                  <span id="pricing-status-text" class="status-msg"></span>
+            <!-- PRICING CMS CARD 1: HOW I WORK (PROCESS) -->
+            <div class="admin-card" style="margin-top: 1.75rem;">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Process: How I Work (5 Steps)</h3>
+                <button type="button" class="admin-btn ghost small btn-save-block" title="Save this section to database">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>Save Block</span>
+                </button>
+              </div>
+              <div class="card-body">
+                <!-- Field: Process Title -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Section Title</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_process_title" name="da_pricing_process_title" type="text" value="En gennemskuelig proces fra start til slut." />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_process_title" name="ua_pricing_process_title" type="text" value="Прозорий процес від знайомства до результату." />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_process_title" name="en_pricing_process_title" type="text" value="A clear process, start to finish." />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 1 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Step 1: Title & Description</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_step1_title" name="da_pricing_step1_title" type="text" value="1. Første snak" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_step1_desc" name="da_pricing_step1_desc" rows="3">Vi starter med en kort samtale for at forstå jeres dag, stemning og forventninger.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_step1_title" name="ua_pricing_step1_title" type="text" value="1. Знайомство та перший чат" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_step1_desc" name="ua_pricing_step1_desc" rows="3">Починаємо з короткої розмови в чаті, щоб зрозуміти формат вашого дня, настрій та очікування.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_step1_title" name="en_pricing_step1_title" type="text" value="1. First chat" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_step1_desc" name="en_pricing_step1_desc" rows="3">We start with a short conversation in chat to understand your day, your vibe, and your expectations.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Step 2: Title & Description</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_step2_title" name="da_pricing_step2_title" type="text" value="2. Det rette match" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_step2_desc" name="da_pricing_step2_desc" rows="3">Vi mærker efter, om jeg er den rette fotograf for jer, og om stilen passer.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_step2_title" name="ua_pricing_step2_title" type="text" value="2. Взаємний метч" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_step2_desc" name="ua_pricing_step2_desc" rows="3">Чесно розуміємо, чи я ваш фотограф і чи збігається наше відчуття естетики та стилю.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_step2_title" name="en_pricing_step2_title" type="text" value="2. Fit check" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_step2_desc" name="en_pricing_step2_desc" rows="3">We decide honestly if I am the right photographer for you and if our style connection feels right.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Step 3: Title & Description</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_step3_title" name="da_pricing_step3_title" type="text" value="3. Booking og forudbetaling" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_step3_desc" name="da_pricing_step3_desc" rows="3">For at reservere jeres dato sender jeg aftale og betalingsoplysninger.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_step3_title" name="ua_pricing_step3_title" type="text" value="3. Бронювання та передоплата" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_step3_desc" name="ua_pricing_step3_desc" rows="3">Щоб зафіксувати дату за вами, я надсилаю деталі бронювання та реквізити для передоплати.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_step3_title" name="en_pricing_step3_title" type="text" value="3. Booking and prepayment" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_step3_desc" name="en_pricing_step3_desc" rows="3">To secure your date, I send the booking details and prepayment instructions.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Step 4: Title & Description</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_step4_title" name="da_pricing_step4_title" type="text" value="4. Bryllupsdagen" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_step4_desc" name="da_pricing_step4_desc" rows="3">Jeg dokumenterer dagen stille og naturligt, og guider kun, når det hjælper.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_step4_title" name="ua_pricing_step4_title" type="text" value="4. Зйомка весільного дня" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_step4_desc" name="ua_pricing_step4_desc" rows="3">Документую день тихо й природно, спрямовуючи лише тоді, коли це дійсно потрібно для красивих кадрів.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_step4_title" name="en_pricing_step4_title" type="text" value="4. Wedding day coverage" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_step4_desc" name="en_pricing_step4_desc" rows="3">I document the day quietly and naturally, with direction only when it helps.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Step 5: Title & Description</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_step5_title" name="da_pricing_step5_title" type="text" value="5. Levering til tiden" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_step5_desc" name="da_pricing_step5_desc" rows="3">I modtager jeres færdige galleri inden for den aftalte tidsramme.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_step5_title" name="ua_pricing_step5_title" type="text" value="5. Вчасна віддача результату" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_step5_desc" name="ua_pricing_step5_desc" rows="3">Ви отримуєте готову стильну галерею у чітко обумовлені терміни без затримок.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_step5_title" name="en_pricing_step5_title" type="text" value="5. Delivery on time" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_step5_desc" name="en_pricing_step5_desc" rows="3">You receive your edited gallery within the promised delivery timeline.</textarea>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            <!-- PRICING CMS CARD 2: FAQ -->
+            <div class="admin-card" style="margin-top: 1.75rem;">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Pricing FAQ (7 Questions & Answers)</h3>
+                <button type="button" class="admin-btn ghost small btn-save-block" title="Save this section to database">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>Save Block</span>
+                </button>
+              </div>
+              <div class="card-body">
+                <!-- FAQ Title -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">FAQ Section Title</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_faq_title" name="da_pricing_faq_title" type="text" value="Svar på de mest almindelige spørgsmål." />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_faq_title" name="ua_pricing_faq_title" type="text" value="Відповіді на часті запитання." />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_faq_title" name="en_pricing_faq_title" type="text" value="Quick answers couples ask most." />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Q1 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Q1: When should we book?</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_faq_q1" name="da_pricing_faq_q1" type="text" value="Hvornår skal vi booke?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_faq_a1" name="da_pricing_faq_a1" rows="3">De fleste par booker 6-12 måneder i forvejen. Populære sommerdatoer i Danmark bliver oftest booket først.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_faq_q1" name="ua_pricing_faq_q1" type="text" value="Коли варто бронювати дату?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_faq_a1" name="ua_pricing_faq_a1" rows="3">Більшість пар бронюють за 6–12 місяців. Популярні літні дати в Данії зазвичай бронюють першими.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_faq_q1" name="en_pricing_faq_q1" type="text" value="When should we book?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_faq_a1" name="en_pricing_faq_a1" rows="3">Most couples book 6-12 months ahead. Peak summer dates in Denmark are usually reserved first.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Q2: Do you travel?</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_faq_q2" name="da_pricing_faq_q2" type="text" value="Rejser du rundt?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_faq_a2" name="da_pricing_faq_a2" rows="3">Ja. Jeg bor nær Aarhus og arbejder i hele Danmark og Europa. Rejsebetingelser aftales altid inden booking.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_faq_q2" name="ua_pricing_faq_q2" type="text" value="Чи виїжджаєте ви в інші міста та країни?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_faq_a2" name="ua_pricing_faq_a2" rows="3">Так. Я базуюся біля Орхуса та знімаю по всій Данії та Європі. Умови проїзду завжди узгоджуються до бронювання.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_faq_q2" name="en_pricing_faq_q2" type="text" value="Do you travel?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_faq_a2" name="en_pricing_faq_a2" rows="3">Yes. I am based near Aarhus and travel across Denmark and Europe. Travel terms are always clarified before booking.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Q3: What if it rains?</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_faq_q3" name="da_pricing_faq_q3" type="text" value="Hvad hvis det regner?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_faq_a3" name="da_pricing_faq_a3" rows="3">Regn er aldrig et problem. Jeg tilpasser mig altid med backup-locations og lys, så jeres billeder bliver fantastiske uanset vejret.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_faq_q3" name="ua_pricing_faq_q3" type="text" value="Що робити, якщо піде дощ?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_faq_a3" name="ua_pricing_faq_a3" rows="3">Дощ — це не проблема. Я завжди маю запасні локації та варіанти зі світлом, щоб ваша серія вийшла ідеальною за будь-якої погоди.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_faq_q3" name="en_pricing_faq_q3" type="text" value="What if it rains?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_faq_a3" name="en_pricing_faq_a3" rows="3">Rain is never a problem. I always adapt with backup location ideas and lighting approaches to keep your gallery strong.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Q4: How does booking and payment work?</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_faq_q4" name="da_pricing_faq_q4" type="text" value="Hvordan fungerer booking og betaling?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_faq_a4" name="da_pricing_faq_a4" rows="3">For at reservere datoen betales et depositum på 50%. De resterende 50% betales på bryllupsdagen.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_faq_q4" name="ua_pricing_faq_q4" type="text" value="Як відбувається бронювання та оплата?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_faq_a4" name="ua_pricing_faq_a4" rows="3">Для фіксації дати вноситься передоплата 50%. Решта 50% сплачується в день весілля.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_faq_q4" name="en_pricing_faq_q4" type="text" value="How does booking and payment work?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_faq_a4" name="en_pricing_faq_a4" rows="3">To reserve your date, a 50% prepayment is required. The remaining 50% is paid on the wedding day.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Q5: Do you keep backup copies?</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_faq_q5" name="da_pricing_faq_q5" type="text" value="Gemmer du backup af billederne?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_faq_a5" name="da_pricing_faq_a5" rows="3">Ja. Jeg gemmer en sikkerhedskopi af jeres billeder i 1 år efter levering.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_faq_q5" name="ua_pricing_faq_q5" type="text" value="Чи зберігаються резервні копії фотографій?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_faq_a5" name="ua_pricing_faq_a5" rows="3">Так. Я зберігаю резервний архів ваших фотографій протягом 1 року після віддачі.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_faq_q5" name="en_pricing_faq_q5" type="text" value="Do you keep backup copies?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_faq_a5" name="en_pricing_faq_a5" rows="3">Yes. I keep a backup archive of your photos for 1 year after delivery.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Q6: How do we receive the photos?</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_faq_q6" name="da_pricing_faq_q6" type="text" value="Hvordan modtager vi billederne?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_faq_a6" name="da_pricing_faq_a6" rows="3">I får billeder i fuld opløsning i et skygalleri uden komprimering, samt et privat link, der er nemt at dele med familie og venner.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_faq_q6" name="ua_pricing_faq_q6" type="text" value="Як ми отримаємо готові фото?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_faq_a6" name="ua_pricing_faq_a6" rows="3">Ви отримуєте файли у максимальній якості в хмарній галереї без стиснення + зручне приватне посилання для перегляду та пересилання близьким.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_faq_q6" name="en_pricing_faq_q6" type="text" value="How do we receive the photos?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_faq_a6" name="en_pricing_faq_a6" rows="3">You get full-resolution files in a cloud archive without compression, plus a private preview link that is easy to share with friends and family.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Q7: What about copyright and usage?</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_faq_q7" name="da_pricing_faq_q7" type="text" value="Hvad med ophavsret og brug af billederne?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_faq_a7" name="da_pricing_faq_a7" rows="3">I må frit bruge og printe billederne til personlig brug. Kommerciel brug eller publikationer aftales særskilt.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_faq_q7" name="ua_pricing_faq_q7" type="text" value="Як щодо авторських прав та використання?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_faq_a7" name="ua_pricing_faq_a7" rows="3">Ви можете вільно друкувати фото та ділитися ними в соцмережах для особистого користування. Комерційне використання чи публікації узгоджуються окремо.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_faq_q7" name="en_pricing_faq_q7" type="text" value="What about copyright and usage?" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_faq_a7" name="en_pricing_faq_a7" rows="3">You can use your photos for personal use and sharing. Commercial or publication usage is discussed and approved separately.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Social Proof Note -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Social Proof & Reviews Note</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <textarea id="trans-da-pricing_social_proof" name="da_pricing_social_proof" rows="3">Udtalelser fra tidligere par deles i mine Instagram stories og highlights. På anmodning kan jeg også sende private anmeldelser.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <textarea id="trans-ua-pricing_social_proof" name="ua_pricing_social_proof" rows="3">Відгуки моїх молодят я публікую в Instagram Stories та Highlights. За запитом можу надіслати додаткові рекомендації.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <textarea id="trans-en-pricing_social_proof" name="en_pricing_social_proof" rows="3">Client feedback is shared in my Instagram stories and highlights. On request, I can also send private reviews from past couples.</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PRICING CMS CARD 3: PROCESS STORIES -->
+            <div class="admin-card" style="margin-top: 1.75rem;">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Process Stories (Real Wedding Solutions)</h3>
+                <button type="button" class="admin-btn ghost small btn-save-block" title="Save this section to database">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>Save Block</span>
+                </button>
+              </div>
+              <div class="card-body">
+                <!-- Stories Title -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Section Title</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_stories_title" name="da_pricing_stories_title" type="text" value="Sådan håndterer jeg uforudsete øjeblikke." />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_stories_title" name="ua_pricing_stories_title" type="text" value="Як я вирішую реальні моменти весільного дня." />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_stories_title" name="en_pricing_stories_title" type="text" value="How I solve real wedding-day moments." />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Story 1 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Story 1: Wind & Weather</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_story1_title" name="da_pricing_story1_title" type="text" value="Vind og vejr bliver en del af historien" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_story1_desc" name="da_pricing_story1_desc" rows="4">Når vinden er smuk, bruger vi bevægelsen til filmiske billeder. Bliver det for voldsomt, rykker vi ind på hotellet eller restauranten og skaber eksklusive editorial portrætter.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_story1_title" name="ua_pricing_story1_title" type="text" value="Вітер і погода стають частиною історії" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_story1_desc" name="ua_pricing_story1_desc" rows="4">Коли вітер гарний, ми використовуємо цей рух для кінематографічних кадрів. Якщо стає некомфортно — переміщуємося в ресторан чи готель і створюємо преміальні editorial портрети зі світлом.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_story1_title" name="en_pricing_story1_title" type="text" value="Wind and weather become part of the story" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_story1_desc" name="en_pricing_story1_desc" rows="4">When wind feels beautiful, we use that movement for cinematic frames. If conditions become uncomfortable, we move to your restaurant or hotel and create luxury editorial portraits with flash or ambient atmosphere.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Story 2 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Story 2: Reportage First</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_story2_title" name="da_pricing_story2_title" type="text" value="Reportage først, vejledning når det behøves" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_story2_desc" name="da_pricing_story2_desc" rows="4">Min grundstil er dokumentarisk. Jeg holder mig i baggrunden og fanger dagen naturligt, men hjælper altid med posering, når det er tid til portrætter.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_story2_title" name="ua_pricing_story2_title" type="text" value="Спершу репортаж, підказка — коли потрібно" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_story2_desc" name="ua_pricing_story2_desc" rows="4">Мій базовий стиль — документальний. Я тихо супроводжую пару й спостерігаю, не заважаючи святу, але завжди м'яко скеровую для стильних журнальних портретів.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_story2_title" name="en_pricing_story2_title" type="text" value="Reportage first, guidance when needed" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_story2_desc" name="en_pricing_story2_desc" rows="4">My base style is documentary. I quietly direct the couple and watch the day like a hidden agent, while still helping with posing when it is time for frame-worthy portraits.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Story 3 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Story 3: Timeline & Delivery</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_story3_title" name="da_pricing_story3_title" type="text" value="Tydelig tidsplan og levering" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-da-pricing_story3_desc" name="da_pricing_story3_desc" rows="4">Jeres redigerede billeder leveres inden for 4 uger uden forsinkelse, i fuld opløsning via skyarkiv og privat gallerilink.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_story3_title" name="ua_pricing_story3_title" type="text" value="Чіткі терміни та віддача" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-ua-pricing_story3_desc" name="ua_pricing_story3_desc" rows="4">Готова оброблена серія віддається рівно за 4 тижні без жодних затримок, у повній роздільній здатності через хмару з приватним посиланням.</textarea>
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_story3_title" name="en_pricing_story3_title" type="text" value="Clear timeline and delivery" style="margin-bottom: 0.5rem;" />
+                      <textarea id="trans-en-pricing_story3_desc" name="en_pricing_story3_desc" rows="4">Your edited photos are delivered in 4 weeks with no delay, in full resolution via cloud archive plus a private preview link for easy sharing.</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PRICING CMS CARD 4: INCLUDED & ADD-ONS -->
+            <div class="admin-card" style="margin-top: 1.75rem;">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Included in Every Collection & Add-ons</h3>
+                <button type="button" class="admin-btn ghost small btn-save-block" title="Save this section to database">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>Save Block</span>
+                </button>
+              </div>
+              <div class="card-body">
+                <!-- Included Title -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Included: Title</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_included_title" name="da_pricing_included_title" type="text" value="Hvad I altid modtager." />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_included_title" name="ua_pricing_included_title" type="text" value="Що ви завжди отримуєте." />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_included_title" name="en_pricing_included_title" type="text" value="What you always get." />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Included Items 1-4 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Included: 4 Bullet Points</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_included_1" name="da_pricing_included_1" type="text" value="Forudgående planlægningssamtale og rådgivning om tidsplan" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-da-pricing_included_2" name="da_pricing_included_2" type="text" value="Signatur-farvegraduering og omhyggelig udvælgelse" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-da-pricing_included_3" name="da_pricing_included_3" type="text" value="Privat online galleri i fuld opløsning" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-da-pricing_included_4" name="da_pricing_included_4" type="text" value="Rettigheder til personlig brug, deling og print" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_included_1" name="ua_pricing_included_1" type="text" value="Попередня консультація та допомога з таймінгом дня" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-ua-pricing_included_2" name="ua_pricing_included_2" type="text" value="Авторська колористика та ретельна селекція кадрів" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-ua-pricing_included_3" name="ua_pricing_included_3" type="text" value="Приватна онлайн-галерея у повній роздільній здатності" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-ua-pricing_included_4" name="ua_pricing_included_4" type="text" value="Права на особисте використання для друку та соцмереж" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_included_1" name="en_pricing_included_1" type="text" value="Pre-wedding planning chat and timeline guidance" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-en-pricing_included_2" name="en_pricing_included_2" type="text" value="Signature color grading and careful curation" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-en-pricing_included_3" name="en_pricing_included_3" type="text" value="Private online gallery in full resolution" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-en-pricing_included_4" name="en_pricing_included_4" type="text" value="Personal-use rights for sharing and printing" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Addons Title -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Add-ons: Title</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_addons_title" name="da_pricing_addons_title" type="text" value="Populære tilkøb." />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_addons_title" name="ua_pricing_addons_title" type="text" value="Популярні доповнення." />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_addons_title" name="en_pricing_addons_title" type="text" value="Popular upgrades." />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Addons Items 1-4 -->
+                <div class="translation-item-block">
+                  <div class="translation-field-title">Add-ons: 4 Bullet Points</div>
+                  <div class="translation-compare-row">
+                    <div class="translation-lang-col col-da">
+                      <span class="translation-col-label">🇩🇰 Dansk (DA)</span>
+                      <input id="trans-da-pricing_addon_1" name="da_pricing_addon_1" type="text" value="Ekstra timer til længere bryllupper" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-da-pricing_addon_2" name="da_pricing_addon_2" type="text" value="Hurtig levering af udvalgte højdepunkter" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-da-pricing_addon_3" name="da_pricing_addon_3" type="text" value="Hjælp til eksklusive fine-art prints" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-da-pricing_addon_4" name="da_pricing_addon_4" type="text" value="Flere dages dækning i Danmark og Europa" />
+                    </div>
+                    <div class="translation-lang-col col-ua">
+                      <span class="translation-col-label">🇺🇦 Українська (UA)</span>
+                      <input id="trans-ua-pricing_addon_1" name="ua_pricing_addon_1" type="text" value="Додаткові години зйомки для тривалих свят" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-ua-pricing_addon_2" name="ua_pricing_addon_2" type="text" value="Термінова віддача хайлайтів" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-ua-pricing_addon_3" name="ua_pricing_addon_3" type="text" value="Підготовка та допомога з преміальним fine-art друком" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-ua-pricing_addon_4" name="ua_pricing_addon_4" type="text" value="Багатоденна зйомка весіль по Данії та Європі" />
+                    </div>
+                    <div class="translation-lang-col col-en">
+                      <span class="translation-col-label">🇬🇧 English (EN)</span>
+                      <input id="trans-en-pricing_addon_1" name="en_pricing_addon_1" type="text" value="Extra coverage hours for longer celebrations" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-en-pricing_addon_2" name="en_pricing_addon_2" type="text" value="Rush delivery for highlight moments" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-en-pricing_addon_3" name="en_pricing_addon_3" type="text" value="Premium fine-art print support on request" style="margin-bottom: 0.4rem;" />
+                      <input id="trans-en-pricing_addon_4" name="en_pricing_addon_4" type="text" value="Multi-day wedding coverage in Denmark and Europe" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-action-bar" style="margin-top: 1.5rem;">
+              <button type="submit" class="admin-btn primary">Save All Pricing Packages & Texts</button>
+              <a class="admin-btn ghost" href="../pricing/" target="_blank" rel="noopener noreferrer">Open Public Pricing Page ↗</a>
+              <span id="pricing-status-text" class="status-msg"></span>
             </div>
           </form>
         </div>
