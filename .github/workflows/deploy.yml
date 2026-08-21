@@ -39,7 +39,7 @@ jobs:
             HERO_IMAGE_URL: "${{ secrets.HERO_IMAGE_URL }}",
             FAVICON_URL: "${{ secrets.FAVICON_URL }}",
             SITE_NAME: "${{ secrets.SITE_NAME }}",
-            SITE_URL: "${{ secrets.SITE_URL }}",
+            SITE_URL: "${{ secrets.SITE_URL || 'https://deusflow.dk' }}",
             DEFAULT_OG_IMAGE: "${{ secrets.DEFAULT_OG_IMAGE }}",
             CTA_LABEL: "${{ secrets.CTA_LABEL }}",
             AVAILABILITY_NOTE: "${{ secrets.AVAILABILITY_NOTE }}",
@@ -49,6 +49,9 @@ jobs:
             BRIEF_TEMPLATE: "${{ secrets.BRIEF_TEMPLATE }}"
           };
           EOF
+
+      - name: Build static multilingual pages
+        run: node scripts/build-i18n.mjs
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

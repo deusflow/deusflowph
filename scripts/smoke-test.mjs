@@ -33,7 +33,12 @@ const requiredFiles = [
   "admin/index.html",
   "README.md",
   "robots.txt",
-  "sitemap.xml"
+  "sitemap.xml",
+  "CNAME",
+  "da/index.html",
+  "da/weddings/index.html",
+  "uk/index.html",
+  "uk/weddings/index.html"
 ];
 
 const missing = requiredFiles.filter((relativePath) => !fs.existsSync(path.join(root, relativePath)));
@@ -44,10 +49,12 @@ if (missing.length > 0) {
 }
 
 const htmlChecks = [
-  { file: "index.html", includes: ["assets/css/styles.css", "assets/js/home.js", "assets/js/seo.js", "assets/js/cta.js", "<link rel=\"canonical\"", "og:title"] },
+  { file: "index.html", includes: ["assets/css/styles.css", "assets/js/home.js", "assets/js/seo.js", "assets/js/cta.js", "<link rel=\"canonical\" href=\"https://deusflow.dk/\"", "og:title"] },
+  { file: "da/weddings/index.html", includes: ["lang=\"da\"", "Bryllupper", "<link rel=\"canonical\" href=\"https://deusflow.dk/da/weddings/\""] },
+  { file: "uk/weddings/index.html", includes: ["lang=\"uk\"", "Весілля", "<link rel=\"canonical\" href=\"https://deusflow.dk/uk/weddings/\""] },
   { file: "about/index.html", includes: ["../assets/js/about.js", "../assets/js/seo.js", "../assets/js/cta.js", "Values", "<link rel=\"canonical\""] },
   { file: "portfolio/index.html", includes: ["../assets/js/portfolio.js", "../assets/js/seo.js", "../assets/js/cta.js", "<link rel=\"canonical\""] },
-  { file: "weddings/index.html", includes: ["../assets/js/weddings.js", "../assets/js/seo.js", "../assets/js/cta.js", "<link rel=\"canonical\""] },
+  { file: "weddings/index.html", includes: ["../assets/js/weddings.js", "../assets/js/seo.js", "../assets/js/cta.js", "<link rel=\"canonical\" href=\"https://deusflow.dk/weddings/\""] },
   { file: "weddings/album/index.html", includes: ["../../assets/js/wedding-album.js", "../../assets/js/seo.js", "../../assets/js/cta.js", "id=\"lightbox\"", "<link rel=\"canonical\""] },
   { file: "pricing/index.html", includes: ["../assets/js/pricing.js", "../assets/js/seo.js", "../assets/js/cta.js", "Essentials", "Signature", "Luxury", "<link rel=\"canonical\""] },
   { file: "locations/aarhus/index.html", includes: ["../../assets/js/seo.js", "../../assets/js/cta.js", "Aarhus"] },
