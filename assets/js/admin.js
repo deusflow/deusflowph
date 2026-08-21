@@ -1235,8 +1235,11 @@ function setAuthView(isLoggedIn) {
 
 function showAlbumDetails(album) {
   state.selectedAlbum = album;
-  selectedAlbumName.textContent = album.title;
-  state.selectedAlbumMetaBase = `${album.type.toUpperCase()} · ${formatDate(album.date)} · slug: ${album.slug}`;
+  const isPortfolio = album.type === "portfolio" || album.slug === "portfolio-main";
+  selectedAlbumName.textContent = isPortfolio ? "Signature Portfolio Studio" : album.title;
+  state.selectedAlbumMetaBase = isPortfolio
+    ? `PORTFOLIO · Curated Highlights · Public URL: /portfolio/`
+    : `${album.type.toUpperCase()} · ${formatDate(album.date)} · slug: ${album.slug}`;
   selectedAlbumMeta.textContent = state.selectedAlbumMetaBase;
   editTitleInput.value = album.title || "";
   editDateInput.value = album.date || "";
@@ -1337,70 +1340,64 @@ async function loadAlbums() {
   updatePortfolioQuickAccessState();
   updateAlbumOrderControlsState();
 
-  // DASHBOARD STATS UPDATE
+  // DASHBOARD STATS UPDATE (Wedding Galleries)
   const tAlbums = document.getElementById("stat-total-albums");
   const pAlbums = document.getElementById("stat-published-albums");
   const dAlbums = document.getElementById("stat-draft-albums");
-  if(tAlbums) tAlbums.textContent = state.albums.length;
-  if(pAlbums) pAlbums.textContent = state.albums.filter(a => a.visible).length;
-  if(dAlbums) dAlbums.textContent = state.albums.filter(a => !a.visible).length;
+  if (tAlbums) tAlbums.textContent = weddingAlbums.length;
+  if (pAlbums) pAlbums.textContent = weddingAlbums.filter((a) => a.visible).length;
+  if (dAlbums) dAlbums.textContent = weddingAlbums.filter((a) => !a.visible).length;
 
-  state.albums.forEach((album, index) => {
+  weddingAlbums.forEach((album, weddingIndex) => {
     const row = document.createElement("div");
     row.className = "album-row";
+    row.draggable = true;
+    row.dataset.id = album.id;
+    row.dataset.index = String(weddingIndex);
 
-    const weddingAlbumsCurrent = getWeddingAlbumsSorted();
-    const weddingIndex = album.type === "wedding" ? weddingAlbumsCurrent.findIndex((item) => item.id === album.id) : -1;
-
-    if (album.type === "wedding" && weddingIndex >= 0) {
-      row.draggable = true;
-      row.dataset.id = album.id;
-      row.dataset.index = String(weddingIndex);
-
-      row.addEventListener("dragstart", (event) => {
-        if (state.albumReorderInProgress) {
-          event.preventDefault();
-          return;
-        }
-        state.dragSourceIndex = weddingIndex;
-        row.classList.add("dragging");
-        if (event.dataTransfer) {
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/plain", String(weddingIndex));
-        }
-      });
-
-      row.addEventListener("dragend", () => {
-        state.dragSourceIndex = null;
-        row.classList.remove("dragging");
-        albumsList.querySelectorAll(".album-row").forEach((r) => r.classList.remove("drop-target"));
-      });
-
-      row.addEventListener("dragover", (event) => {
-        if (state.albumReorderInProgress) {
-          return;
-        }
+    row.addEventListener("dragstart", (event) => {
+      if (state.albumReorderInProgress) {
         event.preventDefault();
+        return;
+      }
+      state.dragSourceIndex = weddingIndex;
+      row.classList.add("dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", String(weddingIndex));
+      }
+    });
 
-        const draggingElement = albumsList.querySelector(".album-row.dragging");
-        if (draggingElement && draggingElement !== row) {
-          row.classList.add("drop-target");
-          const rect = row.getBoundingClientRect();
-          const next = (event.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
-          albumsList.insertBefore(draggingElement, next ? row.nextSibling : row);
-        }
-      });
+    row.addEventListener("dragend", () => {
+      state.dragSourceIndex = null;
+      row.classList.remove("dragging");
+      albumsList.querySelectorAll(".album-row").forEach((r) => r.classList.remove("drop-target"));
+    });
 
-      row.addEventListener("dragleave", () => {
-        row.classList.remove("drop-target");
-      });
+    row.addEventListener("dragover", (event) => {
+      if (state.albumReorderInProgress) {
+        return;
+      }
+      event.preventDefault();
 
-      row.addEventListener("drop", async (event) => {
-        event.preventDefault();
-        row.classList.remove("drop-target");
-        await saveNewAlbumDOMOrder();
-      });
-    }
+      const draggingElement = albumsList.querySelector(".album-row.dragging");
+      if (draggingElement && draggingElement !== row) {
+        row.classList.add("drop-target");
+        const rect = row.getBoundingClientRect();
+        const next = (event.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+        albumsList.insertBefore(draggingElement, next ? row.nextSibling : row);
+      }
+    });
+
+    row.addEventListener("dragleave", () => {
+      row.classList.remove("drop-target");
+    });
+
+    row.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      row.classList.remove("drop-target");
+      await saveNewAlbumDOMOrder();
+    });
 
     const info = document.createElement("div");
     info.className = "album-info-wrap";
@@ -2460,6 +2457,15 @@ async function optimizeAlbumPhotos() {
 
 function restoreActiveTab() {
   const savedTabId = localStorage.getItem("deusflow_admin_active_tab") || (window.location.hash ? window.location.hash.replace("#", "") : "tab-albums");
+  if (savedTabId === "tab-portfolio") {
+    const portfolioBtn = document.querySelector(`.admin-nav-button[data-target="tab-portfolio"]`);
+    if (portfolioBtn) {
+      document.querySelectorAll(".admin-nav-button").forEach((b) => b.classList.remove("active"));
+      portfolioBtn.classList.add("active");
+    }
+    openPortfolioManager();
+    return;
+  }
   const matchingBtn = document.querySelector(`.admin-nav-button[data-target="${savedTabId}"]`);
   const targetPane = document.getElementById(savedTabId);
   if (matchingBtn && targetPane) {
@@ -2478,10 +2484,20 @@ function setupTabSwitching() {
 
   navButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
       navButtons.forEach((b) => b.classList.remove("active"));
       tabPanes.forEach((pane) => pane.classList.remove("active"));
       btn.classList.add("active");
-      const targetId = btn.getAttribute("data-target");
+
+      if (targetId === "tab-portfolio") {
+        try {
+          localStorage.setItem("deusflow_admin_active_tab", "tab-portfolio");
+          window.location.hash = "tab-portfolio";
+        } catch (_e) {}
+        openPortfolioManager();
+        return;
+      }
+
       const targetPane = document.getElementById(targetId);
       if (targetPane) {
         targetPane.classList.add("active");
@@ -2507,12 +2523,22 @@ function setupTabSwitching() {
   if (closeAlbumBtn && selectedAlbumPanel) {
     closeAlbumBtn.addEventListener("click", () => {
       selectedAlbumPanel.classList.add("hidden");
-      const activeNav = document.querySelector(".admin-nav-button.active");
-      const targetId = activeNav ? activeNav.getAttribute("data-target") : "tab-albums";
-      const targetPane = document.getElementById(targetId);
-      if (targetPane) {
-        targetPane.classList.add("active");
+      const isPortfolio = state.selectedAlbum?.type === "portfolio" || state.selectedAlbum?.slug === "portfolio-main";
+      let targetId = "tab-albums";
+      if (!isPortfolio) {
+        const activeNav = document.querySelector(".admin-nav-button.active");
+        targetId = activeNav ? activeNav.getAttribute("data-target") : "tab-albums";
       }
+      document.querySelectorAll(".admin-nav-button").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".admin-tab-pane").forEach((p) => p.classList.remove("active"));
+      const targetNav = document.querySelector(`.admin-nav-button[data-target="${targetId}"]`);
+      const targetPane = document.getElementById(targetId);
+      if (targetNav) targetNav.classList.add("active");
+      if (targetPane) targetPane.classList.add("active");
+      try {
+        localStorage.setItem("deusflow_admin_active_tab", targetId);
+        window.location.hash = targetId;
+      } catch (_e) {}
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
@@ -3294,6 +3320,10 @@ updateOrderControlsState();
 updateAlbumOrderControlsState();
 
 // Immediate session verification on load
+window.bootAdmin = boot;
+window.openPortfolioManager = openPortfolioManager;
+window.loadAlbums = loadAlbums;
+
 (async () => {
   try {
     const supabase = getSupabase();
