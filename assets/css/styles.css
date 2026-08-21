@@ -984,17 +984,20 @@ h3,
   background: linear-gradient(90deg, #d4ba95 0%, #e5cfd9 100%);
   color: #000;
   border: 1px solid transparent;
-  padding: 0.78rem 1.05rem;
+  padding: 0.78rem 1.15rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-size: 10px;
+  font-weight: 500;
   border-radius: 999px;
-  transition: transform var(--motion-base) var(--motion-ease), filter var(--motion-base) var(--motion-ease);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, filter 0.3s ease;
 }
 
 .floating-cta-button:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   filter: brightness(1.04);
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(212, 186, 149, 0.25);
 }
 
 .floating-cta-note {
@@ -1002,20 +1005,23 @@ h3,
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(232, 226, 217, 0.66);
-  background: rgba(10, 10, 10, 0.82);
-  border: 1px solid rgba(232, 226, 217, 0.15);
-  padding: 0.35rem 0.55rem;
+  color: rgba(232, 226, 217, 0.65);
+  background: transparent;
+  border: none;
+  padding: 0.15rem 0.25rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .floating-cta-note a {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  color: rgba(232, 226, 217, 0.8);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(232, 226, 217, 0.3);
+  color: rgba(232, 226, 217, 0.85);
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
 .floating-cta-note a:hover {
   color: var(--gold);
+  border-color: var(--gold);
 }
 
 .mobile-sticky-cta {
@@ -2545,7 +2551,7 @@ button.danger {
     font-size: 10.5px;
     letter-spacing: 0.14em;
     white-space: nowrap;
-    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
   }
 
   .floating-cta-note {
