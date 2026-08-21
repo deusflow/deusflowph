@@ -868,6 +868,35 @@ async function ensurePortfolioAlbum() {
   }
 
   const supabase = getSupabase();
+
+  // 1. Check if portfolio-main already exists in DB (prevents 409 Conflict)
+  try {
+    const { data: dbMain } = await supabase
+      .from("albums")
+      .select("id, slug, title, description, date, type, visible, cover_url")
+      .eq("slug", "portfolio-main")
+      .maybeSingle();
+
+    if (dbMain) {
+      return dbMain;
+    }
+
+    // 2. Check if any portfolio album exists in DB
+    const { data: dbAnyPortfolio } = await supabase
+      .from("albums")
+      .select("id, slug, title, description, date, type, visible, cover_url")
+      .eq("type", "portfolio")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (dbAnyPortfolio && dbAnyPortfolio.length > 0) {
+      return dbAnyPortfolio[0];
+    }
+  } catch (err) {
+    console.warn("[Admin] Error querying portfolio album:", err);
+  }
+
+  // 3. Only if completely missing, create default portfolio-main
   const { data, error } = await supabase
     .from("albums")
     .insert({
@@ -877,30 +906,16 @@ async function ensurePortfolioAlbum() {
       cover_url: null,
       type: "portfolio",
       date: null,
-      visible: false
+      visible: true
     })
     .select("id, slug, title, description, date, type, visible, cover_url")
     .single();
 
-  if (!error && data) {
-    await loadAlbums();
-    return data;
+  if (error) {
+    throw error;
   }
 
-  if (error && String(error.message || "").toLowerCase().includes("duplicate")) {
-    const { data: existingMain, error: existingError } = await supabase
-      .from("albums")
-      .select("id, slug, title, description, date, type, visible, cover_url")
-      .eq("slug", "portfolio-main")
-      .single();
-    if (existingError) {
-      throw existingError;
-    }
-    await loadAlbums();
-    return existingMain;
-  }
-
-  throw error || new Error("Could not create default portfolio album.");
+  return data;
 }
 
 function getPreferredPortfolioAlbum() {
