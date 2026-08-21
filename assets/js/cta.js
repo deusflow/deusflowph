@@ -49,6 +49,38 @@
       }
     });
 
+    // Kinetic Breath & Silk Sheen on Scroll
+    let scrollTimeout = null;
+    let settleTimeout = null;
+    let isScrolling = false;
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (!ctaNode) return;
+
+        if (!isScrolling) {
+          isScrolling = true;
+          ctaNode.classList.remove("is-settling");
+          ctaNode.classList.add("is-scrolling");
+        }
+
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        if (settleTimeout) clearTimeout(settleTimeout);
+
+        scrollTimeout = setTimeout(() => {
+          isScrolling = false;
+          ctaNode.classList.remove("is-scrolling");
+          ctaNode.classList.add("is-settling");
+
+          settleTimeout = setTimeout(() => {
+            ctaNode.classList.remove("is-settling");
+          }, 450);
+        }, 180);
+      },
+      { passive: true }
+    );
+
     function applyCtaLinks(settings) {
       if (!settings) return;
       const handle = settings.instagram_handle || config.INSTAGRAM_HANDLE || "@deusflow";
