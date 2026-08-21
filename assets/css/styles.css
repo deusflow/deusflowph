@@ -3529,12 +3529,12 @@ button.danger {
   will-change: transform, opacity;
 }
 
-#portfolio-grid:hover .photo-card {
+#portfolio-grid:has(.photo-card:hover) .photo-card {
   opacity: 0.62;
   filter: grayscale(12%) contrast(0.96);
 }
 
-#portfolio-grid:hover .photo-card:hover {
+#portfolio-grid:has(.photo-card:hover) .photo-card:hover {
   opacity: 1;
   filter: none;
   transform: scale(1.15);
