@@ -86,11 +86,21 @@ async function renderPortfolio() {
         .eq("type", "wedding")
     ]);
 
+    let photos = photosRes.data;
     if (photosRes.error) {
-      throw photosRes.error;
+      console.warn("Retrying portfolio photos fetch without linked_album_id:", photosRes.error.message);
+      const retryRes = await supabase
+        .from("photos")
+        .select("id, url")
+        .eq("album_id", albumId)
+        .order("display_order", { ascending: true });
+
+      if (retryRes.error) {
+        throw retryRes.error;
+      }
+      photos = retryRes.data;
     }
 
-    const photos = photosRes.data;
     if (!photos || photos.length === 0) {
       grid.appendChild(createStateMessage("This portfolio album has no photos yet."));
       return;

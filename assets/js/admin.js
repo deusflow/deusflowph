@@ -1810,11 +1810,23 @@ async function loadPhotos(albumId) {
   applyPhotoViewMode();
   clearPendingMoves();
 
-  const { data: photos, error } = await supabase
+  let { data: photos, error } = await supabase
     .from("photos")
     .select("id, url, display_order, linked_album_id")
     .eq("album_id", albumId)
     .order("display_order", { ascending: true });
+
+  if (error) {
+    console.warn("Retrying admin photos fetch without linked_album_id:", error.message);
+    const retryRes = await supabase
+      .from("photos")
+      .select("id, url, display_order")
+      .eq("album_id", albumId)
+      .order("display_order", { ascending: true });
+
+    photos = retryRes.data;
+    error = retryRes.error;
+  }
 
   if (error) {
     photosList.appendChild(createStateMessage(`Could not load photos: ${error.message}`));
