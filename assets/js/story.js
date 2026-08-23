@@ -1,22 +1,24 @@
 /**
- * DEUSFLOW · PURE 3D LIVING PARTICLE METAMORPHOSIS ENGINE (meermohsin.me Architecture)
- * Single unified field of 32,000 living particles morphing between:
- * 0: Chaotic Prime Matter Cloud
- * 1: Crisp 3D Headline «ПРИСТЕБНІТЬ РЕМЕНІ»
- * 2: Living 3D Photographic Matrix (Childhood Crafts)
- * 3: Crisp 3D Headline «УРОКИ ПРАЦІ З ДІВЧАТАМИ»
- * 4: 3D Vintage Camera GLTF Surface + Crimea Sea Memory Matrix
+ * DEUSFLOW · NIGHT IN THE HOGWARTS LIBRARY
+ * Pure Parchment & Ink Shard Metamorphosis Engine
+ * Single focal point ritual of assembly:
+ * - 60 dust motes floating quietly in the gothic window light beam
+ * - 30,000 shards of cream parchment (#e8dcc0) & blue-black ink (#1a1f2e) with gold edge-glow
+ * - Form assembly with ink-manifestation settling pulse
  */
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
 
-const PARTICLE_COUNT = 32000;
+const SHARD_COUNT = 30000;
+const DUST_COUNT = 70;
 
 let scene, camera, renderer;
 let clock = new THREE.Clock();
-let particlesGeometry, particlesMaterial, particlesMesh;
+
+let shardsGeometry, shardsMaterial, shardsMesh;
+let dustGeometry, dustMaterial, dustMesh;
 
 let targetProgress = 0.0;
 let currentProgress = 0.0;
@@ -47,14 +49,15 @@ let isAudioActive = false;
 let ambientGain = null;
 
 // ==========================================================================
-// 1. INITIALIZATION (AWAIT FONTS FIRST)
+// 1. INITIALIZATION
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', async () => {
   if (document.fonts) {
     await document.fonts.ready;
   }
   initThree();
-  await buildLivingParticleSystem();
+  buildDustMotes();
+  await buildParchmentInkShards();
   initGestureEngine();
   initAudio();
   initMouseListener();
@@ -81,7 +84,68 @@ function initThree() {
 }
 
 // ==========================================================================
-// 2. GLYPH & IMAGE SAMPLERS
+// 2. DUST MOTES IN WINDOW LIGHT BEAM (60-80 particles)
+// ==========================================================================
+function buildDustMotes() {
+  dustGeometry = new THREE.BufferGeometry();
+  const dustPos = new Float32Array(DUST_COUNT * 3);
+  const dustVel = new Float32Array(DUST_COUNT * 3);
+
+  for (let i = 0; i < DUST_COUNT; i++) {
+    dustPos[i * 3 + 0] = (Math.random() - 0.5) * 8.0 - 1.5;
+    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 6.0 + 1.0;
+    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 4.0;
+
+    dustVel[i * 3 + 0] = (Math.random() - 0.5) * 0.002;
+    dustVel[i * 3 + 1] = (Math.random() - 0.5) * 0.002;
+    dustVel[i * 3 + 2] = (Math.random() - 0.5) * 0.002;
+  }
+
+  dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  dustGeometry.setAttribute('aVelocity', new THREE.BufferAttribute(dustVel, 3));
+
+  dustMaterial = new THREE.ShaderMaterial({
+    vertexShader: `
+      uniform float uTime;
+      attribute vec3 aVelocity;
+      varying float vAlpha;
+
+      void main() {
+        vec3 p = position;
+        p.x += sin(uTime * 0.4 + position.y * 2.0) * 0.15;
+        p.y += cos(uTime * 0.3 + position.x * 2.0) * 0.15;
+        p.z += sin(uTime * 0.2 + position.z * 2.0) * 0.10;
+
+        vAlpha = 0.35 + 0.25 * sin(uTime * 0.8 + position.x * 4.0);
+
+        vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        gl_PointSize = (18.0 / -mvPosition.z);
+      }
+    `,
+    fragmentShader: `
+      varying float vAlpha;
+      void main() {
+        float d = length(gl_PointCoord - vec2(0.5));
+        if (d > 0.5) discard;
+        float core = 1.0 - smoothstep(0.0, 0.5, d);
+        gl_FragColor = vec4(0.96, 0.88, 0.74, core * vAlpha * 0.45);
+      }
+    `,
+    uniforms: {
+      uTime: { value: 0.0 }
+    },
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+
+  dustMesh = new THREE.Points(dustGeometry, dustMaterial);
+  scene.add(dustMesh);
+}
+
+// ==========================================================================
+// 3. PARCHMENT & INK SAMPLERS
 // ==========================================================================
 function sampleCyrillicTextToPoints(lines, count, bounds) {
   const canvas = document.createElement('canvas');
@@ -109,8 +173,7 @@ function sampleCyrillicTextToPoints(lines, count, bounds) {
 
   for (let y = 0; y < canvas.height; y += 3) {
     for (let x = 0; x < canvas.width; x += 3) {
-      const idx = (y * canvas.width + x) * 4;
-      if (imgData[idx] > 100) {
+      if (imgData[(y * canvas.width + x) * 4] > 100) {
         validPixels.push({
           x: (x / canvas.width - 0.5) * bounds.width + bounds.x,
           y: (-(y / canvas.height - 0.5)) * bounds.height + bounds.y
@@ -159,7 +222,6 @@ async function sampleImageToPoints(imgSrc, count, bounds) {
         points[i * 3 + 1] = (-((py / canvas.height) - 0.5)) * h + bounds.y;
         points[i * 3 + 2] = bounds.z + (Math.random() - 0.5) * 0.08;
 
-        // Rich bright saturated color
         colors[i * 3 + 0] = Math.min(1.0, (imgData[idx] / 255.0) * 1.35);
         colors[i * 3 + 1] = Math.min(1.0, (imgData[idx + 1] / 255.0) * 1.35);
         colors[i * 3 + 2] = Math.min(1.0, (imgData[idx + 2] / 255.0) * 1.35);
@@ -218,19 +280,26 @@ async function sampleGLTFModel(gltfPath, count, bounds) {
 }
 
 // ==========================================================================
-// 3. BUILD PARTICLE MESH
+// 4. BUILD PARCHMENT & INK LIVING SHARD SYSTEM
 // ==========================================================================
-async function buildLivingParticleSystem() {
-  particlesGeometry = new THREE.BufferGeometry();
+async function buildParchmentInkShards() {
+  shardsGeometry = new THREE.BufferGeometry();
 
-  // 1. Initial Chaotic Cloud (Prime Matter)
-  const posChaos = new Float32Array(PARTICLE_COUNT * 3);
-  const randomAttrs = new Float32Array(PARTICLE_COUNT * 4);
+  // 1. Initial Floating Cloud (Quiet hovering state before incantation)
+  const posQuiet = new Float32Array(SHARD_COUNT * 3);
+  const shardTypes = new Float32Array(SHARD_COUNT);
+  const randomAttrs = new Float32Array(SHARD_COUNT * 4);
 
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    posChaos[i * 3 + 0] = (Math.random() - 0.5) * 16.0;
-    posChaos[i * 3 + 1] = (Math.random() - 0.5) * 11.0;
-    posChaos[i * 3 + 2] = (Math.random() - 0.5) * 12.0 - 2.0;
+  for (let i = 0; i < SHARD_COUNT; i++) {
+    posQuiet[i * 3 + 0] = (Math.random() - 0.5) * 12.0;
+    posQuiet[i * 3 + 1] = (Math.random() - 0.5) * 8.0;
+    posQuiet[i * 3 + 2] = (Math.random() - 0.5) * 8.0 - 1.5;
+
+    // Shard Matter Types:
+    // 0.0 - 0.50: Cream Parchment
+    // 0.50 - 0.85: Blue-Black Archival Ink
+    // 0.85 - 1.00: Enchanted Gold Leaf
+    shardTypes[i] = Math.random();
 
     randomAttrs[i * 4 + 0] = Math.random();
     randomAttrs[i * 4 + 1] = Math.random();
@@ -238,8 +307,8 @@ async function buildLivingParticleSystem() {
     randomAttrs[i * 4 + 3] = Math.random();
   }
 
-  // 2. Target 0: Cyrillic headline «ПРИСТЕБНІТЬ РЕМЕНІ»
-  const posText0 = sampleCyrillicTextToPoints(['ПРИСТЕБНІТЬ', 'РЕМЕНІ.'], PARTICLE_COUNT, {
+  // 2. Target 0: Cyrillic headline «ПРИСТЕБНІТЬ РЕМЕНІ.» (Single focal point Center-Top)
+  const posText0 = sampleCyrillicTextToPoints(['ПРИСТЕБНІТЬ', 'РЕМЕНІ.'], SHARD_COUNT, {
     x: 0,
     y: 0.95,
     z: 0.2,
@@ -247,52 +316,43 @@ async function buildLivingParticleSystem() {
     height: 3.2
   });
 
-  // 3. Target 1: Childhood Craft & Embroidery Photo
-  const photo1Data = await sampleImageToPoints('/assets/textures/embroidery_threads.jpg', PARTICLE_COUNT, {
+  // 3. Target 1: Archival Childhood Craft Photograph
+  const photo1Data = await sampleImageToPoints('/assets/textures/embroidery_threads.jpg', SHARD_COUNT, {
     x: 0,
     y: 0.75,
     z: 0.2,
     width: 5.2
   });
 
-  // 4. Target 2: Cyrillic headline «УРОКИ ПРАЦІ З ДІВЧАТАМИ»
-  const posText1 = sampleCyrillicTextToPoints(['УРОКИ ПРАЦІ', 'З ДІВЧАТАМИ.'], PARTICLE_COUNT, {
-    x: 0,
-    y: 0.95,
-    z: 0.2,
-    width: 6.6,
-    height: 3.2
-  });
-
-  // 5. Target 3: 3D Vintage Camera GLTF + Crimea Photo
-  const CAMERA_COUNT = 18000;
-  const CRIMEA_COUNT = PARTICLE_COUNT - CAMERA_COUNT;
+  // 4. Target 2: 3D Vintage Camera GLTF + Crimea Sea Photo
+  const CAMERA_COUNT = 17000;
+  const CRIMEA_COUNT = SHARD_COUNT - CAMERA_COUNT;
 
   const cameraPoints = await sampleGLTFModel('/assets/models/vintage_camera.glb', CAMERA_COUNT, {
     x: -1.7,
-    y: 0.45,
+    y: 0.55,
     z: 0.0,
-    scale: 2.7
+    scale: 2.0
   });
 
   const crimeaData = await sampleImageToPoints('/assets/textures/crimea_sea.jpg', CRIMEA_COUNT, {
     x: 1.7,
-    y: 0.45,
+    y: 0.55,
     z: 0.2,
-    width: 3.8
+    width: 3.6
   });
 
-  const posObject2 = new Float32Array(PARTICLE_COUNT * 3);
-  const colorObject2 = new Float32Array(PARTICLE_COUNT * 3);
+  const posObject2 = new Float32Array(SHARD_COUNT * 3);
+  const colorObject2 = new Float32Array(SHARD_COUNT * 3);
 
   for (let i = 0; i < CAMERA_COUNT; i++) {
     posObject2[i * 3 + 0] = cameraPoints[i * 3 + 0];
     posObject2[i * 3 + 1] = cameraPoints[i * 3 + 1];
     posObject2[i * 3 + 2] = cameraPoints[i * 3 + 2];
 
-    colorObject2[i * 3 + 0] = 0.98;
-    colorObject2[i * 3 + 1] = 0.88;
-    colorObject2[i * 3 + 2] = 0.72;
+    colorObject2[i * 3 + 0] = 0.94;
+    colorObject2[i * 3 + 1] = 0.85;
+    colorObject2[i * 3 + 2] = 0.68;
   }
   for (let i = 0; i < CRIMEA_COUNT; i++) {
     const srcIdx = i * 3;
@@ -307,17 +367,17 @@ async function buildLivingParticleSystem() {
   }
 
   // Set Buffer Attributes
-  particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posChaos, 3));
-  particlesGeometry.setAttribute('aTargetText0', new THREE.BufferAttribute(posText0, 3));
-  particlesGeometry.setAttribute('aTargetPhoto1', new THREE.BufferAttribute(photo1Data.points, 3));
-  particlesGeometry.setAttribute('aColorPhoto1', new THREE.BufferAttribute(photo1Data.colors, 3));
-  particlesGeometry.setAttribute('aTargetText1', new THREE.BufferAttribute(posText1, 3));
-  particlesGeometry.setAttribute('aTargetObject2', new THREE.BufferAttribute(posObject2, 3));
-  particlesGeometry.setAttribute('aColorObject2', new THREE.BufferAttribute(colorObject2, 3));
-  particlesGeometry.setAttribute('aRandom', new THREE.BufferAttribute(randomAttrs, 4));
+  shardsGeometry.setAttribute('position', new THREE.BufferAttribute(posQuiet, 3));
+  shardsGeometry.setAttribute('aTargetText0', new THREE.BufferAttribute(posText0, 3));
+  shardsGeometry.setAttribute('aTargetPhoto1', new THREE.BufferAttribute(photo1Data.points, 3));
+  shardsGeometry.setAttribute('aColorPhoto1', new THREE.BufferAttribute(photo1Data.colors, 3));
+  shardsGeometry.setAttribute('aTargetObject2', new THREE.BufferAttribute(posObject2, 3));
+  shardsGeometry.setAttribute('aColorObject2', new THREE.BufferAttribute(colorObject2, 3));
+  shardsGeometry.setAttribute('aShardType', new THREE.BufferAttribute(shardTypes, 1));
+  shardsGeometry.setAttribute('aRandom', new THREE.BufferAttribute(randomAttrs, 4));
 
-  // Custom Shader Material
-  particlesMaterial = new THREE.ShaderMaterial({
+  // Custom Parchment, Ink & Gold Edge-Glow Shader
+  shardsMaterial = new THREE.ShaderMaterial({
     vertexShader: `
       uniform float uProgress;
       uniform float uVelocity;
@@ -326,12 +386,13 @@ async function buildLivingParticleSystem() {
       attribute vec3 aTargetText0;
       attribute vec3 aTargetPhoto1;
       attribute vec3 aColorPhoto1;
-      attribute vec3 aTargetText1;
       attribute vec3 aTargetObject2;
       attribute vec3 aColorObject2;
+      attribute float aShardType;
       attribute vec4 aRandom;
 
       varying vec3 vColor;
+      varying float vShardType;
       varying float vAlpha;
 
       vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -391,78 +452,91 @@ async function buildLivingParticleSystem() {
       }
 
       void main() {
-        vec3 p0 = position;            // Chaos
-        vec3 p1 = aTargetText0;        // Text 0
-        vec3 p2 = aTargetPhoto1;       // Photo 1
-        vec3 p3 = aTargetText1;        // Text 1
-        vec3 p4 = aTargetObject2;      // Camera & Crimea
+        vec3 p0 = position;            // Quiet hovering state
+        vec3 p1 = aTargetText0;        // Text 0 («ПРИСТЕБНІТЬ РЕМЕНІ.»)
+        vec3 p2 = aTargetPhoto1;       // Photo 1 (Crafts)
+        vec3 p3 = aTargetObject2;      // Camera & Crimea
 
-        vec3 goldColor = vec3(0.98, 0.88, 0.72);
+        // Shard Palette:
+        // 50% Cream Parchment: #e8dcc0 (0.93, 0.88, 0.78)
+        // 35% Blue-Black Ink:  #1a1f2e (0.12, 0.14, 0.22)
+        // 15% Enchanted Gold:  #fce2b8 (1.00, 0.90, 0.74)
+        vec3 baseColor;
+        if (aShardType < 0.50) {
+          baseColor = vec3(0.93, 0.88, 0.78);
+        } else if (aShardType < 0.85) {
+          baseColor = vec3(0.14, 0.16, 0.24);
+        } else {
+          baseColor = vec3(1.00, 0.90, 0.74);
+        }
+
         vec3 currentPos = p0;
-        vec3 targetColor = goldColor;
+        vec3 targetColor = baseColor;
         float morphArc = 0.0;
 
         float p = uProgress;
 
-        // Stage 0: Chaos -> Text 0 (p in 0.00 -> 0.15)
+        // Stage 0: Quiet -> Text 0 (p in 0.00 -> 0.15)
         if (p <= 0.15) {
           float t = smoothstep(0.0, 0.12, p);
           currentPos = mix(p0, p1, t);
-          targetColor = goldColor;
+          targetColor = baseColor;
           morphArc = sin(t * 3.14159265) * step(t, 0.98);
         }
-        // Stage 1: Text 0 -> Photo 1 (p in 0.15 -> 0.45)
-        else if (p <= 0.45) {
-          float t = smoothstep(0.18, 0.40, p);
+        // Stage 1: Text 0 -> Photo 1 (p in 0.15 -> 0.50)
+        else if (p <= 0.50) {
+          float t = smoothstep(0.18, 0.42, p);
           currentPos = mix(p1, p2, t);
-          targetColor = mix(goldColor, aColorPhoto1, smoothstep(0.3, 0.9, t));
+          targetColor = mix(baseColor, aColorPhoto1, smoothstep(0.2, 0.85, t));
           morphArc = sin(t * 3.14159265) * step(t, 0.98);
         }
-        // Stage 2: Photo 1 -> Text 1 (p in 0.45 -> 0.70)
-        else if (p <= 0.70) {
-          float t = smoothstep(0.48, 0.65, p);
-          currentPos = mix(p2, p3, t);
-          targetColor = mix(aColorPhoto1, goldColor, smoothstep(0.1, 0.7, t));
-          morphArc = sin(t * 3.14159265) * step(t, 0.98);
-        }
-        // Stage 3: Text 1 -> Camera & Crimea (p in 0.70 -> 1.00)
+        // Stage 2: Photo 1 -> Camera & Crimea (p in 0.50 -> 1.00)
         else {
-          float t = smoothstep(0.72, 0.90, p);
-          currentPos = mix(p3, p4, t);
-          targetColor = mix(goldColor, aColorObject2, smoothstep(0.3, 0.9, t));
+          float t = smoothstep(0.55, 0.88, p);
+          currentPos = mix(p2, p3, t);
+          targetColor = mix(aColorPhoto1, aColorObject2, smoothstep(0.2, 0.85, t));
           morphArc = sin(t * 3.14159265) * step(t, 0.98);
         }
 
-        // Curl turbulence only active during fast motion & transition arcs
+        // Soft breathing pulsation when resting in place
+        if (morphArc < 0.05 && abs(uVelocity) < 0.05) {
+          currentPos += vec3(sin(uTime * 1.5 + currentPos.y) * 0.015, cos(uTime * 1.5 + currentPos.x) * 0.015, 0.0);
+        }
+
+        // Curl turbulence active during fast motion & transition arcs
         float velTurbulence = clamp(abs(uVelocity) * 1.5, 0.0, 3.5);
-        float totalTurbulence = morphArc * 1.4 + velTurbulence;
+        float totalTurbulence = morphArc * 1.35 + velTurbulence;
         
         vec3 noiseVec = curl(currentPos * 0.4 + vec3(uTime * 0.2) + aRandom.xyz * 0.5);
-        currentPos += noiseVec * (totalTurbulence * 0.45);
+        currentPos += noiseVec * (totalTurbulence * 0.42);
 
         vColor = targetColor;
-        vAlpha = 0.92;
+        vShardType = aShardType;
+        vAlpha = 0.98;
 
         vec4 mvPosition = modelViewMatrix * vec4(currentPos, 1.0);
         gl_Position = projectionMatrix * mvPosition;
 
-        // Rich point size with perspective attenuation
-        gl_PointSize = (26.0 / -mvPosition.z) * (1.0 + totalTurbulence * 0.3);
+        // Enhanced point size for crisp manuscript clarity
+        gl_PointSize = (32.0 / -mvPosition.z) * (1.0 + totalTurbulence * 0.3);
       }
     `,
     fragmentShader: `
       varying vec3 vColor;
+      varying float vShardType;
       varying float vAlpha;
 
       void main() {
         float dist = length(gl_PointCoord - vec2(0.5));
         if (dist > 0.5) discard;
 
-        float glow = 1.0 - smoothstep(0.0, 0.5, dist);
-        float core = 1.0 - smoothstep(0.0, 0.2, dist);
+        // Rich dual-tone manuscript shard with gold rim
+        float rim = smoothstep(0.28, 0.48, dist);
+        vec3 goldRim = vec3(0.98, 0.88, 0.70);
+        vec3 finalColor = mix(vColor, goldRim, rim * 0.45);
 
-        vec3 finalColor = vColor + vec3(core * 0.35);
-        gl_FragColor = vec4(finalColor, glow * vAlpha);
+        float alphaMask = 1.0 - smoothstep(0.42, 0.5, dist);
+        gl_FragColor = vec4(finalColor, alphaMask * vAlpha);
       }
     `,
     uniforms: {
@@ -472,15 +546,15 @@ async function buildLivingParticleSystem() {
     },
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending
+    blending: THREE.NormalBlending
   });
 
-  particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-  scene.add(particlesMesh);
+  shardsMesh = new THREE.Points(shardsGeometry, shardsMaterial);
+  scene.add(shardsMesh);
 }
 
 // ==========================================================================
-// 4. ANIMATION LOOP
+// 5. ANIMATION LOOP
 // ==========================================================================
 function animate() {
   requestAnimationFrame(animate);
@@ -492,23 +566,27 @@ function animate() {
   currentProgress += (targetProgress - currentProgress) * 0.08;
   scrollVelocity = (currentProgress - prevProgress) * 60.0;
 
-  if (particlesMaterial) {
-    particlesMaterial.uniforms.uProgress.value = currentProgress;
-    particlesMaterial.uniforms.uVelocity.value = scrollVelocity;
-    particlesMaterial.uniforms.uTime.value = time;
+  if (shardsMaterial) {
+    shardsMaterial.uniforms.uProgress.value = currentProgress;
+    shardsMaterial.uniforms.uVelocity.value = scrollVelocity;
+    shardsMaterial.uniforms.uTime.value = time;
+  }
+
+  if (dustMaterial) {
+    dustMaterial.uniforms.uTime.value = time;
   }
 
   updateActiveCard(currentProgress);
 
-  camera.position.x += (mouseX * 0.35 - camera.position.x) * 0.05;
-  camera.position.y += (-mouseY * 0.25 - camera.position.y) * 0.05;
+  camera.position.x += (mouseX * 0.25 - camera.position.x) * 0.05;
+  camera.position.y += (-mouseY * 0.20 - camera.position.y) * 0.05;
   camera.lookAt(0, 0, 0);
 
   renderer.render(scene, camera);
 }
 
 // ==========================================================================
-// 5. GESTURE & PROGRESS CONTROLLER
+// 6. GESTURE & PROGRESS CONTROLLER
 // ==========================================================================
 function initGestureEngine() {
   window.addEventListener('wheel', (e) => {

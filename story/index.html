@@ -4,19 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>The Story · Oleg Ro (DeusFlow)</title>
-  <meta name="description" content="Магічний 3D-театр перетворень: історія життя, випробувань і творчої філософії Олега Ро." />
+  <meta name="description" content="Ніч у бібліотеці: історія життя, випробувань і творчої філософії Олега Ро, викарбувана з осколків пергаменту та чорнила." />
   
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
-  <meta name="theme-color" content="#060508" />
+  <meta name="theme-color" content="#0d0a08" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-15" />
+  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-16" />
 
   <!-- ES Module Import Map for Three.js -->
   <script type="importmap">
@@ -30,13 +30,24 @@
 </head>
 <body>
 
-  <!-- Fullscreen 3D WebGL Particle Canvas -->
+  <!-- Diagonal Window Light Beam (Top-Left) -->
+  <div class="library-light-beam"></div>
+
+  <!-- Distant Candlelight Bokeh -->
+  <div class="candle-bokeh-container">
+    <div class="candle-bokeh candle-1"></div>
+    <div class="candle-bokeh candle-2"></div>
+    <div class="candle-bokeh candle-3"></div>
+    <div class="candle-bokeh candle-4"></div>
+  </div>
+
+  <!-- Fullscreen 3D WebGL Canvas -->
   <canvas id="webgl-canvas"></canvas>
 
   <!-- Parchment & Film Noise Texture Overlay -->
   <div class="parchment-vignette"></div>
 
-  <!-- Enchanted Golden Borders -->
+  <!-- Antique Manuscript Border -->
   <div class="enchanted-frame">
     <div class="corner-filigree c-tl"></div>
     <div class="corner-filigree c-tr"></div>
@@ -74,12 +85,13 @@
     <button class="step-dot" data-step="2" aria-label="Beat 2: The First Lens"></button>
   </nav>
 
-  <!-- Synchronized Authentic Ukrainian Narrative Prose Layer -->
+  <!-- Synchronized Bookish Narrative Prose Layer -->
   <main class="narrative-container">
 
     <!-- Card 0: Prologue -->
     <article class="narrative-card active" id="card-0">
       <div class="prophet-badge">THE ENCHANTED CHRONICLES · NO. 01</div>
+      <div class="book-divider"><span class="diamond-icon"></span></div>
       <p class="narrative-text">
         Пристебніть ремені: раз ви зайшли на цю сторінку, ви або дуже допитливі, або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи? Ну ж бо, скіль… Я все ж намагався… То що тебе сюди занесло?
       </p>
@@ -92,6 +104,7 @@
     <!-- Card 1: Childhood & Craft -->
     <article class="narrative-card" id="card-1">
       <div class="prophet-badge">01 // CRAFT & CHILDHOOD</div>
+      <div class="book-divider"><span class="diamond-icon"></span></div>
       <p class="narrative-text">
         Усе життя, скільки себе пам'ятаю, я любив щось творити і витворювати. Творчістю, звісно, це було важко назвати, але я любив малювати й перемальовувати з розмальовок картинки на свій лад… Мені здається, у мене виходило круто, адже завжди мені за це ставили хороші оцінки і в садочку, і в школі на уроках малювання чи уроках праці. Так, до речі, уроки праці в мене були з дівчатами, оскільки хлопців було мало, тому ми там плели, вишивали і так далі…
       </p>
@@ -100,8 +113,9 @@
     <!-- Card 2: The First Lens, Olympus & Crimea -->
     <article class="narrative-card" id="card-2">
       <div class="prophet-badge">02 // THE FIRST LENS · 35MM</div>
+      <div class="book-divider"><span class="diamond-icon"></span></div>
       <p class="narrative-text">
-        Багато чого можна було б ще додати з дитинства про творчість, але тут станеться таймскіп до першої камери — бум! Бабуся подарувала на день народження мені плівкову камеру, це був Olympus, але який саме — не пам'ятаю. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка вимирає (і тоді це була правда). Через пару років у мене з'явився Canon 1000D… Я просто фотографував і робив щось, фотокопії чогось, особливо фотографії з Криму… Це був мій перший і останній «Крим», далі почалося те, що почалося… їбуча Росія вирішила захопити цю прекрасну частину нашої країни України.
+        Багато чого можна було б ще додати з дитинства про творчість, але тут станеться таймскіп до першої камери — бум! Бабуся подарувала на день народження мені плівкову камеру, це був Olympus, але який саме — не пам'таю. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка вимирає (і тоді це була правда). Через пару років у мене з'явився Canon 1000D… Я просто фотографував і робив щось, фотокопії чогось, особливо фотографії з Криму… Це був мій перший і останній «Крим», далі почалося те, що почалося… їбуча Росія вирішила захопити цю прекрасну частину нашої країни України.
       </p>
       <span class="narrative-quote">«Люблю драматичні історії :)»</span>
     </article>
@@ -109,7 +123,7 @@
   </main>
 
   <!-- Main Particle Metamorphosis Engine -->
-  <script type="module" src="/assets/js/story.js?v=20260823-15"></script>
+  <script type="module" src="/assets/js/story.js?v=20260823-16"></script>
 
 </body>
 </html>
