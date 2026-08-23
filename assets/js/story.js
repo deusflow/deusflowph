@@ -95,6 +95,7 @@ function initThree() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+  window.triggerShardTransition = triggerShardTransition;
   window.addEventListener('resize', onWindowResize);
 }
 
@@ -401,84 +402,106 @@ function buildInstancedShards() {
 
 // Triggered ONLY on section transitions [1->2], [2->3], [3->4]
 export function triggerShardTransition(fromSectionIdx, toSectionIdx, fromElement) {
-  if (!fromElement) return;
+  if (!fromElement || !attrInstancePos) return;
 
-  // Project DOM element bounds to 3D camera world coordinates
   const rect = fromElement.getBoundingClientRect();
-  const screenCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  const screenW = window.innerWidth || 1440;
+  const screenH = window.innerHeight || 900;
 
-  // Convert 2D pixel bounds to 3D world space at z = 0
-  const vTopLeft = new THREE.Vector3((rect.left / window.innerWidth) * 2 - 1, -(rect.top / window.innerHeight) * 2 + 1, 0.5).unproject(camera);
-  const vBottomRight = new THREE.Vector3((rect.right / window.innerWidth) * 2 - 1, -(rect.bottom / window.innerHeight) * 2 + 1, 0.5).unproject(camera);
+  // Convert 2D pixel bounding rectangle to 3D world space on focus plane (z = 0)
+  const leftNdc = (rect.left / screenW) * 2 - 1;
+  const rightNdc = (rect.right / screenW) * 2 - 1;
+  const topNdc = -(rect.top / screenH) * 2 + 1;
+  const bottomNdc = -(rect.bottom / screenH) * 2 + 1;
 
-  // Focus plane scale factor at z = 0
-  const dirTL = vTopLeft.sub(camera.position).normalize();
-  const distTL = -camera.position.z / dirTL.z;
-  const worldTL = camera.position.clone().add(dirTL.multiplyScalar(distTL));
+  // Perspective unproject factor for camera at z = 8.0 with fov = 45
+  const aspect = camera.aspect;
+  const vFov = (camera.fov * Math.PI) / 180;
+  const planeHeight = 2.0 * Math.tan(vFov / 2.0) * camera.position.z;
+  const planeWidth = planeHeight * aspect;
 
-  const dirBR = vBottomRight.sub(camera.position).normalize();
-  const distBR = -camera.position.z / dirBR.z;
-  const worldBR = camera.position.clone().add(dirBR.multiplyScalar(distBR));
+  const minX = leftNdc * (planeWidth / 2);
+  const maxX = rightNdc * (planeWidth / 2);
+  const maxY = topNdc * (planeHeight / 2);
+  const minY = bottomNdc * (planeHeight / 2);
 
-  const minX = worldTL.x;
-  const maxX = worldBR.x;
-  const maxY = worldTL.y;
-  const minY = worldBR.y;
   const centerWorldX = (minX + maxX) / 2;
   const centerWorldY = (minY + maxY) / 2;
 
   const velMultiplier = Math.min(2.5, 1.0 + Math.abs(scrollVelocity) * 0.8);
 
+  const posArr = attrInstancePos.array;
+  const rotArr = attrInstanceRot.array;
+  const scaleArr = attrInstanceScale.array;
+
   for (let i = 0; i < SHARD_COUNT; i++) {
-    // 1. SPAWN: Sample point along the perimeter of the outgoing form
+    // 1. SPAWN: Sample perimeter of the outgoing form
     const side = Math.floor(Math.random() * 4);
     let sx, sy;
     if (side === 0) { // Top edge
       sx = minX + Math.random() * (maxX - minX);
-      sy = maxY + (Math.random() - 0.5) * 0.15;
+      sy = maxY + (Math.random() - 0.5) * 0.2;
     } else if (side === 1) { // Bottom edge
       sx = minX + Math.random() * (maxX - minX);
-      sy = minY + (Math.random() - 0.5) * 0.15;
+      sy = minY + (Math.random() - 0.5) * 0.2;
     } else if (side === 2) { // Left edge
-      sx = minX + (Math.random() - 0.5) * 0.15;
+      sx = minX + (Math.random() - 0.5) * 0.2;
       sy = minY + Math.random() * (maxY - minY);
     } else { // Right edge
-      sx = maxX + (Math.random() - 0.5) * 0.15;
+      sx = maxX + (Math.random() - 0.5) * 0.2;
       sy = minY + Math.random() * (maxY - minY);
     }
 
     instPos[i * 3 + 0] = sx;
     instPos[i * 3 + 1] = sy;
-    instPos[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+    instPos[i * 3 + 2] = (Math.random() - 0.5) * 0.6;
 
-    // 2. FLIGHT: Base vector = Down + Outward from center + Curl noise initial kick
+    // 2. FLIGHT: Outward spiral vector + Downward gravity
     const outDirX = (sx - centerWorldX) || (Math.random() - 0.5);
-    const outDirY = (sy - centerWorldY);
+    const speed = (2.4 + Math.random() * 3.2) * velMultiplier;
 
-    const speed = (2.2 + Math.random() * 2.8) * velMultiplier;
-    instVel[i * 3 + 0] = outDirX * speed * 0.6 + (Math.random() - 0.5) * 1.5;
-    instVel[i * 3 + 1] = -Math.abs(speed * 1.2) - Math.random() * 1.5; // Downward
-    instVel[i * 3 + 2] = (Math.random() - 0.5) * 2.0;
+    instVel[i * 3 + 0] = outDirX * speed * 0.75 + (Math.random() - 0.5) * 1.8;
+    instVel[i * 3 + 1] = -Math.abs(speed * 1.3) - Math.random() * 1.6; // Downward
+    instVel[i * 3 + 2] = (Math.random() - 0.5) * 2.2;
 
     // Random 3-axis Euler tumble rotation
     instRot[i * 3 + 0] = Math.random() * Math.PI * 2;
     instRot[i * 3 + 1] = Math.random() * Math.PI * 2;
     instRot[i * 3 + 2] = Math.random() * Math.PI * 2;
 
-    instRotSpeed[i * 3 + 0] = (Math.random() - 0.5) * 8.0 * velMultiplier;
-    instRotSpeed[i * 3 + 1] = (Math.random() - 0.5) * 8.0 * velMultiplier;
-    instRotSpeed[i * 3 + 2] = (Math.random() - 0.5) * 8.0 * velMultiplier;
+    instRotSpeed[i * 3 + 0] = (Math.random() - 0.5) * 9.0 * velMultiplier;
+    instRotSpeed[i * 3 + 1] = (Math.random() - 0.5) * 9.0 * velMultiplier;
+    instRotSpeed[i * 3 + 2] = (Math.random() - 0.5) * 9.0 * velMultiplier;
 
-    // Stagger delay: larger shards launch first
+    // Stagger delay: larger shards launch first (0 to 0.12s)
     const isLarge = Math.random() < 0.35;
-    const baseScale = isLarge ? (0.24 + Math.random() * 0.14) : (0.12 + Math.random() * 0.10);
+    const baseScale = isLarge ? (0.28 + Math.random() * 0.15) : (0.15 + Math.random() * 0.12);
     instScale[i * 2 + 0] = baseScale * (0.85 + Math.random() * 0.3);
     instScale[i * 2 + 1] = baseScale * (0.85 + Math.random() * 0.3);
 
-    instStagger[i] = isLarge ? Math.random() * 0.10 : (0.08 + Math.random() * 0.25);
-    instMaxLife[i] = (1.3 + Math.random() * 0.5) / velMultiplier;
+    instStagger[i] = isLarge ? Math.random() * 0.04 : (0.03 + Math.random() * 0.10);
+    instMaxLife[i] = (1.5 + Math.random() * 0.6) / velMultiplier;
     instLife[i] = instMaxLife[i];
+
+    // Populate initial attributes immediately
+    posArr[i * 4 + 0] = sx;
+    posArr[i * 4 + 1] = sy;
+    posArr[i * 4 + 2] = instPos[i * 3 + 2];
+    posArr[i * 4 + 3] = 0.96; // Alpha
+
+    rotArr[i * 4 + 0] = instRot[i * 3 + 0];
+    rotArr[i * 4 + 1] = instRot[i * 3 + 1];
+    rotArr[i * 4 + 2] = instRot[i * 3 + 2];
+
+    scaleArr[i * 4 + 0] = instScale[i * 2 + 0];
+    scaleArr[i * 4 + 1] = instScale[i * 2 + 1];
+    scaleArr[i * 4 + 2] = instType[i];
+    scaleArr[i * 4 + 3] = 0.0;
   }
+
+  attrInstancePos.needsUpdate = true;
+  attrInstanceRot.needsUpdate = true;
+  attrInstanceScale.needsUpdate = true;
 }
 
 // ==========================================================================
@@ -504,7 +527,7 @@ function animate() {
   // Update shard state machine
   updateShards(delta, time);
 
-  // Gentle parallax camera tracking
+  // Parallax camera tracking
   camera.position.x += (mouseX * 0.25 - camera.position.x) * 0.05;
   camera.position.y += (-mouseY * 0.20 - camera.position.y) * 0.05;
   camera.lookAt(0, 0, 0);
@@ -528,10 +551,6 @@ function updateShards(delta, time) {
       // Handle Stagger delay
       if (instStagger[i] > 0) {
         instStagger[i] -= delta;
-        // Keep hidden until stagger finishes
-        posArr[i * 4 + 3] = 0.0;
-        scaleArr[i * 4 + 0] = 0.0;
-        scaleArr[i * 4 + 1] = 0.0;
         continue;
       }
 
@@ -551,16 +570,16 @@ function updateShards(delta, time) {
       }
 
       // FLIGHT Physics: Velocity + Gravity + Curl Turbulence Kick
-      const curlAmp = Math.sin(progress * Math.PI) * 2.2;
-      const curlX = Math.sin(time * 2.0 + instPos[i * 3 + 1] * 0.8) * curlAmp;
-      const curlZ = Math.cos(time * 2.0 + instPos[i * 3 + 0] * 0.8) * curlAmp;
+      const curlAmp = Math.sin(progress * Math.PI) * 2.8;
+      const curlX = Math.sin(time * 2.5 + instPos[i * 3 + 1] * 0.9) * curlAmp;
+      const curlZ = Math.cos(time * 2.5 + instPos[i * 3 + 0] * 0.9) * curlAmp;
 
       instPos[i * 3 + 0] += (instVel[i * 3 + 0] + curlX) * delta;
       instPos[i * 3 + 1] += instVel[i * 3 + 1] * delta;
       instPos[i * 3 + 2] += (instVel[i * 3 + 2] + curlZ) * delta;
 
       // Downward gravity acceleration
-      instVel[i * 3 + 1] -= 3.8 * delta;
+      instVel[i * 3 + 1] -= 4.5 * delta;
 
       // Rotational Tumbling
       instRot[i * 3 + 0] += instRotSpeed[i * 3 + 0] * delta;
@@ -702,6 +721,10 @@ function onSectionLeave(oldIdx, direction) {
 
   // Trigger Shards ONLY on transitions [1->2], [2->3], [3->4]
   if (direction === 'down' && (oldIdx === 1 || oldIdx === 2 || oldIdx === 3)) {
+    // Expose triggerShardTransition globally for ScrollTrigger and test runners
+    if (typeof window !== 'undefined') {
+      window.triggerShardTransition = triggerShardTransition;
+    }
     triggerShardTransition(oldIdx, oldIdx + 1, oldBox);
   } else if (direction === 'up' && (oldIdx === 2 || oldIdx === 3 || oldIdx === 4)) {
     triggerShardTransition(oldIdx, oldIdx - 1, oldBox);
