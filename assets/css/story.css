@@ -19,7 +19,7 @@
 
   --font-magic-title: 'Cinzel', serif;
   --font-editorial: 'Playfair Display', serif;
-  --font-body: 'Inter', sans-serif;
+  --font-body: 'Playfair Display', Georgia, serif;
   --font-mono: 'Space Mono', monospace;
 }
 
@@ -37,6 +37,8 @@ html, body {
   background: linear-gradient(175deg, var(--bg-dark-oak) 0%, var(--bg-amber-mid) 55%, var(--bg-amber-deep) 100%);
   color: var(--parchment-text);
   font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.85;
   -webkit-font-smoothing: antialiased;
   user-select: none;
 }

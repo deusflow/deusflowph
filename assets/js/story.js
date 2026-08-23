@@ -1,24 +1,25 @@
 /**
  * DEUSFLOW · NIGHT IN THE HOGWARTS LIBRARY
- * Pure Parchment & Ink Shard Metamorphosis Engine
- * Single focal point ritual of assembly:
- * - 60 dust motes floating quietly in the gothic window light beam
- * - 30,000 shards of cream parchment (#e8dcc0) & blue-black ink (#1a1f2e) with gold edge-glow
- * - Form assembly with ink-manifestation settling pulse
+ * Pure 3D InstancedMesh Torn Parchment & Ink Shard Engine
+ * Architecture:
+ * - 500 Physical 3D Polygonal Paper Scraps (THREE.InstancedMesh)
+ * - Double-Sided Paper Shading, 3D Tumbling Rotations & Ragged Gold Edge Contours
+ * - Multi-Target Sampling (Cyrillic Glyphs, 3D Photo Grid, 3D GLTF Camera Model)
+ * - 70 Ambient Dust Motes in Gothic Window Light Beam
  */
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
 
-const SHARD_COUNT = 30000;
+const INSTANCE_COUNT = 500;
 const DUST_COUNT = 70;
 
 let scene, camera, renderer;
 let clock = new THREE.Clock();
 
-let shardsGeometry, shardsMaterial, shardsMesh;
-let dustGeometry, dustMaterial, dustMesh;
+let shardsMesh, shardsMaterial, shardsGeometry;
+let dustMesh, dustMaterial, dustGeometry;
 
 let targetProgress = 0.0;
 let currentProgress = 0.0;
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   initThree();
   buildDustMotes();
-  await buildParchmentInkShards();
+  await buildTornParchmentInstancedShards();
   initGestureEngine();
   initAudio();
   initMouseListener();
@@ -84,43 +85,36 @@ function initThree() {
 }
 
 // ==========================================================================
-// 2. DUST MOTES IN WINDOW LIGHT BEAM (60-80 particles)
+// 2. DUST MOTES IN WINDOW LIGHT BEAM (Ambient Context)
 // ==========================================================================
 function buildDustMotes() {
   dustGeometry = new THREE.BufferGeometry();
   const dustPos = new Float32Array(DUST_COUNT * 3);
-  const dustVel = new Float32Array(DUST_COUNT * 3);
 
   for (let i = 0; i < DUST_COUNT; i++) {
     dustPos[i * 3 + 0] = (Math.random() - 0.5) * 8.0 - 1.5;
     dustPos[i * 3 + 1] = (Math.random() - 0.5) * 6.0 + 1.0;
     dustPos[i * 3 + 2] = (Math.random() - 0.5) * 4.0;
-
-    dustVel[i * 3 + 0] = (Math.random() - 0.5) * 0.002;
-    dustVel[i * 3 + 1] = (Math.random() - 0.5) * 0.002;
-    dustVel[i * 3 + 2] = (Math.random() - 0.5) * 0.002;
   }
 
   dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-  dustGeometry.setAttribute('aVelocity', new THREE.BufferAttribute(dustVel, 3));
 
   dustMaterial = new THREE.ShaderMaterial({
     vertexShader: `
       uniform float uTime;
-      attribute vec3 aVelocity;
       varying float vAlpha;
 
       void main() {
         vec3 p = position;
-        p.x += sin(uTime * 0.4 + position.y * 2.0) * 0.15;
-        p.y += cos(uTime * 0.3 + position.x * 2.0) * 0.15;
-        p.z += sin(uTime * 0.2 + position.z * 2.0) * 0.10;
+        p.x += sin(uTime * 0.35 + position.y * 2.0) * 0.12;
+        p.y += cos(uTime * 0.25 + position.x * 2.0) * 0.12;
+        p.z += sin(uTime * 0.20 + position.z * 2.0) * 0.08;
 
-        vAlpha = 0.35 + 0.25 * sin(uTime * 0.8 + position.x * 4.0);
+        vAlpha = 0.30 + 0.20 * sin(uTime * 0.8 + position.x * 4.0);
 
         vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mvPosition;
-        gl_PointSize = (18.0 / -mvPosition.z);
+        gl_PointSize = (16.0 / -mvPosition.z);
       }
     `,
     fragmentShader: `
@@ -145,13 +139,15 @@ function buildDustMotes() {
 }
 
 // ==========================================================================
-// 3. PARCHMENT & INK SAMPLERS
+// 3. TARGET SAMPLERS FOR PHYSICAL SHARDS
 // ==========================================================================
-function sampleCyrillicTextToPoints(lines, count, bounds) {
+
+// Sample Cyrillic text contours cleanly for physical paper scraps
+function sampleTextForShards(lines, count, bounds) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = 1600;
-  canvas.height = 800;
+  canvas.width = 1800;
+  canvas.height = 700;
 
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -159,22 +155,24 @@ function sampleCyrillicTextToPoints(lines, count, bounds) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  const fontSize = lines.length === 1 ? 160 : 130;
-  ctx.font = `bold ${fontSize}px "Playfair Display", serif`;
+  const fontSize = 150;
+  ctx.font = `900 ${fontSize}px "Playfair Display", Georgia, serif`;
 
-  const lineHeight = fontSize * 1.25;
+  const lineHeight = fontSize * 1.35;
   const startY = canvas.height / 2 - ((lines.length - 1) * lineHeight) / 2;
   lines.forEach((line, idx) => {
     ctx.fillText(line, canvas.width / 2, startY + idx * lineHeight);
   });
 
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  const validPixels = [];
+  const strokePixels = [];
 
-  for (let y = 0; y < canvas.height; y += 3) {
-    for (let x = 0; x < canvas.width; x += 3) {
-      if (imgData[(y * canvas.width + x) * 4] > 100) {
-        validPixels.push({
+  // Edge & interior sampling for distinct letterform coverage
+  for (let y = 0; y < canvas.height; y += 6) {
+    for (let x = 0; x < canvas.width; x += 6) {
+      const idx = (y * canvas.width + x) * 4;
+      if (imgData[idx] > 140) {
+        strokePixels.push({
           x: (x / canvas.width - 0.5) * bounds.width + bounds.x,
           y: (-(y / canvas.height - 0.5)) * bounds.height + bounds.y
         });
@@ -182,63 +180,57 @@ function sampleCyrillicTextToPoints(lines, count, bounds) {
     }
   }
 
-  const points = new Float32Array(count * 3);
-  const totalValid = validPixels.length || 1;
+  const positions = new Float32Array(count * 3);
+  const rotations = new Float32Array(count * 3);
+  const total = strokePixels.length || 1;
 
   for (let i = 0; i < count; i++) {
-    const p = validPixels[i % totalValid] || { x: 0, y: 0 };
-    points[i * 3 + 0] = p.x + (Math.random() - 0.5) * 0.035;
-    points[i * 3 + 1] = p.y + (Math.random() - 0.5) * 0.035;
-    points[i * 3 + 2] = bounds.z + (Math.random() - 0.5) * 0.08;
+    const stepIdx = Math.floor((i / count) * total);
+    const p = strokePixels[stepIdx] || { x: 0, y: 0 };
+
+    positions[i * 3 + 0] = p.x;
+    positions[i * 3 + 1] = p.y;
+    positions[i * 3 + 2] = bounds.z + (Math.random() - 0.5) * 0.02;
+
+    rotations[i * 3 + 0] = (Math.random() - 0.5) * 0.04;
+    rotations[i * 3 + 1] = (Math.random() - 0.5) * 0.04;
+    rotations[i * 3 + 2] = (Math.random() - 0.5) * 0.04;
   }
-  return points;
+  return { positions, rotations };
 }
 
-async function sampleImageToPoints(imgSrc, count, bounds) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = 240;
-      canvas.height = 180;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+// Sample a grid of physical photo scraps with UV coordinates
+function samplePhotoForShards(count, bounds, cols = 25, rows = 20) {
+  const positions = new Float32Array(count * 3);
+  const uvs = new Float32Array(count * 2);
+  const rotations = new Float32Array(count * 3);
 
-      const points = new Float32Array(count * 3);
-      const colors = new Float32Array(count * 3);
+  const cellW = bounds.width / cols;
+  const cellH = bounds.height / rows;
 
-      const aspect = canvas.width / canvas.height;
-      const w = bounds.width;
-      const h = bounds.width / aspect;
+  for (let i = 0; i < count; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
 
-      for (let i = 0; i < count; i++) {
-        const px = Math.floor(Math.random() * canvas.width);
-        const py = Math.floor(Math.random() * canvas.height);
-        const idx = (py * canvas.width + px) * 4;
+    const u = (col + 0.5) / cols;
+    const v = (row + 0.5) / rows;
 
-        points[i * 3 + 0] = ((px / canvas.width) - 0.5) * w + bounds.x;
-        points[i * 3 + 1] = (-((py / canvas.height) - 0.5)) * h + bounds.y;
-        points[i * 3 + 2] = bounds.z + (Math.random() - 0.5) * 0.08;
+    positions[i * 3 + 0] = (col - cols / 2 + 0.5) * cellW + bounds.x;
+    positions[i * 3 + 1] = (row - rows / 2 + 0.5) * cellH + bounds.y;
+    positions[i * 3 + 2] = bounds.z + (Math.random() - 0.5) * 0.02;
 
-        colors[i * 3 + 0] = Math.min(1.0, (imgData[idx] / 255.0) * 1.35);
-        colors[i * 3 + 1] = Math.min(1.0, (imgData[idx + 1] / 255.0) * 1.35);
-        colors[i * 3 + 2] = Math.min(1.0, (imgData[idx + 2] / 255.0) * 1.35);
-      }
-      resolve({ points, colors });
-    };
-    img.onerror = () => {
-      resolve({
-        points: new Float32Array(count * 3),
-        colors: new Float32Array(count * 3).fill(1.0)
-      });
-    };
-    img.src = imgSrc;
-  });
+    uvs[i * 2 + 0] = u;
+    uvs[i * 2 + 1] = 1.0 - v;
+
+    rotations[i * 3 + 0] = (Math.random() - 0.5) * 0.02;
+    rotations[i * 3 + 1] = (Math.random() - 0.5) * 0.02;
+    rotations[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
+  }
+  return { positions, uvs, rotations };
 }
 
-async function sampleGLTFModel(gltfPath, count, bounds) {
+// Sample surface points of a compound GLTF model for shards
+async function sampleGLTFForShards(gltfPath, count, bounds) {
   return new Promise((resolve) => {
     new GLTFLoader().load(gltfPath, (gltf) => {
       const meshes = [];
@@ -249,66 +241,131 @@ async function sampleGLTFModel(gltfPath, count, bounds) {
         }
       });
 
-      const points = new Float32Array(count * 3);
+      const positions = new Float32Array(count * 3);
+      const rotations = new Float32Array(count * 3);
+
       if (meshes.length === 0) {
-        resolve(points);
+        resolve({ positions, rotations });
         return;
       }
 
       const samplers = meshes.map(m => new MeshSurfaceSampler(m).build());
       const tempPos = new THREE.Vector3();
+      const tempNorm = new THREE.Vector3();
 
       const box = new THREE.Box3().setFromObject(gltf.scene);
-      const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
+      const maxDim = Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z);
       const scale = bounds.scale / maxDim;
 
       for (let i = 0; i < count; i++) {
         const s = samplers[i % samplers.length];
-        s.sample(tempPos);
+        s.sample(tempPos, tempNorm);
         tempPos.sub(center);
-        points[i * 3 + 0] = tempPos.x * scale + bounds.x;
-        points[i * 3 + 1] = tempPos.y * scale + bounds.y;
-        points[i * 3 + 2] = tempPos.z * scale + bounds.z;
+
+        positions[i * 3 + 0] = tempPos.x * scale + bounds.x;
+        positions[i * 3 + 1] = tempPos.y * scale + bounds.y;
+        positions[i * 3 + 2] = tempPos.z * scale + bounds.z;
+
+        rotations[i * 3 + 0] = tempNorm.x;
+        rotations[i * 3 + 1] = tempNorm.y;
+        rotations[i * 3 + 2] = tempNorm.z;
       }
-      resolve(points);
+      resolve({ positions, rotations });
     }, undefined, () => {
-      resolve(new Float32Array(count * 3));
+      resolve({
+        positions: new Float32Array(count * 3),
+        rotations: new Float32Array(count * 3)
+      });
     });
   });
 }
 
 // ==========================================================================
-// 4. BUILD PARCHMENT & INK LIVING SHARD SYSTEM
+// 4. BUILD INSTANCED MESH TORN PARCHMENT SHARD UNIVERSE
 // ==========================================================================
-async function buildParchmentInkShards() {
-  shardsGeometry = new THREE.BufferGeometry();
+async function buildTornParchmentInstancedShards() {
+  // Base Geometry: Torn Ragged Polygonal Quad with 4 Displaced Vertices
+  // Including edge coordinates for physical gold edge highlight
+  const baseGeom = new THREE.BufferGeometry();
+  
+  // 4 vertices of a ragged quadrilateral
+  const verts = new Float32Array([
+    -0.52, -0.48, 0.0,
+     0.49, -0.51, 0.0,
+     0.51,  0.49, 0.0,
+    -0.48,  0.52, 0.0
+  ]);
 
-  // 1. Initial Floating Cloud (Quiet hovering state before incantation)
-  const posQuiet = new Float32Array(SHARD_COUNT * 3);
-  const shardTypes = new Float32Array(SHARD_COUNT);
-  const randomAttrs = new Float32Array(SHARD_COUNT * 4);
+  const normals = new Float32Array([
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1
+  ]);
 
-  for (let i = 0; i < SHARD_COUNT; i++) {
-    posQuiet[i * 3 + 0] = (Math.random() - 0.5) * 12.0;
-    posQuiet[i * 3 + 1] = (Math.random() - 0.5) * 8.0;
-    posQuiet[i * 3 + 2] = (Math.random() - 0.5) * 8.0 - 1.5;
+  const uvs = new Float32Array([
+    0, 0,
+    1, 0,
+    1, 1,
+    0, 1
+  ]);
 
-    // Shard Matter Types:
-    // 0.0 - 0.50: Cream Parchment
-    // 0.50 - 0.85: Blue-Black Archival Ink
-    // 0.85 - 1.00: Enchanted Gold Leaf
+  // Distance from center to compute perimeter gold foil edge
+  const edgeDist = new Float32Array([
+    1.0, 1.0, 1.0, 1.0
+  ]);
+
+  const indices = new Uint16Array([
+    0, 1, 2,
+    0, 2, 3
+  ]);
+
+  baseGeom.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+  baseGeom.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+  baseGeom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  baseGeom.setAttribute('aEdge', new THREE.BufferAttribute(edgeDist, 1));
+  baseGeom.setIndex(new THREE.BufferAttribute(indices, 1));
+
+  shardsGeometry = new THREE.InstancedBufferGeometry();
+  shardsGeometry.index = baseGeom.index;
+  shardsGeometry.attributes.position = baseGeom.attributes.position;
+  shardsGeometry.attributes.normal = baseGeom.attributes.normal;
+  shardsGeometry.attributes.uv = baseGeom.attributes.uv;
+  shardsGeometry.attributes.aEdge = baseGeom.attributes.aEdge;
+
+  // 1. Initial State 0: Quiet Hovering in Deep Space
+  const posQuiet = new Float32Array(INSTANCE_COUNT * 3);
+  const rotQuiet = new Float32Array(INSTANCE_COUNT * 3);
+  const shardTypes = new Float32Array(INSTANCE_COUNT);
+  const shardScales = new Float32Array(INSTANCE_COUNT * 2);
+  const randomAttrs = new Float32Array(INSTANCE_COUNT * 4);
+
+  for (let i = 0; i < INSTANCE_COUNT; i++) {
+    posQuiet[i * 3 + 0] = (Math.random() - 0.5) * 8.5;
+    posQuiet[i * 3 + 1] = (Math.random() - 0.5) * 6.5;
+    posQuiet[i * 3 + 2] = (Math.random() - 0.5) * 6.0 - 1.5;
+
+    rotQuiet[i * 3 + 0] = Math.random() * Math.PI * 2;
+    rotQuiet[i * 3 + 1] = Math.random() * Math.PI * 2;
+    rotQuiet[i * 3 + 2] = Math.random() * Math.PI * 2;
+
+    // Matter Types: 50% Cream Parchment, 35% Archival Ink, 15% Gold Leaf
     shardTypes[i] = Math.random();
 
-    randomAttrs[i * 4 + 0] = Math.random();
+    // Scale variation for natural organic torn scrap feel
+    const s = 0.16 + Math.random() * 0.16;
+    shardScales[i * 2 + 0] = s * (0.85 + Math.random() * 0.3);
+    shardScales[i * 2 + 1] = s * (0.85 + Math.random() * 0.3);
+
+    randomAttrs[i * 4 + 0] = Math.random(); // Stagger delay
     randomAttrs[i * 4 + 1] = Math.random();
     randomAttrs[i * 4 + 2] = Math.random();
     randomAttrs[i * 4 + 3] = Math.random();
   }
 
   // 2. Target 0: Cyrillic headline «ПРИСТЕБНІТЬ РЕМЕНІ.» (Single focal point Center-Top)
-  const posText0 = sampleCyrillicTextToPoints(['ПРИСТЕБНІТЬ', 'РЕМЕНІ.'], SHARD_COUNT, {
+  const text0Data = sampleTextForShards(['ПРИСТЕБНІТЬ', 'РЕМЕНІ.'], INSTANCE_COUNT, {
     x: 0,
     y: 0.95,
     z: 0.2,
@@ -316,83 +373,164 @@ async function buildParchmentInkShards() {
     height: 3.2
   });
 
-  // 3. Target 1: Archival Childhood Craft Photograph
-  const photo1Data = await sampleImageToPoints('/assets/textures/embroidery_threads.jpg', SHARD_COUNT, {
+  // 3. Target 1: Archival Childhood Craft Photograph (Grid of 500 physical tiles)
+  const photo1Data = samplePhotoForShards(INSTANCE_COUNT, {
     x: 0,
     y: 0.75,
     z: 0.2,
-    width: 5.2
-  });
+    width: 5.2,
+    height: 3.6
+  }, 25, 20);
 
-  // 4. Target 2: 3D Vintage Camera GLTF + Crimea Sea Photo
-  const CAMERA_COUNT = 17000;
-  const CRIMEA_COUNT = SHARD_COUNT - CAMERA_COUNT;
+  // 4. Target 2: 3D Vintage Camera GLTF (300 shards) + Crimea Photo (200 shards)
+  const CAMERA_COUNT = 300;
+  const CRIMEA_COUNT = INSTANCE_COUNT - CAMERA_COUNT;
 
-  const cameraPoints = await sampleGLTFModel('/assets/models/vintage_camera.glb', CAMERA_COUNT, {
+  const cameraData = await sampleGLTFForShards('/assets/models/vintage_camera.glb', CAMERA_COUNT, {
     x: -1.7,
     y: 0.55,
     z: 0.0,
     scale: 2.0
   });
 
-  const crimeaData = await sampleImageToPoints('/assets/textures/crimea_sea.jpg', CRIMEA_COUNT, {
+  const crimeaData = samplePhotoForShards(CRIMEA_COUNT, {
     x: 1.7,
     y: 0.55,
     z: 0.2,
-    width: 3.6
-  });
+    width: 3.6,
+    height: 2.6
+  }, 20, 10);
 
-  const posObject2 = new Float32Array(SHARD_COUNT * 3);
-  const colorObject2 = new Float32Array(SHARD_COUNT * 3);
+  const posObject2 = new Float32Array(INSTANCE_COUNT * 3);
+  const rotObject2 = new Float32Array(INSTANCE_COUNT * 3);
+  const uvObject2 = new Float32Array(INSTANCE_COUNT * 2);
 
   for (let i = 0; i < CAMERA_COUNT; i++) {
-    posObject2[i * 3 + 0] = cameraPoints[i * 3 + 0];
-    posObject2[i * 3 + 1] = cameraPoints[i * 3 + 1];
-    posObject2[i * 3 + 2] = cameraPoints[i * 3 + 2];
+    posObject2[i * 3 + 0] = cameraData.positions[i * 3 + 0];
+    posObject2[i * 3 + 1] = cameraData.positions[i * 3 + 1];
+    posObject2[i * 3 + 2] = cameraData.positions[i * 3 + 2];
 
-    colorObject2[i * 3 + 0] = 0.94;
-    colorObject2[i * 3 + 1] = 0.85;
-    colorObject2[i * 3 + 2] = 0.68;
+    rotObject2[i * 3 + 0] = cameraData.rotations[i * 3 + 0];
+    rotObject2[i * 3 + 1] = cameraData.rotations[i * 3 + 1];
+    rotObject2[i * 3 + 2] = cameraData.rotations[i * 3 + 2];
+
+    uvObject2[i * 2 + 0] = 0.5;
+    uvObject2[i * 2 + 1] = 0.5;
   }
   for (let i = 0; i < CRIMEA_COUNT; i++) {
-    const srcIdx = i * 3;
-    const dstIdx = (CAMERA_COUNT + i) * 3;
-    posObject2[dstIdx + 0] = crimeaData.points[srcIdx + 0];
-    posObject2[dstIdx + 1] = crimeaData.points[srcIdx + 1];
-    posObject2[dstIdx + 2] = crimeaData.points[srcIdx + 2];
+    const srcIdx3 = i * 3;
+    const dstIdx3 = (CAMERA_COUNT + i) * 3;
+    const srcIdx2 = i * 2;
+    const dstIdx2 = (CAMERA_COUNT + i) * 2;
 
-    colorObject2[dstIdx + 0] = crimeaData.colors[srcIdx + 0];
-    colorObject2[dstIdx + 1] = crimeaData.colors[srcIdx + 1];
-    colorObject2[dstIdx + 2] = crimeaData.colors[srcIdx + 2];
+    posObject2[dstIdx3 + 0] = crimeaData.positions[srcIdx3 + 0];
+    posObject2[dstIdx3 + 1] = crimeaData.positions[srcIdx3 + 1];
+    posObject2[dstIdx3 + 2] = crimeaData.positions[srcIdx3 + 2];
+
+    rotObject2[dstIdx3 + 0] = crimeaData.rotations[srcIdx3 + 0];
+    rotObject2[dstIdx3 + 1] = crimeaData.rotations[srcIdx3 + 1];
+    rotObject2[dstIdx3 + 2] = crimeaData.rotations[srcIdx3 + 2];
+
+    uvObject2[dstIdx2 + 0] = crimeaData.uvs[srcIdx2 + 0];
+    uvObject2[dstIdx2 + 1] = crimeaData.uvs[srcIdx2 + 1];
   }
 
-  // Set Buffer Attributes
-  shardsGeometry.setAttribute('position', new THREE.BufferAttribute(posQuiet, 3));
-  shardsGeometry.setAttribute('aTargetText0', new THREE.BufferAttribute(posText0, 3));
-  shardsGeometry.setAttribute('aTargetPhoto1', new THREE.BufferAttribute(photo1Data.points, 3));
-  shardsGeometry.setAttribute('aColorPhoto1', new THREE.BufferAttribute(photo1Data.colors, 3));
-  shardsGeometry.setAttribute('aTargetObject2', new THREE.BufferAttribute(posObject2, 3));
-  shardsGeometry.setAttribute('aColorObject2', new THREE.BufferAttribute(colorObject2, 3));
-  shardsGeometry.setAttribute('aShardType', new THREE.BufferAttribute(shardTypes, 1));
-  shardsGeometry.setAttribute('aRandom', new THREE.BufferAttribute(randomAttrs, 4));
+  // --------------------------------------------------------------------------
+  // Pack attributes into compact vec4 buffers to stay well within WebGL 16 attribute limit
+  // --------------------------------------------------------------------------
+  const attrPosRot0 = new Float32Array(INSTANCE_COUNT * 4);
+  const attrRot0Scale = new Float32Array(INSTANCE_COUNT * 4);
+  const attrTargetText0 = new Float32Array(INSTANCE_COUNT * 4);
+  const attrTargetPhoto1 = new Float32Array(INSTANCE_COUNT * 4);
+  const attrTargetObject2 = new Float32Array(INSTANCE_COUNT * 4);
+  const attrMeta = new Float32Array(INSTANCE_COUNT * 4);
+  const attrRandom = new Float32Array(INSTANCE_COUNT * 4);
 
-  // Custom Parchment, Ink & Gold Edge-Glow Shader
+  for (let i = 0; i < INSTANCE_COUNT; i++) {
+    const i3 = i * 3;
+    const i4 = i * 4;
+
+    // Buffer 1: posQuiet.xyz + rotQuiet.x
+    attrPosRot0[i4 + 0] = posQuiet[i3 + 0];
+    attrPosRot0[i4 + 1] = posQuiet[i3 + 1];
+    attrPosRot0[i4 + 2] = posQuiet[i3 + 2];
+    attrPosRot0[i4 + 3] = rotQuiet[i3 + 0];
+
+    // Buffer 2: rotQuiet.yz + shardScales.xy
+    attrRot0Scale[i4 + 0] = rotQuiet[i3 + 1];
+    attrRot0Scale[i4 + 1] = rotQuiet[i3 + 2];
+    attrRot0Scale[i4 + 2] = shardScales[i * 2 + 0];
+    attrRot0Scale[i4 + 3] = shardScales[i * 2 + 1];
+
+    // Buffer 3: text0.xyz + shardTypes
+    attrTargetText0[i4 + 0] = text0Data.positions[i3 + 0];
+    attrTargetText0[i4 + 1] = text0Data.positions[i3 + 1];
+    attrTargetText0[i4 + 2] = text0Data.positions[i3 + 2];
+    attrTargetText0[i4 + 3] = shardTypes[i];
+
+    // Buffer 4: photo1.xyz + uv1.x
+    attrTargetPhoto1[i4 + 0] = photo1Data.positions[i3 + 0];
+    attrTargetPhoto1[i4 + 1] = photo1Data.positions[i3 + 1];
+    attrTargetPhoto1[i4 + 2] = photo1Data.positions[i3 + 2];
+    attrTargetPhoto1[i4 + 3] = photo1Data.uvs[i * 2 + 0];
+
+    // Buffer 5: object2.xyz + uv1.y
+    attrTargetObject2[i4 + 0] = posObject2[i3 + 0];
+    attrTargetObject2[i4 + 1] = posObject2[i3 + 1];
+    attrTargetObject2[i4 + 2] = posObject2[i3 + 2];
+    attrTargetObject2[i4 + 3] = photo1Data.uvs[i * 2 + 1];
+
+    // Buffer 6: uv2.xy + extra
+    attrMeta[i4 + 0] = uvObject2[i * 2 + 0];
+    attrMeta[i4 + 1] = uvObject2[i * 2 + 1];
+    attrMeta[i4 + 2] = 0.0;
+    attrMeta[i4 + 3] = 0.0;
+
+    // Buffer 7: random.xyzw
+    attrRandom[i4 + 0] = randomAttrs[i4 + 0];
+    attrRandom[i4 + 1] = randomAttrs[i4 + 1];
+    attrRandom[i4 + 2] = randomAttrs[i4 + 2];
+    attrRandom[i4 + 3] = randomAttrs[i4 + 3];
+  }
+
+  // Load Textures for Dynamic Shading
+  const texLoader = new THREE.TextureLoader();
+  const texPhoto1 = texLoader.load('/assets/textures/embroidery_threads.jpg');
+  texPhoto1.colorSpace = THREE.SRGBColorSpace;
+
+  const texCrimea = texLoader.load('/assets/textures/crimea_sea.jpg');
+  texCrimea.colorSpace = THREE.SRGBColorSpace;
+
+  // Set Instanced Attributes
+  shardsGeometry.setAttribute('aPosRot0', new THREE.InstancedBufferAttribute(attrPosRot0, 4));
+  shardsGeometry.setAttribute('aRot0Scale', new THREE.InstancedBufferAttribute(attrRot0Scale, 4));
+  shardsGeometry.setAttribute('aTargetText0', new THREE.InstancedBufferAttribute(attrTargetText0, 4));
+  shardsGeometry.setAttribute('aTargetPhoto1', new THREE.InstancedBufferAttribute(attrTargetPhoto1, 4));
+  shardsGeometry.setAttribute('aTargetObject2', new THREE.InstancedBufferAttribute(attrTargetObject2, 4));
+  shardsGeometry.setAttribute('aMeta', new THREE.InstancedBufferAttribute(attrMeta, 4));
+  shardsGeometry.setAttribute('aRandom', new THREE.InstancedBufferAttribute(attrRandom, 4));
+
+  // Custom GLSL Instanced Shard Material
   shardsMaterial = new THREE.ShaderMaterial({
     vertexShader: `
       uniform float uProgress;
       uniform float uVelocity;
       uniform float uTime;
 
-      attribute vec3 aTargetText0;
-      attribute vec3 aTargetPhoto1;
-      attribute vec3 aColorPhoto1;
-      attribute vec3 aTargetObject2;
-      attribute vec3 aColorObject2;
-      attribute float aShardType;
+      attribute vec4 aPosRot0;
+      attribute vec4 aRot0Scale;
+      attribute vec4 aTargetText0;
+      attribute vec4 aTargetPhoto1;
+      attribute vec4 aTargetObject2;
+      attribute vec4 aMeta;
       attribute vec4 aRandom;
 
-      varying vec3 vColor;
+      varying vec2 vUV;
+      varying vec2 vTileUV;
+      varying vec3 vNormal;
+      varying vec3 vWorldPos;
       varying float vShardType;
+      varying float vStage;
       varying float vAlpha;
 
       vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -451,105 +589,166 @@ async function buildParchmentInkShards() {
         return vec3(dy - dz, dz - dx, dx - dy) / (2.0 * e);
       }
 
+      mat3 getEulerRot(vec3 rot) {
+        float cx = cos(rot.x), sx = sin(rot.x);
+        float cy = cos(rot.y), sy = sin(rot.y);
+        float cz = cos(rot.z), sz = sin(rot.z);
+        return mat3(
+          cy*cz, -cy*sz, sy,
+          cx*sz + sx*sy*cz, cx*cz - sx*sy*sz, -sx*cy,
+          sx*sz - cx*sy*cz, sx*cz + cx*sy*sz, cx*cy
+        );
+      }
+
       void main() {
-        vec3 p0 = position;            // Quiet hovering state
-        vec3 p1 = aTargetText0;        // Text 0 («ПРИСТЕБНІТЬ РЕМЕНІ.»)
-        vec3 p2 = aTargetPhoto1;       // Photo 1 (Crafts)
-        vec3 p3 = aTargetObject2;      // Camera & Crimea
+        vUV = uv;
+        vShardType = aTargetText0.w;
 
-        // Shard Palette:
-        // 50% Cream Parchment: #e8dcc0 (0.93, 0.88, 0.78)
-        // 35% Blue-Black Ink:  #1a1f2e (0.12, 0.14, 0.22)
-        // 15% Enchanted Gold:  #fce2b8 (1.00, 0.90, 0.74)
-        vec3 baseColor;
-        if (aShardType < 0.50) {
-          baseColor = vec3(0.93, 0.88, 0.78);
-        } else if (aShardType < 0.85) {
-          baseColor = vec3(0.14, 0.16, 0.24);
-        } else {
-          baseColor = vec3(1.00, 0.90, 0.74);
-        }
+        // Unpack attributes
+        vec3 p0 = aPosRot0.xyz;
+        vec3 r0 = vec3(aPosRot0.w, aRot0Scale.xy);
+        vec2 shardScale = aRot0Scale.zw;
 
-        vec3 currentPos = p0;
-        vec3 targetColor = baseColor;
+        vec3 p1 = aTargetText0.xyz;
+        vec3 p2 = aTargetPhoto1.xyz;
+        vec2 uv1 = vec2(aTargetPhoto1.w, aTargetObject2.w);
+
+        vec3 p3 = aTargetObject2.xyz;
+        vec2 uv2 = aMeta.xy;
+
+        // Staggered wave delay per instance
+        float stagger = aRandom.x * 0.12;
+        float p = clamp((uProgress - stagger) / (1.0 - stagger), 0.0, 1.0);
+
+        vec3 instPos;
+        vec3 instRot;
         float morphArc = 0.0;
+        float stageVal = 0.0;
 
-        float p = uProgress;
-
-        // Stage 0: Quiet -> Text 0 (p in 0.00 -> 0.15)
-        if (p <= 0.15) {
+        // Stage 0: Quiet Hovering -> Headline «ПРИСТЕБНІТЬ РЕМЕНІ.» (p in 0.00 -> 0.16)
+        if (p <= 0.16) {
           float t = smoothstep(0.0, 0.12, p);
-          currentPos = mix(p0, p1, t);
-          targetColor = baseColor;
+          instPos = mix(p0, p1, t);
+          instRot = mix(r0, vec3(0.0), t);
           morphArc = sin(t * 3.14159265) * step(t, 0.98);
+          stageVal = 0.0;
+          vTileUV = vec2(0.5);
         }
-        // Stage 1: Text 0 -> Photo 1 (p in 0.15 -> 0.50)
+        // Stage 1: Headline -> Archival Childhood Photo (p in 0.16 -> 0.50)
         else if (p <= 0.50) {
-          float t = smoothstep(0.18, 0.42, p);
-          currentPos = mix(p1, p2, t);
-          targetColor = mix(baseColor, aColorPhoto1, smoothstep(0.2, 0.85, t));
+          float t = smoothstep(0.18, 0.44, p);
+          instPos = mix(p1, p2, t);
+          instRot = mix(vec3(0.0), vec3(0.0), t);
           morphArc = sin(t * 3.14159265) * step(t, 0.98);
+          stageVal = mix(0.0, 1.0, smoothstep(0.3, 0.9, t));
+          vTileUV = uv1;
         }
-        // Stage 2: Photo 1 -> Camera & Crimea (p in 0.50 -> 1.00)
+        // Stage 2: Photo -> 3D Camera + Crimea Sea (p in 0.50 -> 1.00)
         else {
           float t = smoothstep(0.55, 0.88, p);
-          currentPos = mix(p2, p3, t);
-          targetColor = mix(aColorPhoto1, aColorObject2, smoothstep(0.2, 0.85, t));
+          instPos = mix(p2, p3, t);
+          instRot = mix(vec3(0.0), r0 * 0.5, t);
           morphArc = sin(t * 3.14159265) * step(t, 0.98);
+          stageVal = mix(1.0, 2.0, smoothstep(0.3, 0.9, t));
+          vTileUV = uv2;
         }
+
+        vStage = stageVal;
 
         // Soft breathing pulsation when resting in place
         if (morphArc < 0.05 && abs(uVelocity) < 0.05) {
-          currentPos += vec3(sin(uTime * 1.5 + currentPos.y) * 0.015, cos(uTime * 1.5 + currentPos.x) * 0.015, 0.0);
+          instPos += vec3(sin(uTime * 1.5 + instPos.y) * 0.012, cos(uTime * 1.5 + instPos.x) * 0.012, 0.0);
         }
 
         // Curl turbulence active during fast motion & transition arcs
         float velTurbulence = clamp(abs(uVelocity) * 1.5, 0.0, 3.5);
-        float totalTurbulence = morphArc * 1.35 + velTurbulence;
+        float totalTurbulence = morphArc * 1.4 + velTurbulence;
         
-        vec3 noiseVec = curl(currentPos * 0.4 + vec3(uTime * 0.2) + aRandom.xyz * 0.5);
-        currentPos += noiseVec * (totalTurbulence * 0.42);
+        vec3 noiseVec = curl(instPos * 0.4 + vec3(uTime * 0.2) + aRandom.xyz * 0.5);
+        instPos += noiseVec * (totalTurbulence * 0.45);
 
-        vColor = targetColor;
-        vShardType = aShardType;
+        // 3D Rotational tumbling in flight
+        instRot += noiseVec * (totalTurbulence * 0.8);
+        mat3 rotMat = getEulerRot(instRot);
+
+        // Apply physical local quad geometry, scale & rotation
+        vec3 localPos = position * vec3(shardScale, 1.0);
+        vec3 worldOffset = rotMat * localPos;
+        vec3 finalWorldPos = instPos + worldOffset;
+
+        vNormal = normalize(rotMat * normal);
+        vWorldPos = finalWorldPos;
         vAlpha = 0.98;
 
-        vec4 mvPosition = modelViewMatrix * vec4(currentPos, 1.0);
-        gl_Position = projectionMatrix * mvPosition;
-
-        // Enhanced point size for crisp manuscript clarity
-        gl_PointSize = (32.0 / -mvPosition.z) * (1.0 + totalTurbulence * 0.3);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(finalWorldPos, 1.0);
       }
     `,
     fragmentShader: `
-      varying vec3 vColor;
+      uniform sampler2D uTexturePhoto;
+      uniform sampler2D uTextureCrimea;
+
+      varying vec2 vUV;
+      varying vec2 vTileUV;
+      varying vec3 vNormal;
+      varying vec3 vWorldPos;
       varying float vShardType;
+      varying float vStage;
       varying float vAlpha;
 
       void main() {
-        float dist = length(gl_PointCoord - vec2(0.5));
-        if (dist > 0.5) discard;
+        // Shard Palette:
+        // 50% Cream Parchment: #e8dcc0 (0.93, 0.88, 0.78)
+        // 35% Blue-Black Ink:  #1a1f2e (0.14, 0.16, 0.24)
+        // 15% Enchanted Gold:  #fce2b8 (1.00, 0.90, 0.74)
+        vec3 baseParchmentColor;
+        if (vShardType < 0.50) {
+          baseParchmentColor = vec3(0.93, 0.88, 0.78);
+        } else if (vShardType < 0.85) {
+          baseParchmentColor = vec3(0.14, 0.16, 0.24);
+        } else {
+          baseParchmentColor = vec3(1.00, 0.90, 0.74);
+        }
 
-        // Rich dual-tone manuscript shard with gold rim
-        float rim = smoothstep(0.28, 0.48, dist);
+        // Double-sided lighting on physical paper scrap
+        vec3 lightDir = normalize(vec3(0.4, 0.8, 1.0));
+        float diff = max(0.35, abs(dot(vNormal, lightDir)));
+
+        // Ragged gold edge contour (outer perimeter of the quad)
+        vec2 edgeDist = abs(vUV - vec2(0.5)) * 2.0;
+        float maxEdge = max(edgeDist.x, edgeDist.y);
+        float rim = smoothstep(0.72, 0.98, maxEdge);
         vec3 goldRim = vec3(0.98, 0.88, 0.70);
-        vec3 finalColor = mix(vColor, goldRim, rim * 0.45);
 
-        float alphaMask = 1.0 - smoothstep(0.42, 0.5, dist);
-        gl_FragColor = vec4(finalColor, alphaMask * vAlpha);
+        vec3 surfaceColor = baseParchmentColor;
+
+        if (vStage > 0.0 && vStage <= 1.0) {
+          vec4 texColor = texture2D(uTexturePhoto, vTileUV);
+          surfaceColor = mix(baseParchmentColor, texColor.rgb * 1.25, vStage);
+        } else if (vStage > 1.0) {
+          float stage2Factor = clamp(vStage - 1.0, 0.0, 1.0);
+          vec4 texColor = texture2D(uTextureCrimea, vTileUV);
+          vec3 cameraTone = vec3(0.94, 0.85, 0.68);
+          vec3 targetObjColor = mix(cameraTone, texColor.rgb * 1.25, step(0.0, vWorldPos.x));
+          surfaceColor = mix(baseParchmentColor, targetObjColor, stage2Factor);
+        }
+
+        vec3 finalColor = mix(surfaceColor * diff, goldRim, rim * 0.42);
+        gl_FragColor = vec4(finalColor, vAlpha);
       }
     `,
     uniforms: {
       uProgress: { value: 0.0 },
       uVelocity: { value: 0.0 },
-      uTime: { value: 0.0 }
+      uTime: { value: 0.0 },
+      uTexturePhoto: { value: texPhoto1 },
+      uTextureCrimea: { value: texCrimea }
     },
+    side: THREE.DoubleSide,
     transparent: true,
-    depthWrite: false,
-    blending: THREE.NormalBlending
+    depthWrite: true
   });
 
-  shardsMesh = new THREE.Points(shardsGeometry, shardsMaterial);
+  shardsMesh = new THREE.InstancedMesh(shardsGeometry, shardsMaterial, INSTANCE_COUNT);
   scene.add(shardsMesh);
 }
 
