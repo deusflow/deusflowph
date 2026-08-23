@@ -1,42 +1,69 @@
 /**
  * DEUSFLOW · NIGHT IN THE HOGWARTS LIBRARY
- * Clean Transition-Only Shard Engine (Architecture Refactor)
+ * Transition-Only Shard Engine with State Machine (IDLE -> SPAWN -> FLIGHT -> FADEOUT)
  * 
  * Rules:
- * - Shards exist ONLY during section transitions (IDLE -> SPAWN -> FLIGHT -> FADEOUT)
- * - Zero shards in static reading states
- * - Forms and imagery live entirely in semantic DOM with CSS clip-path reveals
+ * - Shards exist ONLY during section transitions [1->2], [2->3], [3->4]
+ * - In static reading states: ALL shards are IDLE (scale 0, alpha 0, completely invisible)
+ * - Transitions [0->1] and [4->5] are silent clip-path reveals (zero shards)
+ * - Embers for Section [1] and Dust Motes in window beam are separate systems
  */
 
 import * as THREE from 'three';
 
 const SHARD_COUNT = 450;
 const DUST_COUNT = 70;
+const EMBER_COUNT = 20;
 
 let scene, camera, renderer;
 let clock = new THREE.Clock();
 
 let shardsMesh, shardsMaterial, shardsGeometry;
 let dustMesh, dustMaterial, dustGeometry;
+let emberMesh, emberMaterial, emberGeometry;
 
 let mouseX = 0, mouseY = 0;
+let scrollVelocity = 0.0;
+let lastScrollY = 0;
+let currentActiveSection = 0;
 
-// Shard State Arrays (Managed on CPU for physics, rendered via InstancedBufferGeometry)
+// Shard Physics & State Machine Arrays (CPU Simulation -> GPU Instanced Rendering)
 const instPos = new Float32Array(SHARD_COUNT * 3);
 const instVel = new Float32Array(SHARD_COUNT * 3);
 const instRot = new Float32Array(SHARD_COUNT * 3);
 const instRotSpeed = new Float32Array(SHARD_COUNT * 3);
 const instScale = new Float32Array(SHARD_COUNT * 2);
-const instLife = new Float32Array(SHARD_COUNT); // 0 = idle, >0 in flight
+const instLife = new Float32Array(SHARD_COUNT);       // 0 = IDLE, >0 = FLIGHT
 const instMaxLife = new Float32Array(SHARD_COUNT);
 const instStagger = new Float32Array(SHARD_COUNT);
-const instType = new Float32Array(SHARD_COUNT); // 0=parchment, 1=ink, 2=gold
+const instType = new Float32Array(SHARD_COUNT);       // 0=parchment, 1=ink, 2=gold
 
 // Packed Instanced Attributes for WebGL
-let attrInstancePos, attrInstanceRot, attrInstanceScale, attrInstanceMeta;
+let attrInstancePos, attrInstanceRot, attrInstanceScale;
+
+// HUD Elements
+const hudSceneTitle = document.getElementById('hud-scene-title');
+const hudTimecode = document.getElementById('hud-timecode');
+const hudActLabel = document.getElementById('hud-act-label');
+const stepDots = document.querySelectorAll('.step-dot');
+const audioToggle = document.getElementById('audio-toggle');
+const audioStatus = document.getElementById('audio-status');
+
+const sectionMeta = [
+  { title: 'PROLOGUE // THE THRESHOLD', timecode: 'FOLIO 01 / 06', act: 'ACT I // ROOTS & THE FIRST LENS' },
+  { title: 'FOLIO 01 // THE INITIATION', timecode: 'FOLIO 02 / 06', act: 'ACT I // ROOTS & THE FIRST LENS' },
+  { title: '01 // CRAFT & EMBROIDERY', timecode: 'FOLIO 03 / 06', act: 'ACT I // ROOTS & THE FIRST LENS' },
+  { title: '02 // THE FIRST LENS · 35MM', timecode: 'FOLIO 04 / 06', act: 'ACT I // ROOTS & THE FIRST LENS' },
+  { title: '03 // CANON 1000D · DIGITAL', timecode: 'FOLIO 05 / 06', act: 'ACT I // ROOTS & THE FIRST LENS' },
+  { title: 'EPILOGUE // THE STILLNESS', timecode: 'FOLIO 06 / 06', act: 'ACT I // ROOTS & THE FIRST LENS' }
+];
+
+let audioCtx = null;
+let isAudioActive = false;
+let ambientGain = null;
 
 // ==========================================================================
-// 1. THREE.JS INITIALIZATION
+// 1. INITIALIZATION
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', async () => {
   if (document.fonts) {
@@ -44,8 +71,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   initThree();
   buildDustMotes();
+  buildTitleEmbers();
   buildInstancedShards();
+  initScrollTriggerNavigation();
   initMouseListener();
+  initAudio();
   animate();
 });
 
@@ -71,7 +101,7 @@ function initThree() {
 // ==========================================================================
 // 2. DUST MOTES IN WINDOW LIGHT BEAM (EMBER/DUST SYSTEM)
 // ==========================================================================
-// EMBER/DUST SYSTEM - Ambient Context
+// EMBER/DUST SYSTEM
 function buildDustMotes() {
   dustGeometry = new THREE.BufferGeometry();
   const dustPos = new Float32Array(DUST_COUNT * 3);
@@ -124,12 +154,70 @@ function buildDustMotes() {
 }
 
 // ==========================================================================
-// 3. PURE INSTANCED MESH TORN PARCHMENT SHARD SYSTEM
+// 3. TITLE SECTION [1] EMBER DRIFT SYSTEM (EMBER/DUST SYSTEM)
+// ==========================================================================
+// EMBER/DUST SYSTEM - Title Section Drift Embers (15-20 particles)
+function buildTitleEmbers() {
+  emberGeometry = new THREE.BufferGeometry();
+  const emberPos = new Float32Array(EMBER_COUNT * 3);
+
+  for (let i = 0; i < EMBER_COUNT; i++) {
+    emberPos[i * 3 + 0] = (Math.random() - 0.5) * 4.5;
+    emberPos[i * 3 + 1] = (Math.random() - 0.5) * 3.0;
+    emberPos[i * 3 + 2] = (Math.random() - 0.5) * 2.0;
+  }
+
+  emberGeometry.setAttribute('position', new THREE.BufferAttribute(emberPos, 3));
+
+  emberMaterial = new THREE.ShaderMaterial({
+    vertexShader: `
+      uniform float uTime;
+      uniform float uVisibility;
+      varying float vAlpha;
+
+      void main() {
+        vec3 p = position;
+        p.x += sin(uTime * 0.6 + position.y * 3.0) * 0.25;
+        p.y += cos(uTime * 0.5 + position.x * 3.0) * 0.20;
+        p.z += sin(uTime * 0.4 + position.z * 3.0) * 0.15;
+
+        vAlpha = uVisibility * (0.45 + 0.35 * sin(uTime * 1.2 + position.x * 5.0));
+
+        vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        gl_PointSize = (22.0 / -mvPosition.z); // EMBER/DUST SYSTEM
+      }
+    `,
+    fragmentShader: `
+      varying float vAlpha;
+      void main() {
+        float d = length(gl_PointCoord - vec2(0.5)); // EMBER/DUST SYSTEM
+        if (d > 0.5) discard;
+        float core = 1.0 - smoothstep(0.0, 0.45, d);
+        vec3 goldColor = vec3(1.00, 0.88, 0.65);
+        gl_FragColor = vec4(goldColor, core * vAlpha * 0.75);
+      }
+    `,
+    uniforms: {
+      uTime: { value: 0.0 },
+      uVisibility: { value: 0.0 } // 1.0 only in section 1
+    },
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+
+  emberMesh = new THREE.Points(emberGeometry, emberMaterial); // EMBER/DUST SYSTEM
+  scene.add(emberMesh);
+}
+
+// ==========================================================================
+// 4. TRANSITION-ONLY SHARD ENGINE (THREE.InstancedMesh, 450 instances)
 // ==========================================================================
 function buildInstancedShards() {
   const baseGeom = new THREE.BufferGeometry();
   
-  // Ragged quadrilateral with displaced vertices
+  // Ragged polygonal quadrilateral with displaced vertices
   const verts = new Float32Array([
     -0.52, -0.48, 0.0,
      0.49, -0.51, 0.0,
@@ -167,35 +255,33 @@ function buildInstancedShards() {
   shardsGeometry.attributes.normal = baseGeom.attributes.normal;
   shardsGeometry.attributes.uv = baseGeom.attributes.uv;
 
-  // Initialize all shards in IDLE state (scale = 0, alpha = 0)
+  // Initialize ALL shards into IDLE state (scale = 0, alpha = 0, offscreen)
+  const attrPosData = new Float32Array(SHARD_COUNT * 4);   // pos.xyz + alpha
+  const attrRotData = new Float32Array(SHARD_COUNT * 4);   // rot.xyz + unused
+  const attrScaleData = new Float32Array(SHARD_COUNT * 4); // scale.xy + type + progress
+
   for (let i = 0; i < SHARD_COUNT; i++) {
     instPos[i * 3 + 0] = 0;
-    instPos[i * 3 + 1] = -100; // Far offscreen
+    instPos[i * 3 + 1] = -100.0; // Far offscreen
     instPos[i * 3 + 2] = 0;
 
     instRot[i * 3 + 0] = 0;
     instRot[i * 3 + 1] = 0;
     instRot[i * 3 + 2] = 0;
 
-    instScale[i * 2 + 0] = 0.0; // Invisible in IDLE
+    instScale[i * 2 + 0] = 0.0; // INVISIBLE IN IDLE
     instScale[i * 2 + 1] = 0.0;
 
-    instLife[i] = 0.0;
+    instLife[i] = 0.0; // IDLE
     instMaxLife[i] = 1.5;
     instStagger[i] = 0.0;
 
     const r = Math.random();
-    instType[i] = r < 0.50 ? 0.0 : (r < 0.85 ? 1.0 : 2.0);
-  }
+    instType[i] = r < 0.50 ? 0.0 : (r < 0.85 ? 1.0 : 2.0); // 50% parchment, 35% ink, 15% gold
 
-  const attrPosData = new Float32Array(SHARD_COUNT * 4); // pos.xyz + alpha
-  const attrRotData = new Float32Array(SHARD_COUNT * 4); // rot.xyz + unused
-  const attrScaleData = new Float32Array(SHARD_COUNT * 4); // scale.xy + type + progress
-
-  for (let i = 0; i < SHARD_COUNT; i++) {
-    attrPosData[i * 4 + 0] = instPos[i * 3 + 0];
-    attrPosData[i * 4 + 1] = instPos[i * 3 + 1];
-    attrPosData[i * 4 + 2] = instPos[i * 3 + 2];
+    attrPosData[i * 4 + 0] = 0;
+    attrPosData[i * 4 + 1] = -100.0;
+    attrPosData[i * 4 + 2] = 0;
     attrPosData[i * 4 + 3] = 0.0; // Alpha 0
 
     attrRotData[i * 4 + 0] = 0;
@@ -222,7 +308,7 @@ function buildInstancedShards() {
   shardsGeometry.setAttribute('aInstanceRot', attrInstanceRot);
   shardsGeometry.setAttribute('aInstanceScale', attrInstanceScale);
 
-  // Material with Double-Sided Paper Lighting and Ragged Gold Edge Foil
+  // Instanced Material with Double-Sided Paper Lighting and Ragged Gold Edge Foil
   shardsMaterial = new THREE.ShaderMaterial({
     vertexShader: `
       attribute vec4 aInstancePos;   // pos.xyz + alpha
@@ -310,21 +396,115 @@ function buildInstancedShards() {
 }
 
 // ==========================================================================
-// 4. ANIMATION LOOP
+// 5. SHARD TRANSITION LIFECYCLE CONTROLLER (SPAWN -> FLIGHT -> FADEOUT)
+// ==========================================================================
+
+// Triggered ONLY on section transitions [1->2], [2->3], [3->4]
+export function triggerShardTransition(fromSectionIdx, toSectionIdx, fromElement) {
+  if (!fromElement) return;
+
+  // Project DOM element bounds to 3D camera world coordinates
+  const rect = fromElement.getBoundingClientRect();
+  const screenCenter = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+  // Convert 2D pixel bounds to 3D world space at z = 0
+  const vTopLeft = new THREE.Vector3((rect.left / window.innerWidth) * 2 - 1, -(rect.top / window.innerHeight) * 2 + 1, 0.5).unproject(camera);
+  const vBottomRight = new THREE.Vector3((rect.right / window.innerWidth) * 2 - 1, -(rect.bottom / window.innerHeight) * 2 + 1, 0.5).unproject(camera);
+
+  // Focus plane scale factor at z = 0
+  const dirTL = vTopLeft.sub(camera.position).normalize();
+  const distTL = -camera.position.z / dirTL.z;
+  const worldTL = camera.position.clone().add(dirTL.multiplyScalar(distTL));
+
+  const dirBR = vBottomRight.sub(camera.position).normalize();
+  const distBR = -camera.position.z / dirBR.z;
+  const worldBR = camera.position.clone().add(dirBR.multiplyScalar(distBR));
+
+  const minX = worldTL.x;
+  const maxX = worldBR.x;
+  const maxY = worldTL.y;
+  const minY = worldBR.y;
+  const centerWorldX = (minX + maxX) / 2;
+  const centerWorldY = (minY + maxY) / 2;
+
+  const velMultiplier = Math.min(2.5, 1.0 + Math.abs(scrollVelocity) * 0.8);
+
+  for (let i = 0; i < SHARD_COUNT; i++) {
+    // 1. SPAWN: Sample point along the perimeter of the outgoing form
+    const side = Math.floor(Math.random() * 4);
+    let sx, sy;
+    if (side === 0) { // Top edge
+      sx = minX + Math.random() * (maxX - minX);
+      sy = maxY + (Math.random() - 0.5) * 0.15;
+    } else if (side === 1) { // Bottom edge
+      sx = minX + Math.random() * (maxX - minX);
+      sy = minY + (Math.random() - 0.5) * 0.15;
+    } else if (side === 2) { // Left edge
+      sx = minX + (Math.random() - 0.5) * 0.15;
+      sy = minY + Math.random() * (maxY - minY);
+    } else { // Right edge
+      sx = maxX + (Math.random() - 0.5) * 0.15;
+      sy = minY + Math.random() * (maxY - minY);
+    }
+
+    instPos[i * 3 + 0] = sx;
+    instPos[i * 3 + 1] = sy;
+    instPos[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+
+    // 2. FLIGHT: Base vector = Down + Outward from center + Curl noise initial kick
+    const outDirX = (sx - centerWorldX) || (Math.random() - 0.5);
+    const outDirY = (sy - centerWorldY);
+
+    const speed = (2.2 + Math.random() * 2.8) * velMultiplier;
+    instVel[i * 3 + 0] = outDirX * speed * 0.6 + (Math.random() - 0.5) * 1.5;
+    instVel[i * 3 + 1] = -Math.abs(speed * 1.2) - Math.random() * 1.5; // Downward
+    instVel[i * 3 + 2] = (Math.random() - 0.5) * 2.0;
+
+    // Random 3-axis Euler tumble rotation
+    instRot[i * 3 + 0] = Math.random() * Math.PI * 2;
+    instRot[i * 3 + 1] = Math.random() * Math.PI * 2;
+    instRot[i * 3 + 2] = Math.random() * Math.PI * 2;
+
+    instRotSpeed[i * 3 + 0] = (Math.random() - 0.5) * 8.0 * velMultiplier;
+    instRotSpeed[i * 3 + 1] = (Math.random() - 0.5) * 8.0 * velMultiplier;
+    instRotSpeed[i * 3 + 2] = (Math.random() - 0.5) * 8.0 * velMultiplier;
+
+    // Stagger delay: larger shards launch first
+    const isLarge = Math.random() < 0.35;
+    const baseScale = isLarge ? (0.24 + Math.random() * 0.14) : (0.12 + Math.random() * 0.10);
+    instScale[i * 2 + 0] = baseScale * (0.85 + Math.random() * 0.3);
+    instScale[i * 2 + 1] = baseScale * (0.85 + Math.random() * 0.3);
+
+    instStagger[i] = isLarge ? Math.random() * 0.10 : (0.08 + Math.random() * 0.25);
+    instMaxLife[i] = (1.3 + Math.random() * 0.5) / velMultiplier;
+    instLife[i] = instMaxLife[i];
+  }
+}
+
+// ==========================================================================
+// 6. ANIMATION & CPU PHYSICS LOOP
 // ==========================================================================
 function animate() {
   requestAnimationFrame(animate);
 
-  const delta = clock.getDelta();
+  const delta = Math.min(clock.getDelta(), 0.05);
   const time = clock.getElapsedTime();
 
   if (dustMaterial) {
     dustMaterial.uniforms.uTime.value = time;
   }
 
-  // Update shard positions on CPU for active transitions
+  if (emberMaterial) {
+    emberMaterial.uniforms.uTime.value = time;
+    // Embers visible only in Section [1]
+    const targetEmberVis = currentActiveSection === 1 ? 1.0 : 0.0;
+    emberMaterial.uniforms.uVisibility.value += (targetEmberVis - emberMaterial.uniforms.uVisibility.value) * 0.08;
+  }
+
+  // Update shard state machine
   updateShards(delta, time);
 
+  // Gentle parallax camera tracking
   camera.position.x += (mouseX * 0.25 - camera.position.x) * 0.05;
   camera.position.y += (-mouseY * 0.20 - camera.position.y) * 0.05;
   camera.lookAt(0, 0, 0);
@@ -344,38 +524,56 @@ function updateShards(delta, time) {
   for (let i = 0; i < SHARD_COUNT; i++) {
     if (instLife[i] > 0) {
       hasActiveShards = true;
-      instLife[i] -= delta;
-      const progress = 1.0 - (instLife[i] / instMaxLife[i]); // 0 -> 1
 
-      if (progress >= 1.0 || instLife[i] <= 0) {
-        // Return to IDLE
-        instLife[i] = 0;
-        posArr[i * 4 + 3] = 0.0; // Alpha 0
+      // Handle Stagger delay
+      if (instStagger[i] > 0) {
+        instStagger[i] -= delta;
+        // Keep hidden until stagger finishes
+        posArr[i * 4 + 3] = 0.0;
         scaleArr[i * 4 + 0] = 0.0;
         scaleArr[i * 4 + 1] = 0.0;
         continue;
       }
 
-      // Physics: Vortex down and outward
-      instPos[i * 3 + 0] += instVel[i * 3 + 0] * delta;
+      instLife[i] -= delta;
+      const progress = clamp(1.0 - (instLife[i] / instMaxLife[i]), 0.0, 1.0);
+
+      // FADEOUT / COMPLETE -> Return to IDLE
+      if (progress >= 1.0 || instLife[i] <= 0) {
+        instLife[i] = 0;
+        posArr[i * 4 + 0] = 0;
+        posArr[i * 4 + 1] = -100.0; // Offscreen
+        posArr[i * 4 + 2] = 0;
+        posArr[i * 4 + 3] = 0.0;    // Alpha 0
+        scaleArr[i * 4 + 0] = 0.0;  // Scale 0
+        scaleArr[i * 4 + 1] = 0.0;
+        continue;
+      }
+
+      // FLIGHT Physics: Velocity + Gravity + Curl Turbulence Kick
+      const curlAmp = Math.sin(progress * Math.PI) * 2.2;
+      const curlX = Math.sin(time * 2.0 + instPos[i * 3 + 1] * 0.8) * curlAmp;
+      const curlZ = Math.cos(time * 2.0 + instPos[i * 3 + 0] * 0.8) * curlAmp;
+
+      instPos[i * 3 + 0] += (instVel[i * 3 + 0] + curlX) * delta;
       instPos[i * 3 + 1] += instVel[i * 3 + 1] * delta;
-      instPos[i * 3 + 2] += instVel[i * 3 + 2] * delta;
+      instPos[i * 3 + 2] += (instVel[i * 3 + 2] + curlZ) * delta;
 
-      // Gravity downward
-      instVel[i * 3 + 1] -= 2.5 * delta;
+      // Downward gravity acceleration
+      instVel[i * 3 + 1] -= 3.8 * delta;
 
-      // Rotation
+      // Rotational Tumbling
       instRot[i * 3 + 0] += instRotSpeed[i * 3 + 0] * delta;
       instRot[i * 3 + 1] += instRotSpeed[i * 3 + 1] * delta;
       instRot[i * 3 + 2] += instRotSpeed[i * 3 + 2] * delta;
 
       // Fadeout in last 20%
-      let alpha = 0.95;
-      let curScale = 1.0;
-      if (progress > 0.8) {
-        const fade = (1.0 - progress) / 0.2;
-        alpha = fade * 0.95;
-        curScale = 0.85 + 0.15 * fade;
+      let alpha = 0.96;
+      let scaleMult = 1.0;
+      if (progress > 0.80) {
+        const fade = (1.0 - progress) / 0.20;
+        alpha = fade * 0.96;
+        scaleMult = 0.85 + 0.15 * fade;
       }
 
       posArr[i * 4 + 0] = instPos[i * 3 + 0];
@@ -387,8 +585,8 @@ function updateShards(delta, time) {
       rotArr[i * 4 + 1] = instRot[i * 3 + 1];
       rotArr[i * 4 + 2] = instRot[i * 3 + 2];
 
-      scaleArr[i * 4 + 0] = instScale[i * 2 + 0] * curScale;
-      scaleArr[i * 4 + 1] = instScale[i * 2 + 1] * curScale;
+      scaleArr[i * 4 + 0] = instScale[i * 2 + 0] * scaleMult;
+      scaleArr[i * 4 + 1] = instScale[i * 2 + 1] * scaleMult;
       scaleArr[i * 4 + 3] = progress;
     }
   }
@@ -397,6 +595,116 @@ function updateShards(delta, time) {
     attrInstancePos.needsUpdate = true;
     attrInstanceRot.needsUpdate = true;
     attrInstanceScale.needsUpdate = true;
+  }
+}
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+// ==========================================================================
+// 7. SCROLLTRIGGER NAVIGATION & CLIP-PATH ORCHESTRATION
+// ==========================================================================
+function initScrollTriggerNavigation() {
+  const sections = document.querySelectorAll('.story-section');
+
+  // GSAP ScrollTrigger per section
+  if (window.gsap && window.ScrollTrigger) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    sections.forEach((sec, idx) => {
+      const box = sec.querySelector('.section-content-box');
+
+      ScrollTrigger.create({
+        trigger: sec,
+        start: 'top 60%',
+        end: 'bottom 40%',
+        onEnter: () => {
+          onSectionActivate(idx, 'down');
+        },
+        onEnterBack: () => {
+          onSectionActivate(idx, 'up');
+        },
+        onLeave: () => {
+          onSectionLeave(idx, 'down');
+        },
+        onLeaveBack: () => {
+          onSectionLeave(idx, 'up');
+        }
+      });
+    });
+  }
+
+  // Velocity calculation via wheel and touch
+  window.addEventListener('wheel', (e) => {
+    scrollVelocity = e.deltaY * 0.05;
+  }, { passive: true });
+
+  let touchStartY = 0;
+  window.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    const diff = touchStartY - e.touches[0].clientY;
+    touchStartY = e.touches[0].clientY;
+    scrollVelocity = diff * 0.08;
+  }, { passive: true });
+
+  stepDots.forEach((dot) => {
+    dot.addEventListener('click', (e) => {
+      const step = parseInt(e.currentTarget.getAttribute('data-step'), 10);
+      const targetSec = document.getElementById(`section-${step}`);
+      if (targetSec) {
+        targetSec.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Reveal Section 0 on initial load
+  const initialBox = document.getElementById('box-0');
+  if (initialBox) {
+    setTimeout(() => {
+      initialBox.classList.add('revealing');
+    }, 200);
+  }
+}
+
+function onSectionActivate(newIdx, direction) {
+  currentActiveSection = newIdx;
+
+  // Reveal new section with clip-path
+  const newBox = document.getElementById(`box-${newIdx}`);
+  if (newBox) {
+    newBox.classList.remove('dissolving');
+    setTimeout(() => {
+      newBox.classList.add('revealing');
+    }, 150);
+  }
+
+  // Update Stepper & HUD
+  stepDots.forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === newIdx);
+  });
+
+  const meta = sectionMeta[newIdx] || sectionMeta[0];
+  if (hudSceneTitle) hudSceneTitle.textContent = meta.title;
+  if (hudTimecode) hudTimecode.textContent = meta.timecode;
+  if (hudActLabel) hudActLabel.textContent = meta.act;
+}
+
+function onSectionLeave(oldIdx, direction) {
+  const oldBox = document.getElementById(`box-${oldIdx}`);
+  if (oldBox) {
+    oldBox.classList.remove('revealing');
+    oldBox.classList.add('dissolving');
+  }
+
+  // Trigger Shards ONLY on transitions [1->2], [2->3], [3->4]
+  if (direction === 'down' && (oldIdx === 1 || oldIdx === 2 || oldIdx === 3)) {
+    triggerShardTransition(oldIdx, oldIdx + 1, oldBox);
+  } else if (direction === 'up' && (oldIdx === 2 || oldIdx === 3 || oldIdx === 4)) {
+    triggerShardTransition(oldIdx, oldIdx - 1, oldBox);
   }
 }
 
@@ -412,4 +720,45 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function initAudio() {
+  if (!audioToggle) return;
+
+  audioToggle.addEventListener('click', () => {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const bufferSize = audioCtx.sampleRate * 2;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 450;
+
+      ambientGain = audioCtx.createGain();
+      ambientGain.gain.value = 0.0;
+
+      whiteNoise.connect(filter);
+      filter.connect(ambientGain);
+      ambientGain.connect(audioCtx.destination);
+      whiteNoise.start();
+    }
+
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    isAudioActive = !isAudioActive;
+    if (isAudioActive) {
+      ambientGain.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.2);
+      audioStatus.textContent = 'SOUND: ON';
+    } else {
+      ambientGain.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.2);
+      audioStatus.textContent = 'SOUND: OFF';
+    }
+  });
 }
