@@ -1,44 +1,33 @@
 /**
- * DEUSFLOW · CONTINUOUS 3D LIVING WORLD & DAILY PROPHET STORY ENGINE
- * The background is the story: Astral rings, flying gold shards, weaving 3D silk loom,
- * torn parchment photo puzzle assembly, 35mm film ribbons, and exploding/assembling 3D camera.
+ * DEUSFLOW · PURE 3D LIVING PARTICLE METAMORPHOSIS ENGINE (meermohsin.me Architecture)
+ * Single unified field of 32,000 living particles morphing between:
+ * 0: Chaotic Prime Matter Cloud
+ * 1: Crisp 3D Headline «ПРИСТЕБНІТЬ РЕМЕНІ»
+ * 2: Living 3D Photographic Matrix (Childhood Crafts)
+ * 3: Crisp 3D Headline «УРОКИ ПРАЦІ З ДІВЧАТАМИ»
+ * 4: 3D Vintage Camera GLTF Surface + Crimea Sea Memory Matrix
  */
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
 
-// ==========================================================================
-// 1. GLOBAL STATE & TIMELINE PROGRESS
-// ==========================================================================
+const PARTICLE_COUNT = 32000;
+
+let scene, camera, renderer;
+let clock = new THREE.Clock();
+let particlesGeometry, particlesMaterial, particlesMesh;
+
 let targetProgress = 0.0;
 let currentProgress = 0.0;
 let scrollVelocity = 0.0;
 let mouseX = 0, mouseY = 0;
 
-let scene, camera, renderer;
-let clock = new THREE.Clock();
-
-// Story Entities
-let astralRingsGroup;
-let goldShardsMesh;
-let shardOriginalPositions = [];
-let shardTargetPositions0 = [];
-let shardTargetPositions1 = [];
-let shardTargetPositions2 = [];
-
-let silkLoomGroup;
-let photoShardMeshes = [];
-let filmStripsGroup;
-let cameraGLTFGroup;
-let cameraParts = [];
-let crimeaPhotoMesh;
-
-// DOM references
-const sections = [
-  document.getElementById('section-0'),
-  document.getElementById('section-1'),
-  document.getElementById('section-2')
+// DOM Elements
+const cards = [
+  document.getElementById('card-0'),
+  document.getElementById('card-1'),
+  document.getElementById('card-2')
 ];
 const stepDots = document.querySelectorAll('.step-dot');
 const hudSceneTitle = document.getElementById('hud-scene-title');
@@ -53,31 +42,31 @@ const beatMetadata = [
   { title: '02 // THE FIRST LENS · 35MM', timecode: 'FOLIO 03 / 08', act: 'ACT I // ROOTS & THE FIRST LENS' }
 ];
 
-// Audio State
 let audioCtx = null;
 let isAudioActive = false;
 let ambientGain = null;
 
 // ==========================================================================
-// 2. INITIALIZATION
+// 1. INITIALIZATION (AWAIT FONTS FIRST)
 // ==========================================================================
-document.addEventListener('DOMContentLoaded', () => {
-  initThreeWorld();
+document.addEventListener('DOMContentLoaded', async () => {
+  if (document.fonts) {
+    await document.fonts.ready;
+  }
+  initThree();
+  await buildLivingParticleSystem();
   initGestureEngine();
   initAudio();
   initMouseListener();
+  animate();
 });
 
-// ==========================================================================
-// 3. THREE.JS SCENE SETUP & ENTITY FACTORY
-// ==========================================================================
-function initThreeWorld() {
+function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x08070b, 0.045);
 
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 0, 7.5);
+  camera.position.set(0, 0, 8.0);
 
   renderer = new THREE.WebGLRenderer({
     canvas,
@@ -87,353 +76,411 @@ function initThreeWorld() {
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.35;
-
-  const pmremGenerator = new THREE.PMREMGenerator(renderer);
-  pmremGenerator.compileEquirectangularShader();
-
-  // Lighting
-  const keyLight = new THREE.DirectionalLight(0xffeedd, 3.5);
-  keyLight.position.set(4, 6, 5);
-  scene.add(keyLight);
-
-  const ambientLight = new THREE.AmbientLight(0x221a28, 1.8);
-  scene.add(ambientLight);
-
-  const goldRimLight = new THREE.PointLight(0xd8b888, 4.0, 20);
-  goldRimLight.position.set(0, 2, -4);
-  scene.add(goldRimLight);
-
-  // Load Studio HDRI
-  new RGBELoader().load('/assets/textures/studio_env.hdr', (texture) => {
-    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-    scene.environment = envMap;
-    texture.dispose();
-  });
-
-  // Build Scene Entities
-  buildAstralRings();
-  buildGoldShardsSystem();
-  buildSilkLoom();
-  buildTornPhotoPuzzle();
-  buildFilmRibbons();
-  buildCrimeaPhotoPlane();
-  load3DVintageCamera();
-
-  // Render Loop
-  animate();
 
   window.addEventListener('resize', onWindowResize);
 }
 
-// --------------------------------------------------------------------------
-// ENTITY 1: ASTRAL RUNIC RINGS (Beat 0 Background Vortex)
-// --------------------------------------------------------------------------
-function buildAstralRings() {
-  astralRingsGroup = new THREE.Group();
-  astralRingsGroup.position.set(0, 0, -6);
+// ==========================================================================
+// 2. GLYPH & IMAGE SAMPLERS
+// ==========================================================================
+function sampleCyrillicTextToPoints(lines, count, bounds) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 1600;
+  canvas.height = 800;
 
-  const ringMaterial = new THREE.MeshStandardMaterial({
-    color: 0xd8b888,
-    emissive: 0x5a3e1b,
-    roughness: 0.25,
-    metalness: 0.9,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.65
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const fontSize = lines.length === 1 ? 160 : 130;
+  ctx.font = `bold ${fontSize}px "Playfair Display", serif`;
+
+  const lineHeight = fontSize * 1.25;
+  const startY = canvas.height / 2 - ((lines.length - 1) * lineHeight) / 2;
+  lines.forEach((line, idx) => {
+    ctx.fillText(line, canvas.width / 2, startY + idx * lineHeight);
   });
 
-  const r1 = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.04, 16, 64), ringMaterial);
-  const r2 = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.03, 16, 48), ringMaterial);
-  const r3 = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.03, 16, 36), ringMaterial);
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const validPixels = [];
 
-  astralRingsGroup.add(r1, r2, r3);
-  scene.add(astralRingsGroup);
-}
-
-// --------------------------------------------------------------------------
-// ENTITY 2: 3D FLYING GOLD SHARDS SYSTEM (Matter forming words & objects)
-// --------------------------------------------------------------------------
-const SHARD_COUNT = 1200;
-
-function buildGoldShardsSystem() {
-  const shardGeom = new THREE.PlaneGeometry(0.06, 0.06);
-  const shardMat = new THREE.MeshStandardMaterial({
-    color: 0xfce2b8,
-    emissive: 0xd8b888,
-    emissiveIntensity: 0.6,
-    roughness: 0.15,
-    metalness: 0.95,
-    side: THREE.DoubleSide
-  });
-
-  goldShardsMesh = new THREE.InstancedMesh(shardGeom, shardMat, SHARD_COUNT);
-  const dummy = new THREE.Object3D();
-
-  for (let i = 0; i < SHARD_COUNT; i++) {
-    // Original deep background vortex position (Beat 0 start)
-    const rad = 2.0 + Math.random() * 4.5;
-    const theta = Math.random() * Math.PI * 2;
-    const z = -4.0 - Math.random() * 12.0;
-    const origPos = new THREE.Vector3(Math.cos(theta) * rad, Math.sin(theta) * rad, z);
-    shardOriginalPositions.push(origPos);
-
-    // Target 0: Floating arc near title
-    const t0 = new THREE.Vector3(
-      (Math.random() - 0.5) * 5.5,
-      1.0 + (Math.random() - 0.5) * 1.5,
-      1.5 + (Math.random() - 0.5) * 1.5
-    );
-    shardTargetPositions0.push(t0);
-
-    // Target 1: Spiral around Loom & Photo Puzzle
-    const t1 = new THREE.Vector3(
-      2.1 + Math.cos(theta * 2) * (1.0 + Math.random() * 0.7),
-      Math.sin(theta * 2) * (1.0 + Math.random() * 0.7),
-      0.5 + (Math.random() - 0.5) * 1.5
-    );
-    shardTargetPositions1.push(t1);
-
-    // Target 2: Luminous halo around Camera & Crimea Photo
-    const t2 = new THREE.Vector3(
-      2.1 + (Math.random() - 0.5) * 2.5,
-      (Math.random() - 0.5) * 2.5,
-      -0.2 + Math.random() * 1.8
-    );
-    shardTargetPositions2.push(t2);
-
-    dummy.position.copy(origPos);
-    dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-    dummy.updateMatrix();
-    goldShardsMesh.setMatrixAt(i, dummy.matrix);
-  }
-
-  goldShardsMesh.instanceMatrix.needsUpdate = true;
-  scene.add(goldShardsMesh);
-}
-
-// --------------------------------------------------------------------------
-// ENTITY 3: WEAVING 3D SILK LOOM (Beat 1 Background Threads)
-// --------------------------------------------------------------------------
-function buildSilkLoom() {
-  silkLoomGroup = new THREE.Group();
-  silkLoomGroup.position.set(window.innerWidth < 860 ? 0 : 2.1, 0, -2.5);
-
-  const silkMat = new THREE.MeshStandardMaterial({
-    color: 0xd8b888,
-    emissive: 0x8a6230,
-    emissiveIntensity: 0.8,
-    roughness: 0.3,
-    metalness: 0.8,
-    transparent: true,
-    opacity: 0.0
-  });
-
-  for (let i = 0; i < 18; i++) {
-    const points = [];
-    const radius = 1.4 + (i % 3) * 0.35;
-    const height = 4.5;
-    const turns = 2.5;
-
-    for (let t = 0; t <= 40; t++) {
-      const p = t / 40;
-      const angle = p * Math.PI * 2 * turns + (i * Math.PI / 9);
-      const x = Math.cos(angle) * radius;
-      const y = (p - 0.5) * height;
-      const z = Math.sin(angle) * radius * 0.6;
-      points.push(new THREE.Vector3(x, y, z));
-    }
-
-    const curve = new THREE.CatmullRomCurve3(points);
-    const geom = new THREE.TubeGeometry(curve, 32, 0.015, 6, false);
-    const mesh = new THREE.Mesh(geom, silkMat);
-    silkLoomGroup.add(mesh);
-  }
-
-  scene.add(silkLoomGroup);
-}
-
-// --------------------------------------------------------------------------
-// ENTITY 4: 3D TORN PARCHMENT PHOTO PUZZLE (Beat 1 Assembling Picture)
-// --------------------------------------------------------------------------
-function buildTornPhotoPuzzle() {
-  const textureLoader = new THREE.TextureLoader();
-  const photoTex = textureLoader.load('/assets/textures/embroidery_threads.jpg');
-  photoTex.colorSpace = THREE.SRGBColorSpace;
-
-  const COLS = 3;
-  const ROWS = 3;
-  const totalWidth = 2.8;
-  const totalHeight = 2.1;
-  const w = totalWidth / COLS;
-  const h = totalHeight / ROWS;
-
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const geom = new THREE.PlaneGeometry(w * 0.96, h * 0.96);
-      
-      // Compute sub-UV coordinates for each tile
-      const uv = geom.attributes.uv;
-      for (let i = 0; i < uv.count; i++) {
-        const u = uv.getX(i);
-        const v = uv.getY(i);
-        uv.setXY(i, (c + u) / COLS, (ROWS - 1 - r + v) / ROWS);
+  for (let y = 0; y < canvas.height; y += 3) {
+    for (let x = 0; x < canvas.width; x += 3) {
+      const idx = (y * canvas.width + x) * 4;
+      if (imgData[idx] > 100) {
+        validPixels.push({
+          x: (x / canvas.width - 0.5) * bounds.width + bounds.x,
+          y: (-(y / canvas.height - 0.5)) * bounds.height + bounds.y
+        });
       }
+    }
+  }
 
-      const mat = new THREE.MeshStandardMaterial({
-        map: photoTex,
-        roughness: 0.4,
-        metalness: 0.1,
-        side: THREE.DoubleSide
+  const points = new Float32Array(count * 3);
+  const totalValid = validPixels.length || 1;
+
+  for (let i = 0; i < count; i++) {
+    const p = validPixels[i % totalValid] || { x: 0, y: 0 };
+    points[i * 3 + 0] = p.x + (Math.random() - 0.5) * 0.035;
+    points[i * 3 + 1] = p.y + (Math.random() - 0.5) * 0.035;
+    points[i * 3 + 2] = bounds.z + (Math.random() - 0.5) * 0.08;
+  }
+  return points;
+}
+
+async function sampleImageToPoints(imgSrc, count, bounds) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 240;
+      canvas.height = 180;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+      const points = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+
+      const aspect = canvas.width / canvas.height;
+      const w = bounds.width;
+      const h = bounds.width / aspect;
+
+      for (let i = 0; i < count; i++) {
+        const px = Math.floor(Math.random() * canvas.width);
+        const py = Math.floor(Math.random() * canvas.height);
+        const idx = (py * canvas.width + px) * 4;
+
+        points[i * 3 + 0] = ((px / canvas.width) - 0.5) * w + bounds.x;
+        points[i * 3 + 1] = (-((py / canvas.height) - 0.5)) * h + bounds.y;
+        points[i * 3 + 2] = bounds.z + (Math.random() - 0.5) * 0.08;
+
+        // Rich bright saturated color
+        colors[i * 3 + 0] = Math.min(1.0, (imgData[idx] / 255.0) * 1.35);
+        colors[i * 3 + 1] = Math.min(1.0, (imgData[idx + 1] / 255.0) * 1.35);
+        colors[i * 3 + 2] = Math.min(1.0, (imgData[idx + 2] / 255.0) * 1.35);
+      }
+      resolve({ points, colors });
+    };
+    img.onerror = () => {
+      resolve({
+        points: new Float32Array(count * 3),
+        colors: new Float32Array(count * 3).fill(1.0)
+      });
+    };
+    img.src = imgSrc;
+  });
+}
+
+async function sampleGLTFModel(gltfPath, count, bounds) {
+  return new Promise((resolve) => {
+    new GLTFLoader().load(gltfPath, (gltf) => {
+      const meshes = [];
+      gltf.scene.traverse((child) => {
+        if (child.isMesh && child.geometry) {
+          child.updateWorldMatrix(true, false);
+          meshes.push(child);
+        }
       });
 
-      const mesh = new THREE.Mesh(geom, mat);
-
-      // Target assembled position in Beat 1
-      const targetPos = new THREE.Vector3(
-        (window.innerWidth < 860 ? 0 : 2.1) + (c - 1) * w,
-        (window.innerWidth < 860 ? -0.8 : 0) + (1 - r) * h,
-        0.5
-      );
-
-      // Scatter start position (flown out in 3D)
-      const scatterPos = new THREE.Vector3(
-        targetPos.x + (Math.random() - 0.5) * 8,
-        targetPos.y + (Math.random() - 0.5) * 6,
-        targetPos.z + 4 + Math.random() * 6
-      );
-
-      const scatterRot = new THREE.Euler(
-        (Math.random() - 0.5) * Math.PI,
-        (Math.random() - 0.5) * Math.PI,
-        (Math.random() - 0.5) * Math.PI
-      );
-
-      mesh.position.copy(scatterPos);
-      mesh.rotation.copy(scatterRot);
-      mesh.userData = {
-        targetPos,
-        scatterPos,
-        scatterRot,
-        assembledRot: new THREE.Euler(0, -0.12, 0.02)
-      };
-
-      photoShardMeshes.push(mesh);
-      scene.add(mesh);
-    }
-  }
-}
-
-// --------------------------------------------------------------------------
-// ENTITY 5: 35MM FILM RIBBONS (Beat 2 Background)
-// --------------------------------------------------------------------------
-function buildFilmRibbons() {
-  filmStripsGroup = new THREE.Group();
-  filmStripsGroup.position.set(0, 0, -1);
-
-  const filmMat = new THREE.MeshStandardMaterial({
-    color: 0x111018,
-    emissive: 0x221a28,
-    roughness: 0.2,
-    metalness: 0.8,
-    transparent: true,
-    opacity: 0.0,
-    side: THREE.DoubleSide
-  });
-
-  for (let i = 0; i < 4; i++) {
-    const points = [];
-    for (let t = 0; t <= 30; t++) {
-      const p = t / 30;
-      points.push(new THREE.Vector3(
-        (p - 0.5) * 12,
-        Math.sin(p * Math.PI * 2 + i) * 2.2,
-        Math.cos(p * Math.PI * 3 + i) * 2.0 - 2.0
-      ));
-    }
-    const curve = new THREE.CatmullRomCurve3(points);
-    const geom = new THREE.TubeGeometry(curve, 40, 0.12, 4, false);
-    const mesh = new THREE.Mesh(geom, filmMat);
-    filmStripsGroup.add(mesh);
-  }
-
-  scene.add(filmStripsGroup);
-}
-
-// --------------------------------------------------------------------------
-// ENTITY 6: CRIMEA PHOTO PLANE (Beat 2)
-// --------------------------------------------------------------------------
-function buildCrimeaPhotoPlane() {
-  const tex = new THREE.TextureLoader().load('/assets/textures/crimea_sea.jpg');
-  tex.colorSpace = THREE.SRGBColorSpace;
-
-  const geom = new THREE.PlaneGeometry(2.5, 1.75);
-  const mat = new THREE.MeshStandardMaterial({
-    map: tex,
-    roughness: 0.35,
-    metalness: 0.15,
-    transparent: true,
-    opacity: 0.0
-  });
-
-  crimeaPhotoMesh = new THREE.Mesh(geom, mat);
-  crimeaPhotoMesh.position.set(
-    window.innerWidth < 860 ? 0 : 2.1,
-    window.innerWidth < 860 ? -1.0 : -0.55,
-    0.2
-  );
-  crimeaPhotoMesh.rotation.set(0.04, -0.15, -0.02);
-  scene.add(crimeaPhotoMesh);
-}
-
-// --------------------------------------------------------------------------
-// ENTITY 7: REAL 3D VINTAGE CAMERA GLTF (Exploding & Reassembling)
-// --------------------------------------------------------------------------
-function load3DVintageCamera() {
-  const gltfLoader = new GLTFLoader();
-  gltfLoader.load('/assets/models/vintage_camera.glb', (gltf) => {
-    cameraGLTFGroup = gltf.scene;
-
-    const box = new THREE.Box3().setFromObject(cameraGLTFGroup);
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = (window.innerWidth < 860 ? 1.4 : 1.85) / maxDim;
-    cameraGLTFGroup.scale.setScalar(scale);
-
-    box.setFromObject(cameraGLTFGroup);
-    const center = box.getCenter(new THREE.Vector3());
-    cameraGLTFGroup.position.sub(center);
-
-    cameraGLTFGroup.position.set(
-      window.innerWidth < 860 ? 0 : 2.1,
-      window.innerWidth < 860 ? -1.1 : 0.55,
-      -0.4
-    );
-
-    cameraGLTFGroup.traverse((child) => {
-      if (child.isMesh) {
-        child.material.envMapIntensity = 1.8;
-        child.material.roughness = Math.min(child.material.roughness, 0.35);
-
-        // Store base position and normal for explosion
-        child.userData.basePos = child.position.clone();
-        child.userData.explodeVector = new THREE.Vector3(
-          (Math.random() - 0.5) * 2.5,
-          (Math.random() - 0.5) * 2.5,
-          (Math.random() - 0.5) * 2.5
-        );
-        cameraParts.push(child);
+      const points = new Float32Array(count * 3);
+      if (meshes.length === 0) {
+        resolve(points);
+        return;
       }
-    });
 
-    cameraGLTFGroup.visible = false;
-    scene.add(cameraGLTFGroup);
+      const samplers = meshes.map(m => new MeshSurfaceSampler(m).build());
+      const tempPos = new THREE.Vector3();
+
+      const box = new THREE.Box3().setFromObject(gltf.scene);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = bounds.scale / maxDim;
+
+      for (let i = 0; i < count; i++) {
+        const s = samplers[i % samplers.length];
+        s.sample(tempPos);
+        tempPos.sub(center);
+        points[i * 3 + 0] = tempPos.x * scale + bounds.x;
+        points[i * 3 + 1] = tempPos.y * scale + bounds.y;
+        points[i * 3 + 2] = tempPos.z * scale + bounds.z;
+      }
+      resolve(points);
+    }, undefined, () => {
+      resolve(new Float32Array(count * 3));
+    });
   });
 }
 
 // ==========================================================================
-// 4. ANIMATION & TIMELINE INTERPOLATION LOOP
+// 3. BUILD PARTICLE MESH
+// ==========================================================================
+async function buildLivingParticleSystem() {
+  particlesGeometry = new THREE.BufferGeometry();
+
+  // 1. Initial Chaotic Cloud (Prime Matter)
+  const posChaos = new Float32Array(PARTICLE_COUNT * 3);
+  const randomAttrs = new Float32Array(PARTICLE_COUNT * 4);
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    posChaos[i * 3 + 0] = (Math.random() - 0.5) * 16.0;
+    posChaos[i * 3 + 1] = (Math.random() - 0.5) * 11.0;
+    posChaos[i * 3 + 2] = (Math.random() - 0.5) * 12.0 - 2.0;
+
+    randomAttrs[i * 4 + 0] = Math.random();
+    randomAttrs[i * 4 + 1] = Math.random();
+    randomAttrs[i * 4 + 2] = Math.random();
+    randomAttrs[i * 4 + 3] = Math.random();
+  }
+
+  // 2. Target 0: Cyrillic headline «ПРИСТЕБНІТЬ РЕМЕНІ»
+  const posText0 = sampleCyrillicTextToPoints(['ПРИСТЕБНІТЬ', 'РЕМЕНІ.'], PARTICLE_COUNT, {
+    x: 0,
+    y: 0.95,
+    z: 0.2,
+    width: 6.8,
+    height: 3.2
+  });
+
+  // 3. Target 1: Childhood Craft & Embroidery Photo
+  const photo1Data = await sampleImageToPoints('/assets/textures/embroidery_threads.jpg', PARTICLE_COUNT, {
+    x: 0,
+    y: 0.75,
+    z: 0.2,
+    width: 5.2
+  });
+
+  // 4. Target 2: Cyrillic headline «УРОКИ ПРАЦІ З ДІВЧАТАМИ»
+  const posText1 = sampleCyrillicTextToPoints(['УРОКИ ПРАЦІ', 'З ДІВЧАТАМИ.'], PARTICLE_COUNT, {
+    x: 0,
+    y: 0.95,
+    z: 0.2,
+    width: 6.6,
+    height: 3.2
+  });
+
+  // 5. Target 3: 3D Vintage Camera GLTF + Crimea Photo
+  const CAMERA_COUNT = 18000;
+  const CRIMEA_COUNT = PARTICLE_COUNT - CAMERA_COUNT;
+
+  const cameraPoints = await sampleGLTFModel('/assets/models/vintage_camera.glb', CAMERA_COUNT, {
+    x: -1.7,
+    y: 0.45,
+    z: 0.0,
+    scale: 2.7
+  });
+
+  const crimeaData = await sampleImageToPoints('/assets/textures/crimea_sea.jpg', CRIMEA_COUNT, {
+    x: 1.7,
+    y: 0.45,
+    z: 0.2,
+    width: 3.8
+  });
+
+  const posObject2 = new Float32Array(PARTICLE_COUNT * 3);
+  const colorObject2 = new Float32Array(PARTICLE_COUNT * 3);
+
+  for (let i = 0; i < CAMERA_COUNT; i++) {
+    posObject2[i * 3 + 0] = cameraPoints[i * 3 + 0];
+    posObject2[i * 3 + 1] = cameraPoints[i * 3 + 1];
+    posObject2[i * 3 + 2] = cameraPoints[i * 3 + 2];
+
+    colorObject2[i * 3 + 0] = 0.98;
+    colorObject2[i * 3 + 1] = 0.88;
+    colorObject2[i * 3 + 2] = 0.72;
+  }
+  for (let i = 0; i < CRIMEA_COUNT; i++) {
+    const srcIdx = i * 3;
+    const dstIdx = (CAMERA_COUNT + i) * 3;
+    posObject2[dstIdx + 0] = crimeaData.points[srcIdx + 0];
+    posObject2[dstIdx + 1] = crimeaData.points[srcIdx + 1];
+    posObject2[dstIdx + 2] = crimeaData.points[srcIdx + 2];
+
+    colorObject2[dstIdx + 0] = crimeaData.colors[srcIdx + 0];
+    colorObject2[dstIdx + 1] = crimeaData.colors[srcIdx + 1];
+    colorObject2[dstIdx + 2] = crimeaData.colors[srcIdx + 2];
+  }
+
+  // Set Buffer Attributes
+  particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posChaos, 3));
+  particlesGeometry.setAttribute('aTargetText0', new THREE.BufferAttribute(posText0, 3));
+  particlesGeometry.setAttribute('aTargetPhoto1', new THREE.BufferAttribute(photo1Data.points, 3));
+  particlesGeometry.setAttribute('aColorPhoto1', new THREE.BufferAttribute(photo1Data.colors, 3));
+  particlesGeometry.setAttribute('aTargetText1', new THREE.BufferAttribute(posText1, 3));
+  particlesGeometry.setAttribute('aTargetObject2', new THREE.BufferAttribute(posObject2, 3));
+  particlesGeometry.setAttribute('aColorObject2', new THREE.BufferAttribute(colorObject2, 3));
+  particlesGeometry.setAttribute('aRandom', new THREE.BufferAttribute(randomAttrs, 4));
+
+  // Custom Shader Material
+  particlesMaterial = new THREE.ShaderMaterial({
+    vertexShader: `
+      uniform float uProgress;
+      uniform float uVelocity;
+      uniform float uTime;
+
+      attribute vec3 aTargetText0;
+      attribute vec3 aTargetPhoto1;
+      attribute vec3 aColorPhoto1;
+      attribute vec3 aTargetText1;
+      attribute vec3 aTargetObject2;
+      attribute vec3 aColorObject2;
+      attribute vec4 aRandom;
+
+      varying vec3 vColor;
+      varying float vAlpha;
+
+      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+      vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+      float snoise(vec3 v) {
+        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+        vec3 i  = floor(v + dot(v, C.yyy));
+        vec3 x0 = v - i + dot(i, C.xxx);
+        vec3 g = step(x0.yzx, x0.xyz);
+        vec3 l = 1.0 - g;
+        vec3 i1 = min(g.xyz, l.zxy);
+        vec3 i2 = max(g.xyz, l.zxy);
+        vec3 x1 = x0 - i1 + C.xxx;
+        vec3 x2 = x0 - i2 + C.yyy;
+        vec3 x3 = x0 - D.yyy;
+        i = mod289(i);
+        vec4 p = permute(permute(permute(
+                  i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+        float n_ = 0.142857142857;
+        vec3 ns = n_ * D.wyz - D.xzx;
+        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+        vec4 x_ = floor(j * ns.z);
+        vec4 y_ = floor(j - 7.0 * x_);
+        vec4 x = x_ *ns.x + ns.yyyy;
+        vec4 y = y_ *ns.x + ns.yyyy;
+        vec4 h = 1.0 - abs(x) - abs(y);
+        vec4 b0 = vec4(x.xy, y.xy);
+        vec4 b1 = vec4(x.zw, y.zw);
+        vec4 s0 = floor(b0)*2.0 + 1.0;
+        vec4 s1 = floor(b1)*2.0 + 1.0;
+        vec4 sh = -step(h, vec4(0.0));
+        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+        vec3 p0 = vec3(a0.xy, h.x);
+        vec3 p1 = vec3(a0.zw, h.y);
+        vec3 p2 = vec3(a1.xy, h.z);
+        vec3 p3 = vec3(a1.zw, h.w);
+        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+        m = m * m;
+        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+      }
+
+      vec3 curl(vec3 p) {
+        float e = 0.1;
+        float dx = snoise(p + vec3(e, 0.0, 0.0)) - snoise(p - vec3(e, 0.0, 0.0));
+        float dy = snoise(p + vec3(0.0, e, 0.0)) - snoise(p - vec3(0.0, e, 0.0));
+        float dz = snoise(p + vec3(0.0, 0.0, e)) - snoise(p - vec3(0.0, 0.0, e));
+        return vec3(dy - dz, dz - dx, dx - dy) / (2.0 * e);
+      }
+
+      void main() {
+        vec3 p0 = position;            // Chaos
+        vec3 p1 = aTargetText0;        // Text 0
+        vec3 p2 = aTargetPhoto1;       // Photo 1
+        vec3 p3 = aTargetText1;        // Text 1
+        vec3 p4 = aTargetObject2;      // Camera & Crimea
+
+        vec3 goldColor = vec3(0.98, 0.88, 0.72);
+        vec3 currentPos = p0;
+        vec3 targetColor = goldColor;
+        float morphArc = 0.0;
+
+        float p = uProgress;
+
+        // Stage 0: Chaos -> Text 0 (p in 0.00 -> 0.15)
+        if (p <= 0.15) {
+          float t = smoothstep(0.0, 0.12, p);
+          currentPos = mix(p0, p1, t);
+          targetColor = goldColor;
+          morphArc = sin(t * 3.14159265) * step(t, 0.98);
+        }
+        // Stage 1: Text 0 -> Photo 1 (p in 0.15 -> 0.45)
+        else if (p <= 0.45) {
+          float t = smoothstep(0.18, 0.40, p);
+          currentPos = mix(p1, p2, t);
+          targetColor = mix(goldColor, aColorPhoto1, smoothstep(0.3, 0.9, t));
+          morphArc = sin(t * 3.14159265) * step(t, 0.98);
+        }
+        // Stage 2: Photo 1 -> Text 1 (p in 0.45 -> 0.70)
+        else if (p <= 0.70) {
+          float t = smoothstep(0.48, 0.65, p);
+          currentPos = mix(p2, p3, t);
+          targetColor = mix(aColorPhoto1, goldColor, smoothstep(0.1, 0.7, t));
+          morphArc = sin(t * 3.14159265) * step(t, 0.98);
+        }
+        // Stage 3: Text 1 -> Camera & Crimea (p in 0.70 -> 1.00)
+        else {
+          float t = smoothstep(0.72, 0.90, p);
+          currentPos = mix(p3, p4, t);
+          targetColor = mix(goldColor, aColorObject2, smoothstep(0.3, 0.9, t));
+          morphArc = sin(t * 3.14159265) * step(t, 0.98);
+        }
+
+        // Curl turbulence only active during fast motion & transition arcs
+        float velTurbulence = clamp(abs(uVelocity) * 1.5, 0.0, 3.5);
+        float totalTurbulence = morphArc * 1.4 + velTurbulence;
+        
+        vec3 noiseVec = curl(currentPos * 0.4 + vec3(uTime * 0.2) + aRandom.xyz * 0.5);
+        currentPos += noiseVec * (totalTurbulence * 0.45);
+
+        vColor = targetColor;
+        vAlpha = 0.92;
+
+        vec4 mvPosition = modelViewMatrix * vec4(currentPos, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+
+        // Rich point size with perspective attenuation
+        gl_PointSize = (26.0 / -mvPosition.z) * (1.0 + totalTurbulence * 0.3);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vAlpha;
+
+      void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+
+        float glow = 1.0 - smoothstep(0.0, 0.5, dist);
+        float core = 1.0 - smoothstep(0.0, 0.2, dist);
+
+        vec3 finalColor = vColor + vec3(core * 0.35);
+        gl_FragColor = vec4(finalColor, glow * vAlpha);
+      }
+    `,
+    uniforms: {
+      uProgress: { value: 0.0 },
+      uVelocity: { value: 0.0 },
+      uTime: { value: 0.0 }
+    },
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+
+  particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+  scene.add(particlesMesh);
+}
+
+// ==========================================================================
+// 4. ANIMATION LOOP
 // ==========================================================================
 function animate() {
   requestAnimationFrame(animate);
@@ -441,140 +488,18 @@ function animate() {
   const delta = clock.getDelta();
   const time = clock.getElapsedTime();
 
-  // Smooth lerp progress
   const prevProgress = currentProgress;
   currentProgress += (targetProgress - currentProgress) * 0.08;
   scrollVelocity = (currentProgress - prevProgress) * 60.0;
 
-  // Active Scene Synchronization
-  updateActiveSection(currentProgress);
-
-  // 1. Update Astral Rings (Beat 0)
-  if (astralRingsGroup) {
-    const ringFade = Math.max(0, 1.0 - currentProgress * 3.5);
-    astralRingsGroup.rotation.z += 0.003 + scrollVelocity * 0.02;
-    astralRingsGroup.rotation.y = mouseX * 0.25;
-    astralRingsGroup.children.forEach((r, idx) => {
-      r.rotation.x += (idx % 2 === 0 ? 0.004 : -0.004);
-      r.material.opacity = ringFade * 0.65;
-    });
-    astralRingsGroup.visible = ringFade > 0.01;
+  if (particlesMaterial) {
+    particlesMaterial.uniforms.uProgress.value = currentProgress;
+    particlesMaterial.uniforms.uVelocity.value = scrollVelocity;
+    particlesMaterial.uniforms.uTime.value = time;
   }
 
-  // 2. Update Flying Gold Shards (Continuous Morphing Across Beats)
-  if (goldShardsMesh) {
-    const dummy = new THREE.Object3D();
-    const p = currentProgress;
+  updateActiveCard(currentProgress);
 
-    for (let i = 0; i < SHARD_COUNT; i++) {
-      let x, y, z;
-
-      if (p < 0.33) {
-        // Morph from deep background into headline area
-        const localT = Math.min(1.0, p * 3.5);
-        const orig = shardOriginalPositions[i];
-        const targ = shardTargetPositions0[i];
-        x = THREE.MathUtils.lerp(orig.x, targ.x, localT);
-        y = THREE.MathUtils.lerp(orig.y, targ.y, localT) + Math.sin(time * 2 + i) * 0.08;
-        z = THREE.MathUtils.lerp(orig.z, targ.z, localT);
-      } else if (p < 0.66) {
-        // Morph from headline into weaving Loom spiral
-        const localT = (p - 0.33) * 3.0;
-        const orig = shardTargetPositions0[i];
-        const targ = shardTargetPositions1[i];
-        x = THREE.MathUtils.lerp(orig.x, targ.x, localT);
-        y = THREE.MathUtils.lerp(orig.y, targ.y, localT) + Math.cos(time * 2 + i) * 0.08;
-        z = THREE.MathUtils.lerp(orig.z, targ.z, localT);
-      } else {
-        // Morph into camera and Crimea atmosphere
-        const localT = Math.min(1.0, (p - 0.66) * 3.0);
-        const orig = shardTargetPositions1[i];
-        const targ = shardTargetPositions2[i];
-        x = THREE.MathUtils.lerp(orig.x, targ.x, localT);
-        y = THREE.MathUtils.lerp(orig.y, targ.y, localT);
-        z = THREE.MathUtils.lerp(orig.z, targ.z, localT);
-      }
-
-      // Add turbulence from scroll velocity
-      x += (Math.random() - 0.5) * Math.abs(scrollVelocity) * 0.4;
-      y += (Math.random() - 0.5) * Math.abs(scrollVelocity) * 0.4;
-
-      dummy.position.set(x, y, z);
-      dummy.rotation.set(time + i, time * 0.5 + i, 0);
-      dummy.updateMatrix();
-      goldShardsMesh.setMatrixAt(i, dummy.matrix);
-    }
-    goldShardsMesh.instanceMatrix.needsUpdate = true;
-  }
-
-  // 3. Update Silk Loom (Beat 1)
-  if (silkLoomGroup) {
-    const loomWeight = Math.sin(Math.max(0, Math.min(1, (currentProgress - 0.2) * 2.5)) * Math.PI);
-    silkLoomGroup.rotation.y += 0.008 + scrollVelocity * 0.04;
-    silkLoomGroup.children.forEach((mesh) => {
-      mesh.material.opacity = loomWeight * 0.8;
-    });
-    silkLoomGroup.visible = loomWeight > 0.01;
-  }
-
-  // 4. Update Torn Parchment Photo Puzzle (Beat 1 Assembly)
-  if (photoShardMeshes.length > 0) {
-    // Assembles as progress goes from 0.28 to 0.48, disperses when moving past 0.62
-    let assembleFactor = 0;
-    if (currentProgress >= 0.25 && currentProgress <= 0.65) {
-      if (currentProgress < 0.45) {
-        assembleFactor = (currentProgress - 0.25) / 0.20;
-      } else if (currentProgress <= 0.55) {
-        assembleFactor = 1.0;
-      } else {
-        assembleFactor = 1.0 - (currentProgress - 0.55) / 0.10;
-      }
-    }
-    assembleFactor = Math.max(0, Math.min(1, assembleFactor));
-
-    photoShardMeshes.forEach((mesh) => {
-      const u = mesh.userData;
-      mesh.position.lerpVectors(u.scatterPos, u.targetPos, assembleFactor);
-      
-      mesh.rotation.x = THREE.MathUtils.lerp(u.scatterRot.x, u.assembledRot.x, assembleFactor);
-      mesh.rotation.y = THREE.MathUtils.lerp(u.scatterRot.y, u.assembledRot.y, assembleFactor);
-      mesh.rotation.z = THREE.MathUtils.lerp(u.scatterRot.z, u.assembledRot.z, assembleFactor);
-
-      mesh.material.opacity = assembleFactor;
-      mesh.visible = assembleFactor > 0.01;
-    });
-  }
-
-  // 5. Update Film Strips & Camera & Crimea (Beat 2)
-  if (filmStripsGroup) {
-    const filmWeight = Math.max(0, (currentProgress - 0.65) * 3.0);
-    filmStripsGroup.children.forEach((mesh) => {
-      mesh.material.opacity = Math.min(0.65, filmWeight * 0.65);
-    });
-    filmStripsGroup.visible = filmWeight > 0.01;
-  }
-
-  if (cameraGLTFGroup) {
-    const camWeight = Math.max(0, (currentProgress - 0.68) * 3.5);
-    cameraGLTFGroup.visible = camWeight > 0.05;
-
-    // Explode parts if scrolling with velocity
-    const explodeAmount = Math.max(0, 1.0 - Math.min(1.0, (currentProgress - 0.75) * 4.0)) + Math.abs(scrollVelocity) * 0.8;
-    cameraParts.forEach((part) => {
-      part.position.copy(part.userData.basePos).addScaledVector(part.userData.explodeVector, explodeAmount);
-    });
-
-    cameraGLTFGroup.rotation.y = mouseX * 0.35;
-    cameraGLTFGroup.rotation.x = mouseY * 0.2;
-  }
-
-  if (crimeaPhotoMesh) {
-    const crimeaWeight = Math.max(0, Math.min(1, (currentProgress - 0.72) * 3.5));
-    crimeaPhotoMesh.material.opacity = crimeaWeight;
-    crimeaPhotoMesh.visible = crimeaWeight > 0.01;
-  }
-
-  // Mouse Parallax on Camera
   camera.position.x += (mouseX * 0.35 - camera.position.x) * 0.05;
   camera.position.y += (-mouseY * 0.25 - camera.position.y) * 0.05;
   camera.lookAt(0, 0, 0);
@@ -583,12 +508,12 @@ function animate() {
 }
 
 // ==========================================================================
-// 5. GESTURE & PROGRESS CONTROLLER (Continuous Wheel & Touch)
+// 5. GESTURE & PROGRESS CONTROLLER
 // ==========================================================================
 function initGestureEngine() {
   window.addEventListener('wheel', (e) => {
     e.preventDefault();
-    targetProgress = Math.max(0.0, Math.min(1.0, targetProgress + e.deltaY * 0.00085));
+    targetProgress = Math.max(0.0, Math.min(1.0, targetProgress + e.deltaY * 0.00075));
   }, { passive: false });
 
   let touchStartY = 0;
@@ -599,10 +524,9 @@ function initGestureEngine() {
   window.addEventListener('touchmove', (e) => {
     const diff = touchStartY - e.touches[0].clientY;
     touchStartY = e.touches[0].clientY;
-    targetProgress = Math.max(0.0, Math.min(1.0, targetProgress + diff * 0.0016));
+    targetProgress = Math.max(0.0, Math.min(1.0, targetProgress + diff * 0.0015));
   }, { passive: true });
 
-  // Keyboard navigation
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'ArrowRight') {
       targetProgress = Math.min(1.0, targetProgress + 0.33);
@@ -611,27 +535,26 @@ function initGestureEngine() {
     }
   });
 
-  // Step Dots Click
   stepDots.forEach((dot) => {
     dot.addEventListener('click', (e) => {
       const step = parseInt(e.currentTarget.getAttribute('data-step'), 10);
-      targetProgress = step === 0 ? 0.0 : step === 1 ? 0.48 : 0.90;
+      targetProgress = step === 0 ? 0.14 : step === 1 ? 0.42 : 0.92;
     });
   });
 }
 
-function updateActiveSection(p) {
+function updateActiveCard(p) {
   let activeIndex = 0;
-  if (p < 0.33) {
+  if (p < 0.28) {
     activeIndex = 0;
-  } else if (p < 0.66) {
+  } else if (p < 0.65) {
     activeIndex = 1;
   } else {
     activeIndex = 2;
   }
 
-  sections.forEach((sec, idx) => {
-    sec.classList.toggle('active', idx === activeIndex);
+  cards.forEach((card, idx) => {
+    card.classList.toggle('active', idx === activeIndex);
   });
 
   stepDots.forEach((dot, idx) => {
@@ -644,9 +567,6 @@ function updateActiveSection(p) {
   if (hudActLabel) hudActLabel.textContent = meta.act;
 }
 
-// ==========================================================================
-// 6. MOUSE & RESIZE LISTENERS
-// ==========================================================================
 function initMouseListener() {
   window.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -661,9 +581,6 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// ==========================================================================
-// 7. WEB AUDIO SYNTHESIZER
-// ==========================================================================
 function initAudio() {
   if (!audioToggle) return;
 
