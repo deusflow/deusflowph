@@ -1,22 +1,20 @@
 /* ==========================================================================
-   THE ENCHANTED LIVING FOLIO (DAILY PROPHET / HOGWARTS MAGIC AESTHETIC)
-   Tactile darkroom parchment, kinetic reassembling typography, living moving photos
+   DEUSFLOW · CONTINUOUS 3D LIVING WORLD & DAILY PROPHET STORYTELLING
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  --bg-parchment: #0c0b0f;
-  --bg-parchment-deep: #070609;
-  --text-parchment: #f6efe2;
-  --text-parchment-dim: rgba(246, 239, 226, 0.72);
-  --text-parchment-muted: rgba(246, 239, 226, 0.42);
+  --bg-deep: #08070b;
+  --bg-ambient: #0f0d14;
+  --text-primary: #f6efe2;
+  --text-dim: rgba(246, 239, 226, 0.75);
+  --text-muted: rgba(246, 239, 226, 0.45);
   
   --gold-foil: #d8b888;
   --gold-foil-bright: #fce2b8;
-  --gold-glow: rgba(216, 184, 136, 0.25);
-  --ink-border: rgba(216, 184, 136, 0.18);
-  --ink-shadow: rgba(0, 0, 0, 0.85);
+  --gold-glow: rgba(216, 184, 136, 0.35);
+  --ink-border: rgba(216, 184, 136, 0.22);
 
   --font-magic-title: 'Cinzel', serif;
   --font-editorial: 'Playfair Display', serif;
@@ -35,73 +33,41 @@ html, body {
   height: 100vh;
   overflow: hidden;
   position: fixed;
-  background-color: var(--bg-parchment);
-  color: var(--text-parchment);
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   user-select: none;
 }
 
-/* ==========================================================================
-   TACTILE LIVING PARCHMENT BACKGROUND
-   ========================================================================== */
-
-.folio-stage {
+/* Fullscreen Continuous 3D WebGL Canvas */
+#webgl-canvas {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  overflow: hidden;
-  background: 
-    radial-gradient(circle at 50% 30%, rgba(35, 28, 42, 0.4) 0%, transparent 70%),
-    radial-gradient(circle at 80% 80%, rgba(26, 21, 16, 0.5) 0%, transparent 60%),
-    linear-gradient(180deg, var(--bg-parchment-deep) 0%, var(--bg-parchment) 50%, var(--bg-parchment-deep) 100%);
   z-index: 1;
-}
-
-/* Animated Parchment Fiber Texture */
-.parchment-texture {
-  position: absolute;
-  inset: 0;
-  opacity: 0.055;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
   pointer-events: none;
 }
 
-/* Golden Runic Ambient Dust Particles */
-#magic-canvas {
-  position: absolute;
+/* Subtle Parchment Noise Overlay */
+.parchment-vignette {
+  position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
   z-index: 2;
-}
-
-/* 3D WebGL Camera Canvas (for Act 1 Beat 2) */
-#three-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
   pointer-events: none;
-  z-index: 3;
-  opacity: 0;
-  transition: opacity 0.6s ease;
+  background: 
+    radial-gradient(circle at 50% 50%, transparent 40%, rgba(8, 7, 11, 0.8) 100%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='0.04' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
 }
 
-/* ==========================================================================
-   DAILY PROPHET ENCHANTED BORDERS & ORNAMENTS
-   ========================================================================== */
-
+/* Golden Border Frame */
 .enchanted-frame {
-  position: absolute;
+  position: fixed;
   inset: 1.5rem;
   border: 1px solid var(--ink-border);
   pointer-events: none;
   z-index: 10;
-  transition: border-color 0.4s ease;
 }
 
 .enchanted-frame::before {
@@ -111,14 +77,13 @@ html, body {
   border: 1px solid rgba(216, 184, 136, 0.08);
 }
 
-/* Corner Filigrees */
 .corner-filigree {
   position: absolute;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-color: var(--gold-foil);
   border-style: solid;
-  opacity: 0.45;
+  opacity: 0.5;
 }
 
 .c-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
@@ -126,10 +91,7 @@ html, body {
 .c-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
 .c-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
 
-/* ==========================================================================
-   MAGICAL HUD (TOP & BOTTOM BARS)
-   ========================================================================== */
-
+/* HUD Controls */
 .folio-hud {
   position: fixed;
   inset: 0;
@@ -143,7 +105,7 @@ html, body {
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--text-parchment-muted);
+  color: var(--text-muted);
 }
 
 .hud-top, .hud-bottom {
@@ -155,9 +117,9 @@ html, body {
 
 .hud-btn, .hud-link {
   pointer-events: auto;
-  color: var(--text-parchment-dim);
+  color: var(--text-dim);
   text-decoration: none;
-  background: rgba(246, 239, 226, 0.03);
+  background: rgba(246, 239, 226, 0.04);
   border: 1px solid var(--ink-border);
   padding: 0.45rem 1.1rem;
   border-radius: 999px;
@@ -169,9 +131,9 @@ html, body {
 }
 
 .hud-btn:hover, .hud-link:hover {
-  color: var(--text-parchment);
+  color: var(--text-primary);
   border-color: var(--gold-foil);
-  background: rgba(216, 184, 136, 0.12);
+  background: rgba(216, 184, 136, 0.15);
   box-shadow: 0 0 16px var(--gold-glow);
 }
 
@@ -190,20 +152,17 @@ html, body {
   background-color: var(--gold-foil-bright);
   border-radius: 50%;
   box-shadow: 0 0 10px var(--gold-foil-bright);
-  animation: magicPulse 2.0s infinite ease-in-out;
+  animation: magicPulse 2s infinite ease-in-out;
 }
 
 @keyframes magicPulse {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 10px var(--gold-foil-bright); }
-  50% { opacity: 0.4; transform: scale(0.75); box-shadow: 0 0 4px var(--gold-foil); }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
 }
 
-/* ==========================================================================
-   ACT 1 ENCHANTED NEWSPAPER & FOLIO SPREADS
-   ========================================================================== */
-
-.scene-viewport {
-  position: absolute;
+/* Synchronized Typography & Story Layer */
+.story-dom-layer {
+  position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
@@ -214,32 +173,29 @@ html, body {
   pointer-events: none;
 }
 
-/* Base Beat Container */
-.beat-spread {
+.story-section {
   position: absolute;
   width: 100%;
-  max-width: 1280px;
-  height: 80vh;
+  max-width: 1200px;
   padding: 2rem 4vw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.5s;
+  transform: translateY(20px);
+  filter: blur(6px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s;
+  pointer-events: none;
 }
 
-.beat-spread.active {
+.story-section.active {
   opacity: 1;
-  visibility: visible;
+  transform: translateY(0);
+  filter: blur(0px);
+  pointer-events: auto;
 }
 
-/* --------------------------------------------------------------------------
-   BEAT 0: THE PROLOGUE (Centrally Manifested Daily Prophet Front Page)
-   -------------------------------------------------------------------------- */
-#beat-0 {
-  flex-direction: column;
+/* Section 0: Prologue */
+#section-0 {
   text-align: center;
+  max-width: 800px;
 }
 
 .prophet-masthead {
@@ -256,7 +212,7 @@ html, body {
 
 .prophet-masthead::before, .prophet-masthead::after {
   content: '';
-  width: 40px;
+  width: 35px;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--gold-foil));
 }
@@ -264,58 +220,28 @@ html, body {
   background: linear-gradient(90deg, var(--gold-foil), transparent);
 }
 
-.kinetic-headline {
+.headline-cinematic {
   font-family: var(--font-editorial);
-  font-size: clamp(2.8rem, 6.2vw, 5.8rem);
+  font-size: clamp(2.6rem, 5.5vw, 5.2rem);
   font-weight: 700;
-  line-height: 1.1;
-  color: var(--text-parchment);
+  line-height: 1.12;
+  color: var(--text-primary);
+  margin-bottom: 1.8rem;
   letter-spacing: -0.01em;
-  margin-bottom: 2rem;
-  text-wrap: balance;
+  text-shadow: 0 0 35px rgba(216, 184, 136, 0.25);
 }
 
-/* Flying Word and Character Fragments */
-.kinetic-word {
-  display: inline-block;
-  white-space: nowrap;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
-
-.kinetic-char {
-  display: inline-block;
-  opacity: 0;
-  transform: translate3d(0, 40px, -50px) rotateX(-60deg) rotateZ(10deg);
-  filter: blur(6px);
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s;
-}
-
-.kinetic-char.assembled {
-  opacity: 1;
-  transform: translate3d(0, 0, 0) rotateX(0deg) rotateZ(0deg);
-  filter: blur(0px);
-}
-
-.editorial-lead {
+.lead-cinematic {
   font-family: var(--font-body);
-  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
   font-weight: 300;
   line-height: 1.7;
-  color: var(--text-parchment-dim);
+  color: var(--text-dim);
   max-width: 680px;
   margin: 0 auto;
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-.editorial-lead.assembled {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.scroll-indicator {
+.scroll-prompt {
   margin-top: 3rem;
   font-family: var(--font-mono);
   font-size: 10px;
@@ -326,124 +252,42 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 0.6rem;
-  opacity: 0;
-  animation: fadeInPrompt 1.2s ease 1.0s forwards;
+  opacity: 0.75;
 }
 
-.scroll-arrow {
+.scroll-line {
   width: 1px;
   height: 24px;
   background: linear-gradient(180deg, var(--gold-foil), transparent);
-  animation: arrowDrop 1.8s infinite ease-in-out;
+  animation: lineDrop 1.8s infinite ease-in-out;
 }
 
-@keyframes arrowDrop {
+@keyframes lineDrop {
   0% { transform: translateY(0); opacity: 0; }
   50% { opacity: 1; }
   100% { transform: translateY(12px); opacity: 0; }
 }
 
-@keyframes fadeInPrompt {
-  to { opacity: 0.75; }
-}
-
-/* --------------------------------------------------------------------------
-   BEAT 1: CRAFT & EMBROIDERY (2-Column Daily Prophet Spread with Living Photo)
-   -------------------------------------------------------------------------- */
-#beat-1 {
+/* Section 1 & 2: Editorial Split Spreads */
+#section-1, #section-2 {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 5vw;
   align-items: center;
 }
 
-.column-text {
-  text-align: left;
-}
-
-.column-media {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  perspective: 1200px;
-}
-
-/* Living Moving Photo (Daily Prophet Picture Frame) */
-.living-photo-frame {
-  position: relative;
-  width: 100%;
-  max-width: 420px;
-  aspect-ratio: 4/3;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--ink-border);
-  box-shadow: 
-    0 16px 40px rgba(0, 0, 0, 0.75),
-    0 0 30px rgba(216, 184, 136, 0.08);
-  transform: rotate3d(0.1, -0.3, 0.05, 12deg) scale(0.92);
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
-}
-
-.living-photo-frame:hover {
-  transform: rotate3d(0, 0, 0, 0deg) scale(0.98);
-  box-shadow: 
-    0 24px 60px rgba(0, 0, 0, 0.85),
-    0 0 40px rgba(216, 184, 136, 0.2);
-}
-
-.living-photo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: contrast(1.08) brightness(0.95);
-  animation: photoBreathe 6s infinite ease-in-out alternate;
-}
-
-@keyframes photoBreathe {
-  0% { transform: scale(1.0) translate(0, 0); }
-  100% { transform: scale(1.06) translate(-1%, -1%); }
-}
-
-/* Living Moving Photo Glass Sheen */
-.living-photo-frame::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, transparent 40%, rgba(216, 184, 136, 0.08) 100%);
-  pointer-events: none;
-}
-
-/* --------------------------------------------------------------------------
-   BEAT 2: OLYMPUS CAMERA & CRIMEA (Emulsion Shift Spread)
-   -------------------------------------------------------------------------- */
-#beat-2 {
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 5vw;
-  align-items: center;
-}
-
-#beat-2 .living-photo-frame {
-  max-width: 380px;
-  transform: rotate3d(-0.1, 0.25, -0.05, 10deg) scale(0.95);
-  margin-top: 2rem;
-}
-
-.quote-highlight {
+.quote-cinematic {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: clamp(1.25rem, 2.0vw, 1.65rem);
+  font-size: clamp(1.3rem, 2.0vw, 1.75rem);
   color: var(--gold-foil-bright);
   margin-top: 1.5rem;
   display: block;
-  text-shadow: 0 0 20px rgba(216, 184, 136, 0.35);
+  text-shadow: 0 0 25px var(--gold-glow);
 }
 
-/* ==========================================================================
-   PROGRESS DIAL & ACT STEPPER
-   ========================================================================== */
-
-.act-progress-track {
+/* Interactive Progress Stepper */
+.act-stepper {
   position: fixed;
   right: 2.5rem;
   top: 50%;
@@ -454,9 +298,9 @@ html, body {
   gap: 1.2rem;
 }
 
-.progress-dot {
-  width: 7px;
-  height: 7px;
+.step-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   border: 1px solid var(--gold-foil);
   background: transparent;
@@ -466,59 +310,35 @@ html, body {
   pointer-events: auto;
 }
 
-.progress-dot.active {
+.step-dot.active {
   opacity: 1;
   background: var(--gold-foil-bright);
-  box-shadow: 0 0 10px var(--gold-foil-bright);
-  transform: scale(1.4);
+  box-shadow: 0 0 12px var(--gold-foil-bright);
+  transform: scale(1.35);
 }
 
-/* ==========================================================================
-   MOBILE RESPONSIVENESS (< 860px)
-   ========================================================================== */
-
+/* Mobile Responsive */
 @media (max-width: 860px) {
   .folio-hud {
     padding: 1.2rem 1.4rem;
     font-size: 9px;
   }
-  
   .enchanted-frame {
     inset: 0.8rem;
   }
-
-  .beat-spread {
-    height: 86vh;
-    padding: 1rem 1.5rem;
-  }
-
-  #beat-1, #beat-2 {
+  #section-1, #section-2 {
     grid-template-columns: 1fr;
+    text-align: center;
     gap: 1.5rem;
-    text-align: center;
   }
-
-  .column-text {
-    text-align: center;
-  }
-
-  .kinetic-headline {
+  .headline-cinematic {
     font-size: 2.2rem;
-    margin-bottom: 1rem;
   }
-
-  .editorial-lead {
+  .lead-cinematic {
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.55;
   }
-
-  .living-photo-frame {
-    max-width: 280px;
-    margin: 0 auto;
-    transform: none;
-  }
-
-  .act-progress-track {
+  .act-stepper {
     right: 1.2rem;
   }
 }

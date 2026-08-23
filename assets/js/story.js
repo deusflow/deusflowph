@@ -1,7 +1,7 @@
 /**
- * DEUSFLOW · THE ENCHANTED LIVING FOLIO (ACT 1 ENGINE)
- * "The Daily Prophet" Hogwarts Magic Aesthetic:
- * Kinetic reassembling typography, tactile living parchment, living moving photos, 100vh locked stage.
+ * DEUSFLOW · CONTINUOUS 3D LIVING WORLD & DAILY PROPHET STORY ENGINE
+ * The background is the story: Astral rings, flying gold shards, weaving 3D silk loom,
+ * torn parchment photo puzzle assembly, 35mm film ribbons, and exploding/assembling 3D camera.
  */
 
 import * as THREE from 'three';
@@ -9,43 +9,51 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 // ==========================================================================
-// 1. STATE & GLOBAL VARIABLES
+// 1. GLOBAL STATE & TIMELINE PROGRESS
 // ==========================================================================
-let currentBeat = 0;
-let targetBeat = 0;
-let isTransitioning = false;
+let targetProgress = 0.0;
+let currentProgress = 0.0;
+let scrollVelocity = 0.0;
 let mouseX = 0, mouseY = 0;
 
-// HUD Elements
+let scene, camera, renderer;
+let clock = new THREE.Clock();
+
+// Story Entities
+let astralRingsGroup;
+let goldShardsMesh;
+let shardOriginalPositions = [];
+let shardTargetPositions0 = [];
+let shardTargetPositions1 = [];
+let shardTargetPositions2 = [];
+
+let silkLoomGroup;
+let photoShardMeshes = [];
+let filmStripsGroup;
+let cameraGLTFGroup;
+let cameraParts = [];
+let crimeaPhotoMesh;
+
+// DOM references
+const sections = [
+  document.getElementById('section-0'),
+  document.getElementById('section-1'),
+  document.getElementById('section-2')
+];
+const stepDots = document.querySelectorAll('.step-dot');
 const hudSceneTitle = document.getElementById('hud-scene-title');
 const hudTimecode = document.getElementById('hud-timecode');
 const hudActLabel = document.getElementById('hud-act-label');
 const audioToggle = document.getElementById('audio-toggle');
 const audioStatus = document.getElementById('audio-status');
-const progressDots = document.querySelectorAll('.progress-dot');
 
-const beats = [
-  {
-    id: 'beat-0',
-    title: 'PROLOGUE // THE INVITATION',
-    folio: 'FOLIO 01 / 08',
-    act: 'ACT I // ROOTS & THE FIRST LENS'
-  },
-  {
-    id: 'beat-1',
-    title: '01 // CRAFT & EMBROIDERY',
-    folio: 'FOLIO 02 / 08',
-    act: 'ACT I // ROOTS & THE FIRST LENS'
-  },
-  {
-    id: 'beat-2',
-    title: '02 // THE FIRST LENS · 35MM',
-    folio: 'FOLIO 03 / 08',
-    act: 'ACT I // ROOTS & THE FIRST LENS'
-  }
+const beatMetadata = [
+  { title: 'PROLOGUE // THE INVITATION', timecode: 'FOLIO 01 / 08', act: 'ACT I // ROOTS & THE FIRST LENS' },
+  { title: '01 // CRAFT & EMBROIDERY', timecode: 'FOLIO 02 / 08', act: 'ACT I // ROOTS & THE FIRST LENS' },
+  { title: '02 // THE FIRST LENS · 35MM', timecode: 'FOLIO 03 / 08', act: 'ACT I // ROOTS & THE FIRST LENS' }
 ];
 
-// Web Audio API
+// Audio State
 let audioCtx = null;
 let isAudioActive = false;
 let ambientGain = null;
@@ -53,404 +61,608 @@ let ambientGain = null;
 // ==========================================================================
 // 2. INITIALIZATION
 // ==========================================================================
-document.addEventListener('DOMContentLoaded', async () => {
-  initKineticTypography();
-  initGestureController();
-  initMagicParticlesCanvas();
+document.addEventListener('DOMContentLoaded', () => {
+  initThreeWorld();
+  initGestureEngine();
   initAudio();
-  initMouseFollow();
-  initThreeStage();
-
-  // Reveal Beat 0 on initial load
-  setTimeout(() => {
-    assembleBeat(0);
-  }, 200);
+  initMouseListener();
 });
 
 // ==========================================================================
-// 3. KINETIC DAILY PROPHET TYPOGRAPHY WRAPPER
+// 3. THREE.JS SCENE SETUP & ENTITY FACTORY
 // ==========================================================================
-function initKineticTypography() {
-  ['title-0', 'title-1', 'title-2'].forEach((titleId) => {
-    const el = document.getElementById(titleId);
-    if (!el) return;
+function initThreeWorld() {
+  const canvas = document.getElementById('webgl-canvas');
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x08070b, 0.045);
 
-    const rawText = el.textContent.trim();
-    el.innerHTML = '';
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 7.5);
 
-    const words = rawText.split(' ');
-    words.forEach((wordText, wIdx) => {
-      const wordSpan = document.createElement('span');
-      wordSpan.className = 'kinetic-word';
+  renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true,
+    powerPreference: 'high-performance'
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.35;
 
-      const chars = wordText.split('');
-      chars.forEach((char, cIdx) => {
-        const charSpan = document.createElement('span');
-        charSpan.className = 'kinetic-char';
-        charSpan.textContent = char;
+  const pmremGenerator = new THREE.PMREMGenerator(renderer);
+  pmremGenerator.compileEquirectangularShader();
 
-        // Give each character random 3D trajectory vectors
-        const rx = (Math.random() - 0.5) * 80;
-        const ry = (Math.random() - 0.5) * 90;
-        const rz = (Math.random() - 0.5) * 45;
-        const tx = (Math.random() - 0.5) * 60;
-        const ty = 40 + Math.random() * 50;
-        const tz = -60 - Math.random() * 80;
+  // Lighting
+  const keyLight = new THREE.DirectionalLight(0xffeedd, 3.5);
+  keyLight.position.set(4, 6, 5);
+  scene.add(keyLight);
 
-        charSpan.style.setProperty('--rx', `${rx}deg`);
-        charSpan.style.setProperty('--ry', `${ry}deg`);
-        charSpan.style.setProperty('--rz', `${rz}deg`);
-        charSpan.style.setProperty('--tx', `${tx}px`);
-        charSpan.style.setProperty('--ty', `${ty}px`);
-        charSpan.style.setProperty('--tz', `${tz}px`);
+  const ambientLight = new THREE.AmbientLight(0x221a28, 1.8);
+  scene.add(ambientLight);
 
-        wordSpan.appendChild(charSpan);
+  const goldRimLight = new THREE.PointLight(0xd8b888, 4.0, 20);
+  goldRimLight.position.set(0, 2, -4);
+  scene.add(goldRimLight);
+
+  // Load Studio HDRI
+  new RGBELoader().load('/assets/textures/studio_env.hdr', (texture) => {
+    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+    scene.environment = envMap;
+    texture.dispose();
+  });
+
+  // Build Scene Entities
+  buildAstralRings();
+  buildGoldShardsSystem();
+  buildSilkLoom();
+  buildTornPhotoPuzzle();
+  buildFilmRibbons();
+  buildCrimeaPhotoPlane();
+  load3DVintageCamera();
+
+  // Render Loop
+  animate();
+
+  window.addEventListener('resize', onWindowResize);
+}
+
+// --------------------------------------------------------------------------
+// ENTITY 1: ASTRAL RUNIC RINGS (Beat 0 Background Vortex)
+// --------------------------------------------------------------------------
+function buildAstralRings() {
+  astralRingsGroup = new THREE.Group();
+  astralRingsGroup.position.set(0, 0, -6);
+
+  const ringMaterial = new THREE.MeshStandardMaterial({
+    color: 0xd8b888,
+    emissive: 0x5a3e1b,
+    roughness: 0.25,
+    metalness: 0.9,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.65
+  });
+
+  const r1 = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.04, 16, 64), ringMaterial);
+  const r2 = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.03, 16, 48), ringMaterial);
+  const r3 = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.03, 16, 36), ringMaterial);
+
+  astralRingsGroup.add(r1, r2, r3);
+  scene.add(astralRingsGroup);
+}
+
+// --------------------------------------------------------------------------
+// ENTITY 2: 3D FLYING GOLD SHARDS SYSTEM (Matter forming words & objects)
+// --------------------------------------------------------------------------
+const SHARD_COUNT = 1200;
+
+function buildGoldShardsSystem() {
+  const shardGeom = new THREE.PlaneGeometry(0.06, 0.06);
+  const shardMat = new THREE.MeshStandardMaterial({
+    color: 0xfce2b8,
+    emissive: 0xd8b888,
+    emissiveIntensity: 0.6,
+    roughness: 0.15,
+    metalness: 0.95,
+    side: THREE.DoubleSide
+  });
+
+  goldShardsMesh = new THREE.InstancedMesh(shardGeom, shardMat, SHARD_COUNT);
+  const dummy = new THREE.Object3D();
+
+  for (let i = 0; i < SHARD_COUNT; i++) {
+    // Original deep background vortex position (Beat 0 start)
+    const rad = 2.0 + Math.random() * 4.5;
+    const theta = Math.random() * Math.PI * 2;
+    const z = -4.0 - Math.random() * 12.0;
+    const origPos = new THREE.Vector3(Math.cos(theta) * rad, Math.sin(theta) * rad, z);
+    shardOriginalPositions.push(origPos);
+
+    // Target 0: Floating arc near title
+    const t0 = new THREE.Vector3(
+      (Math.random() - 0.5) * 5.5,
+      1.0 + (Math.random() - 0.5) * 1.5,
+      1.5 + (Math.random() - 0.5) * 1.5
+    );
+    shardTargetPositions0.push(t0);
+
+    // Target 1: Spiral around Loom & Photo Puzzle
+    const t1 = new THREE.Vector3(
+      2.1 + Math.cos(theta * 2) * (1.0 + Math.random() * 0.7),
+      Math.sin(theta * 2) * (1.0 + Math.random() * 0.7),
+      0.5 + (Math.random() - 0.5) * 1.5
+    );
+    shardTargetPositions1.push(t1);
+
+    // Target 2: Luminous halo around Camera & Crimea Photo
+    const t2 = new THREE.Vector3(
+      2.1 + (Math.random() - 0.5) * 2.5,
+      (Math.random() - 0.5) * 2.5,
+      -0.2 + Math.random() * 1.8
+    );
+    shardTargetPositions2.push(t2);
+
+    dummy.position.copy(origPos);
+    dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+    dummy.updateMatrix();
+    goldShardsMesh.setMatrixAt(i, dummy.matrix);
+  }
+
+  goldShardsMesh.instanceMatrix.needsUpdate = true;
+  scene.add(goldShardsMesh);
+}
+
+// --------------------------------------------------------------------------
+// ENTITY 3: WEAVING 3D SILK LOOM (Beat 1 Background Threads)
+// --------------------------------------------------------------------------
+function buildSilkLoom() {
+  silkLoomGroup = new THREE.Group();
+  silkLoomGroup.position.set(window.innerWidth < 860 ? 0 : 2.1, 0, -2.5);
+
+  const silkMat = new THREE.MeshStandardMaterial({
+    color: 0xd8b888,
+    emissive: 0x8a6230,
+    emissiveIntensity: 0.8,
+    roughness: 0.3,
+    metalness: 0.8,
+    transparent: true,
+    opacity: 0.0
+  });
+
+  for (let i = 0; i < 18; i++) {
+    const points = [];
+    const radius = 1.4 + (i % 3) * 0.35;
+    const height = 4.5;
+    const turns = 2.5;
+
+    for (let t = 0; t <= 40; t++) {
+      const p = t / 40;
+      const angle = p * Math.PI * 2 * turns + (i * Math.PI / 9);
+      const x = Math.cos(angle) * radius;
+      const y = (p - 0.5) * height;
+      const z = Math.sin(angle) * radius * 0.6;
+      points.push(new THREE.Vector3(x, y, z));
+    }
+
+    const curve = new THREE.CatmullRomCurve3(points);
+    const geom = new THREE.TubeGeometry(curve, 32, 0.015, 6, false);
+    const mesh = new THREE.Mesh(geom, silkMat);
+    silkLoomGroup.add(mesh);
+  }
+
+  scene.add(silkLoomGroup);
+}
+
+// --------------------------------------------------------------------------
+// ENTITY 4: 3D TORN PARCHMENT PHOTO PUZZLE (Beat 1 Assembling Picture)
+// --------------------------------------------------------------------------
+function buildTornPhotoPuzzle() {
+  const textureLoader = new THREE.TextureLoader();
+  const photoTex = textureLoader.load('/assets/textures/embroidery_threads.jpg');
+  photoTex.colorSpace = THREE.SRGBColorSpace;
+
+  const COLS = 3;
+  const ROWS = 3;
+  const totalWidth = 2.8;
+  const totalHeight = 2.1;
+  const w = totalWidth / COLS;
+  const h = totalHeight / ROWS;
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const geom = new THREE.PlaneGeometry(w * 0.96, h * 0.96);
+      
+      // Compute sub-UV coordinates for each tile
+      const uv = geom.attributes.uv;
+      for (let i = 0; i < uv.count; i++) {
+        const u = uv.getX(i);
+        const v = uv.getY(i);
+        uv.setXY(i, (c + u) / COLS, (ROWS - 1 - r + v) / ROWS);
+      }
+
+      const mat = new THREE.MeshStandardMaterial({
+        map: photoTex,
+        roughness: 0.4,
+        metalness: 0.1,
+        side: THREE.DoubleSide
       });
 
-      el.appendChild(wordSpan);
-      if (wIdx < words.length - 1) {
-        el.appendChild(document.createTextNode(' '));
+      const mesh = new THREE.Mesh(geom, mat);
+
+      // Target assembled position in Beat 1
+      const targetPos = new THREE.Vector3(
+        (window.innerWidth < 860 ? 0 : 2.1) + (c - 1) * w,
+        (window.innerWidth < 860 ? -0.8 : 0) + (1 - r) * h,
+        0.5
+      );
+
+      // Scatter start position (flown out in 3D)
+      const scatterPos = new THREE.Vector3(
+        targetPos.x + (Math.random() - 0.5) * 8,
+        targetPos.y + (Math.random() - 0.5) * 6,
+        targetPos.z + 4 + Math.random() * 6
+      );
+
+      const scatterRot = new THREE.Euler(
+        (Math.random() - 0.5) * Math.PI,
+        (Math.random() - 0.5) * Math.PI,
+        (Math.random() - 0.5) * Math.PI
+      );
+
+      mesh.position.copy(scatterPos);
+      mesh.rotation.copy(scatterRot);
+      mesh.userData = {
+        targetPos,
+        scatterPos,
+        scatterRot,
+        assembledRot: new THREE.Euler(0, -0.12, 0.02)
+      };
+
+      photoShardMeshes.push(mesh);
+      scene.add(mesh);
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
+// ENTITY 5: 35MM FILM RIBBONS (Beat 2 Background)
+// --------------------------------------------------------------------------
+function buildFilmRibbons() {
+  filmStripsGroup = new THREE.Group();
+  filmStripsGroup.position.set(0, 0, -1);
+
+  const filmMat = new THREE.MeshStandardMaterial({
+    color: 0x111018,
+    emissive: 0x221a28,
+    roughness: 0.2,
+    metalness: 0.8,
+    transparent: true,
+    opacity: 0.0,
+    side: THREE.DoubleSide
+  });
+
+  for (let i = 0; i < 4; i++) {
+    const points = [];
+    for (let t = 0; t <= 30; t++) {
+      const p = t / 30;
+      points.push(new THREE.Vector3(
+        (p - 0.5) * 12,
+        Math.sin(p * Math.PI * 2 + i) * 2.2,
+        Math.cos(p * Math.PI * 3 + i) * 2.0 - 2.0
+      ));
+    }
+    const curve = new THREE.CatmullRomCurve3(points);
+    const geom = new THREE.TubeGeometry(curve, 40, 0.12, 4, false);
+    const mesh = new THREE.Mesh(geom, filmMat);
+    filmStripsGroup.add(mesh);
+  }
+
+  scene.add(filmStripsGroup);
+}
+
+// --------------------------------------------------------------------------
+// ENTITY 6: CRIMEA PHOTO PLANE (Beat 2)
+// --------------------------------------------------------------------------
+function buildCrimeaPhotoPlane() {
+  const tex = new THREE.TextureLoader().load('/assets/textures/crimea_sea.jpg');
+  tex.colorSpace = THREE.SRGBColorSpace;
+
+  const geom = new THREE.PlaneGeometry(2.5, 1.75);
+  const mat = new THREE.MeshStandardMaterial({
+    map: tex,
+    roughness: 0.35,
+    metalness: 0.15,
+    transparent: true,
+    opacity: 0.0
+  });
+
+  crimeaPhotoMesh = new THREE.Mesh(geom, mat);
+  crimeaPhotoMesh.position.set(
+    window.innerWidth < 860 ? 0 : 2.1,
+    window.innerWidth < 860 ? -1.0 : -0.55,
+    0.2
+  );
+  crimeaPhotoMesh.rotation.set(0.04, -0.15, -0.02);
+  scene.add(crimeaPhotoMesh);
+}
+
+// --------------------------------------------------------------------------
+// ENTITY 7: REAL 3D VINTAGE CAMERA GLTF (Exploding & Reassembling)
+// --------------------------------------------------------------------------
+function load3DVintageCamera() {
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.load('/assets/models/vintage_camera.glb', (gltf) => {
+    cameraGLTFGroup = gltf.scene;
+
+    const box = new THREE.Box3().setFromObject(cameraGLTFGroup);
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const scale = (window.innerWidth < 860 ? 1.4 : 1.85) / maxDim;
+    cameraGLTFGroup.scale.setScalar(scale);
+
+    box.setFromObject(cameraGLTFGroup);
+    const center = box.getCenter(new THREE.Vector3());
+    cameraGLTFGroup.position.sub(center);
+
+    cameraGLTFGroup.position.set(
+      window.innerWidth < 860 ? 0 : 2.1,
+      window.innerWidth < 860 ? -1.1 : 0.55,
+      -0.4
+    );
+
+    cameraGLTFGroup.traverse((child) => {
+      if (child.isMesh) {
+        child.material.envMapIntensity = 1.8;
+        child.material.roughness = Math.min(child.material.roughness, 0.35);
+
+        // Store base position and normal for explosion
+        child.userData.basePos = child.position.clone();
+        child.userData.explodeVector = new THREE.Vector3(
+          (Math.random() - 0.5) * 2.5,
+          (Math.random() - 0.5) * 2.5,
+          (Math.random() - 0.5) * 2.5
+        );
+        cameraParts.push(child);
       }
     });
-  });
-}
 
-function assembleBeat(beatIndex) {
-  const beat = beats[beatIndex];
-  if (!beat) return;
-
-  const beatEl = document.getElementById(beat.id);
-  if (!beatEl) return;
-
-  beatEl.classList.add('active');
-
-  // Assemble characters in headline
-  const chars = beatEl.querySelectorAll('.kinetic-char');
-  chars.forEach((char, idx) => {
-    setTimeout(() => {
-      char.classList.add('assembled');
-    }, 80 + idx * 32);
-  });
-
-  // Assemble lead narrative paragraph
-  const lead = beatEl.querySelector('.editorial-lead');
-  if (lead) {
-    setTimeout(() => {
-      lead.classList.add('assembled');
-    }, 150 + chars.length * 32);
-  }
-
-  // Update HUD
-  if (hudSceneTitle) hudSceneTitle.textContent = beat.title;
-  if (hudTimecode) hudTimecode.textContent = beat.folio;
-  if (hudActLabel) hudActLabel.textContent = beat.act;
-
-  // Update Progress Dots
-  progressDots.forEach((dot, idx) => {
-    dot.classList.toggle('active', idx === beatIndex);
-  });
-
-  // Show/Hide 3D Camera Canvas for Beat 2
-  const threeCanvas = document.getElementById('three-canvas');
-  if (threeCanvas) {
-    threeCanvas.style.opacity = beatIndex === 2 ? '1' : '0';
-  }
-}
-
-function disassembleBeat(beatIndex, callback) {
-  const beat = beats[beatIndex];
-  if (!beat) {
-    if (callback) callback();
-    return;
-  }
-
-  const beatEl = document.getElementById(beat.id);
-  if (!beatEl) {
-    if (callback) callback();
-    return;
-  }
-
-  const chars = beatEl.querySelectorAll('.kinetic-char');
-  chars.forEach((char, idx) => {
-    setTimeout(() => {
-      char.classList.remove('assembled');
-    }, idx * 12);
-  });
-
-  const lead = beatEl.querySelector('.editorial-lead');
-  if (lead) {
-    lead.classList.remove('assembled');
-  }
-
-  setTimeout(() => {
-    beatEl.classList.remove('active');
-    if (callback) callback();
-  }, 400);
-}
-
-function goToBeat(nextBeat) {
-  if (nextBeat === currentBeat || isTransitioning) return;
-  if (nextBeat < 0 || nextBeat >= beats.length) return;
-
-  isTransitioning = true;
-  targetBeat = nextBeat;
-
-  if (isAudioActive) {
-    playParchmentFlipSound();
-  }
-
-  disassembleBeat(currentBeat, () => {
-    currentBeat = targetBeat;
-    assembleBeat(currentBeat);
-    setTimeout(() => {
-      isTransitioning = false;
-    }, 300);
+    cameraGLTFGroup.visible = false;
+    scene.add(cameraGLTFGroup);
   });
 }
 
 // ==========================================================================
-// 4. FIXED VIEWPORT GESTURE CONTROLLER (Wheel + Touch + Keyboard)
+// 4. ANIMATION & TIMELINE INTERPOLATION LOOP
 // ==========================================================================
-function initGestureController() {
-  let wheelAccumulator = 0;
-  let touchStartY = 0;
-  let lastGestureTime = 0;
+function animate() {
+  requestAnimationFrame(animate);
 
-  // Mouse Wheel Gesture
-  window.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const now = Date.now();
-    if (now - lastGestureTime < 450) return;
+  const delta = clock.getDelta();
+  const time = clock.getElapsedTime();
 
-    wheelAccumulator += e.deltaY;
+  // Smooth lerp progress
+  const prevProgress = currentProgress;
+  currentProgress += (targetProgress - currentProgress) * 0.08;
+  scrollVelocity = (currentProgress - prevProgress) * 60.0;
 
-    if (wheelAccumulator > 65) {
-      wheelAccumulator = 0;
-      lastGestureTime = now;
-      if (currentBeat < beats.length - 1) {
-        goToBeat(currentBeat + 1);
+  // Active Scene Synchronization
+  updateActiveSection(currentProgress);
+
+  // 1. Update Astral Rings (Beat 0)
+  if (astralRingsGroup) {
+    const ringFade = Math.max(0, 1.0 - currentProgress * 3.5);
+    astralRingsGroup.rotation.z += 0.003 + scrollVelocity * 0.02;
+    astralRingsGroup.rotation.y = mouseX * 0.25;
+    astralRingsGroup.children.forEach((r, idx) => {
+      r.rotation.x += (idx % 2 === 0 ? 0.004 : -0.004);
+      r.material.opacity = ringFade * 0.65;
+    });
+    astralRingsGroup.visible = ringFade > 0.01;
+  }
+
+  // 2. Update Flying Gold Shards (Continuous Morphing Across Beats)
+  if (goldShardsMesh) {
+    const dummy = new THREE.Object3D();
+    const p = currentProgress;
+
+    for (let i = 0; i < SHARD_COUNT; i++) {
+      let x, y, z;
+
+      if (p < 0.33) {
+        // Morph from deep background into headline area
+        const localT = Math.min(1.0, p * 3.5);
+        const orig = shardOriginalPositions[i];
+        const targ = shardTargetPositions0[i];
+        x = THREE.MathUtils.lerp(orig.x, targ.x, localT);
+        y = THREE.MathUtils.lerp(orig.y, targ.y, localT) + Math.sin(time * 2 + i) * 0.08;
+        z = THREE.MathUtils.lerp(orig.z, targ.z, localT);
+      } else if (p < 0.66) {
+        // Morph from headline into weaving Loom spiral
+        const localT = (p - 0.33) * 3.0;
+        const orig = shardTargetPositions0[i];
+        const targ = shardTargetPositions1[i];
+        x = THREE.MathUtils.lerp(orig.x, targ.x, localT);
+        y = THREE.MathUtils.lerp(orig.y, targ.y, localT) + Math.cos(time * 2 + i) * 0.08;
+        z = THREE.MathUtils.lerp(orig.z, targ.z, localT);
+      } else {
+        // Morph into camera and Crimea atmosphere
+        const localT = Math.min(1.0, (p - 0.66) * 3.0);
+        const orig = shardTargetPositions1[i];
+        const targ = shardTargetPositions2[i];
+        x = THREE.MathUtils.lerp(orig.x, targ.x, localT);
+        y = THREE.MathUtils.lerp(orig.y, targ.y, localT);
+        z = THREE.MathUtils.lerp(orig.z, targ.z, localT);
       }
-    } else if (wheelAccumulator < -65) {
-      wheelAccumulator = 0;
-      lastGestureTime = now;
-      if (currentBeat > 0) {
-        goToBeat(currentBeat - 1);
+
+      // Add turbulence from scroll velocity
+      x += (Math.random() - 0.5) * Math.abs(scrollVelocity) * 0.4;
+      y += (Math.random() - 0.5) * Math.abs(scrollVelocity) * 0.4;
+
+      dummy.position.set(x, y, z);
+      dummy.rotation.set(time + i, time * 0.5 + i, 0);
+      dummy.updateMatrix();
+      goldShardsMesh.setMatrixAt(i, dummy.matrix);
+    }
+    goldShardsMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  // 3. Update Silk Loom (Beat 1)
+  if (silkLoomGroup) {
+    const loomWeight = Math.sin(Math.max(0, Math.min(1, (currentProgress - 0.2) * 2.5)) * Math.PI);
+    silkLoomGroup.rotation.y += 0.008 + scrollVelocity * 0.04;
+    silkLoomGroup.children.forEach((mesh) => {
+      mesh.material.opacity = loomWeight * 0.8;
+    });
+    silkLoomGroup.visible = loomWeight > 0.01;
+  }
+
+  // 4. Update Torn Parchment Photo Puzzle (Beat 1 Assembly)
+  if (photoShardMeshes.length > 0) {
+    // Assembles as progress goes from 0.28 to 0.48, disperses when moving past 0.62
+    let assembleFactor = 0;
+    if (currentProgress >= 0.25 && currentProgress <= 0.65) {
+      if (currentProgress < 0.45) {
+        assembleFactor = (currentProgress - 0.25) / 0.20;
+      } else if (currentProgress <= 0.55) {
+        assembleFactor = 1.0;
+      } else {
+        assembleFactor = 1.0 - (currentProgress - 0.55) / 0.10;
       }
     }
+    assembleFactor = Math.max(0, Math.min(1, assembleFactor));
+
+    photoShardMeshes.forEach((mesh) => {
+      const u = mesh.userData;
+      mesh.position.lerpVectors(u.scatterPos, u.targetPos, assembleFactor);
+      
+      mesh.rotation.x = THREE.MathUtils.lerp(u.scatterRot.x, u.assembledRot.x, assembleFactor);
+      mesh.rotation.y = THREE.MathUtils.lerp(u.scatterRot.y, u.assembledRot.y, assembleFactor);
+      mesh.rotation.z = THREE.MathUtils.lerp(u.scatterRot.z, u.assembledRot.z, assembleFactor);
+
+      mesh.material.opacity = assembleFactor;
+      mesh.visible = assembleFactor > 0.01;
+    });
+  }
+
+  // 5. Update Film Strips & Camera & Crimea (Beat 2)
+  if (filmStripsGroup) {
+    const filmWeight = Math.max(0, (currentProgress - 0.65) * 3.0);
+    filmStripsGroup.children.forEach((mesh) => {
+      mesh.material.opacity = Math.min(0.65, filmWeight * 0.65);
+    });
+    filmStripsGroup.visible = filmWeight > 0.01;
+  }
+
+  if (cameraGLTFGroup) {
+    const camWeight = Math.max(0, (currentProgress - 0.68) * 3.5);
+    cameraGLTFGroup.visible = camWeight > 0.05;
+
+    // Explode parts if scrolling with velocity
+    const explodeAmount = Math.max(0, 1.0 - Math.min(1.0, (currentProgress - 0.75) * 4.0)) + Math.abs(scrollVelocity) * 0.8;
+    cameraParts.forEach((part) => {
+      part.position.copy(part.userData.basePos).addScaledVector(part.userData.explodeVector, explodeAmount);
+    });
+
+    cameraGLTFGroup.rotation.y = mouseX * 0.35;
+    cameraGLTFGroup.rotation.x = mouseY * 0.2;
+  }
+
+  if (crimeaPhotoMesh) {
+    const crimeaWeight = Math.max(0, Math.min(1, (currentProgress - 0.72) * 3.5));
+    crimeaPhotoMesh.material.opacity = crimeaWeight;
+    crimeaPhotoMesh.visible = crimeaWeight > 0.01;
+  }
+
+  // Mouse Parallax on Camera
+  camera.position.x += (mouseX * 0.35 - camera.position.x) * 0.05;
+  camera.position.y += (-mouseY * 0.25 - camera.position.y) * 0.05;
+  camera.lookAt(0, 0, 0);
+
+  renderer.render(scene, camera);
+}
+
+// ==========================================================================
+// 5. GESTURE & PROGRESS CONTROLLER (Continuous Wheel & Touch)
+// ==========================================================================
+function initGestureEngine() {
+  window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    targetProgress = Math.max(0.0, Math.min(1.0, targetProgress + e.deltaY * 0.00085));
   }, { passive: false });
 
-  // Touch Swipe Gesture
+  let touchStartY = 0;
   window.addEventListener('touchstart', (e) => {
     touchStartY = e.touches[0].clientY;
   }, { passive: true });
 
-  window.addEventListener('touchend', (e) => {
-    const touchEndY = e.changedTouches[0].clientY;
-    const diff = touchStartY - touchEndY;
-    const now = Date.now();
-    if (now - lastGestureTime < 450) return;
-
-    if (diff > 45 && currentBeat < beats.length - 1) {
-      lastGestureTime = now;
-      goToBeat(currentBeat + 1);
-    } else if (diff < -45 && currentBeat > 0) {
-      lastGestureTime = now;
-      goToBeat(currentBeat - 1);
-    }
+  window.addEventListener('touchmove', (e) => {
+    const diff = touchStartY - e.touches[0].clientY;
+    touchStartY = e.touches[0].clientY;
+    targetProgress = Math.max(0.0, Math.min(1.0, targetProgress + diff * 0.0016));
   }, { passive: true });
 
-  // Keyboard Arrow Navigation
+  // Keyboard navigation
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
-      if (currentBeat < beats.length - 1) goToBeat(currentBeat + 1);
+    if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'ArrowRight') {
+      targetProgress = Math.min(1.0, targetProgress + 0.33);
     } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-      if (currentBeat > 0) goToBeat(currentBeat - 1);
+      targetProgress = Math.max(0.0, targetProgress - 0.33);
     }
   });
 
-  // Progress Dots Click Handler
-  progressDots.forEach((dot) => {
+  // Step Dots Click
+  stepDots.forEach((dot) => {
     dot.addEventListener('click', (e) => {
       const step = parseInt(e.currentTarget.getAttribute('data-step'), 10);
-      goToBeat(step);
+      targetProgress = step === 0 ? 0.0 : step === 1 ? 0.48 : 0.90;
     });
   });
 }
 
-// ==========================================================================
-// 5. 2D CANVAS MAGIC DUST & GOLDEN RUNIC SPARKS
-// ==========================================================================
-function initMagicParticlesCanvas() {
-  const canvas = document.getElementById('magic-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-
-  let width = canvas.width = window.innerWidth;
-  let height = canvas.height = window.innerHeight;
-
-  const PARTICLE_COUNT = 85;
-  const particles = [];
-
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    particles.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.45,
-      vy: -0.2 - Math.random() * 0.5,
-      size: 1.0 + Math.random() * 2.2,
-      baseAlpha: 0.15 + Math.random() * 0.55,
-      alpha: 0.2,
-      pulseSpeed: 0.02 + Math.random() * 0.03,
-      pulsePhase: Math.random() * Math.PI * 2
-    });
+function updateActiveSection(p) {
+  let activeIndex = 0;
+  if (p < 0.33) {
+    activeIndex = 0;
+  } else if (p < 0.66) {
+    activeIndex = 1;
+  } else {
+    activeIndex = 2;
   }
 
-  function renderMagicParticles() {
-    ctx.clearRect(0, 0, width, height);
-
-    particles.forEach((p) => {
-      p.x += p.vx + (mouseX * 0.25);
-      p.y += p.vy;
-      p.pulsePhase += p.pulseSpeed;
-
-      if (p.y < -10) p.y = height + 10;
-      if (p.x < -10) p.x = width + 10;
-      if (p.x > width + 10) p.x = -10;
-
-      const currentAlpha = p.baseAlpha + Math.sin(p.pulsePhase) * 0.25;
-
-      // Soft Golden Glow Gradient
-      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3.5);
-      grad.addColorStop(0, `rgba(252, 226, 184, ${Math.max(currentAlpha, 0.05)})`);
-      grad.addColorStop(0.4, `rgba(216, 184, 136, ${Math.max(currentAlpha * 0.6, 0.02)})`);
-      grad.addColorStop(1, 'rgba(216, 184, 136, 0)');
-
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * 3.5, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    requestAnimationFrame(renderMagicParticles);
-  }
-
-  renderMagicParticles();
-
-  window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
+  sections.forEach((sec, idx) => {
+    sec.classList.toggle('active', idx === activeIndex);
   });
+
+  stepDots.forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === activeIndex);
+  });
+
+  const meta = beatMetadata[activeIndex];
+  if (hudSceneTitle) hudSceneTitle.textContent = meta.title;
+  if (hudTimecode) hudTimecode.textContent = meta.timecode;
+  if (hudActLabel) hudActLabel.textContent = meta.act;
 }
 
 // ==========================================================================
-// 6. THREE.JS 3D VINTAGE CAMERA STAGE (BEAT 2)
+// 6. MOUSE & RESIZE LISTENERS
 // ==========================================================================
-let threeScene, threeCamera, threeRenderer, cameraGroup;
-
-function initThreeStage() {
-  const canvas = document.getElementById('three-canvas');
-  if (!canvas) return;
-
-  threeScene = new THREE.Scene();
-  threeCamera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
-  threeCamera.position.set(0, 0, 6.5);
-
-  threeRenderer = new THREE.WebGLRenderer({
-    canvas,
-    alpha: true,
-    antialias: true
-  });
-  threeRenderer.setSize(window.innerWidth, window.innerHeight);
-  threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-  threeRenderer.toneMappingExposure = 1.3;
-
-  const pmremGenerator = new THREE.PMREMGenerator(threeRenderer);
-  pmremGenerator.compileEquirectangularShader();
-
-  // Studio Lighting
-  const keyLight = new THREE.DirectionalLight(0xffeedd, 3.2);
-  keyLight.position.set(3, 5, 4);
-  threeScene.add(keyLight);
-
-  const fillLight = new THREE.DirectionalLight(0x8cb0d8, 1.4);
-  fillLight.position.set(-4, -1, -3);
-  threeScene.add(fillLight);
-
-  const rimLight = new THREE.PointLight(0xd8b888, 3.5, 15);
-  rimLight.position.set(0, 3, -2);
-  threeScene.add(rimLight);
-
-  // Load Studio HDRI
-  const rgbeLoader = new RGBELoader();
-  rgbeLoader.load('/assets/textures/studio_env.hdr', (texture) => {
-    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-    threeScene.environment = envMap;
-    texture.dispose();
-  });
-
-  // Load Real Vintage Camera GLTF
-  const gltfLoader = new GLTFLoader();
-  gltfLoader.load('/assets/models/vintage_camera.glb', (gltf) => {
-    cameraGroup = gltf.scene;
-
-    const box = new THREE.Box3().setFromObject(cameraGroup);
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = (window.innerWidth < 860 ? 1.6 : 2.1) / maxDim;
-    cameraGroup.scale.setScalar(scale);
-
-    box.setFromObject(cameraGroup);
-    const center = box.getCenter(new THREE.Vector3());
-    cameraGroup.position.sub(center);
-
-    if (window.innerWidth < 860) {
-      cameraGroup.position.set(0, -1.0, 0);
-    } else {
-      cameraGroup.position.set(1.5, -0.05, 0);
-    }
-
-    cameraGroup.traverse((child) => {
-      if (child.isMesh && child.material) {
-        child.material.envMapIntensity = 1.6;
-        child.material.roughness = Math.min(child.material.roughness, 0.35);
-      }
-    });
-
-    threeScene.add(cameraGroup);
-  });
-
-  function animateThree() {
-    requestAnimationFrame(animateThree);
-    if (cameraGroup) {
-      cameraGroup.rotation.y += (mouseX * 0.4 - cameraGroup.rotation.y) * 0.05;
-      cameraGroup.rotation.x += (mouseY * 0.2 - cameraGroup.rotation.x) * 0.05;
-    }
-    threeRenderer.render(threeScene, threeCamera);
-  }
-
-  animateThree();
-
-  window.addEventListener('resize', () => {
-    if (!threeCamera || !threeRenderer) return;
-    threeCamera.aspect = window.innerWidth / window.innerHeight;
-    threeCamera.updateProjectionMatrix();
-    threeRenderer.setSize(window.innerWidth, window.innerHeight);
-  });
-}
-
-// ==========================================================================
-// 7. MOUSE PARALLAX TRACKER
-// ==========================================================================
-function initMouseFollow() {
+function initMouseListener() {
   window.addEventListener('mousemove', (e) => {
     mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
     mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
   });
 }
 
+function onWindowResize() {
+  if (!camera || !renderer) return;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
 // ==========================================================================
-// 8. WEB AUDIO SYNTHESIZER (Parchment Rustle & Shutter Sound)
+// 7. WEB AUDIO SYNTHESIZER
 // ==========================================================================
 function initAudio() {
   if (!audioToggle) return;
@@ -458,60 +670,37 @@ function initAudio() {
   audioToggle.addEventListener('click', () => {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      setupAmbientTapeNoise();
+      const bufferSize = audioCtx.sampleRate * 2;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 450;
+
+      ambientGain = audioCtx.createGain();
+      ambientGain.gain.value = 0.0;
+
+      whiteNoise.connect(filter);
+      filter.connect(ambientGain);
+      ambientGain.connect(audioCtx.destination);
+      whiteNoise.start();
     }
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
+
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
     isAudioActive = !isAudioActive;
     if (isAudioActive) {
-      ambientGain.gain.setTargetAtTime(0.04, audioCtx.currentTime, 0.2);
+      ambientGain.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.2);
       audioStatus.textContent = 'SOUND: ON';
-      playParchmentFlipSound();
     } else {
       ambientGain.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.2);
       audioStatus.textContent = 'SOUND: OFF';
     }
   });
-}
-
-function setupAmbientTapeNoise() {
-  const bufferSize = audioCtx.sampleRate * 2;
-  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const output = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    output[i] = Math.random() * 2 - 1;
-  }
-
-  const whiteNoise = audioCtx.createBufferSource();
-  whiteNoise.buffer = noiseBuffer;
-  whiteNoise.loop = true;
-
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 550;
-
-  ambientGain = audioCtx.createGain();
-  ambientGain.gain.value = 0.0;
-
-  whiteNoise.connect(filter);
-  filter.connect(ambientGain);
-  ambientGain.connect(audioCtx.destination);
-  whiteNoise.start();
-}
-
-function playParchmentFlipSound() {
-  if (!audioCtx || !isAudioActive) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.14);
-  gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.15);
 }

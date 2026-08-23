@@ -9,16 +9,16 @@
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
-  <meta name="theme-color" content="#0c0b0f" />
+  <meta name="theme-color" content="#08070b" />
 
-  <!-- Google Fonts: Cinzel, Playfair Display & Inter -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-10" />
+  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-12" />
 
-  <!-- ES Module Import Map for Three.js & Addons -->
+  <!-- ES Module Import Map for Three.js -->
   <script type="importmap">
   {
     "imports": {
@@ -27,148 +27,98 @@
     }
   }
   </script>
-
-  <!-- GSAP CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 </head>
 <body>
 
-  <!-- Main Enchanted Folio Stage Container -->
-  <div class="folio-stage" id="folio-stage">
-    
-    <!-- Tactile Parchment Paper Fiber -->
-    <div class="parchment-texture"></div>
+  <!-- Fullscreen WebGL Universe -->
+  <canvas id="webgl-canvas"></canvas>
 
-    <!-- 2D Canvas for Magic Sparks & Ink Trails -->
-    <canvas id="magic-canvas"></canvas>
+  <!-- Parchment & Film Noise Texture Overlay -->
+  <div class="parchment-vignette"></div>
 
-    <!-- 3D Three.js Canvas (Active during Beat 2 Olympus scene) -->
-    <canvas id="three-canvas"></canvas>
-
-    <!-- Enchanted Golden Border & Filigrees -->
-    <div class="enchanted-frame">
-      <div class="corner-filigree c-tl"></div>
-      <div class="corner-filigree c-tr"></div>
-      <div class="corner-filigree c-bl"></div>
-      <div class="corner-filigree c-br"></div>
-    </div>
-
-    <!-- HUD Overlay -->
-    <header class="folio-hud">
-      <div class="hud-top">
-        <a href="/" class="hud-link" id="hud-back">
-          <span>&larr; DeusFlow</span>
-        </a>
-
-        <div class="folio-status-badge">
-          <span class="gold-sparkle-dot"></span>
-          <span id="hud-act-label">ACT I // ROOTS & THE FIRST LENS</span>
-        </div>
-
-        <button class="hud-btn" id="audio-toggle" type="button" aria-label="Toggle Sound">
-          <span id="audio-status">SOUND: OFF</span>
-        </button>
-      </div>
-
-      <div class="hud-bottom">
-        <div id="hud-scene-title">PROLOGUE // THE INVITATION</div>
-        <div id="hud-timecode">FOLIO 01 / 08</div>
-      </div>
-    </header>
-
-    <!-- Act Progress Stepper -->
-    <nav class="act-progress-track" aria-label="Scene progress">
-      <button class="progress-dot active" data-step="0" aria-label="Beat 0: Prologue"></button>
-      <button class="progress-dot" data-step="1" aria-label="Beat 1: Craft & Embroidery"></button>
-      <button class="progress-dot" data-step="2" aria-label="Beat 2: Olympus & Crimea"></button>
-    </nav>
-
-    <!-- Act 1 Viewport Container -->
-    <main class="scene-viewport" id="scene-viewport">
-
-      <!-- ==================================================================
-           BEAT 0: THE PROLOGUE (Daily Prophet Front Page Hook)
-           ================================================================== -->
-      <section class="beat-spread active" id="beat-0">
-        <div class="prophet-masthead">THE ENCHANTED CHRONICLES · NO. 01</div>
-        
-        <h1 class="kinetic-headline" id="title-0" aria-label="Пристебніть ремені.">
-          <!-- Populated by JS kinetic word/char wrapper -->
-          Пристебніть ремені.
-        </h1>
-
-        <p class="editorial-lead" id="lead-0">
-          Раз ви зайшли на цю сторінку, ви або дуже допитливі, або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?
-        </p>
-
-        <div class="scroll-indicator">
-          <span>Крути коліщатко або свайпай</span>
-          <div class="scroll-arrow"></div>
-        </div>
-      </section>
-
-      <!-- ==================================================================
-           BEAT 1: CRAFT & EMBROIDERY (Daily Prophet 2-Column Living Spread)
-           ================================================================== -->
-      <section class="beat-spread" id="beat-1">
-        <div class="column-text">
-          <div class="prophet-masthead">01 // CRAFT & EMBROIDERY</div>
-
-          <h2 class="kinetic-headline" id="title-1" aria-label="Уроки праці з дівчатами.">
-            Уроки праці з дівчатами.
-          </h2>
-
-          <p class="editorial-lead" id="lead-1">
-            Усе життя я любив щось творити і витворювати. Уроки праці в мене були з дівчатами — ми там плели, вишивали і створювали деталі власноруч.
-          </p>
-        </div>
-
-        <div class="column-media">
-          <div class="living-photo-frame" id="photo-frame-1">
-            <img 
-              src="/assets/textures/embroidery_threads.jpg" 
-              alt="Archival photograph of childhood embroidery craftwork" 
-              class="living-photo-img" 
-            />
-          </div>
-        </div>
-      </section>
-
-      <!-- ==================================================================
-           BEAT 2: OLYMPUS & CRIMEA (Emulsion Shift & Living Sea Memory)
-           ================================================================== -->
-      <section class="beat-spread" id="beat-2">
-        <div class="column-text">
-          <div class="prophet-masthead">02 // THE FIRST LENS · 35MM</div>
-
-          <h2 class="kinetic-headline" id="title-2" aria-label="Бабусин Olympus.">
-            Бабусин Olympus.
-          </h2>
-
-          <p class="editorial-lead" id="lead-2">
-            Бабуся подарувала на день народження плівкову камеру. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка відходить у минуле… Мій перший і останній Крим.
-          </p>
-
-          <span class="quote-highlight">«Люблю драматичні історії :)»</span>
-        </div>
-
-        <div class="column-media">
-          <div class="living-photo-frame" id="photo-frame-2">
-            <img 
-              src="/assets/textures/crimea_sea.jpg" 
-              alt="Archival photograph of Crimea sea on 35mm film" 
-              class="living-photo-img" 
-            />
-          </div>
-        </div>
-      </section>
-
-    </main>
-
+  <!-- Enchanted Golden Borders -->
+  <div class="enchanted-frame">
+    <div class="corner-filigree c-tl"></div>
+    <div class="corner-filigree c-tr"></div>
+    <div class="corner-filigree c-bl"></div>
+    <div class="corner-filigree c-br"></div>
   </div>
 
-  <!-- Main JavaScript Engine (Fixed Viewport Gesture Controller & Magic Pipeline) -->
-  <script type="module" src="/assets/js/story.js?v=20260823-10"></script>
+  <!-- HUD Interface -->
+  <header class="folio-hud">
+    <div class="hud-top">
+      <a href="/" class="hud-link" id="hud-back">
+        <span>&larr; DeusFlow</span>
+      </a>
+
+      <div class="folio-status-badge">
+        <span class="gold-sparkle-dot"></span>
+        <span id="hud-act-label">ACT I // ROOTS & THE FIRST LENS</span>
+      </div>
+
+      <button class="hud-btn" id="audio-toggle" type="button" aria-label="Toggle Sound">
+        <span id="audio-status">SOUND: OFF</span>
+      </button>
+    </div>
+
+    <div class="hud-bottom">
+      <div id="hud-scene-title">PROLOGUE // THE INVITATION</div>
+      <div id="hud-timecode">FOLIO 01 / 08</div>
+    </div>
+  </header>
+
+  <!-- Step Dial -->
+  <nav class="act-stepper" aria-label="Folio Milestones">
+    <button class="step-dot active" data-step="0" aria-label="Beat 0: Prologue"></button>
+    <button class="step-dot" data-step="1" aria-label="Beat 1: Craft & Embroidery"></button>
+    <button class="step-dot" data-step="2" aria-label="Beat 2: The First Lens"></button>
+  </nav>
+
+  <!-- Narrative Story Layer (Synchronized with 3D Background Transformations) -->
+  <main class="story-dom-layer">
+
+    <!-- Section 0: Prologue -->
+    <section class="story-section active" id="section-0">
+      <div class="prophet-masthead">THE ENCHANTED CHRONICLES · NO. 01</div>
+      <h1 class="headline-cinematic" id="title-0">Пристебніть ремені.</h1>
+      <p class="lead-cinematic">
+        Раз ви зайшли на цю сторінку, ви або дуже допитливі, або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?
+      </p>
+      <div class="scroll-prompt">
+        <span>Крути коліщатко або свайпай</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- Section 1: Craft & Embroidery -->
+    <section class="story-section" id="section-1">
+      <div class="column-text">
+        <div class="prophet-masthead">01 // CRAFT & EMBROIDERY</div>
+        <h2 class="headline-cinematic" id="title-1">Уроки праці з дівчатами.</h2>
+        <p class="lead-cinematic">
+          Усе життя я любив щось творити і витворювати. Уроки праці в мене були з дівчатами — ми там плели, вишивали і створювали деталі власноруч.
+        </p>
+      </div>
+      <div class="column-spacer"></div>
+    </section>
+
+    <!-- Section 2: The First Lens & Crimea -->
+    <section class="story-section" id="section-2">
+      <div class="column-text">
+        <div class="prophet-masthead">02 // THE FIRST LENS · 35MM</div>
+        <h2 class="headline-cinematic" id="title-2">Бабусин Olympus.</h2>
+        <p class="lead-cinematic">
+          Бабуся подарувала на день народження плівкову камеру. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка відходить у минуле… Мій перший і останній Крим.
+        </p>
+        <span class="quote-cinematic">«Люблю драматичні історії :)»</span>
+      </div>
+      <div class="column-spacer"></div>
+    </section>
+
+  </main>
+
+  <!-- Main 3D Engine -->
+  <script type="module" src="/assets/js/story.js?v=20260823-12"></script>
 
 </body>
 </html>
