@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>The Story · Oleg Ro (DeusFlow)</title>
-  <meta name="description" content="Ніч у бібліотеці: історія життя, випробувань і творчої філософії Олега Ро, викарбувана з осколків пергаменту та чорнила." />
+  <meta name="description" content="Ніч у бібліотеці: історія життя, випробувань і творчої філософії Олега Ро, викарбувана на пергаменті." />
   
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
@@ -14,9 +14,13 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-16" />
+  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-17" />
+
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 
   <!-- ES Module Import Map for Three.js -->
   <script type="importmap">
@@ -30,7 +34,7 @@
 </head>
 <body>
 
-  <!-- Diagonal Window Light Beam (Top-Left) -->
+  <!-- Atmospheric Background: Diagonal Window Light Beam (Top-Left) -->
   <div class="library-light-beam"></div>
 
   <!-- Distant Candlelight Bokeh -->
@@ -41,10 +45,10 @@
     <div class="candle-bokeh candle-4"></div>
   </div>
 
-  <!-- Fullscreen 3D WebGL Canvas -->
+  <!-- Fullscreen 3D WebGL Canvas for Transition-Only Shards & Embers -->
   <canvas id="webgl-canvas"></canvas>
 
-  <!-- Parchment & Film Noise Texture Overlay -->
+  <!-- Archival Paper Vignette & Subtle Film Grain -->
   <div class="parchment-vignette"></div>
 
   <!-- Antique Manuscript Border -->
@@ -73,57 +77,134 @@
     </div>
 
     <div class="hud-bottom">
-      <div id="hud-scene-title">PROLOGUE // THE INVITATION</div>
-      <div id="hud-timecode">FOLIO 01 / 08</div>
+      <div id="hud-scene-title">PROLOGUE // THE THRESHOLD</div>
+      <div id="hud-timecode">FOLIO 01 / 06</div>
     </div>
   </header>
 
-  <!-- Step Dial -->
+  <!-- Folio Section Stepper Navigation -->
   <nav class="act-stepper" aria-label="Folio Milestones">
-    <button class="step-dot active" data-step="0" aria-label="Beat 0: Prologue"></button>
-    <button class="step-dot" data-step="1" aria-label="Beat 1: Craft & Embroidery"></button>
-    <button class="step-dot" data-step="2" aria-label="Beat 2: The First Lens"></button>
+    <button class="step-dot active" data-step="0" aria-label="Section 0: Threshold"></button>
+    <button class="step-dot" data-step="1" aria-label="Section 1: Name"></button>
+    <button class="step-dot" data-step="2" aria-label="Section 2: Childhood"></button>
+    <button class="step-dot" data-step="3" aria-label="Section 3: Crimea"></button>
+    <button class="step-dot" data-step="4" aria-label="Section 4: Camera"></button>
+    <button class="step-dot" data-step="5" aria-label="Section 5: Epilogue"></button>
   </nav>
 
-  <!-- Synchronized Bookish Narrative Prose Layer -->
-  <main class="narrative-container">
+  <!-- Scroll Container with 6 Narrative Screens (100vh Each) -->
+  <div class="scroll-wrapper">
 
-    <!-- Card 0: Prologue -->
-    <article class="narrative-card active" id="card-0">
-      <div class="prophet-badge">THE ENCHANTED CHRONICLES · NO. 01</div>
-      <div class="book-divider"><span class="diamond-icon"></span></div>
-      <p class="narrative-text">
-        Пристебніть ремені: раз ви зайшли на цю сторінку, ви або дуже допитливі, або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи? Ну ж бо, скіль… Я все ж намагався… То що тебе сюди занесло?
-      </p>
-      <div class="scroll-prompt-wrapper">
-        <span>Крути коліщатко або свайпай для перетворень</span>
-        <div class="scroll-stem"></div>
+    <!-- [0] Порог: Темнота, одна строка serif по центру, clip-path reveal при загрузке -->
+    <section class="story-section section-threshold" id="section-0" data-section-idx="0">
+      <div class="section-content-box single-focus-box clip-reveal revealing" id="box-0">
+        <div class="prophet-badge">THE ENCHANTED CHRONICLES · NO. 00</div>
+        <div class="book-divider"><span class="diamond-icon"></span></div>
+        <h1 class="threshold-heading">
+          Пристебніть ремені: раз ви зайшли на цю сторінку, ви або дуже допитливі, або це випадковість і ви її вмить покинете…
+        </h1>
+        <div class="scroll-prompt-wrapper">
+          <span>Крутіть або гортайте для відкриття</span>
+          <div class="scroll-stem"></div>
+        </div>
       </div>
-    </article>
+    </section>
 
-    <!-- Card 1: Childhood & Craft -->
-    <article class="narrative-card" id="card-1">
-      <div class="prophet-badge">01 // CRAFT & CHILDHOOD</div>
-      <div class="book-divider"><span class="diamond-icon"></span></div>
-      <p class="narrative-text">
-        Усе життя, скільки себе пам'ятаю, я любив щось творити і витворювати. Творчістю, звісно, це було важко назвати, але я любив малювати й перемальовувати з розмальовок картинки на свій лад… Мені здається, у мене виходило круто, адже завжди мені за це ставили хороші оцінки і в садочку, і в школі на уроках малювання чи уроках праці. Так, до речі, уроки праці в мене були з дівчатами, оскільки хлопців було мало, тому ми там плели, вишивали і так далі…
-      </p>
-    </article>
+    <!-- [1] Имя: Крупный заголовок (Playfair), reveal снизу, 15-20 искр дрейфуют -->
+    <section class="story-section section-name" id="section-1" data-section-idx="1">
+      <div class="section-content-box single-focus-box clip-reveal" id="box-1">
+        <div class="prophet-badge">FOLIO 01 // THE INITIATION</div>
+        <div class="book-divider"><span class="diamond-icon"></span></div>
+        <h2 class="hero-name-title">ОЛЕГ РО</h2>
+        <div class="hero-name-sub">DEUSFLOW ARCHIVES</div>
+        <p class="hero-tagline">
+          Історія про те, як дитяча допитливість перетворюється на ремесло, а ремесло — на візуальну поезію.
+        </p>
+      </div>
+    </section>
 
-    <!-- Card 2: The First Lens, Olympus & Crimea -->
-    <article class="narrative-card" id="card-2">
-      <div class="prophet-badge">02 // THE FIRST LENS · 35MM</div>
-      <div class="book-divider"><span class="diamond-icon"></span></div>
-      <p class="narrative-text">
-        Багато чого можна було б ще додати з дитинства про творчість, але тут станеться таймскіп до першої камери — бум! Бабуся подарувала на день народження мені плівкову камеру, це був Olympus, але який саме — не пам'таю. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка вимирає (і тоді це була правда). Через пару років у мене з'явився Canon 1000D… Я просто фотографував і робив щось, фотокопії чогось, особливо фотографії з Криму… Це був мій перший і останній «Крим», далі почалося те, що почалося… їбуча Росія вирішила захопити цю прекрасну частину нашої країни України.
-      </p>
-      <span class="narrative-quote">«Люблю драматичні історії :)»</span>
-    </article>
+    <!-- [2] Детство: Колонка текста ~34em + фото детских вышивок справа в тонкой рамке -->
+    <section class="story-section section-editorial-duo" id="section-2" data-section-idx="2">
+      <div class="section-content-box editorial-grid clip-reveal" id="box-2">
+        <div class="editorial-text-col">
+          <div class="prophet-badge">01 // CRAFT & EMBROIDERY</div>
+          <div class="book-divider"><span class="diamond-icon"></span></div>
+          <p class="narrative-text">
+            Усе життя, скільки себе пам'ятаю, я любив щось творити і витворювати. Творчістю, звісно, це було важко назвати, але я любив малювати й перемальовувати з розмальовок картинки на свій лад… Мені здається, у мене виходило круто, адже завжди мені за це ставили хороші оцінки і в садочку, і в школі на уроках малювання чи уроках праці.
+          </p>
+          <p class="narrative-text" style="margin-top: 0.8rem;">
+            Так, до речі, уроки праці в мене були з дівчатами, оскільки хлопців було мало, тому ми там плели, вишивали і так далі…
+          </p>
+        </div>
+        <div class="editorial-media-col">
+          <div class="archival-photo-frame">
+            <img src="/assets/textures/embroidery_threads.jpg" alt="Дитячі вишивки та нитки" class="archival-photo" loading="eager" />
+            <div class="photo-caption">АРХІВ · ДИТЯЧІ РЕМЕСЛА</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  </main>
+    <!-- [3] Море: Текст + фото Крыма -->
+    <section class="story-section section-editorial-duo" id="section-3" data-section-idx="3">
+      <div class="section-content-box editorial-grid clip-reveal" id="box-3">
+        <div class="editorial-text-col">
+          <div class="prophet-badge">02 // THE FIRST LENS · 35MM</div>
+          <div class="book-divider"><span class="diamond-icon"></span></div>
+          <p class="narrative-text">
+            Багато чого можна було б ще додати з дитинства про творчість, але тут станеться таймскіп до першої камери — бум! Бабуся подарувала на день народження мені плівкову камеру, це був Olympus, але який саме — не пам'таю. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка вимирає (і тоді це була правда).
+          </p>
+          <p class="narrative-text" style="margin-top: 0.8rem;">
+            Я просто фотографував і робив щось, фотокопії чогось, особливо фотографії з Криму… Це був мій перший і останній «Крим», далі почалося те, що почалося… їбуча Росія вирішила захопити цю прекрасну частину нашої країни України.
+          </p>
+          <span class="narrative-quote">«Люблю драматичні історії :)»</span>
+        </div>
+        <div class="editorial-media-col">
+          <div class="archival-photo-frame">
+            <img src="/assets/textures/crimea_sea.jpg" alt="Кримське море, перша плівка" class="archival-photo" loading="eager" />
+            <div class="photo-caption">АРХІВ · КРИМ, 35MM FILM</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <!-- Main Particle Metamorphosis Engine -->
-  <script type="module" src="/assets/js/story.js?v=20260823-16"></script>
+    <!-- [4] Камера: Текст + placeholder под будущий 3D-объект GLTF -->
+    <section class="story-section section-camera" id="section-4" data-section-idx="4">
+      <div class="section-content-box single-focus-box clip-reveal" id="box-4">
+        <div class="prophet-badge">03 // CANON 1000D & DIGITAL DAWN</div>
+        <div class="book-divider"><span class="diamond-icon"></span></div>
+        <p class="narrative-text" style="max-width: 620px; margin: 0 auto;">
+          Через пару років у мене з'явився Canon 1000D… Так почався шлях крізь сотні туторіалів на YouTube, ночі за фотошопом і пошуки власного візуального почерку.
+        </p>
+        <!-- TODO: 3D GLB Camera Assembly (Next Task: Shards Assemble into 3D Vintage Camera on Tripod) -->
+        <div class="camera-3d-placeholder" id="camera-3d-mount">
+          <div class="placeholder-border">
+            <span class="diamond-icon"></span>
+            <span class="placeholder-text">CANON EOS & VINTAGE OPTICS // 3D MATIFESTATION ZONE</span>
+            <span class="diamond-icon"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- [5] Финал: Всё затухает до тёплого полумрака -->
+    <section class="story-section section-epilogue" id="section-5" data-section-idx="5">
+      <div class="section-content-box single-focus-box clip-reveal" id="box-5">
+        <div class="prophet-badge">EPILOGUE // THE STILLNESS</div>
+        <div class="book-divider"><span class="diamond-icon"></span></div>
+        <p class="epilogue-text">
+          Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.
+        </p>
+        <div style="margin-top: 2rem;">
+          <a href="/" class="hud-btn">&larr; ПОВЕРНУТИСЯ НА ГОЛОВНУ</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Main Particle Metamorphosis & Transition Shard Engine -->
+  <script type="module" src="/assets/js/story.js?v=20260823-17"></script>
 
 </body>
 </html>
