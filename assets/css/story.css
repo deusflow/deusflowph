@@ -1,24 +1,27 @@
 /* ==========================================================================
-   ALCHEMICAL 3D LIVING PARTICLE EXPERIENCE (DEUSFLOW)
-   Style: 70% meermohsin.me (Creative Magic) + 30% moto-card.com (Tactile Luxury)
+   THE ENCHANTED LIVING FOLIO (DAILY PROPHET / HOGWARTS MAGIC AESTHETIC)
+   Tactile darkroom parchment, kinetic reassembling typography, living moving photos
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  --bg-noir: #050507;
-  --text-paper: #f4efe6;
-  --text-dim: rgba(244, 239, 230, 0.65);
-  --text-muted: rgba(244, 239, 230, 0.35);
-  --accent-gold: #d4ba95;
-  --accent-gold-bright: #ecd7be;
-  --accent-emergency: #e05345;
-  --border-subtle: rgba(244, 239, 230, 0.12);
+  --bg-parchment: #0c0b0f;
+  --bg-parchment-deep: #070609;
+  --text-parchment: #f6efe2;
+  --text-parchment-dim: rgba(246, 239, 226, 0.72);
+  --text-parchment-muted: rgba(246, 239, 226, 0.42);
   
-  --font-display: 'Playfair Display', serif;
-  --font-title: 'Cinzel', serif;
-  --font-mono: 'Space Mono', monospace;
+  --gold-foil: #d8b888;
+  --gold-foil-bright: #fce2b8;
+  --gold-glow: rgba(216, 184, 136, 0.25);
+  --ink-border: rgba(216, 184, 136, 0.18);
+  --ink-shadow: rgba(0, 0, 0, 0.85);
+
+  --font-magic-title: 'Cinzel', serif;
+  --font-editorial: 'Playfair Display', serif;
   --font-body: 'Inter', sans-serif;
+  --font-mono: 'Space Mono', monospace;
 }
 
 *, *::before, *::after {
@@ -28,71 +31,122 @@
 }
 
 html, body {
-  background-color: var(--bg-noir);
-  color: var(--text-paper);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: fixed;
+  background-color: var(--bg-parchment);
+  color: var(--text-parchment);
   font-family: var(--font-body);
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  user-select: none;
 }
 
 /* ==========================================================================
-   FIXED WEBGL STAGE
+   TACTILE LIVING PARCHMENT BACKGROUND
    ========================================================================== */
 
-#stage-canvas {
+.folio-stage {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
+  background: 
+    radial-gradient(circle at 50% 30%, rgba(35, 28, 42, 0.4) 0%, transparent 70%),
+    radial-gradient(circle at 80% 80%, rgba(26, 21, 16, 0.5) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-parchment-deep) 0%, var(--bg-parchment) 50%, var(--bg-parchment-deep) 100%);
   z-index: 1;
+}
+
+/* Animated Parchment Fiber Texture */
+.parchment-texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
   pointer-events: none;
 }
 
-/* Analog 35mm Grain Overlay */
-.film-grain {
-  position: fixed;
+/* Golden Runic Ambient Dust Particles */
+#magic-canvas {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  pointer-events: none;
   z-index: 2;
-  pointer-events: none;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Soft Cinematic Vignette */
-.stage-vignette {
-  position: fixed;
+/* 3D WebGL Camera Canvas (for Act 1 Beat 2) */
+#three-canvas {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 3;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(5, 5, 7, 0.88) 100%);
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.6s ease;
 }
 
 /* ==========================================================================
-   MINIMALIST HUD / VIEWFINDER
+   DAILY PROPHET ENCHANTED BORDERS & ORNAMENTS
    ========================================================================== */
 
-.story-hud {
+.enchanted-frame {
+  position: absolute;
+  inset: 1.5rem;
+  border: 1px solid var(--ink-border);
+  pointer-events: none;
+  z-index: 10;
+  transition: border-color 0.4s ease;
+}
+
+.enchanted-frame::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(216, 184, 136, 0.08);
+}
+
+/* Corner Filigrees */
+.corner-filigree {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: var(--gold-foil);
+  border-style: solid;
+  opacity: 0.45;
+}
+
+.c-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.c-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.c-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.c-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+/* ==========================================================================
+   MAGICAL HUD (TOP & BOTTOM BARS)
+   ========================================================================== */
+
+.folio-hud {
   position: fixed;
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  padding: 2rem 2.5rem;
+  padding: 2.2rem 2.8rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--text-parchment-muted);
 }
 
-.hud-row {
+.hud-top, .hud-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -101,232 +155,370 @@ html, body {
 
 .hud-btn, .hud-link {
   pointer-events: auto;
-  color: var(--text-dim);
+  color: var(--text-parchment-dim);
   text-decoration: none;
-  background: rgba(244, 239, 230, 0.03);
-  border: 1px solid var(--border-subtle);
-  padding: 0.45rem 1rem;
+  background: rgba(246, 239, 226, 0.03);
+  border: 1px solid var(--ink-border);
+  padding: 0.45rem 1.1rem;
   border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.14em;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .hud-btn:hover, .hud-link:hover {
-  color: var(--text-paper);
-  border-color: var(--accent-gold);
-  background: rgba(212, 186, 149, 0.1);
+  color: var(--text-parchment);
+  border-color: var(--gold-foil);
+  background: rgba(216, 184, 136, 0.12);
+  box-shadow: 0 0 16px var(--gold-glow);
 }
 
-.rec-badge {
+.folio-status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   font-weight: 700;
-  color: var(--text-paper);
+  color: var(--gold-foil);
+  letter-spacing: 0.22em;
 }
 
-.rec-dot {
-  width: 7px;
-  height: 7px;
-  background-color: var(--accent-emergency);
+.gold-sparkle-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--gold-foil-bright);
   border-radius: 50%;
-  box-shadow: 0 0 8px var(--accent-emergency);
-  animation: recPulse 1.5s infinite ease-in-out;
+  box-shadow: 0 0 10px var(--gold-foil-bright);
+  animation: magicPulse 2.0s infinite ease-in-out;
 }
 
-@keyframes recPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.85); }
+@keyframes magicPulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 10px var(--gold-foil-bright); }
+  50% { opacity: 0.4; transform: scale(0.75); box-shadow: 0 0 4px var(--gold-foil); }
 }
-
-.hud-tag {
-  color: var(--accent-gold);
-}
-
-/* Minimalist Focus Reticles */
-.viewfinder-crosshair {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
-  pointer-events: none;
-  opacity: 0.22;
-}
-
-.viewfinder-crosshair::before, .viewfinder-crosshair::after {
-  content: '';
-  position: absolute;
-  background: var(--accent-gold);
-}
-
-.viewfinder-crosshair::before {
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  transform: translateY(-50%);
-}
-
-.viewfinder-crosshair::after {
-  left: 50%;
-  top: 0;
-  width: 1px;
-  height: 100%;
-  transform: translateX(-50%);
-}
-
-/* Corner Reticle Brackets */
-.bracket {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-color: var(--accent-gold);
-  border-style: solid;
-  opacity: 0.25;
-}
-
-.b-tl { top: 12%; left: 8%; border-width: 1px 0 0 1px; }
-.b-tr { top: 12%; right: 8%; border-width: 1px 1px 0 0; }
-.b-bl { bottom: 12%; left: 8%; border-width: 0 0 1px 1px; }
-.b-br { bottom: 12%; right: 8%; border-width: 0 1px 1px 0; }
 
 /* ==========================================================================
-   PINNED SCROLL STAGE & NARRATIVE LEADS
+   ACT 1 ENCHANTED NEWSPAPER & FOLIO SPREADS
    ========================================================================== */
 
-.scroll-track {
-  position: relative;
-  width: 100%;
-  height: 400vh; /* 4 stages of alchemical morphing */
-}
-
-.pinned-stage {
-  position: fixed;
+.scene-viewport {
+  position: absolute;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 10;
-  pointer-events: none;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
-/* Narrative Lead Steps (Tethered to 3D Particle Headlines) */
-.lead-step {
+/* Base Beat Container */
+.beat-spread {
   position: absolute;
-  pointer-events: none;
+  width: 100%;
+  max-width: 1280px;
+  height: 80vh;
+  padding: 2rem 4vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
-  z-index: 20;
+  visibility: hidden;
+  transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.5s;
+}
+
+.beat-spread.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* --------------------------------------------------------------------------
+   BEAT 0: THE PROLOGUE (Centrally Manifested Daily Prophet Front Page)
+   -------------------------------------------------------------------------- */
+#beat-0 {
+  flex-direction: column;
+  text-align: center;
+}
+
+.prophet-masthead {
+  font-family: var(--font-magic-title);
+  font-size: clamp(0.75rem, 1.1vw, 0.95rem);
+  letter-spacing: 0.35em;
+  color: var(--gold-foil);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.prophet-masthead::before, .prophet-masthead::after {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-foil));
+}
+.prophet-masthead::after {
+  background: linear-gradient(90deg, var(--gold-foil), transparent);
+}
+
+.kinetic-headline {
+  font-family: var(--font-editorial);
+  font-size: clamp(2.8rem, 6.2vw, 5.8rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-parchment);
+  letter-spacing: -0.01em;
+  margin-bottom: 2rem;
+  text-wrap: balance;
+}
+
+/* Flying Word and Character Fragments */
+.kinetic-word {
+  display: inline-block;
+  white-space: nowrap;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.kinetic-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 40px, -50px) rotateX(-60deg) rotateZ(10deg);
+  filter: blur(6px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s;
+}
+
+.kinetic-char.assembled {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotateX(0deg) rotateZ(0deg);
+  filter: blur(0px);
+}
+
+.editorial-lead {
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--text-parchment-dim);
+  max-width: 680px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(16px);
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-/* Beat 0: Centered beneath 3D "ПРИСТЕБНІТЬ РЕМЕНІ" headline */
-#lead-0 {
+.editorial-lead.assembled {
   opacity: 1;
-  top: 60vh;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  max-width: 680px;
-  width: 90%;
+  transform: translateY(0);
 }
 
-/* Beat 1: Left column beneath 3D golden silk loom */
-#lead-1 {
-  top: 58vh;
-  left: 8vw;
+.scroll-indicator {
+  margin-top: 3rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold-foil);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  opacity: 0;
+  animation: fadeInPrompt 1.2s ease 1.0s forwards;
+}
+
+.scroll-arrow {
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(180deg, var(--gold-foil), transparent);
+  animation: arrowDrop 1.8s infinite ease-in-out;
+}
+
+@keyframes arrowDrop {
+  0% { transform: translateY(0); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(12px); opacity: 0; }
+}
+
+@keyframes fadeInPrompt {
+  to { opacity: 0.75; }
+}
+
+/* --------------------------------------------------------------------------
+   BEAT 1: CRAFT & EMBROIDERY (2-Column Daily Prophet Spread with Living Photo)
+   -------------------------------------------------------------------------- */
+#beat-1 {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 5vw;
+  align-items: center;
+}
+
+.column-text {
   text-align: left;
-  max-width: 520px;
-  width: 90%;
 }
 
-/* Beat 2: Left column beside 3D Olympus camera */
-#lead-2 {
-  top: 32vh;
-  left: 8vw;
-  text-align: left;
-  max-width: 540px;
-  width: 90%;
+.column-media {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
 }
 
-.step-lead {
-  font-family: var(--font-body);
-  font-size: clamp(1.1rem, 1.8vw, 1.35rem);
-  font-weight: 300;
-  line-height: 1.65;
-  color: var(--text-dim);
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.95);
+/* Living Moving Photo (Daily Prophet Picture Frame) */
+.living-photo-frame {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 4/3;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--ink-border);
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.75),
+    0 0 30px rgba(216, 184, 136, 0.08);
+  transform: rotate3d(0.1, -0.3, 0.05, 12deg) scale(0.92);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
 }
 
-.step-quote {
-  font-family: var(--font-display);
+.living-photo-frame:hover {
+  transform: rotate3d(0, 0, 0, 0deg) scale(0.98);
+  box-shadow: 
+    0 24px 60px rgba(0, 0, 0, 0.85),
+    0 0 40px rgba(216, 184, 136, 0.2);
+}
+
+.living-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.08) brightness(0.95);
+  animation: photoBreathe 6s infinite ease-in-out alternate;
+}
+
+@keyframes photoBreathe {
+  0% { transform: scale(1.0) translate(0, 0); }
+  100% { transform: scale(1.06) translate(-1%, -1%); }
+}
+
+/* Living Moving Photo Glass Sheen */
+.living-photo-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, transparent 40%, rgba(216, 184, 136, 0.08) 100%);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   BEAT 2: OLYMPUS CAMERA & CRIMEA (Emulsion Shift Spread)
+   -------------------------------------------------------------------------- */
+#beat-2 {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 5vw;
+  align-items: center;
+}
+
+#beat-2 .living-photo-frame {
+  max-width: 380px;
+  transform: rotate3d(-0.1, 0.25, -0.05, 10deg) scale(0.95);
+  margin-top: 2rem;
+}
+
+.quote-highlight {
+  font-family: var(--font-editorial);
   font-style: italic;
-  font-size: clamp(1.25rem, 2.0vw, 1.6rem);
-  color: var(--accent-gold-bright);
-  margin-top: 1rem;
+  font-size: clamp(1.25rem, 2.0vw, 1.65rem);
+  color: var(--gold-foil-bright);
+  margin-top: 1.5rem;
   display: block;
+  text-shadow: 0 0 20px rgba(216, 184, 136, 0.35);
 }
 
 /* ==========================================================================
-   RESPONSIVE OPTIMIZATIONS
+   PROGRESS DIAL & ACT STEPPER
+   ========================================================================== */
+
+.act-progress-track {
+  position: fixed;
+  right: 2.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.progress-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-foil);
+  background: transparent;
+  opacity: 0.35;
+  transition: all 0.35s ease;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.progress-dot.active {
+  opacity: 1;
+  background: var(--gold-foil-bright);
+  box-shadow: 0 0 10px var(--gold-foil-bright);
+  transform: scale(1.4);
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS (< 860px)
    ========================================================================== */
 
 @media (max-width: 860px) {
-  .story-hud {
-    padding: 1.25rem 1.25rem;
+  .folio-hud {
+    padding: 1.2rem 1.4rem;
     font-size: 9px;
-    letter-spacing: 0.12em;
   }
-  .hud-btn, .hud-link {
-    font-size: 9px;
-    padding: 0.35rem 0.75rem;
-  }
-  .bracket {
-    display: none;
-  }
-  .step-lead {
-    font-size: 1.0rem;
-    line-height: 1.5;
-  }
-  .step-quote {
-    font-size: 1.15rem;
-  }
-}
-
-/* ==========================================================================
-   MOBILE RESPONSIVENESS (< 768px)
-   ========================================================================== */
-@media (max-width: 768px) {
-  .lead-step {
-    left: 20px !important;
-    right: 20px !important;
-    transform: none !important;
-    width: calc(100% - 40px) !important;
-    max-width: 100% !important;
-    text-align: center !important;
+  
+  .enchanted-frame {
+    inset: 0.8rem;
   }
 
-  #lead-0 {
-    top: 56vh;
+  .beat-spread {
+    height: 86vh;
+    padding: 1rem 1.5rem;
   }
 
-  #lead-1 {
-    top: 58vh;
+  #beat-1, #beat-2 {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    text-align: center;
   }
 
-  #lead-2 {
-    top: 14vh;
-    text-align: left !important;
+  .column-text {
+    text-align: center;
   }
 
-  .step-lead {
+  .kinetic-headline {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .editorial-lead {
     font-size: 0.95rem;
     line-height: 1.5;
+  }
+
+  .living-photo-frame {
+    max-width: 280px;
+    margin: 0 auto;
+    transform: none;
+  }
+
+  .act-progress-track {
+    right: 1.2rem;
   }
 }

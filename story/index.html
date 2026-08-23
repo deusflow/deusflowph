@@ -9,14 +9,14 @@
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
-  <meta name="theme-color" content="#050507" />
+  <meta name="theme-color" content="#0c0b0f" />
 
-  <!-- Google Fonts: Playfair Display & Inter -->
+  <!-- Google Fonts: Cinzel, Playfair Display & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-03" />
+  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-10" />
 
   <!-- ES Module Import Map for Three.js & Addons -->
   <script type="importmap">
@@ -28,85 +28,147 @@
   }
   </script>
 
-  <!-- GSAP & Lenis CDN -->
+  <!-- GSAP CDN -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
 </head>
 <body>
 
-  <!-- Fixed WebGL 3D Canvas Stage -->
-  <canvas id="stage-canvas"></canvas>
+  <!-- Main Enchanted Folio Stage Container -->
+  <div class="folio-stage" id="folio-stage">
+    
+    <!-- Tactile Parchment Paper Fiber -->
+    <div class="parchment-texture"></div>
 
-  <!-- Analog 35mm Grain & Vignette -->
-  <div class="film-grain"></div>
-  <div class="stage-vignette"></div>
+    <!-- 2D Canvas for Magic Sparks & Ink Trails -->
+    <canvas id="magic-canvas"></canvas>
 
-  <!-- Camera HUD Interface -->
-  <header class="story-hud" id="story-hud">
-    <div class="hud-row hud-top">
-      <a href="/" class="hud-link" id="hud-back">
-        <span>&larr; DeusFlow</span>
-      </a>
+    <!-- 3D Three.js Canvas (Active during Beat 2 Olympus scene) -->
+    <canvas id="three-canvas"></canvas>
 
-      <div class="rec-badge">
-        <span class="rec-dot"></span>
-        <span id="hud-timecode">REC 00:00:01</span>
+    <!-- Enchanted Golden Border & Filigrees -->
+    <div class="enchanted-frame">
+      <div class="corner-filigree c-tl"></div>
+      <div class="corner-filigree c-tr"></div>
+      <div class="corner-filigree c-bl"></div>
+      <div class="corner-filigree c-br"></div>
+    </div>
+
+    <!-- HUD Overlay -->
+    <header class="folio-hud">
+      <div class="hud-top">
+        <a href="/" class="hud-link" id="hud-back">
+          <span>&larr; DeusFlow</span>
+        </a>
+
+        <div class="folio-status-badge">
+          <span class="gold-sparkle-dot"></span>
+          <span id="hud-act-label">ACT I // ROOTS & THE FIRST LENS</span>
+        </div>
+
+        <button class="hud-btn" id="audio-toggle" type="button" aria-label="Toggle Sound">
+          <span id="audio-status">SOUND: OFF</span>
+        </button>
       </div>
 
-      <button class="hud-btn" id="audio-toggle" type="button" aria-label="Toggle Sound">
-        <span id="audio-status">SOUND: OFF</span>
-      </button>
-    </div>
-
-    <!-- Center Viewfinder Reticle -->
-    <div class="viewfinder-crosshair"></div>
-    <div class="bracket b-tl"></div>
-    <div class="bracket b-tr"></div>
-    <div class="bracket b-bl"></div>
-    <div class="bracket b-br"></div>
-
-    <div class="hud-row hud-bottom">
-      <div id="hud-scene-name">00 // THE PROLOGUE</div>
-      <div>
-        <span class="hud-tag" id="hud-iso">ISO 3200</span>
-        <span>&nbsp;&middot;&nbsp;</span>
-        <span class="hud-tag" id="hud-lens">35mm f/1.4</span>
+      <div class="hud-bottom">
+        <div id="hud-scene-title">PROLOGUE // THE INVITATION</div>
+        <div id="hud-timecode">FOLIO 01 / 08</div>
       </div>
-      <div id="hud-scroll-pct">00%</div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Pinned Stage for Narrative Leads (Tethered directly to 3D particle headlines) -->
-  <div class="pinned-stage" id="story-stage">
-    <!-- Beat 0 Lead -->
-    <div class="lead-step" id="lead-0">
-      <p class="step-lead">
-        Раз ви зайшли на цю сторінку, ви або дуже допитливі, або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?
-      </p>
-    </div>
+    <!-- Act Progress Stepper -->
+    <nav class="act-progress-track" aria-label="Scene progress">
+      <button class="progress-dot active" data-step="0" aria-label="Beat 0: Prologue"></button>
+      <button class="progress-dot" data-step="1" aria-label="Beat 1: Craft & Embroidery"></button>
+      <button class="progress-dot" data-step="2" aria-label="Beat 2: Olympus & Crimea"></button>
+    </nav>
 
-    <!-- Beat 1 Lead -->
-    <div class="lead-step" id="lead-1">
-      <p class="step-lead">
-        Усе життя я любив щось творити і витворювати. Уроки праці в мене були з дівчатами — ми там плели, вишивали і створювали деталі власноруч.
-      </p>
-    </div>
+    <!-- Act 1 Viewport Container -->
+    <main class="scene-viewport" id="scene-viewport">
 
-    <!-- Beat 2 Lead -->
-    <div class="lead-step" id="lead-2">
-      <p class="step-lead">
-        Бабуся подарувала на день народження плівкову камеру. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка відходить у минуле… Мій перший і останній Крим.
-      </p>
-      <span class="step-quote">«Люблю драматичні історії :)»</span>
-    </div>
+      <!-- ==================================================================
+           BEAT 0: THE PROLOGUE (Daily Prophet Front Page Hook)
+           ================================================================== -->
+      <section class="beat-spread active" id="beat-0">
+        <div class="prophet-masthead">THE ENCHANTED CHRONICLES · NO. 01</div>
+        
+        <h1 class="kinetic-headline" id="title-0" aria-label="Пристебніть ремені.">
+          <!-- Populated by JS kinetic word/char wrapper -->
+          Пристебніть ремені.
+        </h1>
+
+        <p class="editorial-lead" id="lead-0">
+          Раз ви зайшли на цю сторінку, ви або дуже допитливі, або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?
+        </p>
+
+        <div class="scroll-indicator">
+          <span>Крути коліщатко або свайпай</span>
+          <div class="scroll-arrow"></div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           BEAT 1: CRAFT & EMBROIDERY (Daily Prophet 2-Column Living Spread)
+           ================================================================== -->
+      <section class="beat-spread" id="beat-1">
+        <div class="column-text">
+          <div class="prophet-masthead">01 // CRAFT & EMBROIDERY</div>
+
+          <h2 class="kinetic-headline" id="title-1" aria-label="Уроки праці з дівчатами.">
+            Уроки праці з дівчатами.
+          </h2>
+
+          <p class="editorial-lead" id="lead-1">
+            Усе життя я любив щось творити і витворювати. Уроки праці в мене були з дівчатами — ми там плели, вишивали і створювали деталі власноруч.
+          </p>
+        </div>
+
+        <div class="column-media">
+          <div class="living-photo-frame" id="photo-frame-1">
+            <img 
+              src="/assets/textures/embroidery_threads.jpg" 
+              alt="Archival photograph of childhood embroidery craftwork" 
+              class="living-photo-img" 
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           BEAT 2: OLYMPUS & CRIMEA (Emulsion Shift & Living Sea Memory)
+           ================================================================== -->
+      <section class="beat-spread" id="beat-2">
+        <div class="column-text">
+          <div class="prophet-masthead">02 // THE FIRST LENS · 35MM</div>
+
+          <h2 class="kinetic-headline" id="title-2" aria-label="Бабусин Olympus.">
+            Бабусин Olympus.
+          </h2>
+
+          <p class="editorial-lead" id="lead-2">
+            Бабуся подарувала на день народження плівкову камеру. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка відходить у минуле… Мій перший і останній Крим.
+          </p>
+
+          <span class="quote-highlight">«Люблю драматичні історії :)»</span>
+        </div>
+
+        <div class="column-media">
+          <div class="living-photo-frame" id="photo-frame-2">
+            <img 
+              src="/assets/textures/crimea_sea.jpg" 
+              alt="Archival photograph of Crimea sea on 35mm film" 
+              class="living-photo-img" 
+            />
+          </div>
+        </div>
+      </section>
+
+    </main>
+
   </div>
 
-  <!-- Scroll Track (Spacer that drives GSAP ScrollTrigger timeline) -->
-  <div class="scroll-track" id="scroll-track"></div>
-
-  <!-- 3D Morphing Engine ES Module -->
-  <script type="module" src="/assets/js/story.js?v=20260823-02"></script>
+  <!-- Main JavaScript Engine (Fixed Viewport Gesture Controller & Magic Pipeline) -->
+  <script type="module" src="/assets/js/story.js?v=20260823-10"></script>
 
 </body>
 </html>
