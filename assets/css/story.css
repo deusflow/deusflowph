@@ -1,0 +1,363 @@
+/* ==========================================================================
+   MORPHING TABLEAU 3D STORY EXPERIENCE (DEUSFLOW)
+   Style: 70% meermohsin.me (Creative Magic) + 30% moto-card.com (Tactile Luxury)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  --bg-noir: #060608;
+  --text-paper: #f4efe6;
+  --text-dim: rgba(244, 239, 230, 0.6);
+  --text-muted: rgba(244, 239, 230, 0.35);
+  --accent-gold: #d4ba95;
+  --accent-gold-bright: #ecd7be;
+  --accent-emergency: #e05345;
+  --border-subtle: rgba(244, 239, 230, 0.12);
+  
+  --font-display: 'Playfair Display', serif;
+  --font-mono: 'Space Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--bg-noir);
+  color: var(--text-paper);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   FIXED WEBGL STAGE
+   ========================================================================== */
+
+#stage-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Analog 35mm Grain Overlay */
+.film-grain {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Soft Cinematic Vignette */
+.stage-vignette {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(6, 6, 8, 0.85) 100%);
+}
+
+/* ==========================================================================
+   MINIMALIST HUD / VIEWFINDER
+   ========================================================================== */
+
+.story-hud {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  padding: 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.hud-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.hud-btn, .hud-link {
+  pointer-events: auto;
+  color: var(--text-dim);
+  text-decoration: none;
+  background: rgba(244, 239, 230, 0.03);
+  border: 1px solid var(--border-subtle);
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.hud-btn:hover, .hud-link:hover {
+  color: var(--text-paper);
+  border-color: var(--accent-gold);
+  background: rgba(212, 186, 149, 0.1);
+}
+
+.rec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: var(--text-paper);
+}
+
+.rec-dot {
+  width: 7px;
+  height: 7px;
+  background-color: var(--accent-emergency);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-emergency);
+  animation: recPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes recPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+
+.hud-tag {
+  color: var(--accent-gold);
+}
+
+/* Minimalist Focus Reticles */
+.viewfinder-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+  opacity: 0.25;
+}
+
+.viewfinder-crosshair::before, .viewfinder-crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--accent-gold);
+}
+
+.viewfinder-crosshair::before {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.viewfinder-crosshair::after {
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+/* Corner Reticle Brackets */
+.bracket {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--accent-gold);
+  border-style: solid;
+  opacity: 0.3;
+}
+
+.b-tl { top: 12%; left: 8%; border-width: 1px 0 0 1px; }
+.b-tr { top: 12%; right: 8%; border-width: 1px 1px 0 0; }
+.b-bl { bottom: 12%; left: 8%; border-width: 0 0 1px 1px; }
+.b-br { bottom: 12%; right: 8%; border-width: 0 1px 1px 0; }
+
+/* ==========================================================================
+   PINNED SCROLL STAGE & CINEMATIC TITLES
+   ========================================================================== */
+
+.scroll-track {
+  position: relative;
+  width: 100%;
+  height: 350vh; /* Scroll distance to drive the morph timeline */
+}
+
+.pinned-stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Titles Layer (Cinematic Editorial Subtitles) */
+.title-step {
+  position: absolute;
+  max-width: 560px;
+  width: 90%;
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+  z-index: 20;
+  left: 7vw;
+}
+
+/* Beat 0: Starts visible on initial load */
+#beat-0 {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  top: 16vh;
+  max-width: 720px;
+}
+
+/* Beat 1: Upper-mid left column */
+#beat-1 {
+  top: 32vh;
+}
+
+/* Beat 2: Mid left column */
+#beat-2 {
+  top: 30vh;
+}
+
+.step-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  margin-bottom: 1.25rem;
+  display: block;
+}
+
+.step-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 5.5vw, 4.8rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  color: var(--text-paper);
+  text-wrap: balance;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.85);
+  margin-bottom: 1.25rem;
+}
+
+.step-lead {
+  font-family: var(--font-body);
+  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--text-dim);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.step-quote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+  color: var(--accent-gold-bright);
+  margin-top: 1rem;
+  display: block;
+}
+
+/* ==========================================================================
+   RESPONSIVE OPTIMIZATIONS
+   ========================================================================== */
+
+@media (max-width: 860px) {
+  .story-hud {
+    padding: 1.25rem 1.25rem;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+  .hud-btn, .hud-link {
+    font-size: 9px;
+    padding: 0.35rem 0.75rem;
+  }
+  .bracket {
+    display: none;
+  }
+  .step-heading {
+    font-size: 2.1rem;
+  }
+  .step-lead {
+    font-size: 1.0rem;
+    line-height: 1.5;
+  }
+  .step-quote {
+    font-size: 1.15rem;
+  }
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS (< 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .title-step {
+    left: 20px;
+    right: 20px;
+    width: calc(100% - 40px);
+    max-width: 100%;
+  }
+
+  #beat-0 {
+    top: 12vh;
+  }
+
+  #beat-1 {
+    top: 14vh;
+  }
+
+  #beat-2 {
+    top: 14vh;
+  }
+
+  .step-heading {
+    font-size: 2.1rem;
+    line-height: 1.15;
+    margin-bottom: 0.85rem;
+  }
+
+  .step-lead {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .hud-footer {
+    padding: 0 16px;
+    font-size: 10px;
+  }
+
+  .hud-params {
+    gap: 10px;
+  }
+}
