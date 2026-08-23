@@ -9,9 +9,14 @@
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
-  <meta name="theme-color" content="#060608" />
+  <meta name="theme-color" content="#050507" />
 
-  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-02" />
+  <!-- Google Fonts: Playfair Display & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/assets/css/story.css?v=20260823-03" />
 
   <!-- ES Module Import Map for Three.js & Addons -->
   <script type="importmap">
@@ -62,7 +67,7 @@
     <div class="bracket b-br"></div>
 
     <div class="hud-row hud-bottom">
-      <div id="hud-scene-name">PROLOGUE // THE WEAVING</div>
+      <div id="hud-scene-name">00 // THE PROLOGUE</div>
       <div>
         <span class="hud-tag" id="hud-iso">ISO 3200</span>
         <span>&nbsp;&middot;&nbsp;</span>
@@ -72,30 +77,24 @@
     </div>
   </header>
 
-  <!-- Pinned Stage for Titles (Fixed in Viewport) -->
+  <!-- Pinned Stage for Narrative Leads (Tethered directly to 3D particle headlines) -->
   <div class="pinned-stage" id="story-stage">
-    <!-- Beat 0: The Hook -->
-    <div class="title-step" id="beat-0">
-      <div class="step-tag">00 // THE PROLOGUE</div>
-      <h1 class="step-heading">Пристебніть ремені.</h1>
+    <!-- Beat 0 Lead -->
+    <div class="lead-step" id="lead-0">
       <p class="step-lead">
         Раз ви зайшли на цю сторінку, ви або дуже допитливі, або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?
       </p>
     </div>
 
-    <!-- Beat 1: Craft & Embroidery -->
-    <div class="title-step" id="beat-1">
-      <div class="step-tag">01 // CRAFT & EMBROIDERY</div>
-      <h2 class="step-heading">Уроки праці з дівчатами.</h2>
+    <!-- Beat 1 Lead -->
+    <div class="lead-step" id="lead-1">
       <p class="step-lead">
         Усе життя я любив щось творити і витворювати. Уроки праці в мене були з дівчатами — ми там плели, вишивали і створювали деталі власноруч.
       </p>
     </div>
 
-    <!-- Beat 2: Olympus & Crimea -->
-    <div class="title-step" id="beat-2">
-      <div class="step-tag">02 // THE FIRST LENS · 35MM</div>
-      <h2 class="step-heading">Бабусин Olympus.</h2>
+    <!-- Beat 2 Lead -->
+    <div class="lead-step" id="lead-2">
       <p class="step-lead">
         Бабуся подарувала на день народження плівкову камеру. Мені тоді це здалося дивним подарунком, бо вже було відчуття, що плівка відходить у минуле… Мій перший і останній Крим.
       </p>
@@ -107,7 +106,7 @@
   <div class="scroll-track" id="scroll-track"></div>
 
   <!-- 3D Morphing Engine ES Module -->
-  <script type="module" src="/assets/js/story.js?v=20260823-01"></script>
+  <script type="module" src="/assets/js/story.js?v=20260823-02"></script>
 
 </body>
 </html>

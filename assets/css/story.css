@@ -1,14 +1,14 @@
 /* ==========================================================================
-   MORPHING TABLEAU 3D STORY EXPERIENCE (DEUSFLOW)
+   ALCHEMICAL 3D LIVING PARTICLE EXPERIENCE (DEUSFLOW)
    Style: 70% meermohsin.me (Creative Magic) + 30% moto-card.com (Tactile Luxury)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  --bg-noir: #060608;
+  --bg-noir: #050507;
   --text-paper: #f4efe6;
-  --text-dim: rgba(244, 239, 230, 0.6);
+  --text-dim: rgba(244, 239, 230, 0.65);
   --text-muted: rgba(244, 239, 230, 0.35);
   --accent-gold: #d4ba95;
   --accent-gold-bright: #ecd7be;
@@ -16,6 +16,7 @@
   --border-subtle: rgba(244, 239, 230, 0.12);
   
   --font-display: 'Playfair Display', serif;
+  --font-title: 'Cinzel', serif;
   --font-mono: 'Space Mono', monospace;
   --font-body: 'Inter', sans-serif;
 }
@@ -68,7 +69,7 @@ html, body {
   height: 100%;
   z-index: 3;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(6, 6, 8, 0.85) 100%);
+  background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(5, 5, 7, 0.88) 100%);
 }
 
 /* ==========================================================================
@@ -154,7 +155,7 @@ html, body {
   width: 44px;
   height: 44px;
   pointer-events: none;
-  opacity: 0.25;
+  opacity: 0.22;
 }
 
 .viewfinder-crosshair::before, .viewfinder-crosshair::after {
@@ -186,7 +187,7 @@ html, body {
   height: 12px;
   border-color: var(--accent-gold);
   border-style: solid;
-  opacity: 0.3;
+  opacity: 0.25;
 }
 
 .b-tl { top: 12%; left: 8%; border-width: 1px 0 0 1px; }
@@ -195,13 +196,13 @@ html, body {
 .b-br { bottom: 12%; right: 8%; border-width: 0 1px 1px 0; }
 
 /* ==========================================================================
-   PINNED SCROLL STAGE & CINEMATIC TITLES
+   PINNED SCROLL STAGE & NARRATIVE LEADS
    ========================================================================== */
 
 .scroll-track {
   position: relative;
   width: 100%;
-  height: 350vh; /* Scroll distance to drive the morph timeline */
+  height: 400vh; /* 4 stages of alchemical morphing */
 }
 
 .pinned-stage {
@@ -216,74 +217,57 @@ html, body {
   justify-content: center;
 }
 
-/* Titles Layer (Cinematic Editorial Subtitles) */
-.title-step {
+/* Narrative Lead Steps (Tethered to 3D Particle Headlines) */
+.lead-step {
   position: absolute;
-  max-width: 560px;
-  width: 90%;
-  text-align: left;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(20px) scale(0.98);
   z-index: 20;
-  left: 7vw;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-/* Beat 0: Starts visible on initial load */
-#beat-0 {
+/* Beat 0: Centered beneath 3D "ПРИСТЕБНІТЬ РЕМЕНІ" headline */
+#lead-0 {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  top: 16vh;
-  max-width: 720px;
+  top: 60vh;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  max-width: 680px;
+  width: 90%;
 }
 
-/* Beat 1: Upper-mid left column */
-#beat-1 {
+/* Beat 1: Left column beneath 3D golden silk loom */
+#lead-1 {
+  top: 58vh;
+  left: 8vw;
+  text-align: left;
+  max-width: 520px;
+  width: 90%;
+}
+
+/* Beat 2: Left column beside 3D Olympus camera */
+#lead-2 {
   top: 32vh;
-}
-
-/* Beat 2: Mid left column */
-#beat-2 {
-  top: 30vh;
-}
-
-.step-tag {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--accent-gold);
-  margin-bottom: 1.25rem;
-  display: block;
-}
-
-.step-heading {
-  font-family: var(--font-display);
-  font-size: clamp(2.4rem, 5.5vw, 4.8rem);
-  font-weight: 400;
-  line-height: 1.15;
-  letter-spacing: 0.01em;
-  color: var(--text-paper);
-  text-wrap: balance;
-  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.85);
-  margin-bottom: 1.25rem;
+  left: 8vw;
+  text-align: left;
+  max-width: 540px;
+  width: 90%;
 }
 
 .step-lead {
   font-family: var(--font-body);
-  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+  font-size: clamp(1.1rem, 1.8vw, 1.35rem);
   font-weight: 300;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--text-dim);
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
-  max-width: 680px;
-  margin: 0 auto;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.95);
 }
 
 .step-quote {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+  font-size: clamp(1.25rem, 2.0vw, 1.6rem);
   color: var(--accent-gold-bright);
   margin-top: 1rem;
   display: block;
@@ -306,9 +290,6 @@ html, body {
   .bracket {
     display: none;
   }
-  .step-heading {
-    font-size: 2.1rem;
-  }
   .step-lead {
     font-size: 1.0rem;
     line-height: 1.5;
@@ -322,42 +303,30 @@ html, body {
    MOBILE RESPONSIVENESS (< 768px)
    ========================================================================== */
 @media (max-width: 768px) {
-  .title-step {
-    left: 20px;
-    right: 20px;
-    width: calc(100% - 40px);
-    max-width: 100%;
+  .lead-step {
+    left: 20px !important;
+    right: 20px !important;
+    transform: none !important;
+    width: calc(100% - 40px) !important;
+    max-width: 100% !important;
+    text-align: center !important;
   }
 
-  #beat-0 {
-    top: 12vh;
+  #lead-0 {
+    top: 56vh;
   }
 
-  #beat-1 {
+  #lead-1 {
+    top: 58vh;
+  }
+
+  #lead-2 {
     top: 14vh;
-  }
-
-  #beat-2 {
-    top: 14vh;
-  }
-
-  .step-heading {
-    font-size: 2.1rem;
-    line-height: 1.15;
-    margin-bottom: 0.85rem;
+    text-align: left !important;
   }
 
   .step-lead {
     font-size: 0.95rem;
     line-height: 1.5;
-  }
-
-  .hud-footer {
-    padding: 0 16px;
-    font-size: 10px;
-  }
-
-  .hud-params {
-    gap: 10px;
   }
 }
