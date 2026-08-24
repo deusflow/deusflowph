@@ -73,15 +73,15 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Clean ambient lighting matching Sketchfab viewer
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+  // Soft atmospheric lighting matching Sketchfab
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.6);
   scene.add(ambientLight);
 
-  const mainLight = new THREE.DirectionalLight(0xffeedd, 1.6);
+  const mainLight = new THREE.DirectionalLight(0xffeedd, 1.2);
   mainLight.position.set(25, 40, 20);
   scene.add(mainLight);
 
-  const fillLight = new THREE.DirectionalLight(0x90b0d8, 1.2);
+  const fillLight = new THREE.DirectionalLight(0x90b0d8, 0.9);
   fillLight.position.set(-25, 20, -50);
   scene.add(fillLight);
 
@@ -195,19 +195,24 @@ function loadAssets() {
             child.material.transparent = false;
             child.renderOrder = 1;
           } else if (child.name && child.name.includes('Poly')) {
-            // Main solid cloud canyon floor
+            // Main solid cloud canyon floor: 100% matte diffuse (zero ice/gloss sheen)
             child.material.side = THREE.DoubleSide;
             child.material.depthWrite = true;
             child.material.transparent = false;
+            child.material.roughness = 1.0;
+            child.material.metalness = 0.0;
             child.renderOrder = 1;
           } else {
-            // Cloud_1, Cloud_2, Cloud_3 (The soft cloud puffs / layers):
-            // Eliminate jagged feather borders via soft alpha blending without depth-cutout artifacts
+            // Cloud_1, Cloud_2, Cloud_3 (The soft misty cloud layers):
+            // 100% matte velvety mist with zero plastic/ice glossiness
             child.material.side = THREE.DoubleSide;
             child.material.transparent = true;
             child.material.depthWrite = false;
-            child.material.alphaTest = 0.01; // Soft gradient cutout instead of hard 0.45 mask
-            child.renderOrder = 2; // Renders smoothly on top of solid base
+            child.material.alphaTest = 0.0; // Soft continuous mist gradient
+            child.material.roughness = 1.0;
+            child.material.metalness = 0.0;
+            child.material.opacity = 0.95;
+            child.renderOrder = 2;
           }
         }
       });
