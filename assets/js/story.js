@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Octree } from 'three/addons/math/Octree.js';
 import { Capsule } from 'three/addons/math/Capsule.js';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 let scene, camera, renderer;
 let clock = new THREE.Clock();
@@ -154,20 +153,7 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-function smoothCloudGeometry(geometry, tolerance = 1e-4) {
-  if (!geometry) return geometry;
-  try {
-    const merged = mergeVertices(geometry, tolerance);
-    merged.computeVertexNormals();
-    return merged;
-  } catch (err) {
-    console.warn('mergeVertices fallback:', err);
-    geometry.computeVertexNormals();
-    return geometry;
-  }
-}
-
-// ── LOAD 3D ASSETS WITH MATERIAL & NORMAL REFINEMENT ──────────
+// ── LOAD 3D ASSETS WITH MATERIAL REFINEMENT ───────────────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
@@ -203,7 +189,6 @@ function loadAssets() {
       cloudsContainer.rotation.y = Math.PI;
       cloudsContainer.position.set(0, 0, -45);
 
-      // Deep Material & Normal Smoothing Optimization
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = true;
@@ -224,20 +209,18 @@ function loadAssets() {
               side: THREE.FrontSide
             });
           } else {
-            // Cloud Meshes (Cloud_Poly, Cloud_1, Cloud_2, Cloud_3):
-            // 1. Weld split seam vertices and compute smooth interpolated normals
-            child.geometry = smoothCloudGeometry(child.geometry);
+            // Simply recompute vertex normals without aggressive vertex merging
+            child.geometry.computeVertexNormals();
 
-            // 2. Soft physical cloud shading without flat facet shards
             const tex = child.material.emissiveMap || child.material.map;
             child.material = new THREE.MeshStandardMaterial({
               map: tex,
-              color: new THREE.Color(0xdce7f5), // Soft atmospheric cloud tone
+              color: new THREE.Color(0xdce7f5),
               roughness: 0.9,
               metalness: 0.0,
-              emissive: new THREE.Color(0x141f30), // Deep ambient tone
+              emissive: new THREE.Color(0x141f30),
               emissiveIntensity: 0.35,
-              side: THREE.DoubleSide,
+              side: THREE.FrontSide, // FrontSide hides backface rendering
               transparent: false,
               depthWrite: true
             });
