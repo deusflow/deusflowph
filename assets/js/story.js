@@ -70,7 +70,7 @@ function buildDioramaArchitecture() {
 
   // Stylized Baked Shader (Dark Oak to Warm Amber)
   const archMaterial = new THREE.ShaderMaterial({
-    vertexShader: \`
+    vertexShader: `
       varying vec3 vPosition;
       varying vec3 vNormal;
       void main() {
@@ -78,8 +78,8 @@ function buildDioramaArchitecture() {
         vNormal = normalMatrix * normal;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
-    \`,
-    fragmentShader: \`
+    `,
+    fragmentShader: `
       varying vec3 vPosition;
       varying vec3 vNormal;
       void main() {
@@ -98,7 +98,7 @@ function buildDioramaArchitecture() {
         
         gl_FragColor = vec4(finalColor, 1.0);
       }
-    \`,
+    `,
     side: THREE.DoubleSide
   });
 
@@ -155,7 +155,7 @@ function buildSplinePath() {
 async function buildMiseEnScene() {
   // 1. 3D Text (Title)
   const myText = new Text();
-  myText.text = "DEUSFLOW\\nARCHIVE";
+  myText.text = "DEUSFLOW\nARCHIVE";
   myText.fontSize = 1.0;
   myText.font = "https://fonts.gstatic.com/s/cinzel/v19/8vIJ7qcw3PEtcqCGzCwjI7Lg_xY.woff2";
   myText.position.set(0, 3, 2);
@@ -172,7 +172,7 @@ async function buildMiseEnScene() {
   const createPhotoPlane = (url, pos, rot) => {
     const tex = new THREE.TextureLoader().load(url);
     const mat = new THREE.ShaderMaterial({
-      vertexShader: \`
+      vertexShader: `
         uniform float uTime;
         uniform float uVelocity;
         varying vec2 vUv;
@@ -183,8 +183,8 @@ async function buildMiseEnScene() {
           p.z += sin(p.y * 3.0 + uTime) * uVelocity * 0.003;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
         }
-      \`,
-      fragmentShader: \`
+      `,
+      fragmentShader: `
         uniform sampler2D tMap;
         uniform float uVelocity;
         varying vec2 vUv;
@@ -195,7 +195,7 @@ async function buildMiseEnScene() {
           float b = texture2D(tMap, vUv - vec2(shift, 0.0)).b;
           gl_FragColor = vec4(r, g, b, 1.0);
         }
-      \`,
+      `,
       uniforms: {
         tMap: { value: tex },
         uTime: { value: 0 },
@@ -235,7 +235,7 @@ function buildDustMotes() {
   }
   dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
   dustMaterial = new THREE.ShaderMaterial({
-    vertexShader: \`
+    vertexShader: `
       uniform float uTime;
       void main() {
         vec3 p = position;
@@ -245,15 +245,15 @@ function buildDustMotes() {
         gl_Position = projectionMatrix * mvPosition;
         gl_PointSize = (25.0 / -mvPosition.z);
       }
-    \`,
-    fragmentShader: \`
+    `,
+    fragmentShader: `
       void main() {
         float d = length(gl_PointCoord - vec2(0.5));
         if (d > 0.5) discard;
         float core = 1.0 - smoothstep(0.0, 0.5, d);
         gl_FragColor = vec4(0.96, 0.88, 0.74, core * 0.3);
       }
-    \`,
+    `,
     uniforms: { uTime: { value: 0.0 } },
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   });
