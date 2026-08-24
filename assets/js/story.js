@@ -39,14 +39,17 @@ const sectionMeta = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-  initThree();
-  initCollisionSystem();
-  buildSplinePath();
-  loadAssets();
-  build3DStoryTypography();
-  initScrollTrigger();
-  initMouseListener();
-  animate();
+  // Wait for Google Fonts to be ready so canvas draws with the handwritten font
+  document.fonts.ready.then(() => {
+    initThree();
+    initCollisionSystem();
+    buildSplinePath();
+    loadAssets();
+    build3DStoryTypography();
+    initScrollTrigger();
+    initMouseListener();
+    animate();
+  });
 });
 
 function initThree() {
@@ -56,8 +59,8 @@ function initThree() {
   // Soft atmospheric fog
   scene.fog = new THREE.FogExp2(0x0d0a08, 0.0035);
 
-  // Near plane at 0.05 prevents camera from slicing close geometry
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 1000);
+  // Near 0.05, Far 220 (optimal 4400:1 ratio, completely eliminates z-fighting)
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 220);
   scene.add(camera);
 
   // Performance-optimized WebGL Renderer
@@ -95,32 +98,28 @@ function initThree() {
 function initCollisionSystem() {
   worldOctree = new Octree();
   
-  // Player Capsule: radius 0.35, height 1.2
   playerCapsule = new Capsule(
     new THREE.Vector3(0, -0.4, 0),
     new THREE.Vector3(0, 0.4, 0),
     0.35
   );
 
-  // Invisible low-poly corridor bounds (floor, ceiling, walls)
+  // Invisible low-poly corridor bounds
   collisionGroup = new THREE.Group();
   collisionGroup.visible = false;
 
-  // Floor barrier
   const floorGeo = new THREE.PlaneGeometry(30, 120);
   floorGeo.rotateX(-Math.PI / 2);
   const floorMesh = new THREE.Mesh(floorGeo, new THREE.MeshBasicMaterial());
   floorMesh.position.set(0, -5.5, -55);
   collisionGroup.add(floorMesh);
 
-  // Ceiling barrier
   const ceilGeo = new THREE.PlaneGeometry(30, 120);
   ceilGeo.rotateX(Math.PI / 2);
   const ceilMesh = new THREE.Mesh(ceilGeo, new THREE.MeshBasicMaterial());
   ceilMesh.position.set(0, 5.5, -55);
   collisionGroup.add(ceilMesh);
 
-  // Left & Right boundary walls
   const wallLeftGeo = new THREE.PlaneGeometry(120, 20);
   wallLeftGeo.rotateY(Math.PI / 2);
   const wallLeft = new THREE.Mesh(wallLeftGeo, new THREE.MeshBasicMaterial());
@@ -137,18 +136,16 @@ function initCollisionSystem() {
 
 // ── CAMERA SPLINE PATH (Deep inside the cloud canyon) ─────────
 function buildSplinePath() {
-  // Center airway of the cloud canyon (eye level inside the clouds)
   cameraCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, -0.5, -12),     // Beat 0: Inside the first chamber
     new THREE.Vector3(1.0, -0.2, -32),   // Beat 1: Weaving through the cloud archway
     new THREE.Vector3(-1.4, -0.6, -54),  // Beat 2: Gliding alongside the flying ship
     new THREE.Vector3(1.6, -0.3, -76),   // Beat 3: Starry cloud canyon
-    new THREE.Vector3(-0.5, 0.0, -96),   // Beat 4: Approaching the glowing Portal
+    new THREE.Vector3(-0.5, 0.0, -96),   // Beat 4: Approaching the mystical Portal
     new THREE.Vector3(0, 0, -112)        // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
-  // Set initial position
   const startPos = cameraCurve.getPointAt(0.001);
   const lookPos = cameraCurve.getPointAt(0.04);
   camera.position.copy(startPos);
@@ -179,7 +176,6 @@ function loadAssets() {
       const center = new THREE.Vector3();
       box.getCenter(center);
 
-      // Center clouds geometry at exact middle of canyon
       model.position.sub(center);
 
       cloudsContainer = new THREE.Group();
@@ -189,7 +185,6 @@ function loadAssets() {
       const scale = 145 / (maxDim || 1);
       cloudsContainer.scale.setScalar(scale);
       
-      // Rotated so we enter into the cloud tunnel
       cloudsContainer.rotation.y = Math.PI;
       cloudsContainer.position.set(0, 0, -45);
 
@@ -281,59 +276,55 @@ function loadAssets() {
   );
 }
 
-// ── 3D STORY TYPOGRAPHY ──────────────────────────────────────
-function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
+// ── 3D HANDWRITTEN STORY TYPOGRAPHY (Mr. Panda Style: 100% Transparent, No Boxes) ──
+function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 512;
   const ctx = canvas.getContext('2d');
 
+  // 100% Transparent background (NO fillRect, NO boxes, NO borders)
   ctx.clearRect(0, 0, 1024, 512);
 
-  // Soft seamless manuscript glow vignette
-  const grad = ctx.createRadialGradient(512, 256, 10, 512, 256, 380);
-  grad.addColorStop(0, 'rgba(13, 10, 8, 0.65)');
-  grad.addColorStop(0.6, 'rgba(13, 10, 8, 0.25)');
-  grad.addColorStop(1, 'rgba(13, 10, 8, 0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 1024, 512);
-
-  // 1. Badge
+  // 1. Badge / Small Caps Header
   if (badge) {
-    ctx.font = '600 24px "Space Mono", monospace';
-    ctx.fillStyle = 'rgba(216, 184, 136, 0.9)';
+    ctx.font = '600 22px "Space Mono", monospace';
+    ctx.fillStyle = '#d8b888';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(badge.toUpperCase(), 512, 105);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+    ctx.shadowBlur = 10;
+    ctx.fillText(badge.toUpperCase(), 512, 90);
   }
 
-  // 2. Title
-  ctx.font = '700 48px "Cinzel", "Playfair Display", Georgia, serif';
-  ctx.fillStyle = '#fce2b8';
+  // 2. Main Title (Handwritten / Expressive Script)
+  ctx.font = '700 58px "Caveat", "Marck Script", "Cinzel", cursive';
+  ctx.fillStyle = '#fff4dc';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.shadowColor = 'rgba(216, 184, 136, 0.65)';
-  ctx.shadowBlur = 18;
-  ctx.fillText(title, 512, 160);
+  ctx.shadowColor = 'rgba(216, 184, 136, 0.9)';
+  ctx.shadowBlur = 24;
+  ctx.fillText(title, 512, 140);
 
-  // 3. Subtitle / Story Line
+  // 3. Subtitle / Story Line (Poetic Handwritten Script)
   if (subtitle) {
-    ctx.shadowBlur = 0;
-    ctx.font = '400 26px "Playfair Display", Georgia, serif';
-    ctx.fillStyle = '#d8cdb4';
+    ctx.font = '500 32px "Caveat", "Marck Script", cursive';
+    ctx.fillStyle = '#e8dcc0';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+    ctx.shadowBlur = 12;
     
     const words = subtitle.split(' ');
     let line = '';
-    let y = 245;
+    let y = 230;
     for (let n = 0; n < words.length; n++) {
       const testLine = line + words[n] + ' ';
       const metrics = ctx.measureText(testLine);
       if (metrics.width > 860 && n > 0) {
         ctx.fillText(line, 512, y);
         line = words[n] + ' ';
-        y += 38;
+        y += 44;
       } else {
         line = testLine;
       }
@@ -345,11 +336,13 @@ function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
   texture.minFilter = THREE.LinearFilter;
   texture.generateMipmaps = false;
 
+  // Pure transparent material without any background plane
   const mat = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
     side: THREE.DoubleSide,
-    depthWrite: false
+    depthWrite: false,
+    alphaTest: 0.02
   });
 
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 4.25), mat);
@@ -363,45 +356,45 @@ function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
 
 function build3DStoryTypography() {
   // Act 0: Initial Screen (Inside the clouds, Z = -20)
-  create3DTextCard(
+  createHandwritten3DText(
     'DEUSFLOW ARCHIVES · FOLIO 00',
-    'ОЛЕГ РО',
+    'Олег Ро',
     'Ніч у чарівній бібліотеці: історія про те, як дитяча допитливість перетворюється на ремесло.',
     new THREE.Vector3(0, 0.0, -20),
     0
   );
 
   // Act 1: Craft & Embroidery
-  create3DTextCard(
+  createHandwritten3DText(
     '01 // CRAFT & EMBROIDERY',
-    'ДИТЯЧА ДОПИТЛИВІСТЬ',
+    'Дитяча Допитливість',
     'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
     new THREE.Vector3(3.4, -0.2, -40),
     -0.18
   );
 
   // Act 2: The First Lens
-  create3DTextCard(
+  createHandwritten3DText(
     '02 // THE FIRST LENS · 35MM',
-    'ОЛІМПУС ТА КРИМ',
+    'Олімпус та Крим',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
     new THREE.Vector3(-3.5, -0.4, -62),
     0.18
   );
 
   // Act 3: Digital Dawn
-  create3DTextCard(
+  createHandwritten3DText(
     '03 // DIGITAL DAWN · CANON EOS',
-    'ПОШУК ВЛАСНОГО ПОЧЕРКУ',
+    'Пошук Власного Почерку',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
     new THREE.Vector3(3.2, 0.2, -84),
     -0.15
   );
 
   // Epilogue: The Portal
-  create3DTextCard(
+  createHandwritten3DText(
     'EPILOGUE // THE PORTAL',
-    'ЗАКЛИНАННЯ МИТІ',
+    'Заклинання Миті',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
     new THREE.Vector3(0, 1.2, -102),
     0
