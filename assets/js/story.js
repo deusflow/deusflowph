@@ -54,15 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
-  
-  // Gentle atmospheric fog
-  scene.fog = new THREE.FogExp2(0x0d0a08, 0.0035);
 
-  // Near 0.05, Far 220
-  camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.05, 220);
+  // No dark fog: preserves the natural glowing pink/amber painterly lighting of the model
+  camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 250);
   scene.add(camera);
 
-  // Renderer with standard glTF color accuracy
+  // High performance renderer with vibrant color mapping
   renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
@@ -72,19 +69,19 @@ function initThree() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 1.15;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Soft atmospheric lighting matching Blender
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+  // Clean ambient lighting matching Sketchfab viewer
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
   scene.add(ambientLight);
 
-  const mainLight = new THREE.DirectionalLight(0xffeedd, 1.5);
+  const mainLight = new THREE.DirectionalLight(0xffeedd, 1.6);
   mainLight.position.set(25, 40, 20);
   scene.add(mainLight);
 
-  const fillLight = new THREE.DirectionalLight(0x8fa8c8, 1.0);
+  const fillLight = new THREE.DirectionalLight(0x90b0d8, 1.2);
   fillLight.position.set(-25, 20, -50);
   scene.add(fillLight);
 
@@ -106,19 +103,19 @@ function initCollisionSystem() {
   collisionGroup = new THREE.Group();
   collisionGroup.visible = false;
 
-  const floorGeo = new THREE.PlaneGeometry(60, 120);
+  const floorGeo = new THREE.PlaneGeometry(60, 140);
   floorGeo.rotateX(-Math.PI / 2);
   const floorMesh = new THREE.Mesh(floorGeo, new THREE.MeshBasicMaterial());
   floorMesh.position.set(0, -14, -40);
   collisionGroup.add(floorMesh);
 
-  const ceilGeo = new THREE.PlaneGeometry(60, 120);
+  const ceilGeo = new THREE.PlaneGeometry(60, 140);
   ceilGeo.rotateX(Math.PI / 2);
   const ceilMesh = new THREE.Mesh(ceilGeo, new THREE.MeshBasicMaterial());
   ceilMesh.position.set(0, 14, -40);
   collisionGroup.add(ceilMesh);
 
-  const wallLeftGeo = new THREE.PlaneGeometry(120, 30);
+  const wallLeftGeo = new THREE.PlaneGeometry(140, 30);
   wallLeftGeo.rotateY(Math.PI / 2);
   const wallLeft = new THREE.Mesh(wallLeftGeo, new THREE.MeshBasicMaterial());
   wallLeft.position.set(-25.0, 0, -40);
@@ -132,15 +129,16 @@ function initCollisionSystem() {
   worldOctree.fromGraphNode(collisionGroup);
 }
 
-// ── NATURAL BLENDER CAMERA FLYTHROUGH PATH ────────────────────
+// ── EXACT SKETCHFAB HERO FRAMING & SMOOTH FLIGHT PATH ─────────
 function buildSplinePath() {
+  // Hero starting viewpoint perfectly matches the Sketchfab angle
   cameraCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 1.8, 8),       // Beat 0: In the open sky facing the grand cloud entrance
-    new THREE.Vector3(1.6, 1.0, -12),   // Beat 1: Soaring above the cloud floor into the canyon
-    new THREE.Vector3(-1.8, 0.4, -32),  // Beat 2: Gliding through the heart of the cloud valley
-    new THREE.Vector3(1.4, 0.0, -52),   // Beat 3: Gliding along the canyon path
-    new THREE.Vector3(-0.4, -0.2, -70), // Beat 4: Approaching the mystical Portal
-    new THREE.Vector3(0, 0, -82)        // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0, 1.2, 9),       // Beat 0: Hero framed view of Ship and glowing cloud arch
+    new THREE.Vector3(1.4, 0.8, -12),   // Beat 1: Gliding smoothly forward into the archway
+    new THREE.Vector3(-1.6, 0.4, -34),  // Beat 2: Soaring above the cloud valley
+    new THREE.Vector3(1.2, 0.0, -56),   // Beat 3: Gliding along the canyon stream
+    new THREE.Vector3(-0.4, -0.2, -74), // Beat 4: Approaching the mystical Portal
+    new THREE.Vector3(0, 0, -84)        // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
@@ -166,7 +164,6 @@ function loadAssets() {
       const center = new THREE.Vector3();
       box.getCenter(center);
 
-      // Center model
       model.position.sub(center);
 
       cloudsContainer = new THREE.Group();
@@ -176,7 +173,6 @@ function loadAssets() {
       const scale = 140 / (maxDim || 1);
       cloudsContainer.scale.setScalar(scale);
       
-      // Natural Blender Orientation: entrance at +Z, canyon extending to -Z
       cloudsContainer.rotation.y = 0;
       cloudsContainer.position.set(0, 0, -35);
 
@@ -199,7 +195,7 @@ function loadAssets() {
     (err) => { console.warn('4K Clouds model note:', err); }
   );
 
-  // 2. Destination Portal at Z = -82
+  // 2. Destination Portal at Z = -84
   loader.load(
     '/assets/models/%D0%BF%D0%BE%D1%80%D1%82%D0%B0%D0%BB2.glb',
     (gltf) => {
@@ -217,7 +213,7 @@ function loadAssets() {
       
       const maxDim = Math.max(size.x, size.y, size.z);
       portalContainer.scale.setScalar(9.0 / (maxDim || 1));
-      portalContainer.position.set(0, 0, -82);
+      portalContainer.position.set(0, 0, -84);
 
       portalMesh.traverse((child) => {
         if (child.isMesh && child.material) {
@@ -230,42 +226,10 @@ function loadAssets() {
     undefined,
     (err) => { console.warn('Portal model note:', err); }
   );
-
-  // 3. Calm Floating Grimoire Books
-  loader.load(
-    '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
-    (gltf) => {
-      const positions = [
-        new THREE.Vector3(2.4, 1.8, 2),
-        new THREE.Vector3(-2.8, 1.0, -18),
-        new THREE.Vector3(2.6, 0.6, -38),
-        new THREE.Vector3(-2.2, 0.4, -58),
-        new THREE.Vector3(1.6, 0.2, -74)
-      ];
-
-      positions.forEach((pos, idx) => {
-        const book = gltf.scene.clone();
-        book.position.copy(pos);
-        book.rotation.set(0.2 + idx * 0.3, 0.4 + idx * 0.5, 0.1);
-        book.scale.setScalar(1.5);
-        book.userData = {
-          baseY: pos.y,
-          rotSpeedX: 0.002 * (idx % 2 === 0 ? 1 : -1),
-          rotSpeedY: 0.003 * (idx % 2 === 0 ? -1 : 1),
-          floatSpeed: 0.7 + idx * 0.15,
-          offset: idx * 2.0
-        };
-        scene.add(book);
-        floatingBooks.push(book);
-      });
-    },
-    undefined,
-    (err) => { console.warn('Book model note:', err); }
-  );
 }
 
 // ── 3D HANDWRITTEN STORY TYPOGRAPHY ──────────────────────────
-function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
+function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0, sectionIndex = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 512;
@@ -289,7 +253,7 @@ function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
   ctx.fillStyle = '#fff4dc';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.shadowColor = 'rgba(216, 184, 136, 0.9)';
+  ctx.shadowColor = 'rgba(216, 184, 136, 0.95)';
   ctx.shadowBlur = 24;
   ctx.fillText(title, 512, 140);
 
@@ -328,13 +292,17 @@ function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
     transparent: true,
     side: THREE.DoubleSide,
     depthWrite: false,
-    alphaTest: 0.02
+    alphaTest: 0.02,
+    opacity: sectionIndex === 0 ? 1.0 : 0.0
   });
 
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 4.25), mat);
   plane.position.copy(pos);
   plane.rotation.y = rotY;
-  plane.userData.baseY = pos.y;
+  plane.userData = {
+    baseY: pos.y,
+    sectionIndex: sectionIndex
+  };
   scene.add(plane);
   textPlanes.push(plane);
   return plane;
@@ -345,7 +313,8 @@ function build3DStoryTypography() {
     'DEUSFLOW ARCHIVES · FOLIO 00',
     'Олег Ро',
     'Ніч у чарівній бібліотеці: історія про те, як дитяча допитливість перетворюється на ремесло.',
-    new THREE.Vector3(0, 1.8, 0),
+    new THREE.Vector3(0, 1.8, 1),
+    0,
     0
   );
 
@@ -354,7 +323,8 @@ function build3DStoryTypography() {
     'Дитяча Допитливість',
     'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
     new THREE.Vector3(3.0, 1.2, -18),
-    -0.18
+    -0.18,
+    1
   );
 
   createHandwritten3DText(
@@ -362,7 +332,8 @@ function build3DStoryTypography() {
     'Олімпус та Крим',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
     new THREE.Vector3(-3.2, 0.6, -38),
-    0.15
+    0.15,
+    2
   );
 
   createHandwritten3DText(
@@ -370,7 +341,8 @@ function build3DStoryTypography() {
     'Пошук Власного Почерку',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
     new THREE.Vector3(2.6, 0.2, -58),
-    -0.12
+    -0.12,
+    3
   );
 
   createHandwritten3DText(
@@ -378,7 +350,8 @@ function build3DStoryTypography() {
     'Заклинання Миті',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
     new THREE.Vector3(0, 0.6, -74),
-    0
+    0,
+    4
   );
 }
 
@@ -455,15 +428,15 @@ function animate() {
     camera.lookAt(lookAtPos);
   }
 
-  for (let i = 0; i < floatingBooks.length; i++) {
-    const b = floatingBooks[i];
-    b.rotation.x += b.userData.rotSpeedX;
-    b.rotation.y += b.userData.rotSpeedY;
-    b.position.y = b.userData.baseY + Math.sin(time * b.userData.floatSpeed + b.userData.offset) * 0.2;
-  }
-
+  // Fade text planes in and out per chapter (no overlapping clutter)
   for (let i = 0; i < textPlanes.length; i++) {
     const p = textPlanes[i];
+    const targetProgress = p.userData.sectionIndex / (textPlanes.length - 1);
+    const diff = Math.abs(scrollProgress - targetProgress);
+    const alpha = Math.max(0.0, Math.min(1.0, 1.0 - (diff / 0.16)));
+    
+    p.material.opacity = alpha;
+    p.visible = alpha > 0.02;
     p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.08;
   }
 
