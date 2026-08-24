@@ -24,7 +24,7 @@ const hudActLabel = document.getElementById('hud-act-label');
 const stepDots = document.querySelectorAll('.step-dot');
 
 const sectionMeta = [
-  { title: 'PROLOGUE // THE CLOUDS GATE', timecode: 'FOLIO 01 / 05', act: 'ACT I // ROOTS' },
+  { title: 'PROLOGUE // THE INNER SANCTUM', timecode: 'FOLIO 01 / 05', act: 'ACT I // ROOTS' },
   { title: '01 // CHILDHOOD & CRAFT', timecode: 'FOLIO 02 / 05', act: 'ACT I // ROOTS' },
   { title: '02 // THE FIRST 35MM LENS', timecode: 'FOLIO 03 / 05', act: 'ACT I // ROOTS' },
   { title: '03 // THE DIGITAL DAWN', timecode: 'FOLIO 04 / 05', act: 'ACT I // ROOTS' },
@@ -45,10 +45,10 @@ function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
   
-  // Warm atmospheric fog that does not black out geometry
+  // Soft atmospheric fog
   scene.fog = new THREE.FogExp2(0x0d0a08, 0.0035);
 
-  // Direct camera in scene to eliminate double-inversion bugs
+  // Direct camera in scene to ensure pristine orientation
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
   scene.add(camera);
 
@@ -66,7 +66,7 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Warm library & celestial directional lighting
+  // Warm library & ethereal directional lighting
   const ambientLight = new THREE.AmbientLight(0xffeedd, 2.2);
   scene.add(ambientLight);
 
@@ -78,20 +78,20 @@ function initThree() {
   fillLight.position.set(-25, 20, -50);
   scene.add(fillLight);
 
-  const warmGateLight = new THREE.PointLight(0xffa347, 5.0, 120);
-  warmGateLight.position.set(0, 5, -5);
+  const warmGateLight = new THREE.PointLight(0xffa347, 5.0, 100);
+  warmGateLight.position.set(0, 3, -25);
   scene.add(warmGateLight);
 }
 
-// ── CAMERA SPLINE PATH (Entering from outside into the clouds) ──
+// ── CAMERA SPLINE PATH (Starts ALREADY DEEP INSIDE the clouds) ──
 function buildSplinePath() {
   cameraCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 1.0, 12),      // Beat 0: In front of the Grand Cloud Gate
-    new THREE.Vector3(1.0, 0.5, -12),   // Beat 1: Flying inside the first cloud canyon
-    new THREE.Vector3(-1.8, -0.2, -38), // Beat 2: Weaving past the sailing ship & grimoires
-    new THREE.Vector3(2.2, 0.4, -65),   // Beat 3: Deep into the starry cloud archives
-    new THREE.Vector3(-0.8, 0.6, -90),  // Beat 4: Approaching the mystical Portal
-    new THREE.Vector3(0, 0, -108)       // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0, 0.2, -16),     // Beat 0: ALREADY INSIDE the cloud cave / canyon
+    new THREE.Vector3(1.2, 0.4, -36),   // Beat 1: First cloud corridor
+    new THREE.Vector3(-1.6, -0.2, -58), // Beat 2: Gliding alongside the flying ship
+    new THREE.Vector3(2.0, 0.3, -80),   // Beat 3: Starry cloud canyon
+    new THREE.Vector3(-0.6, 0.5, -98),  // Beat 4: Approaching the mystical Portal
+    new THREE.Vector3(0, 0, -112)       // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
@@ -102,11 +102,11 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS WITH 180° ENTRANCE ALIGNMENT ──────────────
+// ── LOAD 3D ASSETS ───────────────────────────────────────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
-  // 1. 1K Clouds Model (Fast, Lightweight, High FPS)
+  // 1. 1K Clouds Model
   loader.load(
     '/assets/models/%D0%9E%D0%91%D0%9B%D0%90%D0%9A%D0%90%201%D0%9A.glb',
     (gltf) => {
@@ -118,7 +118,6 @@ function loadAssets() {
       const center = new THREE.Vector3();
       box.getCenter(center);
 
-      // Center model origin
       model.position.sub(center);
 
       cloudsContainer = new THREE.Group();
@@ -128,12 +127,10 @@ function loadAssets() {
       const scale = 145 / (maxDim || 1);
       cloudsContainer.scale.setScalar(scale);
       
-      // ROTATE 180° so the grand archway is at the START of our flight path!
-      // This means we ENTER the clouds going in, passing the ship, into the depths.
+      // Aligned so the canyon flows from front to back
       cloudsContainer.rotation.y = Math.PI;
       cloudsContainer.position.set(0, -3.5, -48);
 
-      // Single-sided front/back rendering for smooth 60 FPS
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = true;
@@ -157,7 +154,7 @@ function loadAssets() {
     (err) => { console.warn('1K Clouds model note:', err); }
   );
 
-  // 2. Destination Portal at Z = -106
+  // 2. Destination Portal at Z = -110
   loader.load(
     '/assets/models/%D0%BF%D0%BE%D1%80%D1%82%D0%B0%D0%BB2.glb',
     (gltf) => {
@@ -175,7 +172,7 @@ function loadAssets() {
       
       const maxDim = Math.max(size.x, size.y, size.z);
       portalContainer.scale.setScalar(9.0 / (maxDim || 1));
-      portalContainer.position.set(0, 0, -106);
+      portalContainer.position.set(0, 0, -110);
 
       portalMesh.traverse((child) => {
         if (child.isMesh && child.material) {
@@ -194,11 +191,11 @@ function loadAssets() {
     '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
     (gltf) => {
       const positions = [
-        new THREE.Vector3(3.5, 1.5, 0),
-        new THREE.Vector3(-3.8, -0.6, -22),
-        new THREE.Vector3(3.6, 0.8, -48),
-        new THREE.Vector3(-3.4, 1.4, -75),
-        new THREE.Vector3(2.6, -0.4, -94)
+        new THREE.Vector3(3.0, 1.2, -20),
+        new THREE.Vector3(-3.6, -0.5, -42),
+        new THREE.Vector3(3.4, 0.7, -64),
+        new THREE.Vector3(-3.0, 1.2, -86),
+        new THREE.Vector3(2.4, -0.3, -102)
       ];
 
       positions.forEach((pos, idx) => {
@@ -222,7 +219,7 @@ function loadAssets() {
   );
 }
 
-// ── 3D STORY TYPOGRAPHY (Proper Non-Mirrored Orientation) ─────
+// ── 3D STORY TYPOGRAPHY (Seamless Soft Vignette) ─────────────
 function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -231,10 +228,10 @@ function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
 
   ctx.clearRect(0, 0, 1024, 512);
 
-  // Soft parchment glow vignette background
-  const grad = ctx.createRadialGradient(512, 256, 10, 512, 256, 440);
-  grad.addColorStop(0, 'rgba(28, 19, 12, 0.75)');
-  grad.addColorStop(0.75, 'rgba(13, 10, 8, 0.40)');
+  // Soft seamless manuscript glow vignette (no harsh box edges)
+  const grad = ctx.createRadialGradient(512, 256, 10, 512, 256, 380);
+  grad.addColorStop(0, 'rgba(13, 10, 8, 0.65)');
+  grad.addColorStop(0.6, 'rgba(13, 10, 8, 0.25)');
   grad.addColorStop(1, 'rgba(13, 10, 8, 0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 1024, 512);
@@ -295,8 +292,6 @@ function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
 
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 4.25), mat);
   plane.position.copy(pos);
-  
-  // Look directly towards +Z (where camera comes from) to guarantee text is NEVER mirrored
   plane.rotation.y = rotY;
   plane.userData.baseY = pos.y;
   scene.add(plane);
@@ -305,12 +300,12 @@ function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
 }
 
 function build3DStoryTypography() {
-  // Act 0: Initial Screen (Z = 0, immediately visible at the entrance!)
+  // Act 0: Initial Screen (Z = -23, right in front of camera inside the clouds chamber)
   create3DTextCard(
     'DEUSFLOW ARCHIVES · FOLIO 00',
     'ОЛЕГ РО',
     'Ніч у чарівній бібліотеці: історія про те, як дитяча допитливість перетворюється на ремесло.',
-    new THREE.Vector3(0, 1.2, 0),
+    new THREE.Vector3(0, 0.6, -23),
     0
   );
 
@@ -319,7 +314,7 @@ function build3DStoryTypography() {
     '01 // CRAFT & EMBROIDERY',
     'ДИТЯЧА ДОПИТЛИВІСТЬ',
     'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
-    new THREE.Vector3(3.8, 0.4, -20),
+    new THREE.Vector3(3.6, 0.2, -44),
     -0.18
   );
 
@@ -328,7 +323,7 @@ function build3DStoryTypography() {
     '02 // THE FIRST LENS · 35MM',
     'ОЛІМПУС ТА КРИМ',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
-    new THREE.Vector3(-4.0, -0.1, -44),
+    new THREE.Vector3(-3.8, -0.2, -66),
     0.18
   );
 
@@ -337,7 +332,7 @@ function build3DStoryTypography() {
     '03 // DIGITAL DAWN · CANON EOS',
     'ПОШУК ВЛАСНОГО ПОЧЕРКУ',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
-    new THREE.Vector3(3.6, 0.6, -72),
+    new THREE.Vector3(3.4, 0.5, -88),
     -0.15
   );
 
@@ -346,7 +341,7 @@ function build3DStoryTypography() {
     'EPILOGUE // THE PORTAL',
     'ЗАКЛИНАННЯ МИТІ',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
-    new THREE.Vector3(0, 1.8, -96),
+    new THREE.Vector3(0, 1.6, -104),
     0
   );
 }
@@ -395,7 +390,7 @@ function animate() {
     const p = Math.max(0.001, Math.min(0.999, scrollProgress));
     const camPos = cameraCurve.getPointAt(p);
     
-    // Mouse Parallax offset
+    // Subtle Mouse Parallax offset
     const targetX = (mouseX / window.innerWidth) * 2 - 1;
     const targetY = -(mouseY / window.innerHeight) * 2 + 1;
     
