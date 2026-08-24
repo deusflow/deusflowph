@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { Octree } from 'three/addons/math/Octree.js';
+import { Capsule } from 'three/addons/math/Capsule.js';
 
 let scene, camera, renderer;
 let clock = new THREE.Clock();
@@ -17,6 +19,11 @@ let portalMesh;
 let floatingBooks = [];
 let textPlanes = [];
 
+// Physics / Capsule Collision System
+let worldOctree;
+let playerCapsule;
+let collisionGroup;
+
 // DOM Elements
 const hudSceneTitle = document.getElementById('hud-scene-title');
 const hudTimecode = document.getElementById('hud-timecode');
@@ -33,6 +40,7 @@ const sectionMeta = [
 
 document.addEventListener('DOMContentLoaded', () => {
   initThree();
+  initCollisionSystem();
   buildSplinePath();
   loadAssets();
   build3DStoryTypography();
@@ -48,8 +56,8 @@ function initThree() {
   // Soft atmospheric fog
   scene.fog = new THREE.FogExp2(0x0d0a08, 0.0035);
 
-  // Direct camera in scene to ensure pristine orientation
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  // Near plane at 0.05 prevents camera from slicing close geometry
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 1000);
   scene.add(camera);
 
   // Performance-optimized WebGL Renderer
@@ -66,7 +74,7 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Warm library & ethereal directional lighting
+  // Warm library & celestial directional lighting
   const ambientLight = new THREE.AmbientLight(0xffeedd, 2.2);
   scene.add(ambientLight);
 
@@ -79,19 +87,64 @@ function initThree() {
   scene.add(fillLight);
 
   const warmGateLight = new THREE.PointLight(0xffa347, 5.0, 100);
-  warmGateLight.position.set(0, 3, -25);
+  warmGateLight.position.set(0, 0, -25);
   scene.add(warmGateLight);
 }
 
-// ── CAMERA SPLINE PATH (Starts ALREADY DEEP INSIDE the clouds) ──
+// ── COLLISION & CAPSULE SYSTEM ────────────────────────────────
+function initCollisionSystem() {
+  worldOctree = new Octree();
+  
+  // Player Capsule: radius 0.35, height 1.2
+  playerCapsule = new Capsule(
+    new THREE.Vector3(0, -0.4, 0),
+    new THREE.Vector3(0, 0.4, 0),
+    0.35
+  );
+
+  // Invisible low-poly corridor bounds (floor, ceiling, walls)
+  collisionGroup = new THREE.Group();
+  collisionGroup.visible = false;
+
+  // Floor barrier
+  const floorGeo = new THREE.PlaneGeometry(30, 120);
+  floorGeo.rotateX(-Math.PI / 2);
+  const floorMesh = new THREE.Mesh(floorGeo, new THREE.MeshBasicMaterial());
+  floorMesh.position.set(0, -5.5, -55);
+  collisionGroup.add(floorMesh);
+
+  // Ceiling barrier
+  const ceilGeo = new THREE.PlaneGeometry(30, 120);
+  ceilGeo.rotateX(Math.PI / 2);
+  const ceilMesh = new THREE.Mesh(ceilGeo, new THREE.MeshBasicMaterial());
+  ceilMesh.position.set(0, 5.5, -55);
+  collisionGroup.add(ceilMesh);
+
+  // Left & Right boundary walls
+  const wallLeftGeo = new THREE.PlaneGeometry(120, 20);
+  wallLeftGeo.rotateY(Math.PI / 2);
+  const wallLeft = new THREE.Mesh(wallLeftGeo, new THREE.MeshBasicMaterial());
+  wallLeft.position.set(-8.0, 0, -55);
+  collisionGroup.add(wallLeft);
+
+  const wallRight = new THREE.Mesh(wallLeftGeo.clone(), new THREE.MeshBasicMaterial());
+  wallRight.position.set(8.0, 0, -55);
+  collisionGroup.add(wallRight);
+
+  scene.add(collisionGroup);
+  worldOctree.fromGraphNode(collisionGroup);
+}
+
+// ── CAMERA SPLINE PATH (Deep inside the cloud canyon) ─────────
 function buildSplinePath() {
+  // Center airway of the cloud canyon (eye level inside the clouds)
   cameraCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 0.2, -16),     // Beat 0: ALREADY INSIDE the cloud cave / canyon
-    new THREE.Vector3(1.2, 0.4, -36),   // Beat 1: First cloud corridor
-    new THREE.Vector3(-1.6, -0.2, -58), // Beat 2: Gliding alongside the flying ship
-    new THREE.Vector3(2.0, 0.3, -80),   // Beat 3: Starry cloud canyon
-    new THREE.Vector3(-0.6, 0.5, -98),  // Beat 4: Approaching the mystical Portal
-    new THREE.Vector3(0, 0, -112)       // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0, -0.5, -12),     // Beat 0: Inside the first chamber
+    new THREE.Vector3(1.0, -0.2, -32),   // Beat 1: Weaving through the cloud archway
+    new THREE.Vector3(-1.4, -0.6, -54),  // Beat 2: Gliding alongside the flying ship
+    new THREE.Vector3(1.6, -0.3, -76),   // Beat 3: Starry cloud canyon
+    new THREE.Vector3(-0.5, 0.0, -96),   // Beat 4: Approaching the glowing Portal
+    new THREE.Vector3(0, 0, -112)        // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
@@ -102,7 +155,7 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS ───────────────────────────────────────────
+// ── LOAD 3D ASSETS WITH ACCURATE CLOUDS CENTERING ────────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
@@ -112,12 +165,21 @@ function loadAssets() {
     (gltf) => {
       const model = gltf.scene;
       
-      const box = new THREE.Box3().setFromObject(model);
+      // Calculate bounding box strictly on clouds and ship (exclude Sky sphere)
+      const box = new THREE.Box3();
+      model.traverse((child) => {
+        if (child.isMesh && (!child.name || !child.name.includes('Sky'))) {
+          child.geometry.computeBoundingBox();
+          box.expandByObject(child);
+        }
+      });
+
       const size = new THREE.Vector3();
       box.getSize(size);
       const center = new THREE.Vector3();
       box.getCenter(center);
 
+      // Center clouds geometry at exact middle of canyon
       model.position.sub(center);
 
       cloudsContainer = new THREE.Group();
@@ -127,9 +189,9 @@ function loadAssets() {
       const scale = 145 / (maxDim || 1);
       cloudsContainer.scale.setScalar(scale);
       
-      // Aligned so the canyon flows from front to back
+      // Rotated so we enter into the cloud tunnel
       cloudsContainer.rotation.y = Math.PI;
-      cloudsContainer.position.set(0, -3.5, -48);
+      cloudsContainer.position.set(0, 0, -45);
 
       model.traverse((child) => {
         if (child.isMesh && child.material) {
@@ -191,11 +253,11 @@ function loadAssets() {
     '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
     (gltf) => {
       const positions = [
-        new THREE.Vector3(3.0, 1.2, -20),
-        new THREE.Vector3(-3.6, -0.5, -42),
-        new THREE.Vector3(3.4, 0.7, -64),
-        new THREE.Vector3(-3.0, 1.2, -86),
-        new THREE.Vector3(2.4, -0.3, -102)
+        new THREE.Vector3(2.8, 0.5, -18),
+        new THREE.Vector3(-3.2, -0.8, -38),
+        new THREE.Vector3(3.0, 0.4, -60),
+        new THREE.Vector3(-2.8, 0.8, -82),
+        new THREE.Vector3(2.2, -0.4, -100)
       ];
 
       positions.forEach((pos, idx) => {
@@ -219,7 +281,7 @@ function loadAssets() {
   );
 }
 
-// ── 3D STORY TYPOGRAPHY (Seamless Soft Vignette) ─────────────
+// ── 3D STORY TYPOGRAPHY ──────────────────────────────────────
 function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -228,7 +290,7 @@ function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
 
   ctx.clearRect(0, 0, 1024, 512);
 
-  // Soft seamless manuscript glow vignette (no harsh box edges)
+  // Soft seamless manuscript glow vignette
   const grad = ctx.createRadialGradient(512, 256, 10, 512, 256, 380);
   grad.addColorStop(0, 'rgba(13, 10, 8, 0.65)');
   grad.addColorStop(0.6, 'rgba(13, 10, 8, 0.25)');
@@ -300,12 +362,12 @@ function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
 }
 
 function build3DStoryTypography() {
-  // Act 0: Initial Screen (Z = -23, right in front of camera inside the clouds chamber)
+  // Act 0: Initial Screen (Inside the clouds, Z = -20)
   create3DTextCard(
     'DEUSFLOW ARCHIVES · FOLIO 00',
     'ОЛЕГ РО',
     'Ніч у чарівній бібліотеці: історія про те, як дитяча допитливість перетворюється на ремесло.',
-    new THREE.Vector3(0, 0.6, -23),
+    new THREE.Vector3(0, 0.0, -20),
     0
   );
 
@@ -314,7 +376,7 @@ function build3DStoryTypography() {
     '01 // CRAFT & EMBROIDERY',
     'ДИТЯЧА ДОПИТЛИВІСТЬ',
     'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
-    new THREE.Vector3(3.6, 0.2, -44),
+    new THREE.Vector3(3.4, -0.2, -40),
     -0.18
   );
 
@@ -323,7 +385,7 @@ function build3DStoryTypography() {
     '02 // THE FIRST LENS · 35MM',
     'ОЛІМПУС ТА КРИМ',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
-    new THREE.Vector3(-3.8, -0.2, -66),
+    new THREE.Vector3(-3.5, -0.4, -62),
     0.18
   );
 
@@ -332,7 +394,7 @@ function build3DStoryTypography() {
     '03 // DIGITAL DAWN · CANON EOS',
     'ПОШУК ВЛАСНОГО ПОЧЕРКУ',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
-    new THREE.Vector3(3.4, 0.5, -88),
+    new THREE.Vector3(3.2, 0.2, -84),
     -0.15
   );
 
@@ -341,7 +403,7 @@ function build3DStoryTypography() {
     'EPILOGUE // THE PORTAL',
     'ЗАКЛИНАННЯ МИТІ',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
-    new THREE.Vector3(0, 1.6, -104),
+    new THREE.Vector3(0, 1.2, -102),
     0
   );
 }
@@ -377,7 +439,7 @@ function updateHUD(index) {
   });
 }
 
-// ── RENDER & ANIMATION LOOP ──────────────────────────────────
+// ── RENDER & ANIMATION LOOP WITH CAPSULE COLLISION ───────────
 function animate() {
   requestAnimationFrame(animate);
   const time = clock.getElapsedTime();
@@ -385,19 +447,38 @@ function animate() {
   scrollVelocity *= 0.9;
   scrollProgress += (targetScrollProgress - scrollProgress) * 0.06;
 
-  // Move camera along spline smoothly
+  // Move camera along spline with Capsule & Octree collision sliding
   if (cameraCurve) {
     const p = Math.max(0.001, Math.min(0.999, scrollProgress));
     const camPos = cameraCurve.getPointAt(p);
     
-    // Subtle Mouse Parallax offset
+    // Mouse Parallax offset
     const targetX = (mouseX / window.innerWidth) * 2 - 1;
     const targetY = -(mouseY / window.innerHeight) * 2 + 1;
     
-    camera.position.set(
+    const desiredPos = new THREE.Vector3(
       camPos.x + targetX * 0.35,
       camPos.y + targetY * 0.25,
       camPos.z
+    );
+
+    // Update capsule position
+    playerCapsule.start.set(desiredPos.x, desiredPos.y - 0.4, desiredPos.z);
+    playerCapsule.end.set(desiredPos.x, desiredPos.y + 0.4, desiredPos.z);
+
+    // Check collision against low-poly bounds
+    if (worldOctree) {
+      const hit = worldOctree.capsuleIntersect(playerCapsule);
+      if (hit) {
+        playerCapsule.translate(hit.normal.multiplyScalar(hit.depth));
+      }
+    }
+
+    // Set camera to capsule center
+    camera.position.set(
+      (playerCapsule.start.x + playerCapsule.end.x) * 0.5,
+      (playerCapsule.start.y + playerCapsule.end.y) * 0.5,
+      playerCapsule.start.z
     );
 
     const lookAheadP = Math.min(0.999, p + 0.04);
@@ -416,7 +497,7 @@ function animate() {
   // Floating text planes gentle wave
   for (let i = 0; i < textPlanes.length; i++) {
     const p = textPlanes[i];
-    p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.1;
+    p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.08;
   }
 
   // Portal gentle rotation
