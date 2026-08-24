@@ -11,7 +11,6 @@ let scrollVelocity = 0.0;
 let lastScrollY = 0;
 
 let cameraCurve;
-let cameraGroup;
 
 let cloudsContainer;
 let portalMesh;
@@ -25,7 +24,7 @@ const hudActLabel = document.getElementById('hud-act-label');
 const stepDots = document.querySelectorAll('.step-dot');
 
 const sectionMeta = [
-  { title: 'PROLOGUE // THE THRESHOLD', timecode: 'FOLIO 01 / 05', act: 'ACT I // ROOTS' },
+  { title: 'PROLOGUE // THE CLOUDS GATE', timecode: 'FOLIO 01 / 05', act: 'ACT I // ROOTS' },
   { title: '01 // CHILDHOOD & CRAFT', timecode: 'FOLIO 02 / 05', act: 'ACT I // ROOTS' },
   { title: '02 // THE FIRST 35MM LENS', timecode: 'FOLIO 03 / 05', act: 'ACT I // ROOTS' },
   { title: '03 // THE DIGITAL DAWN', timecode: 'FOLIO 04 / 05', act: 'ACT I // ROOTS' },
@@ -46,14 +45,12 @@ function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
   
-  // Gentle warm atmospheric fog (never blacks out close geometry)
-  scene.fog = new THREE.FogExp2(0x0d0a08, 0.004);
+  // Warm atmospheric fog that does not black out geometry
+  scene.fog = new THREE.FogExp2(0x0d0a08, 0.0035);
 
-  cameraGroup = new THREE.Group();
-  scene.add(cameraGroup);
-
+  // Direct camera in scene to eliminate double-inversion bugs
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-  cameraGroup.add(camera);
+  scene.add(camera);
 
   // Performance-optimized WebGL Renderer
   renderer = new THREE.WebGLRenderer({
@@ -63,54 +60,53 @@ function initThree() {
     powerPreference: 'high-performance'
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  // Cap pixel ratio at 1.5 to prevent 4K GPU overdraw lag
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.4;
+  renderer.toneMappingExposure = 1.45;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Warm library & ethereal directional lighting
-  const ambientLight = new THREE.AmbientLight(0xffeedd, 2.0);
+  // Warm library & celestial directional lighting
+  const ambientLight = new THREE.AmbientLight(0xffeedd, 2.2);
   scene.add(ambientLight);
 
-  const mainLight = new THREE.DirectionalLight(0xffe2b8, 2.8);
-  mainLight.position.set(20, 35, 20);
+  const mainLight = new THREE.DirectionalLight(0xffe2b8, 3.0);
+  mainLight.position.set(25, 40, 20);
   scene.add(mainLight);
 
-  const fillLight = new THREE.DirectionalLight(0xa0b8d8, 1.5);
-  fillLight.position.set(-20, 15, -40);
+  const fillLight = new THREE.DirectionalLight(0xa0b8d8, 1.6);
+  fillLight.position.set(-25, 20, -50);
   scene.add(fillLight);
 
-  const warmHeroLight = new THREE.PointLight(0xffa347, 4.5, 100);
-  warmHeroLight.position.set(0, 2, -10);
-  scene.add(warmHeroLight);
+  const warmGateLight = new THREE.PointLight(0xffa347, 5.0, 120);
+  warmGateLight.position.set(0, 5, -5);
+  scene.add(warmGateLight);
 }
 
-// ── CAMERA SPLINE PATH (Starts directly in view of clouds) ────
+// ── CAMERA SPLINE PATH (Entering from outside into the clouds) ──
 function buildSplinePath() {
   cameraCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 0.5, 5),      // Beat 0: Initial view (immediate clouds & title)
-    new THREE.Vector3(1.2, 0.2, -18),  // Beat 1: First cloud gate
-    new THREE.Vector3(-1.8, -0.4, -42),// Beat 2: Cloud valley & grimoires
-    new THREE.Vector3(2.0, 0.3, -68),  // Beat 3: Memory archives
-    new THREE.Vector3(-0.8, 0.5, -92), // Beat 4: Approaching the Portal
-    new THREE.Vector3(0, 0, -108)      // Beat 5: Inside the Portal
+    new THREE.Vector3(0, 1.0, 12),      // Beat 0: In front of the Grand Cloud Gate
+    new THREE.Vector3(1.0, 0.5, -12),   // Beat 1: Flying inside the first cloud canyon
+    new THREE.Vector3(-1.8, -0.2, -38), // Beat 2: Weaving past the sailing ship & grimoires
+    new THREE.Vector3(2.2, 0.4, -65),   // Beat 3: Deep into the starry cloud archives
+    new THREE.Vector3(-0.8, 0.6, -90),  // Beat 4: Approaching the mystical Portal
+    new THREE.Vector3(0, 0, -108)       // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
-  // Position camera at start point immediately
+  // Set initial position
   const startPos = cameraCurve.getPointAt(0.001);
   const lookPos = cameraCurve.getPointAt(0.04);
-  cameraGroup.position.copy(startPos);
-  cameraGroup.lookAt(lookPos);
+  camera.position.copy(startPos);
+  camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS (Optimized 1K Cloud Model) ────────────────
+// ── LOAD 3D ASSETS WITH 180° ENTRANCE ALIGNMENT ──────────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
-  // 1. Clouds Model (Using fast 1K version)
+  // 1. 1K Clouds Model (Fast, Lightweight, High FPS)
   loader.load(
     '/assets/models/%D0%9E%D0%91%D0%9B%D0%90%D0%9A%D0%90%201%D0%9A.glb',
     (gltf) => {
@@ -129,13 +125,15 @@ function loadAssets() {
       cloudsContainer.add(model);
 
       const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = 140 / (maxDim || 1);
+      const scale = 145 / (maxDim || 1);
       cloudsContainer.scale.setScalar(scale);
       
-      // Positioned right along the spline corridor
-      cloudsContainer.position.set(0, -3, -50);
+      // ROTATE 180° so the grand archway is at the START of our flight path!
+      // This means we ENTER the clouds going in, passing the ship, into the depths.
+      cloudsContainer.rotation.y = Math.PI;
+      cloudsContainer.position.set(0, -3.5, -48);
 
-      // Fast single-sided rendering for high FPS
+      // Single-sided front/back rendering for smooth 60 FPS
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = true;
@@ -143,7 +141,7 @@ function loadAssets() {
             child.material.side = THREE.BackSide;
             child.material.depthWrite = false;
             child.material.transparent = true;
-            child.material.opacity = 0.7;
+            child.material.opacity = 0.75;
           } else {
             child.material.side = THREE.FrontSide;
             child.material.transparent = true;
@@ -159,7 +157,7 @@ function loadAssets() {
     (err) => { console.warn('1K Clouds model note:', err); }
   );
 
-  // 2. Glowing Portal at Z = -106
+  // 2. Destination Portal at Z = -106
   loader.load(
     '/assets/models/%D0%BF%D0%BE%D1%80%D1%82%D0%B0%D0%BB2.glb',
     (gltf) => {
@@ -196,11 +194,11 @@ function loadAssets() {
     '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
     (gltf) => {
       const positions = [
-        new THREE.Vector3(3.2, 1.2, -8),
-        new THREE.Vector3(-3.8, -0.8, -28),
-        new THREE.Vector3(3.5, 0.6, -52),
-        new THREE.Vector3(-3.2, 1.2, -78),
-        new THREE.Vector3(2.8, -0.5, -96)
+        new THREE.Vector3(3.5, 1.5, 0),
+        new THREE.Vector3(-3.8, -0.6, -22),
+        new THREE.Vector3(3.6, 0.8, -48),
+        new THREE.Vector3(-3.4, 1.4, -75),
+        new THREE.Vector3(2.6, -0.4, -94)
       ];
 
       positions.forEach((pos, idx) => {
@@ -224,8 +222,8 @@ function loadAssets() {
   );
 }
 
-// ── 3D FLOATING STORY TYPOGRAPHY ─────────────────────────────
-function create3DTextCard(badge, title, subtitle, pos, rotY) {
+// ── 3D STORY TYPOGRAPHY (Proper Non-Mirrored Orientation) ─────
+function create3DTextCard(badge, title, subtitle, pos, rotY = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 512;
@@ -233,15 +231,15 @@ function create3DTextCard(badge, title, subtitle, pos, rotY) {
 
   ctx.clearRect(0, 0, 1024, 512);
 
-  // Soft manuscript glow background
+  // Soft parchment glow vignette background
   const grad = ctx.createRadialGradient(512, 256, 10, 512, 256, 440);
-  grad.addColorStop(0, 'rgba(28, 19, 12, 0.72)');
-  grad.addColorStop(0.75, 'rgba(13, 10, 8, 0.38)');
+  grad.addColorStop(0, 'rgba(28, 19, 12, 0.75)');
+  grad.addColorStop(0.75, 'rgba(13, 10, 8, 0.40)');
   grad.addColorStop(1, 'rgba(13, 10, 8, 0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 1024, 512);
 
-  // 1. Badge (Small caps golden serif)
+  // 1. Badge
   if (badge) {
     ctx.font = '600 24px "Space Mono", monospace';
     ctx.fillStyle = 'rgba(216, 184, 136, 0.9)';
@@ -250,7 +248,7 @@ function create3DTextCard(badge, title, subtitle, pos, rotY) {
     ctx.fillText(badge.toUpperCase(), 512, 105);
   }
 
-  // 2. Title (Prominent Editorial Serif)
+  // 2. Title
   ctx.font = '700 48px "Cinzel", "Playfair Display", Georgia, serif';
   ctx.fillStyle = '#fce2b8';
   ctx.textAlign = 'center';
@@ -297,6 +295,8 @@ function create3DTextCard(badge, title, subtitle, pos, rotY) {
 
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 4.25), mat);
   plane.position.copy(pos);
+  
+  // Look directly towards +Z (where camera comes from) to guarantee text is NEVER mirrored
   plane.rotation.y = rotY;
   plane.userData.baseY = pos.y;
   scene.add(plane);
@@ -305,12 +305,12 @@ function create3DTextCard(badge, title, subtitle, pos, rotY) {
 }
 
 function build3DStoryTypography() {
-  // Act 0: Initial Screen (Z = -6, immediately visible on load!)
+  // Act 0: Initial Screen (Z = 0, immediately visible at the entrance!)
   create3DTextCard(
     'DEUSFLOW ARCHIVES · FOLIO 00',
     'ОЛЕГ РО',
     'Ніч у чарівній бібліотеці: історія про те, як дитяча допитливість перетворюється на ремесло.',
-    new THREE.Vector3(0, 0.8, -6),
+    new THREE.Vector3(0, 1.2, 0),
     0
   );
 
@@ -319,8 +319,8 @@ function build3DStoryTypography() {
     '01 // CRAFT & EMBROIDERY',
     'ДИТЯЧА ДОПИТЛИВІСТЬ',
     'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
-    new THREE.Vector3(3.8, 0.2, -26),
-    -0.22
+    new THREE.Vector3(3.8, 0.4, -20),
+    -0.18
   );
 
   // Act 2: The First Lens
@@ -328,8 +328,8 @@ function build3DStoryTypography() {
     '02 // THE FIRST LENS · 35MM',
     'ОЛІМПУС ТА КРИМ',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
-    new THREE.Vector3(-4.0, -0.3, -50),
-    0.20
+    new THREE.Vector3(-4.0, -0.1, -44),
+    0.18
   );
 
   // Act 3: Digital Dawn
@@ -337,8 +337,8 @@ function build3DStoryTypography() {
     '03 // DIGITAL DAWN · CANON EOS',
     'ПОШУК ВЛАСНОГО ПОЧЕРКУ',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
-    new THREE.Vector3(3.6, 0.5, -76),
-    -0.18
+    new THREE.Vector3(3.6, 0.6, -72),
+    -0.15
   );
 
   // Epilogue: The Portal
@@ -346,7 +346,7 @@ function build3DStoryTypography() {
     'EPILOGUE // THE PORTAL',
     'ЗАКЛИНАННЯ МИТІ',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
-    new THREE.Vector3(0, 1.8, -98),
+    new THREE.Vector3(0, 1.8, -96),
     0
   );
 }
@@ -394,20 +394,23 @@ function animate() {
   if (cameraCurve) {
     const p = Math.max(0.001, Math.min(0.999, scrollProgress));
     const camPos = cameraCurve.getPointAt(p);
-    cameraGroup.position.copy(camPos);
+    
+    // Mouse Parallax offset
+    const targetX = (mouseX / window.innerWidth) * 2 - 1;
+    const targetY = -(mouseY / window.innerHeight) * 2 + 1;
+    
+    camera.position.set(
+      camPos.x + targetX * 0.35,
+      camPos.y + targetY * 0.25,
+      camPos.z
+    );
 
-    const lookAheadP = Math.min(0.999, p + 0.035);
+    const lookAheadP = Math.min(0.999, p + 0.04);
     const lookAtPos = cameraCurve.getPointAt(lookAheadP);
-    cameraGroup.lookAt(lookAtPos);
+    camera.lookAt(lookAtPos);
   }
 
-  // Mouse Parallax
-  const targetX = (mouseX / window.innerWidth) * 2 - 1;
-  const targetY = -(mouseY / window.innerHeight) * 2 + 1;
-  camera.position.x += (targetX * 0.3 - camera.position.x) * 0.05;
-  camera.position.y += (targetY * 0.25 - camera.position.y) * 0.05;
-
-  // Gentle floating for books
+  // Floating books gentle hover
   for (let i = 0; i < floatingBooks.length; i++) {
     const b = floatingBooks[i];
     b.rotation.x += b.userData.rotSpeedX;
@@ -415,7 +418,7 @@ function animate() {
     b.position.y = b.userData.baseY + Math.sin(time * b.userData.floatSpeed + b.userData.offset) * 0.2;
   }
 
-  // Gentle floating for text cards
+  // Floating text planes gentle wave
   for (let i = 0; i < textPlanes.length; i++) {
     const p = textPlanes[i];
     p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.1;
