@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Text } from 'troika-three-text';
 
 let scene, camera, renderer;
 let clock = new THREE.Clock();
@@ -16,6 +15,7 @@ let cameraGroup;
 
 let books = [];
 let portal;
+let cloudsObject;
 
 // DOM Elements
 const hudSceneTitle = document.getElementById('hud-scene-title');
@@ -31,10 +31,10 @@ const sectionMeta = [
   { title: 'EPILOGUE // THE PORTAL', timecode: 'FOLIO 05 / 05', act: 'ACT I // ROOTS' }
 ];
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   initThree();
   buildSplinePath();
-  await loadAssets();
+  loadAssets();
   buildMiseEnScene();
   initScrollTrigger();
   initMouseListener();
@@ -49,7 +49,7 @@ function initThree() {
   cameraGroup = new THREE.Group();
   scene.add(cameraGroup);
 
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 250);
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 300);
   cameraGroup.add(camera);
 
   renderer = new THREE.WebGLRenderer({
@@ -60,24 +60,30 @@ function initThree() {
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
   window.addEventListener('resize', onWindowResize);
 
   // Lighting
-  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-  var dirLight = new THREE.DirectionalLight(0xffddaa, 1.5);
-  dirLight.position.set(10, 20, 10);
+  scene.add(new THREE.AmbientLight(0xffeedd, 1.2));
+  const dirLight = new THREE.DirectionalLight(0xffd59e, 2.0);
+  dirLight.position.set(15, 30, 20);
   scene.add(dirLight);
+
+  const warmPoint = new THREE.PointLight(0xffa347, 3.0, 60);
+  warmPoint.position.set(0, 5, -30);
+  scene.add(warmPoint);
 }
 
 // ── SPLINE PATH ──────────────────────────────────────────────
 function buildSplinePath() {
   cameraCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 0, 10),
-    new THREE.Vector3(2, 2, -10),
-    new THREE.Vector3(-2, 1, -30),
-    new THREE.Vector3(3, -1, -50),
-    new THREE.Vector3(-2, 2, -70),
-    new THREE.Vector3(0, 0, -90),
+    new THREE.Vector3(2, 1.5, -15),
+    new THREE.Vector3(-2.5, 0.5, -35),
+    new THREE.Vector3(3, -0.5, -55),
+    new THREE.Vector3(-1.5, 1.5, -75),
+    new THREE.Vector3(0, 0, -92),
     new THREE.Vector3(0, 0, -100)
   ]);
   cameraCurve.tension = 0.5;
@@ -85,138 +91,143 @@ function buildSplinePath() {
 
 // ── LOAD GLTF ASSETS ─────────────────────────────────────────
 function loadAssets() {
-  var loader = new GLTFLoader();
+  const loader = new GLTFLoader();
 
-  return new Promise(function (resolve) {
-    var loadedCount = 0;
-    var totalAssets = 4;
+  // 1. Clouds
+  loader.load(
+    '/assets/models/%D0%BE%D0%B1%D0%BB%D0%B0%D0%BA%D0%B0%20%D1%81%20%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B0%D1%87%D0%B8%D0%BD%D0%B0%D0%B5%D0%BC.glb',
+    (gltf) => {
+      cloudsObject = gltf.scene;
+      cloudsObject.position.set(0, -6, -45);
+      cloudsObject.scale.setScalar(6.0);
+      scene.add(cloudsObject);
+    },
+    undefined,
+    (err) => { console.warn('Clouds model note:', err); }
+  );
 
-    function checkComplete() {
-      loadedCount++;
-      if (loadedCount >= totalAssets) resolve();
-    }
+  // 2. Portal
+  loader.load(
+    '/assets/models/%D0%BF%D0%BE%D1%80%D1%82%D0%B0%D0%BB2.glb',
+    (gltf) => {
+      portal = gltf.scene;
+      portal.position.set(0, -1, -95);
+      portal.scale.setScalar(2.5);
+      scene.add(portal);
+    },
+    undefined,
+    (err) => { console.warn('Portal model note:', err); }
+  );
 
-    // 1. Clouds
-    loader.load(
-      '/assets/models/%D0%BE%D0%B1%D0%BB%D0%B0%D0%BA%D0%B0%20%D1%81%20%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B0%D1%87%D0%B8%D0%BD%D0%B0%D0%B5%D0%BC.glb',
-      function (gltf) {
-        var clouds = gltf.scene;
-        clouds.position.set(0, -5, -40);
-        clouds.scale.setScalar(5.0);
-        scene.add(clouds);
-        checkComplete();
-      },
-      undefined,
-      function () { console.warn('Failed to load clouds'); checkComplete(); }
-    );
+  // 3. Book 1
+  loader.load(
+    '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
+    (gltf) => {
+      for (let i = 0; i < 6; i++) {
+        const b = gltf.scene.clone();
+        b.position.set(
+          (Math.random() - 0.5) * 18,
+          (Math.random() - 0.5) * 8,
+          -15 - Math.random() * 60
+        );
+        b.rotation.set(
+          Math.random() * Math.PI,
+          Math.random() * Math.PI,
+          Math.random() * Math.PI
+        );
+        b.scale.setScalar(2.5);
+        b.userData = {
+          rotSpeedX: (Math.random() - 0.5) * 0.015,
+          rotSpeedY: (Math.random() - 0.5) * 0.015,
+          baseY: b.position.y,
+          floatSpeed: Math.random() * 1.5 + 0.8,
+          offset: Math.random() * 10
+        };
+        scene.add(b);
+        books.push(b);
+      }
+    },
+    undefined,
+    (err) => { console.warn('Book 1 model note:', err); }
+  );
 
-    // 2. Portal
-    loader.load(
-      '/assets/models/%D0%BF%D0%BE%D1%80%D1%82%D0%B0%D0%BB2.glb',
-      function (gltf) {
-        portal = gltf.scene;
-        portal.position.set(0, -2, -95);
-        portal.scale.setScalar(2.0);
-        scene.add(portal);
-        checkComplete();
-      },
-      undefined,
-      function () { console.warn('Failed to load portal'); checkComplete(); }
-    );
+  // 4. Book 2
+  loader.load(
+    '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B02.glb',
+    (gltf) => {
+      for (let i = 0; i < 6; i++) {
+        const b = gltf.scene.clone();
+        b.position.set(
+          (Math.random() - 0.5) * 18,
+          (Math.random() - 0.5) * 8,
+          -15 - Math.random() * 60
+        );
+        b.rotation.set(
+          Math.random() * Math.PI,
+          Math.random() * Math.PI,
+          Math.random() * Math.PI
+        );
+        b.scale.setScalar(2.2);
+        b.userData = {
+          rotSpeedX: (Math.random() - 0.5) * 0.015,
+          rotSpeedY: (Math.random() - 0.5) * 0.015,
+          baseY: b.position.y,
+          floatSpeed: Math.random() * 1.5 + 0.8,
+          offset: Math.random() * 10
+        };
+        scene.add(b);
+        books.push(b);
+      }
+    },
+    undefined,
+    (err) => { console.warn('Book 2 model note:', err); }
+  );
+}
 
-    // 3. Book 1
-    loader.load(
-      '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
-      function (gltf) {
-        for (var i = 0; i < 5; i++) {
-          var b = gltf.scene.clone();
-          b.position.set(
-            (Math.random() - 0.5) * 20,
-            (Math.random() - 0.5) * 10,
-            -20 - Math.random() * 50
-          );
-          b.rotation.set(
-            Math.random() * Math.PI,
-            Math.random() * Math.PI,
-            Math.random() * Math.PI
-          );
-          b.scale.setScalar(2.0);
-          b.userData = {
-            rotSpeedX: (Math.random() - 0.5) * 0.02,
-            rotSpeedY: (Math.random() - 0.5) * 0.02,
-            baseY: b.position.y,
-            floatSpeed: Math.random() * 2 + 1,
-            offset: Math.random() * 10
-          };
-          scene.add(b);
-          books.push(b);
-        }
-        checkComplete();
-      },
-      undefined,
-      function () { console.warn('Failed to load book 1'); checkComplete(); }
-    );
+// ── NATIVE CANVAS 3D TEXT (Zero External Dependencies) ───────
+function createFloatingText(str, pos, rotY, fontSize = 60, color = '#fce2b8') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 1024, 256);
+  ctx.font = `700 ${fontSize}px "Cinzel", "Playfair Display", Georgia, serif`;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(216, 184, 136, 0.7)';
+  ctx.shadowBlur = 18;
+  ctx.fillText(str, 512, 128);
 
-    // 4. Book 2
-    loader.load(
-      '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B02.glb',
-      function (gltf) {
-        for (var i = 0; i < 5; i++) {
-          var b = gltf.scene.clone();
-          b.position.set(
-            (Math.random() - 0.5) * 20,
-            (Math.random() - 0.5) * 10,
-            -20 - Math.random() * 50
-          );
-          b.rotation.set(
-            Math.random() * Math.PI,
-            Math.random() * Math.PI,
-            Math.random() * Math.PI
-          );
-          b.scale.setScalar(2.0);
-          b.userData = {
-            rotSpeedX: (Math.random() - 0.5) * 0.02,
-            rotSpeedY: (Math.random() - 0.5) * 0.02,
-            baseY: b.position.y,
-            floatSpeed: Math.random() * 2 + 1,
-            offset: Math.random() * 10
-          };
-          scene.add(b);
-          books.push(b);
-        }
-        checkComplete();
-      },
-      undefined,
-      function () { console.warn('Failed to load book 2'); checkComplete(); }
-    );
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+
+  const mat = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false
   });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(8, 2), mat);
+  plane.position.copy(pos);
+  plane.rotation.y = rotY;
+  scene.add(plane);
+  return plane;
 }
 
 // ── MISE EN SCÈNE ────────────────────────────────────────────
 function buildMiseEnScene() {
-  // Floating 3D Text
-  function createFloatingText(str, pos, rotY) {
-    var txt = new Text();
-    txt.text = str;
-    txt.fontSize = 1.5;
-    txt.font = 'https://fonts.gstatic.com/s/cinzel/v19/8vIJ7qcw3PEtcqCGzCwjI7Lg_xY.woff2';
-    txt.position.copy(pos);
-    txt.rotation.y = rotY;
-    txt.color = 0xffffff;
-    txt.anchorX = 'center';
-    txt.anchorY = 'middle';
-    scene.add(txt);
-    txt.sync();
-  }
+  createFloatingText('THE BEGINNING', new THREE.Vector3(4, 2, -15), -0.25, 62, '#fce2b8');
+  createFloatingText('MOMENTS DRIFT', new THREE.Vector3(-4.5, 1, -38), 0.25, 58, '#e8dcc0');
+  createFloatingText('THE ARCHIVE', new THREE.Vector3(3.5, 0, -62), -0.2, 58, '#fce2b8');
+  createFloatingText('THE PORTAL', new THREE.Vector3(0, 3.5, -88), 0, 64, '#ffd9a0');
 
-  createFloatingText('THE BEGINNING', new THREE.Vector3(5, 2, -15), -0.3);
-  createFloatingText('MOMENTS DRIFT', new THREE.Vector3(-5, 1, -35), 0.3);
-  createFloatingText('THE ARCHIVE', new THREE.Vector3(4, 0, -60), -0.2);
+  // Photo Planes
+  const planeGeo = new THREE.PlaneGeometry(6, 4);
 
-  // Photo Planes with chromatic aberration shader
-  var planeGeo = new THREE.PlaneGeometry(6, 4);
-
-  var photoVertexShader = [
+  const photoVertexShader = [
     'uniform float uTime;',
     'uniform float uVelocity;',
     'varying vec2 vUv;',
@@ -228,7 +239,7 @@ function buildMiseEnScene() {
     '}'
   ].join('\n');
 
-  var photoFragmentShader = [
+  const photoFragmentShader = [
     'uniform sampler2D tMap;',
     'uniform float uVelocity;',
     'varying vec2 vUv;',
@@ -242,8 +253,8 @@ function buildMiseEnScene() {
   ].join('\n');
 
   function createPhotoPlane(url, pos, rot) {
-    var tex = new THREE.TextureLoader().load(url);
-    var mat = new THREE.ShaderMaterial({
+    const tex = new THREE.TextureLoader().load(url);
+    const mat = new THREE.ShaderMaterial({
       vertexShader: photoVertexShader,
       fragmentShader: photoFragmentShader,
       uniforms: {
@@ -254,7 +265,7 @@ function buildMiseEnScene() {
       transparent: true,
       side: THREE.DoubleSide
     });
-    var mesh = new THREE.Mesh(planeGeo, mat);
+    const mesh = new THREE.Mesh(planeGeo, mat);
     mesh.position.copy(pos);
     mesh.rotation.copy(rot);
     mesh.userData.isPhoto = true;
@@ -262,13 +273,13 @@ function buildMiseEnScene() {
     scene.add(mesh);
   }
 
-  createPhotoPlane('/assets/textures/unsplash_film.jpg', new THREE.Vector3(4, 3, -25), new THREE.Euler(0, -0.3, 0));
-  createPhotoPlane('/assets/textures/unsplash_silhouette.jpg', new THREE.Vector3(-4, 0, -45), new THREE.Euler(0, 0.3, 0));
-  createPhotoPlane('/assets/textures/unsplash_memory.jpg', new THREE.Vector3(3, 2, -65), new THREE.Euler(0, -0.2, 0));
+  createPhotoPlane('/assets/textures/unsplash_film.jpg', new THREE.Vector3(4, 2.5, -25), new THREE.Euler(0, -0.3, 0));
+  createPhotoPlane('/assets/textures/unsplash_silhouette.jpg', new THREE.Vector3(-4, 0.5, -48), new THREE.Euler(0, 0.3, 0));
+  createPhotoPlane('/assets/textures/unsplash_memory.jpg', new THREE.Vector3(3.5, 1.8, -68), new THREE.Euler(0, -0.2, 0));
   createPhotoPlane('/assets/textures/unsplash_frame.jpg', new THREE.Vector3(-3, 1, -85), new THREE.Euler(0, 0.2, 0));
 
-  // Hide DOM images
-  document.querySelectorAll('.webgl-sync').forEach(function (el) { el.style.opacity = '0'; });
+  // Hide static DOM images
+  document.querySelectorAll('.webgl-sync').forEach((el) => { el.style.opacity = '0'; });
 }
 
 // ── GSAP SCROLL ──────────────────────────────────────────────
@@ -277,36 +288,36 @@ function initScrollTrigger() {
     trigger: document.body,
     start: 'top top',
     end: 'bottom bottom',
-    scrub: 1.5,
-    onUpdate: function (self) {
+    scrub: 1.2,
+    onUpdate: (self) => {
       targetScrollProgress = self.progress;
     }
   });
 
-  window.addEventListener('scroll', function () {
-    var currentY = window.scrollY;
+  window.addEventListener('scroll', () => {
+    const currentY = window.scrollY;
     scrollVelocity = currentY - lastScrollY;
     lastScrollY = currentY;
   });
 
-  var sections = document.querySelectorAll('.story-section');
-  sections.forEach(function (sec, idx) {
+  const sections = document.querySelectorAll('.story-section');
+  sections.forEach((sec, idx) => {
     ScrollTrigger.create({
       trigger: sec,
       start: 'top 50%',
       end: 'bottom 50%',
-      onEnter: function () { updateHUD(idx); },
-      onEnterBack: function () { updateHUD(idx); }
+      onEnter: () => { updateHUD(idx); },
+      onEnterBack: () => { updateHUD(idx); }
     });
   });
 }
 
 function updateHUD(index) {
-  var meta = sectionMeta[index] || sectionMeta[0];
-  hudSceneTitle.innerText = meta.title;
-  hudTimecode.innerText = meta.timecode;
-  hudActLabel.innerText = meta.act;
-  stepDots.forEach(function (dot, i) {
+  const meta = sectionMeta[index] || sectionMeta[0];
+  if (hudSceneTitle) hudSceneTitle.innerText = meta.title;
+  if (hudTimecode) hudTimecode.innerText = meta.timecode;
+  if (hudActLabel) hudActLabel.innerText = meta.act;
+  stepDots.forEach((dot, i) => {
     dot.classList.toggle('active', i === index);
   });
 }
@@ -314,39 +325,39 @@ function updateHUD(index) {
 // ── ANIMATION LOOP ───────────────────────────────────────────
 function animate() {
   requestAnimationFrame(animate);
-  var time = clock.getElapsedTime();
+  const time = clock.getElapsedTime();
 
   scrollVelocity *= 0.9;
-  scrollProgress += (targetScrollProgress - scrollProgress) * 0.05;
+  scrollProgress += (targetScrollProgress - scrollProgress) * 0.06;
 
   // Camera along spline
   if (cameraCurve) {
-    var p = Math.max(0.001, Math.min(0.999, scrollProgress));
-    var camPos = cameraCurve.getPointAt(p);
+    const p = Math.max(0.001, Math.min(0.999, scrollProgress));
+    const camPos = cameraCurve.getPointAt(p);
     cameraGroup.position.copy(camPos);
 
-    var lookAheadP = Math.min(0.999, p + 0.03);
-    var lookAtPos = cameraCurve.getPointAt(lookAheadP);
+    const lookAheadP = Math.min(0.999, p + 0.035);
+    const lookAtPos = cameraCurve.getPointAt(lookAheadP);
     cameraGroup.lookAt(lookAtPos);
   }
 
   // Mouse parallax
-  var targetX = (mouseX / window.innerWidth) * 2 - 1;
-  var targetY = -(mouseY / window.innerHeight) * 2 + 1;
-  camera.position.x += (targetX * 0.3 - camera.position.x) * 0.05;
-  camera.position.y += (targetY * 0.3 - camera.position.y) * 0.05;
+  const targetX = (mouseX / window.innerWidth) * 2 - 1;
+  const targetY = -(mouseY / window.innerHeight) * 2 + 1;
+  camera.position.x += (targetX * 0.4 - camera.position.x) * 0.05;
+  camera.position.y += (targetY * 0.4 - camera.position.y) * 0.05;
 
-  // Floating books
-  for (var i = 0; i < books.length; i++) {
-    var b = books[i];
+  // Animate floating books
+  for (let i = 0; i < books.length; i++) {
+    const b = books[i];
     b.rotation.x += b.userData.rotSpeedX;
     b.rotation.y += b.userData.rotSpeedY;
-    b.position.y = b.userData.baseY + Math.sin(time * b.userData.floatSpeed + b.userData.offset) * 0.5;
+    b.position.y = b.userData.baseY + Math.sin(time * b.userData.floatSpeed + b.userData.offset) * 0.4;
   }
 
   // Photos
-  scene.traverse(function (child) {
-    if (child.userData.isPhoto && child.material && child.material.uniforms) {
+  scene.traverse((child) => {
+    if (child.userData && child.userData.isPhoto && child.material && child.material.uniforms) {
       child.material.uniforms.uTime.value = time;
       child.material.uniforms.uVelocity.value = THREE.MathUtils.lerp(
         child.material.uniforms.uVelocity.value,
@@ -357,9 +368,15 @@ function animate() {
     }
   });
 
+  // Clouds slow ambient movement
+  if (cloudsObject) {
+    cloudsObject.rotation.y = time * 0.015;
+  }
+
   // Portal rotation
   if (portal) {
-    portal.rotation.y = time * 0.1;
+    portal.rotation.z = time * 0.15;
+    portal.rotation.y = Math.sin(time * 0.3) * 0.1;
   }
 
   renderer.render(scene, camera);
@@ -372,7 +389,7 @@ function onWindowResize() {
 }
 
 function initMouseListener() {
-  window.addEventListener('mousemove', function (e) {
+  window.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
   });
