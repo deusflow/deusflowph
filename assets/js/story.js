@@ -39,7 +39,7 @@ const sectionMeta = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Wait for Google Fonts to be ready so canvas draws with the handwritten font
+  // Wait for Google Fonts to be ready so canvas renders with handwritten fonts
   document.fonts.ready.then(() => {
     initThree();
     initCollisionSystem();
@@ -59,7 +59,7 @@ function initThree() {
   // Soft atmospheric fog
   scene.fog = new THREE.FogExp2(0x0d0a08, 0.0035);
 
-  // Near 0.05, Far 220 (optimal 4400:1 ratio, completely eliminates z-fighting)
+  // Near 0.05, Far 220 (optimal 4400:1 ratio)
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 220);
   scene.add(camera);
 
@@ -73,23 +73,23 @@ function initThree() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.45;
+  renderer.toneMappingExposure = 1.35;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Warm library & celestial directional lighting (balanced for ACES tone mapping)
-  const ambientLight = new THREE.AmbientLight(0xffeedd, 1.4);
+  // Warm atmospheric directional and ambient lighting
+  const ambientLight = new THREE.AmbientLight(0xffeedd, 1.5);
   scene.add(ambientLight);
 
   const mainLight = new THREE.DirectionalLight(0xffe2b8, 2.2);
   mainLight.position.set(25, 40, 20);
   scene.add(mainLight);
 
-  const fillLight = new THREE.DirectionalLight(0xa0b8d8, 1.2);
+  const fillLight = new THREE.DirectionalLight(0x8fa8c8, 1.4);
   fillLight.position.set(-25, 20, -50);
   scene.add(fillLight);
 
-  const warmGateLight = new THREE.PointLight(0xffa347, 2.2, 80);
+  const warmGateLight = new THREE.PointLight(0xffa347, 2.5, 80);
   warmGateLight.position.set(0, 0, -25);
   scene.add(warmGateLight);
 }
@@ -134,15 +134,16 @@ function initCollisionSystem() {
   worldOctree.fromGraphNode(collisionGroup);
 }
 
-// ── CAMERA SPLINE PATH (Deep inside the cloud canyon) ─────────
+// ── CAMERA SPLINE PATH (Cinematic flyby around ship) ──────────
 function buildSplinePath() {
+  // Graceful flight path that swoops past the ship on the starboard side
   cameraCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, -0.5, -12),     // Beat 0: Inside the first chamber
-    new THREE.Vector3(1.0, -0.2, -32),   // Beat 1: Weaving through the cloud archway
-    new THREE.Vector3(-1.4, -0.6, -54),  // Beat 2: Gliding alongside the flying ship
-    new THREE.Vector3(1.6, -0.3, -76),   // Beat 3: Starry cloud canyon
-    new THREE.Vector3(-0.5, 0.0, -96),   // Beat 4: Approaching the mystical Portal
-    new THREE.Vector3(0, 0, -112)        // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0, 0.2, -12),     // Beat 0: Inside the first cloud chamber
+    new THREE.Vector3(2.4, 0.5, -30),   // Beat 1: Approaching the ship canyon
+    new THREE.Vector3(3.8, 0.8, -48),   // Beat 2: Gliding alongside the ship (avoids mast collision!)
+    new THREE.Vector3(0.6, 0.3, -68),   // Beat 3: Swooping past the bow into the cloud depths
+    new THREE.Vector3(-1.2, 0.2, -88),  // Beat 4: Approaching the mystical Portal
+    new THREE.Vector3(0, 0, -112)       // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
@@ -152,7 +153,7 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS WITH ACCURATE CLOUDS CENTERING ────────────
+// ── LOAD 3D ASSETS WITH MATERIAL REFINEMENT ───────────────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
@@ -162,7 +163,7 @@ function loadAssets() {
     (gltf) => {
       const model = gltf.scene;
       
-      // Calculate bounding box strictly on clouds and ship (exclude Sky sphere)
+      // Calculate bounding box strictly on clouds and ship
       const box = new THREE.Box3();
       model.traverse((child) => {
         if (child.isMesh && (!child.name || !child.name.includes('Sky'))) {
@@ -188,20 +189,41 @@ function loadAssets() {
       cloudsContainer.rotation.y = Math.PI;
       cloudsContainer.position.set(0, 0, -45);
 
+      // Deep Material Optimization: Eliminates self-illuminating white lines
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = true;
+          
           if (child.name && child.name.includes('Sky')) {
+            // Sky Dome: soft background hemisphere
             child.material.side = THREE.BackSide;
             child.material.depthWrite = false;
             child.material.transparent = true;
             child.material.opacity = 0.75;
+          } else if (child.name && child.name.includes('Boot')) {
+            // Flying Ship: preserve wood and sail textures with rich standard shading
+            const tex = child.material.emissiveMap || child.material.map;
+            child.material = new THREE.MeshStandardMaterial({
+              map: tex,
+              roughness: 0.7,
+              metalness: 0.05,
+              side: THREE.FrontSide
+            });
           } else {
-            child.material.side = THREE.FrontSide;
-            child.material.transparent = false;
-            child.material.opacity = 1.0;
-            child.material.roughness = 0.6;
-            child.material.metalness = 0.0;
+            // Cloud Meshes (Cloud_Poly, Cloud_1, Cloud_2, Cloud_3):
+            // Replace blinding self-emitting white contour lines with soft physical cloud shading
+            const tex = child.material.emissiveMap || child.material.map;
+            child.material = new THREE.MeshStandardMaterial({
+              map: tex,
+              color: new THREE.Color(0xdce7f5), // Soft atmospheric cloud tone
+              roughness: 0.85,
+              metalness: 0.0,
+              emissive: new THREE.Color(0x141f30), // Deep blue-black ambient tone (NOT white)
+              emissiveIntensity: 0.35,
+              side: THREE.DoubleSide,
+              transparent: false,
+              depthWrite: true
+            });
           }
         }
       });
@@ -249,11 +271,11 @@ function loadAssets() {
     '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
     (gltf) => {
       const positions = [
-        new THREE.Vector3(2.8, 0.5, -18),
-        new THREE.Vector3(-3.2, -0.8, -38),
-        new THREE.Vector3(3.0, 0.4, -60),
-        new THREE.Vector3(-2.8, 0.8, -82),
-        new THREE.Vector3(2.2, -0.4, -100)
+        new THREE.Vector3(2.6, 0.8, -18),
+        new THREE.Vector3(-3.0, -0.4, -38),
+        new THREE.Vector3(2.8, 0.6, -60),
+        new THREE.Vector3(-2.6, 0.9, -82),
+        new THREE.Vector3(1.8, -0.2, -100)
       ];
 
       positions.forEach((pos, idx) => {
@@ -277,7 +299,7 @@ function loadAssets() {
   );
 }
 
-// ── 3D HANDWRITTEN STORY TYPOGRAPHY (Mr. Panda Style: 100% Transparent, No Boxes) ──
+// ── 3D HANDWRITTEN STORY TYPOGRAPHY (Pure Transparent, No Boxes) ─
 function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -293,13 +315,13 @@ function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
     ctx.fillStyle = '#d8b888';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
     ctx.shadowBlur = 10;
     ctx.fillText(badge.toUpperCase(), 512, 90);
   }
 
-  // 2. Main Title (Handwritten / Expressive Script)
-  ctx.font = '700 58px "Caveat", "Marck Script", "Cinzel", cursive';
+  // 2. Main Title (Handwritten Script)
+  ctx.font = '700 58px "Caveat", "Marck Script", cursive';
   ctx.fillStyle = '#fff4dc';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
@@ -313,7 +335,7 @@ function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
     ctx.fillStyle = '#e8dcc0';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
     ctx.shadowBlur = 12;
     
     const words = subtitle.split(' ');
@@ -370,17 +392,17 @@ function build3DStoryTypography() {
     '01 // CRAFT & EMBROIDERY',
     'Дитяча Допитливість',
     'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
-    new THREE.Vector3(3.4, -0.2, -40),
+    new THREE.Vector3(3.2, 0.2, -38),
     -0.18
   );
 
-  // Act 2: The First Lens
+  // Act 2: The First Lens (Starboard side near ship)
   createHandwritten3DText(
     '02 // THE FIRST LENS · 35MM',
     'Олімпус та Крим',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
-    new THREE.Vector3(-3.5, -0.4, -62),
-    0.18
+    new THREE.Vector3(4.0, 0.5, -56),
+    -0.15
   );
 
   // Act 3: Digital Dawn
@@ -388,8 +410,8 @@ function build3DStoryTypography() {
     '03 // DIGITAL DAWN · CANON EOS',
     'Пошук Власного Почерку',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
-    new THREE.Vector3(3.2, 0.2, -84),
-    -0.15
+    new THREE.Vector3(2.8, 0.2, -78),
+    -0.12
   );
 
   // Epilogue: The Portal
@@ -397,7 +419,7 @@ function build3DStoryTypography() {
     'EPILOGUE // THE PORTAL',
     'Заклинання Миті',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
-    new THREE.Vector3(0, 1.2, -102),
+    new THREE.Vector3(0, 1.2, -100),
     0
   );
 }
