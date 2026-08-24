@@ -73,17 +73,9 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Pure diffuse ambient lighting without harsh specular glare
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
+  // Pure diffuse ambient lighting without directional specular seams
+  const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
   scene.add(ambientLight);
-
-  const mainLight = new THREE.DirectionalLight(0xffeedd, 0.6);
-  mainLight.position.set(25, 40, 20);
-  scene.add(mainLight);
-
-  const fillLight = new THREE.DirectionalLight(0x90b0d8, 0.4);
-  fillLight.position.set(-25, 20, -50);
-  scene.add(fillLight);
 }
 
 // ── COLLISION & CAPSULE SYSTEM ────────────────────────────────
@@ -125,15 +117,16 @@ function initCollisionSystem() {
   worldOctree.fromGraphNode(collisionGroup);
 }
 
-// ── EXACT SKETCHFAB HERO FRAMING & SMOOTH FLIGHT PATH ─────────
+// ── CRUISE ALTITUDE CAMERA FLYTHROUGH PATH ────────────────────
 function buildSplinePath() {
+  // Camera stays in the central open airspace, floating gracefully above the cloud floor
   cameraCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 1.2, 9),       // Beat 0: Hero framed view of Ship and glowing cloud arch
-    new THREE.Vector3(1.4, 0.8, -12),   // Beat 1: Gliding smoothly forward into the archway
-    new THREE.Vector3(-1.6, 0.4, -34),  // Beat 2: Soaring above the cloud valley
-    new THREE.Vector3(1.2, 0.0, -56),   // Beat 3: Gliding along the canyon stream
-    new THREE.Vector3(-0.4, -0.2, -74), // Beat 4: Approaching the mystical Portal
-    new THREE.Vector3(0, 0, -84)        // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0, 1.6, 9),       // Beat 0: Hero framed view of Ship and glowing cloud arch
+    new THREE.Vector3(1.2, 1.4, -12),   // Beat 1: Soaring high above the cloud entrance
+    new THREE.Vector3(-1.2, 1.3, -34),  // Beat 2: High altitude cruise above the cloud sea
+    new THREE.Vector3(1.0, 1.2, -54),   // Beat 3: Gliding high towards the clearing
+    new THREE.Vector3(-0.2, 1.1, -70),  // Beat 4: Approaching the magical Portal
+    new THREE.Vector3(0, 1.0, -80)      // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
