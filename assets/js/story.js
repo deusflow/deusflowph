@@ -2,8 +2,12 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Octree } from 'three/addons/math/Octree.js';
 import { Capsule } from 'three/addons/math/Capsule.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-let scene, camera, renderer;
+let scene, camera, renderer, composer;
 let clock = new THREE.Clock();
 
 let mouseX = 0, mouseY = 0;
@@ -18,6 +22,11 @@ let cloudsContainer;
 let portalMesh;
 let floatingBooks = [];
 let textPlanes = [];
+
+// Volumetric Mist Puffs Blanket System
+let mistMesh;
+const MIST_COUNT = 85;
+const mistData = [];
 
 // Physics / Capsule Collision System
 let worldOctree;
@@ -44,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCollisionSystem();
     buildSplinePath();
     loadAssets();
+    initVolumetricMist();
     build3DStoryTypography();
     initScrollTrigger();
     initMouseListener();
@@ -55,11 +65,10 @@ function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
 
-  // Near 0.05, Far 250
   camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 250);
   scene.add(camera);
 
-  // High performance renderer with vibrant color mapping
+  // High performance renderer
   renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
@@ -71,11 +80,97 @@ function initThree() {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  window.addEventListener('resize', onWindowResize);
 
   // Pure diffuse ambient lighting without directional specular seams
   const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
   scene.add(ambientLight);
+
+  // Post-Processing: Cinematic Unreal Bloom Pass matching Sketchfab
+  composer = new EffectComposer(renderer);
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    0.42, // strength: soft luminous atmospheric glow
+    0.55, // radius: wide gentle light diffusion
+    0.82  // threshold: only bright glowing canyon opening & portal bloom
+  );
+  composer.addPass(bloomPass);
+
+  const outputPass = new OutputPass();
+  composer.addPass(outputPass);
+
+  window.addEventListener('resize', onWindowResize);
+}
+
+// ── PROCEDURAL VOLUMETRIC MIST PUFFS (Fluffy Blanket) ─────────
+function createCloudPuffTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+
+  const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  grad.addColorStop(0.0, 'rgba(255, 248, 240, 1.0)');
+  grad.addColorStop(0.35, 'rgba(248, 224, 215, 0.75)');
+  grad.addColorStop(0.7, 'rgba(225, 205, 230, 0.35)');
+  grad.addColorStop(1.0, 'rgba(210, 195, 220, 0.0)');
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 256);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.generateMipmaps = false;
+  texture.minFilter = THREE.LinearFilter;
+  return texture;
+}
+
+function initVolumetricMist() {
+  const texture = createCloudPuffTexture();
+  const geometry = new THREE.PlaneGeometry(10, 10);
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    opacity: 0.42,
+    side: THREE.DoubleSide,
+    blending: THREE.NormalBlending
+  });
+
+  mistMesh = new THREE.InstancedMesh(geometry, material, MIST_COUNT);
+  mistMesh.renderOrder = 3; // Renders softly on top of cloud base to blanket all polygon seams
+
+  const dummy = new THREE.Object3D();
+
+  for (let i = 0; i < MIST_COUNT; i++) {
+    // Distribute along the canyon floor from Z = +15 down to Z = -85
+    const z = 14 - (i / MIST_COUNT) * 98 + (Math.random() - 0.5) * 5;
+    const x = (Math.random() - 0.5) * 20;
+    const y = 0.1 + Math.random() * 2.0;
+    const scale = 0.9 + Math.random() * 1.4;
+    const rotZ = Math.random() * Math.PI * 2;
+
+    dummy.position.set(x, y, z);
+    dummy.rotation.set(0.1, 0.1, rotZ);
+    dummy.scale.set(scale, scale, 1);
+    dummy.updateMatrix();
+    mistMesh.setMatrixAt(i, dummy.matrix);
+
+    mistData.push({
+      baseX: x,
+      baseY: y,
+      baseZ: z,
+      scale: scale,
+      rotZ: rotZ,
+      rotSpeed: (Math.random() - 0.5) * 0.0012,
+      driftSpeed: 0.2 + Math.random() * 0.3,
+      driftPhase: Math.random() * Math.PI * 2
+    });
+  }
+
+  mistMesh.instanceMatrix.needsUpdate = true;
+  scene.add(mistMesh);
 }
 
 // ── COLLISION & CAPSULE SYSTEM ────────────────────────────────
@@ -119,7 +214,6 @@ function initCollisionSystem() {
 
 // ── CRUISE ALTITUDE CAMERA FLYTHROUGH PATH ────────────────────
 function buildSplinePath() {
-  // Camera stays in the central open airspace, floating gracefully above the cloud floor
   cameraCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 1.6, 9),       // Beat 0: Hero framed view of Ship and glowing cloud arch
     new THREE.Vector3(1.2, 1.4, -12),   // Beat 1: Soaring high above the cloud entrance
@@ -136,7 +230,7 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS (Original GLTF Shaders with Zero-Gloss Soft Mist) ──
+// ── LOAD 3D ASSETS (Native GLTF Shaders with Zero-Specular Hook) ──
 function loadAssets() {
   const loader = new GLTFLoader();
 
@@ -331,6 +425,7 @@ function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0, sectionI
     baseY: pos.y,
     sectionIndex: sectionIndex
   };
+  plane.renderOrder = 4; // Text renders cleanly in the foreground
   scene.add(plane);
   textPlanes.push(plane);
   return plane;
@@ -350,7 +445,7 @@ function build3DStoryTypography() {
     '01 // CRAFT & EMBROIDERY',
     'Дитяча Допитливість',
     'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
-    new THREE.Vector3(3.0, 1.2, -18),
+    new THREE.Vector3(3.0, 1.4, -16),
     -0.18,
     1
   );
@@ -359,7 +454,7 @@ function build3DStoryTypography() {
     '02 // THE FIRST LENS · 35MM',
     'Олімпус та Крим',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
-    new THREE.Vector3(-3.2, 0.6, -38),
+    new THREE.Vector3(-3.2, 1.3, -36),
     0.15,
     2
   );
@@ -368,7 +463,7 @@ function build3DStoryTypography() {
     '03 // DIGITAL DAWN · CANON EOS',
     'Пошук Власного Почерку',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
-    new THREE.Vector3(2.6, 0.2, -58),
+    new THREE.Vector3(2.6, 1.2, -54),
     -0.12,
     3
   );
@@ -377,7 +472,7 @@ function build3DStoryTypography() {
     'EPILOGUE // THE PORTAL',
     'Заклинання Миті',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
-    new THREE.Vector3(0, 0.6, -74),
+    new THREE.Vector3(0, 1.1, -72),
     0,
     4
   );
@@ -456,6 +551,24 @@ function animate() {
     camera.lookAt(lookAtPos);
   }
 
+  // Animate Volumetric Mist Puffs (Slow undulating floating drift)
+  if (mistMesh) {
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < MIST_COUNT; i++) {
+      const d = mistData[i];
+      d.rotZ += d.rotSpeed;
+      const y = d.baseY + Math.sin(time * d.driftSpeed + d.driftPhase) * 0.18;
+      const x = d.baseX + Math.cos(time * 0.2 + d.driftPhase) * 0.25;
+
+      dummy.position.set(x, y, d.baseZ);
+      dummy.rotation.set(0.1, 0.1, d.rotZ);
+      dummy.scale.set(d.scale, d.scale, 1);
+      dummy.updateMatrix();
+      mistMesh.setMatrixAt(i, dummy.matrix);
+    }
+    mistMesh.instanceMatrix.needsUpdate = true;
+  }
+
   // Fade text planes in and out per chapter (no overlapping clutter)
   for (let i = 0; i < textPlanes.length; i++) {
     const p = textPlanes[i];
@@ -472,13 +585,20 @@ function animate() {
     portalMesh.rotation.y = time * 0.12;
   }
 
-  renderer.render(scene, camera);
+  if (composer) {
+    composer.render();
+  } else {
+    renderer.render(scene, camera);
+  }
 }
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  if (composer) {
+    composer.setSize(window.innerWidth, window.innerHeight);
+  }
 }
 
 function initMouseListener() {
