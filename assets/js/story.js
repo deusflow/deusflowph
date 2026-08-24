@@ -55,7 +55,7 @@ function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
 
-  // No dark fog: preserves the natural glowing pink/amber painterly lighting of the model
+  // Near 0.05, Far 250
   camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 250);
   scene.add(camera);
 
@@ -73,21 +73,17 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Soft atmospheric lighting matching Sketchfab
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.6);
+  // Pure diffuse ambient lighting without harsh specular glare
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
   scene.add(ambientLight);
 
-  const mainLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+  const mainLight = new THREE.DirectionalLight(0xffeedd, 0.6);
   mainLight.position.set(25, 40, 20);
   scene.add(mainLight);
 
-  const fillLight = new THREE.DirectionalLight(0x90b0d8, 0.9);
+  const fillLight = new THREE.DirectionalLight(0x90b0d8, 0.4);
   fillLight.position.set(-25, 20, -50);
   scene.add(fillLight);
-
-  const warmGateLight = new THREE.PointLight(0xffa347, 2.0, 80);
-  warmGateLight.position.set(0, 0, -25);
-  scene.add(warmGateLight);
 }
 
 // ── COLLISION & CAPSULE SYSTEM ────────────────────────────────
@@ -131,7 +127,6 @@ function initCollisionSystem() {
 
 // ── EXACT SKETCHFAB HERO FRAMING & SMOOTH FLIGHT PATH ─────────
 function buildSplinePath() {
-  // Hero starting viewpoint perfectly matches the Sketchfab angle
   cameraCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 1.2, 9),       // Beat 0: Hero framed view of Ship and glowing cloud arch
     new THREE.Vector3(1.4, 0.8, -12),   // Beat 1: Gliding smoothly forward into the archway
@@ -148,11 +143,11 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS (Native 4K glTF Rendering) ────────────────
+// ── LOAD 3D ASSETS (Original GLTF Shaders with Zero-Gloss Soft Mist) ──
 function loadAssets() {
   const loader = new GLTFLoader();
 
-  // 1. Original 4K Clouds Model in Natural Blender Space
+  // 1. Original 4K Clouds Model
   loader.load(
     '/assets/models/%D0%BE%D0%B1%D0%BB%D0%B0%D0%BA%D0%B0%20%D1%81%20%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B0%D1%87%D0%B8%D0%BD%D0%B0%D0%B5%D0%BC.glb',
     (gltf) => {
@@ -176,55 +171,43 @@ function loadAssets() {
       cloudsContainer.rotation.y = 0;
       cloudsContainer.position.set(0, 0, -35);
 
-      // Pure Unlit / Shadeless Rendering matching Sketchfab (Zero gloss, Zero specular)
+      // Preserve native GLTF materials with exact alpha blending and matte roughness
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = false;
           
           if (child.name && child.name.includes('Sky')) {
-            // Sky Dome: background hemisphere
-            const tex = child.material.emissiveMap || child.material.map;
-            child.material = new THREE.MeshBasicMaterial({
-              map: tex,
-              side: THREE.BackSide,
-              depthWrite: false,
-              transparent: true,
-              opacity: 0.8
-            });
+            // Sky Dome
+            child.material.side = THREE.BackSide;
+            child.material.depthWrite = false;
+            child.material.transparent = true;
+            child.material.opacity = 0.75;
             child.renderOrder = 0;
           } else if (child.name && child.name.includes('Boot')) {
-            // Ship: solid hand-painted unlit mesh
-            const tex = child.material.emissiveMap || child.material.map;
-            child.material = new THREE.MeshBasicMaterial({
-              map: tex,
-              side: THREE.DoubleSide,
-              depthWrite: true,
-              transparent: false
-            });
+            // Ship: solid opaque mesh
+            child.material.side = THREE.DoubleSide;
+            child.material.depthWrite = true;
+            child.material.transparent = false;
+            if ('roughness' in child.material) child.material.roughness = 0.7;
+            if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 1;
           } else if (child.name && child.name.includes('Poly')) {
-            // Main solid cloud canyon floor: pure unlit matte painting
-            const tex = child.material.emissiveMap || child.material.map;
-            child.material = new THREE.MeshBasicMaterial({
-              map: tex,
-              side: THREE.DoubleSide,
-              depthWrite: true,
-              transparent: false
-            });
+            // Main solid cloud canyon floor
+            child.material.side = THREE.DoubleSide;
+            child.material.depthWrite = true;
+            child.material.transparent = false;
+            if ('roughness' in child.material) child.material.roughness = 1.0;
+            if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 1;
           } else {
-            // Cloud_1, Cloud_2, Cloud_3 (The soft misty cloud layers):
-            // Pure unlit velvety cloud puffs with soft alpha cutout
-            const colorTex = child.material.emissiveMap || child.material.map;
-            const alphaTex = child.material.map;
-            child.material = new THREE.MeshBasicMaterial({
-              map: colorTex,
-              alphaMap: alphaTex,
-              side: THREE.DoubleSide,
-              transparent: true,
-              depthWrite: false,
-              opacity: 0.95
-            });
+            // Cloud_1, Cloud_2, Cloud_3 (The soft cloud puffs):
+            // Soft alpha blending without hard depth-cuts or glass reflections
+            child.material.side = THREE.DoubleSide;
+            child.material.transparent = true;
+            child.material.depthWrite = false;
+            child.material.alphaTest = 0.01;
+            if ('roughness' in child.material) child.material.roughness = 1.0;
+            if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 2;
           }
         }
