@@ -177,11 +177,10 @@ function loadAssets() {
           child.frustumCulled = false;
           
           if (child.name && child.name.includes('Sky')) {
-            // Sky Dome
+            // Sky Dome: solid background hemisphere
             child.material.side = THREE.BackSide;
             child.material.depthWrite = false;
-            child.material.transparent = true;
-            child.material.opacity = 0.75;
+            child.material.transparent = false;
             child.renderOrder = 0;
           } else if (child.name && child.name.includes('Boot')) {
             // Ship: solid opaque mesh
@@ -201,11 +200,11 @@ function loadAssets() {
             child.renderOrder = 1;
           } else {
             // Cloud_1, Cloud_2, Cloud_3 (The soft cloud puffs):
-            // Soft alpha blending without hard depth-cuts or glass reflections
+            // Soft continuous alpha blending without hard depth-cuts or glass reflections
             child.material.side = THREE.DoubleSide;
             child.material.transparent = true;
             child.material.depthWrite = false;
-            child.material.alphaTest = 0.01;
+            child.material.alphaTest = 0.001;
             if ('roughness' in child.material) child.material.roughness = 1.0;
             if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 2;
