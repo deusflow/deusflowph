@@ -176,42 +176,55 @@ function loadAssets() {
       cloudsContainer.rotation.y = 0;
       cloudsContainer.position.set(0, 0, -35);
 
-      // Configure soft painterly alpha blending matching Sketchfab
+      // Pure Unlit / Shadeless Rendering matching Sketchfab (Zero gloss, Zero specular)
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = false;
           
           if (child.name && child.name.includes('Sky')) {
             // Sky Dome: background hemisphere
-            child.material.side = THREE.BackSide;
-            child.material.depthWrite = false;
-            child.material.transparent = true;
-            child.material.opacity = 0.75;
+            const tex = child.material.emissiveMap || child.material.map;
+            child.material = new THREE.MeshBasicMaterial({
+              map: tex,
+              side: THREE.BackSide,
+              depthWrite: false,
+              transparent: true,
+              opacity: 0.8
+            });
             child.renderOrder = 0;
           } else if (child.name && child.name.includes('Boot')) {
-            // Ship: solid opaque mesh
-            child.material.side = THREE.DoubleSide;
-            child.material.depthWrite = true;
-            child.material.transparent = false;
+            // Ship: solid hand-painted unlit mesh
+            const tex = child.material.emissiveMap || child.material.map;
+            child.material = new THREE.MeshBasicMaterial({
+              map: tex,
+              side: THREE.DoubleSide,
+              depthWrite: true,
+              transparent: false
+            });
             child.renderOrder = 1;
           } else if (child.name && child.name.includes('Poly')) {
-            // Main solid cloud canyon floor: 100% matte diffuse (zero ice/gloss sheen)
-            child.material.side = THREE.DoubleSide;
-            child.material.depthWrite = true;
-            child.material.transparent = false;
-            child.material.roughness = 1.0;
-            child.material.metalness = 0.0;
+            // Main solid cloud canyon floor: pure unlit matte painting
+            const tex = child.material.emissiveMap || child.material.map;
+            child.material = new THREE.MeshBasicMaterial({
+              map: tex,
+              side: THREE.DoubleSide,
+              depthWrite: true,
+              transparent: false
+            });
             child.renderOrder = 1;
           } else {
             // Cloud_1, Cloud_2, Cloud_3 (The soft misty cloud layers):
-            // 100% matte velvety mist with zero plastic/ice glossiness
-            child.material.side = THREE.DoubleSide;
-            child.material.transparent = true;
-            child.material.depthWrite = false;
-            child.material.alphaTest = 0.0; // Soft continuous mist gradient
-            child.material.roughness = 1.0;
-            child.material.metalness = 0.0;
-            child.material.opacity = 0.95;
+            // Pure unlit velvety cloud puffs with soft alpha cutout
+            const colorTex = child.material.emissiveMap || child.material.map;
+            const alphaTex = child.material.map;
+            child.material = new THREE.MeshBasicMaterial({
+              map: colorTex,
+              alphaMap: alphaTex,
+              side: THREE.DoubleSide,
+              transparent: true,
+              depthWrite: false,
+              opacity: 0.95
+            });
             child.renderOrder = 2;
           }
         }
