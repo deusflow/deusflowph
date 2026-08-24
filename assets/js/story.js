@@ -82,19 +82,19 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   // Pure diffuse ambient lighting without directional specular seams
-  const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
   scene.add(ambientLight);
 
-  // Post-Processing: Cinematic Unreal Bloom Pass matching Sketchfab
+  // Post-Processing: Gentle Atmospheric Bloom Pass
   composer = new EffectComposer(renderer);
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
 
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.42, // strength: soft luminous atmospheric glow
-    0.55, // radius: wide gentle light diffusion
-    0.82  // threshold: only bright glowing canyon opening & portal bloom
+    0.18, // strength: delicate soft ambient glow (no flash/flare)
+    0.35, // radius: subtle diffusion
+    0.94  // threshold: only bright core of opening and portal glow
   );
   composer.addPass(bloomPass);
 
@@ -112,10 +112,10 @@ function createCloudPuffTexture() {
   const ctx = canvas.getContext('2d');
 
   const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-  grad.addColorStop(0.0, 'rgba(255, 248, 240, 1.0)');
-  grad.addColorStop(0.35, 'rgba(248, 224, 215, 0.75)');
-  grad.addColorStop(0.7, 'rgba(225, 205, 230, 0.35)');
-  grad.addColorStop(1.0, 'rgba(210, 195, 220, 0.0)');
+  grad.addColorStop(0.0, 'rgba(240, 228, 220, 0.5)');
+  grad.addColorStop(0.4, 'rgba(230, 215, 225, 0.3)');
+  grad.addColorStop(0.75, 'rgba(215, 200, 220, 0.1)');
+  grad.addColorStop(1.0, 'rgba(200, 190, 215, 0.0)');
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 256, 256);
@@ -128,12 +128,12 @@ function createCloudPuffTexture() {
 
 function initVolumetricMist() {
   const texture = createCloudPuffTexture();
-  const geometry = new THREE.PlaneGeometry(10, 10);
+  const geometry = new THREE.PlaneGeometry(8, 8);
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
     depthWrite: false,
-    opacity: 0.42,
+    opacity: 0.25,
     side: THREE.DoubleSide,
     blending: THREE.NormalBlending
   });
