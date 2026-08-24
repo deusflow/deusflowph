@@ -85,22 +85,6 @@ function initThree() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
   scene.add(ambientLight);
 
-  // Post-Processing: Gentle Atmospheric Bloom Pass
-  composer = new EffectComposer(renderer);
-  const renderPass = new RenderPass(scene, camera);
-  composer.addPass(renderPass);
-
-  const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.18, // strength: delicate soft ambient glow (no flash/flare)
-    0.35, // radius: subtle diffusion
-    0.94  // threshold: only bright core of opening and portal glow
-  );
-  composer.addPass(bloomPass);
-
-  const outputPass = new OutputPass();
-  composer.addPass(outputPass);
-
   window.addEventListener('resize', onWindowResize);
 }
 
@@ -112,9 +96,9 @@ function createCloudPuffTexture() {
   const ctx = canvas.getContext('2d');
 
   const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-  grad.addColorStop(0.0, 'rgba(240, 228, 220, 0.5)');
-  grad.addColorStop(0.4, 'rgba(230, 215, 225, 0.3)');
-  grad.addColorStop(0.75, 'rgba(215, 200, 220, 0.1)');
+  grad.addColorStop(0.0, 'rgba(235, 225, 215, 0.4)');
+  grad.addColorStop(0.4, 'rgba(225, 212, 220, 0.22)');
+  grad.addColorStop(0.75, 'rgba(210, 198, 215, 0.08)');
   grad.addColorStop(1.0, 'rgba(200, 190, 215, 0.0)');
 
   ctx.fillStyle = grad;
@@ -128,12 +112,12 @@ function createCloudPuffTexture() {
 
 function initVolumetricMist() {
   const texture = createCloudPuffTexture();
-  const geometry = new THREE.PlaneGeometry(8, 8);
+  const geometry = new THREE.PlaneGeometry(7, 7);
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
     depthWrite: false,
-    opacity: 0.25,
+    opacity: 0.18,
     side: THREE.DoubleSide,
     blending: THREE.NormalBlending
   });
@@ -585,20 +569,13 @@ function animate() {
     portalMesh.rotation.y = time * 0.12;
   }
 
-  if (composer) {
-    composer.render();
-  } else {
-    renderer.render(scene, camera);
-  }
+  renderer.render(scene, camera);
 }
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  if (composer) {
-    composer.setSize(window.innerWidth, window.innerHeight);
-  }
 }
 
 function initMouseListener() {
