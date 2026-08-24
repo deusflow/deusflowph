@@ -150,7 +150,7 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS (Accurately Centered on Cloud_Poly) ────────
+// ── LOAD 3D ASSETS ───────────────────────────────────────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
@@ -160,76 +160,45 @@ function loadAssets() {
     (gltf) => {
       const model = gltf.scene;
       
-      // Target Cloud_Poly specifically for centering the canyon
-      let polyMesh = null;
-      model.traverse((child) => {
-        if (child.isMesh && child.name && child.name.includes('Poly')) {
-          polyMesh = child;
-        }
-      });
-
-      const box = new THREE.Box3();
-      if (polyMesh) {
-        polyMesh.geometry.computeBoundingBox();
-        box.copy(polyMesh.geometry.boundingBox);
-      } else {
-        box.setFromObject(model);
-      }
-
+      const box = new THREE.Box3().setFromObject(model);
       const size = new THREE.Vector3();
       box.getSize(size);
       const center = new THREE.Vector3();
       box.getCenter(center);
 
-      // Perfectly center the main cloud canyon
+      // Center model
       model.position.sub(center);
 
       cloudsContainer = new THREE.Group();
       cloudsContainer.add(model);
 
-      // Scale tunnel length to 120 units
-      const scale = 120.0 / (size.z || 1963);
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 140 / (maxDim || 1);
       cloudsContainer.scale.setScalar(scale);
       
-      // Orient tunnel so the entrance faces the starting camera
+      // Orient clouds
       cloudsContainer.rotation.y = Math.PI;
-      cloudsContainer.position.set(0, 0, -60);
+      cloudsContainer.position.set(0, 0, -45);
 
       model.traverse((child) => {
         if (child.isMesh && child.material) {
-          child.frustumCulled = true;
+          child.frustumCulled = false;
           
           if (child.name && child.name.includes('Sky')) {
-            // Sky hemisphere
             child.material.side = THREE.BackSide;
             child.material.depthWrite = false;
             child.material.transparent = true;
             child.material.opacity = 0.75;
-          } else if (child.name && child.name.includes('Boot')) {
-            // Flying Ship: rich wood & sails
-            const tex = child.material.emissiveMap || child.material.map;
-            child.material = new THREE.MeshStandardMaterial({
-              map: tex,
-              roughness: 0.7,
-              metalness: 0.05,
-              side: THREE.FrontSide
-            });
           } else {
-            // Cloud Meshes
-            child.geometry.computeVertexNormals();
-
-            const tex = child.material.emissiveMap || child.material.map;
-            child.material = new THREE.MeshStandardMaterial({
-              map: tex,
-              color: new THREE.Color(0xdce7f5),
-              roughness: 0.88,
-              metalness: 0.0,
-              emissive: new THREE.Color(0x141f30),
-              emissiveIntensity: 0.35,
-              side: THREE.FrontSide,
-              transparent: false,
-              depthWrite: true
-            });
+            // Keep original rich materials but ensure DoubleSide and zero metallic reflection
+            child.material.side = THREE.DoubleSide;
+            child.material.depthWrite = true;
+            if ('metalness' in child.material) {
+              child.material.metalness = 0.0;
+            }
+            if ('roughness' in child.material) {
+              child.material.roughness = 0.75;
+            }
           }
         }
       });
