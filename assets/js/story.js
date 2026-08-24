@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Octree } from 'three/addons/math/Octree.js';
 import { Capsule } from 'three/addons/math/Capsule.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 let scene, camera, renderer;
 let clock = new THREE.Clock();
@@ -153,7 +154,20 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS WITH MATERIAL REFINEMENT ───────────────────
+function smoothCloudGeometry(geometry, tolerance = 1e-4) {
+  if (!geometry) return geometry;
+  try {
+    const merged = mergeVertices(geometry, tolerance);
+    merged.computeVertexNormals();
+    return merged;
+  } catch (err) {
+    console.warn('mergeVertices fallback:', err);
+    geometry.computeVertexNormals();
+    return geometry;
+  }
+}
+
+// ── LOAD 3D ASSETS WITH MATERIAL & NORMAL REFINEMENT ──────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
@@ -189,7 +203,7 @@ function loadAssets() {
       cloudsContainer.rotation.y = Math.PI;
       cloudsContainer.position.set(0, 0, -45);
 
-      // Deep Material Optimization: Eliminates self-illuminating white lines
+      // Deep Material & Normal Smoothing Optimization
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = true;
@@ -201,7 +215,7 @@ function loadAssets() {
             child.material.transparent = true;
             child.material.opacity = 0.75;
           } else if (child.name && child.name.includes('Boot')) {
-            // Flying Ship: preserve wood and sail textures with rich standard shading
+            // Flying Ship: preserve wood and sail textures
             const tex = child.material.emissiveMap || child.material.map;
             child.material = new THREE.MeshStandardMaterial({
               map: tex,
@@ -211,14 +225,17 @@ function loadAssets() {
             });
           } else {
             // Cloud Meshes (Cloud_Poly, Cloud_1, Cloud_2, Cloud_3):
-            // Replace blinding self-emitting white contour lines with soft physical cloud shading
+            // 1. Weld split seam vertices and compute smooth interpolated normals
+            child.geometry = smoothCloudGeometry(child.geometry);
+
+            // 2. Soft physical cloud shading without flat facet shards
             const tex = child.material.emissiveMap || child.material.map;
             child.material = new THREE.MeshStandardMaterial({
               map: tex,
               color: new THREE.Color(0xdce7f5), // Soft atmospheric cloud tone
-              roughness: 0.85,
+              roughness: 0.9,
               metalness: 0.0,
-              emissive: new THREE.Color(0x141f30), // Deep blue-black ambient tone (NOT white)
+              emissive: new THREE.Color(0x141f30), // Deep ambient tone
               emissiveIntensity: 0.35,
               side: THREE.DoubleSide,
               transparent: false,
