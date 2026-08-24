@@ -55,14 +55,14 @@ function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
   
-  // Atmospheric soft fog
+  // Soft atmospheric fog
   scene.fog = new THREE.FogExp2(0x0d0a08, 0.003);
 
   // Near 0.05, Far 220
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 220);
   scene.add(camera);
 
-  // High performance renderer
+  // High performance renderer with standard glTF color accuracy
   renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
@@ -72,23 +72,23 @@ function initThree() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.35;
+  renderer.toneMappingExposure = 1.0;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Ambient and directional lighting
-  const ambientLight = new THREE.AmbientLight(0xffeedd, 1.6);
+  // Balanced environment lighting matching Blender / glTF viewer
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
   scene.add(ambientLight);
 
-  const mainLight = new THREE.DirectionalLight(0xffe2b8, 2.0);
+  const mainLight = new THREE.DirectionalLight(0xffeedd, 1.5);
   mainLight.position.set(25, 40, 20);
   scene.add(mainLight);
 
-  const fillLight = new THREE.DirectionalLight(0x8fa8c8, 1.4);
+  const fillLight = new THREE.DirectionalLight(0x8fa8c8, 1.0);
   fillLight.position.set(-25, 20, -50);
   scene.add(fillLight);
 
-  const warmGateLight = new THREE.PointLight(0xffa347, 2.5, 80);
+  const warmGateLight = new THREE.PointLight(0xffa347, 2.0, 80);
   warmGateLight.position.set(0, 0, -25);
   scene.add(warmGateLight);
 }
@@ -132,14 +132,14 @@ function initCollisionSystem() {
   worldOctree.fromGraphNode(collisionGroup);
 }
 
-// ── CAMERA SPLINE PATH (Soaring down the grand open cloud canyon) ─
+// ── CAMERA SPLINE PATH ───────────────────────────────────────
 function buildSplinePath() {
   cameraCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 0.0, -10),    // Beat 0: Grand entrance of the cloud canyon
-    new THREE.Vector3(2.2, 0.5, -35),  // Beat 1: Soaring above the cloud floor
-    new THREE.Vector3(-2.0, 0.2, -60), // Beat 2: Gliding through the heart of the canyon
-    new THREE.Vector3(1.8, -0.4, -85), // Beat 3: Descending gracefully toward the ship
-    new THREE.Vector3(0.0, -0.8, -102),// Beat 4: Flying past the ship toward the Portal
+    new THREE.Vector3(2.2, 0.5, -35),  // Beat 1: Soaring through the clouds
+    new THREE.Vector3(-2.0, 0.2, -60), // Beat 2: Heart of the canyon
+    new THREE.Vector3(1.8, -0.4, -85), // Beat 3: Gliding toward the ship
+    new THREE.Vector3(0.0, -0.8, -102),// Beat 4: Flying past the ship toward Portal
     new THREE.Vector3(0.0, -0.8, -112) // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
@@ -150,13 +150,13 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS ───────────────────────────────────────────
+// ── LOAD 3D ASSETS (Native 4K glTF Rendering) ────────────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
-  // 1. 1K Clouds Model
+  // 1. Original High-Res 4K Clouds Model (Natural Blender Materials)
   loader.load(
-    '/assets/models/%D0%9E%D0%91%D0%9B%D0%90%D0%9A%D0%90%201%D0%9A.glb',
+    '/assets/models/%D0%BE%D0%B1%D0%BB%D0%B0%D0%BA%D0%B0%20%D1%81%20%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B0%D1%87%D0%B8%D0%BD%D0%B0%D0%B5%D0%BC.glb',
     (gltf) => {
       const model = gltf.scene;
       
@@ -180,6 +180,7 @@ function loadAssets() {
       cloudsContainer.rotation.y = Math.PI;
       cloudsContainer.position.set(0, 0, -45);
 
+      // Preserve native materials exactly as authored in Blender
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = false;
@@ -189,16 +190,6 @@ function loadAssets() {
             child.material.depthWrite = false;
             child.material.transparent = true;
             child.material.opacity = 0.75;
-          } else {
-            // Keep original rich materials but ensure DoubleSide and zero metallic reflection
-            child.material.side = THREE.DoubleSide;
-            child.material.depthWrite = true;
-            if ('metalness' in child.material) {
-              child.material.metalness = 0.0;
-            }
-            if ('roughness' in child.material) {
-              child.material.roughness = 0.75;
-            }
           }
         }
       });
@@ -206,7 +197,7 @@ function loadAssets() {
       scene.add(cloudsContainer);
     },
     undefined,
-    (err) => { console.warn('1K Clouds model note:', err); }
+    (err) => { console.warn('4K Clouds model note:', err); }
   );
 
   // 2. Destination Portal at Z = -110
@@ -274,7 +265,7 @@ function loadAssets() {
   );
 }
 
-// ── 3D HANDWRITTEN STORY TYPOGRAPHY (Pure Transparent, Mr. Panda Style) ──
+// ── 3D HANDWRITTEN STORY TYPOGRAPHY ──────────────────────────
 function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -423,7 +414,7 @@ function updateHUD(index) {
   });
 }
 
-// ── RENDER & ANIMATION LOOP WITH CAPSULE COLLISION ───────────
+// ── RENDER & ANIMATION LOOP ──────────────────────────────────
 function animate() {
   requestAnimationFrame(animate);
   const time = clock.getElapsedTime();
@@ -435,7 +426,6 @@ function animate() {
     const p = Math.max(0.001, Math.min(0.999, scrollProgress));
     const camPos = cameraCurve.getPointAt(p);
     
-    // Mouse Parallax offset
     const targetX = (mouseX / window.innerWidth) * 2 - 1;
     const targetY = -(mouseY / window.innerHeight) * 2 + 1;
     
