@@ -39,7 +39,6 @@ const sectionMeta = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Wait for Google Fonts to be ready so canvas renders with handwritten fonts
   document.fonts.ready.then(() => {
     initThree();
     initCollisionSystem();
@@ -56,14 +55,14 @@ function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
   
-  // Soft atmospheric fog
-  scene.fog = new THREE.FogExp2(0x0d0a08, 0.0035);
+  // Atmospheric soft fog
+  scene.fog = new THREE.FogExp2(0x0d0a08, 0.003);
 
-  // Near 0.05, Far 220 (optimal 4400:1 ratio)
+  // Near 0.05, Far 220
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 220);
   scene.add(camera);
 
-  // Performance-optimized WebGL Renderer
+  // High performance renderer
   renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
@@ -77,11 +76,11 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Warm atmospheric directional and ambient lighting
-  const ambientLight = new THREE.AmbientLight(0xffeedd, 1.5);
+  // Ambient and directional lighting
+  const ambientLight = new THREE.AmbientLight(0xffeedd, 1.6);
   scene.add(ambientLight);
 
-  const mainLight = new THREE.DirectionalLight(0xffe2b8, 2.2);
+  const mainLight = new THREE.DirectionalLight(0xffe2b8, 2.0);
   mainLight.position.set(25, 40, 20);
   scene.add(mainLight);
 
@@ -104,46 +103,44 @@ function initCollisionSystem() {
     0.35
   );
 
-  // Invisible low-poly corridor bounds
   collisionGroup = new THREE.Group();
   collisionGroup.visible = false;
 
-  const floorGeo = new THREE.PlaneGeometry(30, 120);
+  const floorGeo = new THREE.PlaneGeometry(50, 140);
   floorGeo.rotateX(-Math.PI / 2);
   const floorMesh = new THREE.Mesh(floorGeo, new THREE.MeshBasicMaterial());
-  floorMesh.position.set(0, -5.5, -55);
+  floorMesh.position.set(0, -12, -60);
   collisionGroup.add(floorMesh);
 
-  const ceilGeo = new THREE.PlaneGeometry(30, 120);
+  const ceilGeo = new THREE.PlaneGeometry(50, 140);
   ceilGeo.rotateX(Math.PI / 2);
   const ceilMesh = new THREE.Mesh(ceilGeo, new THREE.MeshBasicMaterial());
-  ceilMesh.position.set(0, 5.5, -55);
+  ceilMesh.position.set(0, 12, -60);
   collisionGroup.add(ceilMesh);
 
-  const wallLeftGeo = new THREE.PlaneGeometry(120, 20);
+  const wallLeftGeo = new THREE.PlaneGeometry(140, 30);
   wallLeftGeo.rotateY(Math.PI / 2);
   const wallLeft = new THREE.Mesh(wallLeftGeo, new THREE.MeshBasicMaterial());
-  wallLeft.position.set(-8.0, 0, -55);
+  wallLeft.position.set(-20.0, 0, -60);
   collisionGroup.add(wallLeft);
 
   const wallRight = new THREE.Mesh(wallLeftGeo.clone(), new THREE.MeshBasicMaterial());
-  wallRight.position.set(8.0, 0, -55);
+  wallRight.position.set(20.0, 0, -60);
   collisionGroup.add(wallRight);
 
   scene.add(collisionGroup);
   worldOctree.fromGraphNode(collisionGroup);
 }
 
-// ── CAMERA SPLINE PATH (Cinematic flyby around ship) ──────────
+// ── CAMERA SPLINE PATH (Soaring down the grand open cloud canyon) ─
 function buildSplinePath() {
-  // Graceful flight path that swoops past the ship on the starboard side
   cameraCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 0.2, -12),     // Beat 0: Inside the first cloud chamber
-    new THREE.Vector3(2.4, 0.5, -30),   // Beat 1: Approaching the ship canyon
-    new THREE.Vector3(3.8, 0.8, -48),   // Beat 2: Gliding alongside the ship (avoids mast collision!)
-    new THREE.Vector3(0.6, 0.3, -68),   // Beat 3: Swooping past the bow into the cloud depths
-    new THREE.Vector3(-1.2, 0.2, -88),  // Beat 4: Approaching the mystical Portal
-    new THREE.Vector3(0, 0, -112)       // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0, 0.0, -10),    // Beat 0: Grand entrance of the cloud canyon
+    new THREE.Vector3(2.2, 0.5, -35),  // Beat 1: Soaring above the cloud floor
+    new THREE.Vector3(-2.0, 0.2, -60), // Beat 2: Gliding through the heart of the canyon
+    new THREE.Vector3(1.8, -0.4, -85), // Beat 3: Descending gracefully toward the ship
+    new THREE.Vector3(0.0, -0.8, -102),// Beat 4: Flying past the ship toward the Portal
+    new THREE.Vector3(0.0, -0.8, -112) // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
@@ -153,7 +150,7 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS WITH MATERIAL REFINEMENT ───────────────────
+// ── LOAD 3D ASSETS (Accurately Centered on Cloud_Poly) ────────
 function loadAssets() {
   const loader = new GLTFLoader();
 
@@ -163,44 +160,53 @@ function loadAssets() {
     (gltf) => {
       const model = gltf.scene;
       
-      // Calculate bounding box strictly on clouds and ship
-      const box = new THREE.Box3();
+      // Target Cloud_Poly specifically for centering the canyon
+      let polyMesh = null;
       model.traverse((child) => {
-        if (child.isMesh && (!child.name || !child.name.includes('Sky'))) {
-          child.geometry.computeBoundingBox();
-          box.expandByObject(child);
+        if (child.isMesh && child.name && child.name.includes('Poly')) {
+          polyMesh = child;
         }
       });
+
+      const box = new THREE.Box3();
+      if (polyMesh) {
+        polyMesh.geometry.computeBoundingBox();
+        box.copy(polyMesh.geometry.boundingBox);
+      } else {
+        box.setFromObject(model);
+      }
 
       const size = new THREE.Vector3();
       box.getSize(size);
       const center = new THREE.Vector3();
       box.getCenter(center);
 
+      // Perfectly center the main cloud canyon
       model.position.sub(center);
 
       cloudsContainer = new THREE.Group();
       cloudsContainer.add(model);
 
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = 145 / (maxDim || 1);
+      // Scale tunnel length to 120 units
+      const scale = 120.0 / (size.z || 1963);
       cloudsContainer.scale.setScalar(scale);
       
+      // Orient tunnel so the entrance faces the starting camera
       cloudsContainer.rotation.y = Math.PI;
-      cloudsContainer.position.set(0, 0, -45);
+      cloudsContainer.position.set(0, 0, -60);
 
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = true;
           
           if (child.name && child.name.includes('Sky')) {
-            // Sky Dome: soft background hemisphere
+            // Sky hemisphere
             child.material.side = THREE.BackSide;
             child.material.depthWrite = false;
             child.material.transparent = true;
             child.material.opacity = 0.75;
           } else if (child.name && child.name.includes('Boot')) {
-            // Flying Ship: preserve wood and sail textures
+            // Flying Ship: rich wood & sails
             const tex = child.material.emissiveMap || child.material.map;
             child.material = new THREE.MeshStandardMaterial({
               map: tex,
@@ -209,18 +215,18 @@ function loadAssets() {
               side: THREE.FrontSide
             });
           } else {
-            // Simply recompute vertex normals without aggressive vertex merging
+            // Cloud Meshes
             child.geometry.computeVertexNormals();
 
             const tex = child.material.emissiveMap || child.material.map;
             child.material = new THREE.MeshStandardMaterial({
               map: tex,
               color: new THREE.Color(0xdce7f5),
-              roughness: 0.9,
+              roughness: 0.88,
               metalness: 0.0,
               emissive: new THREE.Color(0x141f30),
               emissiveIntensity: 0.35,
-              side: THREE.FrontSide, // FrontSide hides backface rendering
+              side: THREE.FrontSide,
               transparent: false,
               depthWrite: true
             });
@@ -252,7 +258,7 @@ function loadAssets() {
       
       const maxDim = Math.max(size.x, size.y, size.z);
       portalContainer.scale.setScalar(9.0 / (maxDim || 1));
-      portalContainer.position.set(0, 0, -110);
+      portalContainer.position.set(0, -0.8, -110);
 
       portalMesh.traverse((child) => {
         if (child.isMesh && child.material) {
@@ -299,14 +305,13 @@ function loadAssets() {
   );
 }
 
-// ── 3D HANDWRITTEN STORY TYPOGRAPHY (Pure Transparent, No Boxes) ─
+// ── 3D HANDWRITTEN STORY TYPOGRAPHY (Pure Transparent, Mr. Panda Style) ──
 function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 512;
   const ctx = canvas.getContext('2d');
 
-  // 100% Transparent background (NO fillRect, NO boxes, NO borders)
   ctx.clearRect(0, 0, 1024, 512);
 
   // 1. Badge / Small Caps Header
@@ -359,7 +364,6 @@ function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
   texture.minFilter = THREE.LinearFilter;
   texture.generateMipmaps = false;
 
-  // Pure transparent material without any background plane
   const mat = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
@@ -378,16 +382,14 @@ function createHandwritten3DText(badge, title, subtitle, pos, rotY = 0) {
 }
 
 function build3DStoryTypography() {
-  // Act 0: Initial Screen (Inside the clouds, Z = -20)
   createHandwritten3DText(
     'DEUSFLOW ARCHIVES · FOLIO 00',
     'Олег Ро',
     'Ніч у чарівній бібліотеці: історія про те, як дитяча допитливість перетворюється на ремесло.',
-    new THREE.Vector3(0, 0.0, -20),
+    new THREE.Vector3(0, 0.0, -18),
     0
   );
 
-  // Act 1: Craft & Embroidery
   createHandwritten3DText(
     '01 // CRAFT & EMBROIDERY',
     'Дитяча Допитливість',
@@ -396,30 +398,27 @@ function build3DStoryTypography() {
     -0.18
   );
 
-  // Act 2: The First Lens (Starboard side near ship)
   createHandwritten3DText(
     '02 // THE FIRST LENS · 35MM',
     'Олімпус та Крим',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
-    new THREE.Vector3(4.0, 0.5, -56),
-    -0.15
+    new THREE.Vector3(-3.5, 0.2, -62),
+    0.15
   );
 
-  // Act 3: Digital Dawn
   createHandwritten3DText(
     '03 // DIGITAL DAWN · CANON EOS',
     'Пошук Власного Почерку',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
-    new THREE.Vector3(2.8, 0.2, -78),
+    new THREE.Vector3(2.8, -0.2, -84),
     -0.12
   );
 
-  // Epilogue: The Portal
   createHandwritten3DText(
     'EPILOGUE // THE PORTAL',
     'Заклинання Миті',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
-    new THREE.Vector3(0, 1.2, -100),
+    new THREE.Vector3(0, 0.8, -104),
     0
   );
 }
@@ -463,7 +462,6 @@ function animate() {
   scrollVelocity *= 0.9;
   scrollProgress += (targetScrollProgress - scrollProgress) * 0.06;
 
-  // Move camera along spline with Capsule & Octree collision sliding
   if (cameraCurve) {
     const p = Math.max(0.001, Math.min(0.999, scrollProgress));
     const camPos = cameraCurve.getPointAt(p);
@@ -478,11 +476,9 @@ function animate() {
       camPos.z
     );
 
-    // Update capsule position
     playerCapsule.start.set(desiredPos.x, desiredPos.y - 0.4, desiredPos.z);
     playerCapsule.end.set(desiredPos.x, desiredPos.y + 0.4, desiredPos.z);
 
-    // Check collision against low-poly bounds
     if (worldOctree) {
       const hit = worldOctree.capsuleIntersect(playerCapsule);
       if (hit) {
@@ -490,7 +486,6 @@ function animate() {
       }
     }
 
-    // Set camera to capsule center
     camera.position.set(
       (playerCapsule.start.x + playerCapsule.end.x) * 0.5,
       (playerCapsule.start.y + playerCapsule.end.y) * 0.5,
@@ -502,7 +497,6 @@ function animate() {
     camera.lookAt(lookAtPos);
   }
 
-  // Floating books gentle hover
   for (let i = 0; i < floatingBooks.length; i++) {
     const b = floatingBooks[i];
     b.rotation.x += b.userData.rotSpeedX;
@@ -510,13 +504,11 @@ function animate() {
     b.position.y = b.userData.baseY + Math.sin(time * b.userData.floatSpeed + b.userData.offset) * 0.2;
   }
 
-  // Floating text planes gentle wave
   for (let i = 0; i < textPlanes.length; i++) {
     const p = textPlanes[i];
     p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.08;
   }
 
-  // Portal gentle rotation
   if (portalMesh) {
     portalMesh.rotation.y = time * 0.12;
   }
