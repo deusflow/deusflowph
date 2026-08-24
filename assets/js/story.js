@@ -55,14 +55,14 @@ function initThree() {
   const canvas = document.getElementById('webgl-canvas');
   scene = new THREE.Scene();
   
-  // Soft atmospheric fog
-  scene.fog = new THREE.FogExp2(0x0d0a08, 0.003);
+  // Gentle atmospheric fog
+  scene.fog = new THREE.FogExp2(0x0d0a08, 0.0035);
 
   // Near 0.05, Far 220
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 220);
+  camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.05, 220);
   scene.add(camera);
 
-  // High performance renderer with standard glTF color accuracy
+  // Renderer with standard glTF color accuracy
   renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
@@ -76,8 +76,8 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Balanced environment lighting matching Blender / glTF viewer
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+  // Soft atmospheric lighting matching Blender
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
   scene.add(ambientLight);
 
   const mainLight = new THREE.DirectionalLight(0xffeedd, 1.5);
@@ -106,41 +106,41 @@ function initCollisionSystem() {
   collisionGroup = new THREE.Group();
   collisionGroup.visible = false;
 
-  const floorGeo = new THREE.PlaneGeometry(50, 140);
+  const floorGeo = new THREE.PlaneGeometry(60, 120);
   floorGeo.rotateX(-Math.PI / 2);
   const floorMesh = new THREE.Mesh(floorGeo, new THREE.MeshBasicMaterial());
-  floorMesh.position.set(0, -12, -60);
+  floorMesh.position.set(0, -14, -40);
   collisionGroup.add(floorMesh);
 
-  const ceilGeo = new THREE.PlaneGeometry(50, 140);
+  const ceilGeo = new THREE.PlaneGeometry(60, 120);
   ceilGeo.rotateX(Math.PI / 2);
   const ceilMesh = new THREE.Mesh(ceilGeo, new THREE.MeshBasicMaterial());
-  ceilMesh.position.set(0, 12, -60);
+  ceilMesh.position.set(0, 14, -40);
   collisionGroup.add(ceilMesh);
 
-  const wallLeftGeo = new THREE.PlaneGeometry(140, 30);
+  const wallLeftGeo = new THREE.PlaneGeometry(120, 30);
   wallLeftGeo.rotateY(Math.PI / 2);
   const wallLeft = new THREE.Mesh(wallLeftGeo, new THREE.MeshBasicMaterial());
-  wallLeft.position.set(-20.0, 0, -60);
+  wallLeft.position.set(-25.0, 0, -40);
   collisionGroup.add(wallLeft);
 
   const wallRight = new THREE.Mesh(wallLeftGeo.clone(), new THREE.MeshBasicMaterial());
-  wallRight.position.set(20.0, 0, -60);
+  wallRight.position.set(25.0, 0, -40);
   collisionGroup.add(wallRight);
 
   scene.add(collisionGroup);
   worldOctree.fromGraphNode(collisionGroup);
 }
 
-// ── CAMERA SPLINE PATH ───────────────────────────────────────
+// ── NATURAL BLENDER CAMERA FLYTHROUGH PATH ────────────────────
 function buildSplinePath() {
   cameraCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 0.0, -10),    // Beat 0: Grand entrance of the cloud canyon
-    new THREE.Vector3(2.2, 0.5, -35),  // Beat 1: Soaring through the clouds
-    new THREE.Vector3(-2.0, 0.2, -60), // Beat 2: Heart of the canyon
-    new THREE.Vector3(1.8, -0.4, -85), // Beat 3: Gliding toward the ship
-    new THREE.Vector3(0.0, -0.8, -102),// Beat 4: Flying past the ship toward Portal
-    new THREE.Vector3(0.0, -0.8, -112) // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0, 1.8, 8),       // Beat 0: In the open sky facing the grand cloud entrance
+    new THREE.Vector3(1.6, 1.0, -12),   // Beat 1: Soaring above the cloud floor into the canyon
+    new THREE.Vector3(-1.8, 0.4, -32),  // Beat 2: Gliding through the heart of the cloud valley
+    new THREE.Vector3(1.4, 0.0, -52),   // Beat 3: Gliding along the canyon path
+    new THREE.Vector3(-0.4, -0.2, -70), // Beat 4: Approaching the mystical Portal
+    new THREE.Vector3(0, 0, -82)        // Beat 5: Stepping into the Portal
   ]);
   cameraCurve.tension = 0.5;
 
@@ -154,7 +154,7 @@ function buildSplinePath() {
 function loadAssets() {
   const loader = new GLTFLoader();
 
-  // 1. Original High-Res 4K Clouds Model (Natural Blender Materials)
+  // 1. Original 4K Clouds Model in Natural Blender Space
   loader.load(
     '/assets/models/%D0%BE%D0%B1%D0%BB%D0%B0%D0%BA%D0%B0%20%D1%81%20%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B0%D1%87%D0%B8%D0%BD%D0%B0%D0%B5%D0%BC.glb',
     (gltf) => {
@@ -176,11 +176,10 @@ function loadAssets() {
       const scale = 140 / (maxDim || 1);
       cloudsContainer.scale.setScalar(scale);
       
-      // Orient clouds
-      cloudsContainer.rotation.y = Math.PI;
-      cloudsContainer.position.set(0, 0, -45);
+      // Natural Blender Orientation: entrance at +Z, canyon extending to -Z
+      cloudsContainer.rotation.y = 0;
+      cloudsContainer.position.set(0, 0, -35);
 
-      // Preserve native materials exactly as authored in Blender
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = false;
@@ -200,7 +199,7 @@ function loadAssets() {
     (err) => { console.warn('4K Clouds model note:', err); }
   );
 
-  // 2. Destination Portal at Z = -110
+  // 2. Destination Portal at Z = -82
   loader.load(
     '/assets/models/%D0%BF%D0%BE%D1%80%D1%82%D0%B0%D0%BB2.glb',
     (gltf) => {
@@ -218,7 +217,7 @@ function loadAssets() {
       
       const maxDim = Math.max(size.x, size.y, size.z);
       portalContainer.scale.setScalar(9.0 / (maxDim || 1));
-      portalContainer.position.set(0, -0.8, -110);
+      portalContainer.position.set(0, 0, -82);
 
       portalMesh.traverse((child) => {
         if (child.isMesh && child.material) {
@@ -237,11 +236,11 @@ function loadAssets() {
     '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
     (gltf) => {
       const positions = [
-        new THREE.Vector3(2.6, 0.8, -18),
-        new THREE.Vector3(-3.0, -0.4, -38),
-        new THREE.Vector3(2.8, 0.6, -60),
-        new THREE.Vector3(-2.6, 0.9, -82),
-        new THREE.Vector3(1.8, -0.2, -100)
+        new THREE.Vector3(2.4, 1.8, 2),
+        new THREE.Vector3(-2.8, 1.0, -18),
+        new THREE.Vector3(2.6, 0.6, -38),
+        new THREE.Vector3(-2.2, 0.4, -58),
+        new THREE.Vector3(1.6, 0.2, -74)
       ];
 
       positions.forEach((pos, idx) => {
@@ -346,7 +345,7 @@ function build3DStoryTypography() {
     'DEUSFLOW ARCHIVES · FOLIO 00',
     'Олег Ро',
     'Ніч у чарівній бібліотеці: історія про те, як дитяча допитливість перетворюється на ремесло.',
-    new THREE.Vector3(0, 0.0, -18),
+    new THREE.Vector3(0, 1.8, 0),
     0
   );
 
@@ -354,7 +353,7 @@ function build3DStoryTypography() {
     '01 // CRAFT & EMBROIDERY',
     'Дитяча Допитливість',
     'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
-    new THREE.Vector3(3.2, 0.2, -38),
+    new THREE.Vector3(3.0, 1.2, -18),
     -0.18
   );
 
@@ -362,7 +361,7 @@ function build3DStoryTypography() {
     '02 // THE FIRST LENS · 35MM',
     'Олімпус та Крим',
     'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
-    new THREE.Vector3(-3.5, 0.2, -62),
+    new THREE.Vector3(-3.2, 0.6, -38),
     0.15
   );
 
@@ -370,7 +369,7 @@ function build3DStoryTypography() {
     '03 // DIGITAL DAWN · CANON EOS',
     'Пошук Власного Почерку',
     'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
-    new THREE.Vector3(2.8, -0.2, -84),
+    new THREE.Vector3(2.6, 0.2, -58),
     -0.12
   );
 
@@ -378,7 +377,7 @@ function build3DStoryTypography() {
     'EPILOGUE // THE PORTAL',
     'Заклинання Миті',
     'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
-    new THREE.Vector3(0, 0.8, -104),
+    new THREE.Vector3(0, 0.6, -74),
     0
   );
 }
