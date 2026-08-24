@@ -202,6 +202,18 @@ function loadAssets() {
             if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 2;
           }
+
+          // Surgical Fresnel & Specular elimination: zero out specular reflection in GLSL
+          child.material.onBeforeCompile = (shader) => {
+            shader.fragmentShader = shader.fragmentShader.replace(
+              '#include <lights_fragment_end>',
+              `
+              reflectedLight.directSpecular = vec3( 0.0 );
+              reflectedLight.indirectSpecular = vec3( 0.0 );
+              #include <lights_fragment_end>
+              `
+            );
+          };
         }
       });
 
