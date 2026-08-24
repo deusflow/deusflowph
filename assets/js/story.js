@@ -77,19 +77,19 @@ function initThree() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   window.addEventListener('resize', onWindowResize);
 
-  // Warm library & celestial directional lighting
-  const ambientLight = new THREE.AmbientLight(0xffeedd, 2.2);
+  // Warm library & celestial directional lighting (balanced for ACES tone mapping)
+  const ambientLight = new THREE.AmbientLight(0xffeedd, 1.4);
   scene.add(ambientLight);
 
-  const mainLight = new THREE.DirectionalLight(0xffe2b8, 3.0);
+  const mainLight = new THREE.DirectionalLight(0xffe2b8, 2.2);
   mainLight.position.set(25, 40, 20);
   scene.add(mainLight);
 
-  const fillLight = new THREE.DirectionalLight(0xa0b8d8, 1.6);
+  const fillLight = new THREE.DirectionalLight(0xa0b8d8, 1.2);
   fillLight.position.set(-25, 20, -50);
   scene.add(fillLight);
 
-  const warmGateLight = new THREE.PointLight(0xffa347, 5.0, 100);
+  const warmGateLight = new THREE.PointLight(0xffa347, 2.2, 80);
   warmGateLight.position.set(0, 0, -25);
   scene.add(warmGateLight);
 }
@@ -198,9 +198,10 @@ function loadAssets() {
             child.material.opacity = 0.75;
           } else {
             child.material.side = THREE.FrontSide;
-            child.material.transparent = true;
-            child.material.opacity = 0.95;
+            child.material.transparent = false;
+            child.material.opacity = 1.0;
             child.material.roughness = 0.6;
+            child.material.metalness = 0.0;
           }
         }
       });
