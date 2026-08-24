@@ -176,15 +176,38 @@ function loadAssets() {
       cloudsContainer.rotation.y = 0;
       cloudsContainer.position.set(0, 0, -35);
 
+      // Configure soft painterly alpha blending matching Sketchfab
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = false;
           
           if (child.name && child.name.includes('Sky')) {
+            // Sky Dome: background hemisphere
             child.material.side = THREE.BackSide;
             child.material.depthWrite = false;
             child.material.transparent = true;
             child.material.opacity = 0.75;
+            child.renderOrder = 0;
+          } else if (child.name && child.name.includes('Boot')) {
+            // Ship: solid opaque mesh
+            child.material.side = THREE.DoubleSide;
+            child.material.depthWrite = true;
+            child.material.transparent = false;
+            child.renderOrder = 1;
+          } else if (child.name && child.name.includes('Poly')) {
+            // Main solid cloud canyon floor
+            child.material.side = THREE.DoubleSide;
+            child.material.depthWrite = true;
+            child.material.transparent = false;
+            child.renderOrder = 1;
+          } else {
+            // Cloud_1, Cloud_2, Cloud_3 (The soft cloud puffs / layers):
+            // Eliminate jagged feather borders via soft alpha blending without depth-cutout artifacts
+            child.material.side = THREE.DoubleSide;
+            child.material.transparent = true;
+            child.material.depthWrite = false;
+            child.material.alphaTest = 0.01; // Soft gradient cutout instead of hard 0.45 mask
+            child.renderOrder = 2; // Renders smoothly on top of solid base
           }
         }
       });
