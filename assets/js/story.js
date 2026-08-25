@@ -19,6 +19,10 @@ let portalMesh;
 let floatingBooks = [];
 let textPlanes = [];
 
+// Procedural Volumetric Cloud Canyon System
+let cloudVolumeMesh;
+let cloudVolumeMaterial;
+
 // Physics / Capsule Collision System
 let worldOctree;
 let playerCapsule;
@@ -44,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCollisionSystem();
     buildSplinePath();
     loadAssets();
+    initProceduralCloudCanyon();
     build3DStoryTypography();
     initScrollTrigger();
     initMouseListener();
@@ -58,7 +63,6 @@ function initThree() {
   camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 250);
   scene.add(camera);
 
-  // High performance renderer
   renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
@@ -71,11 +75,162 @@ function initThree() {
   renderer.toneMappingExposure = 1.15;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-  // Pure diffuse ambient lighting without directional specular seams
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
   scene.add(ambientLight);
 
   window.addEventListener('resize', onWindowResize);
+}
+
+// ── PROCEDURAL VOLUMETRIC CLOUD CANYON SHADER ────────────────
+function initProceduralCloudCanyon() {
+  const vertexShader = `
+    varying vec3 vWorldPosition;
+    varying vec3 vCamPos;
+
+    void main() {
+      vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+      vWorldPosition = worldPosition.xyz;
+      vCamPos = cameraPosition;
+      gl_Position = projectionMatrix * viewMatrix * worldPosition;
+    }
+  `;
+
+  const fragmentShader = `
+    uniform float uTime;
+    varying vec3 vWorldPosition;
+    varying vec3 vCamPos;
+
+    // Fast 3D Simplex noise
+    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+    float snoise(vec3 v) {
+      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+      vec3 i  = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+      vec3 x1 = x0 - i1 + C.xxx;
+      vec3 x2 = x0 - i2 + C.yyy;
+      vec3 x3 = x0 - D.yyy;
+      i = mod289(i);
+      vec4 p = permute(permute(permute(
+                i.z + vec4(0.0, i1.z, i2.z, 1.0))
+              + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+              + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+      float n_ = 0.142857142857;
+      vec3  ns = n_ * D.wyz - D.xzx;
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+      vec4 x = x_ *ns.x + ns.yyyy;
+      vec4 y = y_ *ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+      vec4 s0 = floor(b0)*2.0 + 1.0;
+      vec4 s1 = floor(b1)*2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+      vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+      p0 *= norm.x;
+      p1 *= norm.y;
+      p2 *= norm.z;
+      p3 *= norm.w;
+      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+    }
+
+    float fbm(vec3 p) {
+      float f = 0.0;
+      f += 0.5000 * snoise(p); p *= 2.02;
+      f += 0.2500 * snoise(p); p *= 2.03;
+      f += 0.1250 * snoise(p);
+      return f;
+    }
+
+    void main() {
+      vec3 ro = vCamPos;
+      vec3 rd = normalize(vWorldPosition - vCamPos);
+
+      float tMin = 0.2;
+      float tMax = 70.0;
+      int steps = 32;
+      float stepSize = (tMax - tMin) / float(steps);
+
+      vec3 accColor = vec3(0.0);
+      float transmittance = 1.0;
+
+      vec3 sunDir = normalize(vec3(0.05, 0.35, -1.0));
+      vec3 cloudShadow = vec3(0.24, 0.20, 0.32);
+      vec3 cloudSun = vec3(0.98, 0.90, 0.82);
+      vec3 cloudWarm = vec3(0.95, 0.72, 0.60);
+
+      for (int i = 0; i < 32; i++) {
+        float t = tMin + float(i) * stepSize;
+        vec3 p = ro + rd * t;
+
+        // Canyon Corridor: 100% CLEAR AIR in central flight tunnel
+        float spineX = sin(p.z * 0.05) * 1.5;
+        float spineY = 1.4 + sin(p.z * 0.03) * 0.3;
+        float distToSpine = length(vec2(p.x - spineX, (p.y - spineY) * 1.4));
+
+        // Hollow tunnel (dist < 5.0 is completely clear, clouds only form on canyon walls & floor)
+        float canyonMask = smoothstep(4.8, 8.5, distToSpine);
+
+        if (canyonMask > 0.01) {
+          vec3 samplePos = p * 0.07 + vec3(0.0, uTime * 0.008, 0.0);
+          float n = fbm(samplePos);
+          
+          float floorBias = clamp((-0.5 - p.y) * 0.18, 0.0, 0.75);
+          float density = max(0.0, n + 0.12 + floorBias) * canyonMask * 0.55;
+
+          if (density > 0.008) {
+            float sunDot = max(0.0, dot(rd, sunDir));
+            float phase = 0.5 + 0.5 * pow(sunDot, 2.5);
+            vec3 col = mix(cloudShadow, mix(cloudWarm, cloudSun, phase), phase);
+
+            float att = exp(-density * stepSize * 0.5);
+            accColor += col * (1.0 - att) * transmittance;
+            transmittance *= att;
+
+            if (transmittance < 0.03) break;
+          }
+        }
+      }
+
+      float alpha = 1.0 - transmittance;
+      gl_FragColor = vec4(accColor, alpha);
+    }
+  `;
+
+  cloudVolumeMaterial = new THREE.ShaderMaterial({
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader,
+    uniforms: {
+      uTime: { value: 0 }
+    },
+    transparent: true,
+    depthWrite: false,
+    side: THREE.BackSide
+  });
+
+  const geo = new THREE.BoxGeometry(65, 30, 130);
+  cloudVolumeMesh = new THREE.Mesh(geo, cloudVolumeMaterial);
+  cloudVolumeMesh.position.set(0, 0, -35);
+  cloudVolumeMesh.renderOrder = 2;
+  scene.add(cloudVolumeMesh);
 }
 
 // ── COLLISION & CAPSULE SYSTEM ────────────────────────────────
@@ -119,7 +274,6 @@ function initCollisionSystem() {
 
 // ── NATURAL CRUISE ALTITUDE CAMERA FLYTHROUGH PATH ────────────
 function buildSplinePath() {
-  // Clear open-air flight path maintaining optimal viewing distance from the painted artwork
   cameraCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 1.6, 9),       // Beat 0: Hero view of Ship and glowing cloud arch
     new THREE.Vector3(1.2, 1.4, -12),   // Beat 1: Soaring above the cloud entrance
@@ -136,11 +290,11 @@ function buildSplinePath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS (Native 4K glTF Shaders with Zero-Specular Hook) ──
+// ── LOAD 3D ASSETS (Preserving Ship, Sky & Portal; Replacing Jagged Diorama) ──
 function loadAssets() {
   const loader = new GLTFLoader();
 
-  // 1. Original 4K Clouds Model
+  // 1. Original Ship & Sky Dome
   loader.load(
     '/assets/models/%D0%BE%D0%B1%D0%BB%D0%B0%D0%BA%D0%B0%20%D1%81%20%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B0%D1%87%D0%B8%D0%BD%D0%B0%D0%B5%D0%BC.glb',
     (gltf) => {
@@ -164,7 +318,6 @@ function loadAssets() {
       cloudsContainer.rotation.y = 0;
       cloudsContainer.position.set(0, 0, -35);
 
-      // Preserve native GLTF materials with exact alpha blending and matte roughness
       model.traverse((child) => {
         if (child.isMesh && child.material) {
           child.frustumCulled = false;
@@ -176,34 +329,19 @@ function loadAssets() {
             child.material.transparent = false;
             child.renderOrder = 0;
           } else if (child.name && child.name.includes('Boot')) {
-            // Ship: solid opaque mesh
+            // Ship: solid beautiful flying boat
             child.material.side = THREE.DoubleSide;
             child.material.depthWrite = true;
             child.material.transparent = false;
             if ('roughness' in child.material) child.material.roughness = 0.7;
             if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 1;
-          } else if (child.name && child.name.includes('Poly')) {
-            // Main solid cloud canyon floor
-            child.material.side = THREE.DoubleSide;
-            child.material.depthWrite = true;
-            child.material.transparent = false;
-            if ('roughness' in child.material) child.material.roughness = 1.0;
-            if ('metalness' in child.material) child.material.metalness = 0.0;
-            child.renderOrder = 1;
           } else {
-            // Cloud_1, Cloud_2, Cloud_3 (The soft cloud puffs):
-            // Soft continuous alpha blending without hard depth-cuts or glass reflections
-            child.material.side = THREE.DoubleSide;
-            child.material.transparent = true;
-            child.material.depthWrite = false;
-            child.material.alphaTest = 0.001;
-            if ('roughness' in child.material) child.material.roughness = 1.0;
-            if ('metalness' in child.material) child.material.metalness = 0.0;
-            child.renderOrder = 2;
+            // Replace the jagged diorama polygon floor with procedural volumetric cloud volume
+            child.visible = false;
           }
 
-          // Surgical Fresnel & Specular elimination: zero out specular reflection in GLSL
+          // Zero out specular/Fresnel on ship and sky
           child.material.onBeforeCompile = (shader) => {
             shader.fragmentShader = shader.fragmentShader.replace(
               '#include <lights_fragment_end>',
@@ -422,6 +560,11 @@ function animate() {
 
   scrollVelocity *= 0.9;
   scrollProgress += (targetScrollProgress - scrollProgress) * 0.06;
+
+  // Update Procedural Clouds uniform
+  if (cloudVolumeMaterial) {
+    cloudVolumeMaterial.uniforms.uTime.value = time;
+  }
 
   if (cameraCurve) {
     const p = Math.max(0.001, Math.min(0.999, scrollProgress));
