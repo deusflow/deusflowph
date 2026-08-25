@@ -18,12 +18,8 @@ let lookAtPathCurve;
 let cloudsContainer;
 let shipMesh;
 let portalMesh;
+let floatingBooks = [];
 let textPlanes = [];
-
-// Golden Sun Dust Motes System
-let sunDustMesh;
-const DUST_COUNT = 160;
-const dustData = [];
 
 // Physics / Capsule Collision System
 let worldOctree;
@@ -45,12 +41,16 @@ const sectionMeta = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.fonts.ready.then(() => {
+  // Ensure handwritten Google Fonts are fully loaded before rendering 3D typography
+  Promise.all([
+    document.fonts.load('700 36px "Caveat"'),
+    document.fonts.load('500 24px "Caveat"'),
+    document.fonts.ready
+  ]).then(() => {
     initThree();
     initCollisionSystem();
     buildSlalomPath();
     loadAssets();
-    initSunDust();
     build3DStoryTypography();
     initScrollTrigger();
     initMouseListener();
@@ -81,45 +81,6 @@ function initThree() {
   scene.add(ambientLight);
 
   window.addEventListener('resize', onWindowResize);
-}
-
-// ── ATMOSPHERIC GOLDEN SUN DUST MOTES ─────────────────────────
-function initSunDust() {
-  const geo = new THREE.TetrahedronGeometry(0.07, 0);
-  const mat = new THREE.MeshBasicMaterial({
-    color: 0xffe4b5,
-    transparent: true,
-    opacity: 0.85
-  });
-
-  sunDustMesh = new THREE.InstancedMesh(geo, mat, DUST_COUNT);
-  const dummy = new THREE.Object3D();
-
-  for (let i = 0; i < DUST_COUNT; i++) {
-    const x = (Math.random() - 0.5) * 22;
-    const y = 0.4 + Math.random() * 4.5;
-    const z = 12 - Math.random() * 96;
-    const scale = 0.6 + Math.random() * 1.3;
-
-    dummy.position.set(x, y, z);
-    dummy.scale.setScalar(scale);
-    dummy.updateMatrix();
-    sunDustMesh.setMatrixAt(i, dummy.matrix);
-
-    dustData.push({
-      baseX: x,
-      baseY: y,
-      baseZ: z,
-      scale: scale,
-      speed: 0.4 + Math.random() * 0.5,
-      rotSpeed: (Math.random() - 0.5) * 0.02,
-      phase: Math.random() * Math.PI * 2
-    });
-  }
-
-  sunDustMesh.instanceMatrix.needsUpdate = true;
-  sunDustMesh.renderOrder = 3;
-  scene.add(sunDustMesh);
 }
 
 // ── COLLISION & CAPSULE SYSTEM ────────────────────────────────
@@ -161,27 +122,27 @@ function initCollisionSystem() {
   worldOctree.fromGraphNode(collisionGroup);
 }
 
-// ── SLALOM CAMERA & LOOK-AT CHOREOGRAPHY ──────────────────────
+// ── SLALOM CAMERA PATH & DYNAMIC LOOK-AT CHOREOGRAPHY ─────────
 function buildSlalomPath() {
-  // 1. Camera Eye Position Path: Weaves left & right around the ship and aligns squarely with each text
+  // 1. Camera Eye Position: Starts inside clear airspace (Z = +4.5), weaves around the ship and frames each text
   cameraPathCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.0, 1.8, 8.5),     // Beat 0: Hero overview of the sky and floating ship
-    new THREE.Vector3(-2.8, 1.7, -14.0),  // Beat 1: Glides left around ship, aligns squarely with Text 1
-    new THREE.Vector3(2.8, 1.6, -34.0),   // Beat 2: Sweeps diagonally right, aligns squarely with Text 2
-    new THREE.Vector3(-2.5, 1.5, -54.0),  // Beat 3: Sweeps diagonally left, aligns squarely with Text 3
-    new THREE.Vector3(0.0, 1.3, -71.0),   // Beat 4: Enters center approaching the Portal
-    new THREE.Vector3(0.0, 1.2, -81.0)    // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0.0, 1.8, 4.5),     // Beat 0: Front prologue in clear open airspace
+    new THREE.Vector3(-2.2, 1.7, -13.5),  // Beat 1: Glides left around ship, frames Text 1 comfortably
+    new THREE.Vector3(2.2, 1.6, -33.5),   // Beat 2: Sweeps diagonally right, frames Text 2
+    new THREE.Vector3(-2.0, 1.5, -53.5),  // Beat 3: Sweeps diagonally left, frames Text 3
+    new THREE.Vector3(0.0, 1.3, -70.5),   // Beat 4: Approaching the Portal
+    new THREE.Vector3(0.0, 1.2, -80.0)    // Beat 5: Stepping into the Portal
   ]);
   cameraPathCurve.tension = 0.45;
 
-  // 2. Camera Gaze Target Path: Points directly at the slanted text cards and straightens out on arrival
+  // 2. Camera Look-At Target: Points directly at the slanted text cards from comfortable reading distance
   lookAtPathCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.0, 1.8, 1.0),     // Beat 0 LookAt: Center prologue
-    new THREE.Vector3(-3.8, 1.6, -18.0),  // Beat 1 LookAt: Left slanted Text 1
-    new THREE.Vector3(3.8, 1.5, -38.0),   // Beat 2 LookAt: Right slanted Text 2
-    new THREE.Vector3(-3.5, 1.4, -58.0),  // Beat 3 LookAt: Left slanted Text 3
-    new THREE.Vector3(0.0, 1.2, -76.0),   // Beat 4 LookAt: Portal epilogue
-    new THREE.Vector3(0.0, 1.2, -85.0)    // Beat 5 LookAt: Inside Portal core
+    new THREE.Vector3(0.0, 1.8, -0.5),    // Beat 0 LookAt: Center prologue
+    new THREE.Vector3(-3.4, 1.6, -18.0),  // Beat 1 LookAt: Left slanted Text 1
+    new THREE.Vector3(3.4, 1.5, -38.0),   // Beat 2 LookAt: Right slanted Text 2
+    new THREE.Vector3(-3.2, 1.4, -58.0),  // Beat 3 LookAt: Left slanted Text 3
+    new THREE.Vector3(0.0, 1.2, -75.5),   // Beat 4 LookAt: Portal epilogue
+    new THREE.Vector3(0.0, 1.2, -85.0)    // Beat 5 LookAt: Core of Portal
   ]);
   lookAtPathCurve.tension = 0.45;
 
@@ -191,11 +152,11 @@ function buildSlalomPath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS ────────────────────────────────────────────
+// ── LOAD 3D ASSETS (Model, Ship, Floating Books & Portal) ─────
 function loadAssets() {
   const loader = new GLTFLoader();
 
-  // 1. Original 4K Clouds Model & Ship
+  // 1. Original 4K Clouds Model & Flying Ship
   loader.load(
     '/assets/models/%D0%BE%D0%B1%D0%BB%D0%B0%D0%BA%D0%B0%20%D1%81%20%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B0%D1%87%D0%B8%D0%BD%D0%B0%D0%B5%D0%BC.glb',
     (gltf) => {
@@ -273,7 +234,49 @@ function loadAssets() {
     (err) => { console.warn('4K Clouds model note:', err); }
   );
 
-  // 2. Destination Portal at Z = -84
+  // 2. Floating 3D Magic Books in the Clouds
+  loader.load(
+    '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
+    (gltf) => {
+      const bookTemplate = gltf.scene;
+      
+      const bookPositions = [
+        { pos: new THREE.Vector3(-1.8, 2.0, -4.0), rot: new THREE.Vector3(0.2, 0.4, -0.15), scale: 0.35, phase: 0.0 },
+        { pos: new THREE.Vector3(2.4, 1.8, -14.0), rot: new THREE.Vector3(-0.15, -0.6, 0.2), scale: 0.32, phase: 1.2 },
+        { pos: new THREE.Vector3(-3.0, 1.7, -26.0), rot: new THREE.Vector3(0.25, 0.8, -0.1), scale: 0.36, phase: 2.4 },
+        { pos: new THREE.Vector3(2.8, 1.5, -46.0), rot: new THREE.Vector3(-0.2, -0.4, 0.25), scale: 0.34, phase: 3.6 },
+        { pos: new THREE.Vector3(-2.4, 1.4, -62.0), rot: new THREE.Vector3(0.18, 0.5, -0.2), scale: 0.33, phase: 4.8 },
+        { pos: new THREE.Vector3(1.6, 1.3, -73.0), rot: new THREE.Vector3(-0.1, -0.7, 0.15), scale: 0.35, phase: 5.5 }
+      ];
+
+      bookPositions.forEach((bp) => {
+        const book = bookTemplate.clone(true);
+        book.position.copy(bp.pos);
+        book.rotation.set(bp.rot.x, bp.rot.y, bp.rot.z);
+        book.scale.setScalar(bp.scale);
+        
+        book.traverse((c) => {
+          if (c.isMesh && c.material) {
+            c.material = c.material.clone();
+            c.material.side = THREE.DoubleSide;
+          }
+        });
+
+        book.userData = {
+          baseY: bp.pos.y,
+          phase: bp.phase,
+          rotSpeed: 0.006 + Math.random() * 0.004
+        };
+
+        scene.add(book);
+        floatingBooks.push(book);
+      });
+    },
+    undefined,
+    (err) => { console.warn('Book model note:', err); }
+  );
+
+  // 3. Destination Portal at Z = -84
   loader.load(
     '/assets/models/%D0%BF%D0%BE%D1%80%D1%82%D0%B0%D0%BB2.glb',
     (gltf) => {
@@ -306,59 +309,49 @@ function loadAssets() {
   );
 }
 
-// ── 3D SLANTED STORY TYPOGRAPHY ───────────────────────────────
-function createSlanted3DText(badge, title, subtitle, pos, rotY = 0, sectionIndex = 0) {
+// ── 3D HANDWRITTEN STORY TYPOGRAPHY (True Oleg Ro Narrative) ──
+function createHandwrittenText(badge, title, bodyLines, pos, rotY = 0, sectionIndex = 0) {
   const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 512;
+  canvas.width = 1400;
+  canvas.height = 750;
   const ctx = canvas.getContext('2d');
 
-  ctx.clearRect(0, 0, 1024, 512);
+  ctx.clearRect(0, 0, 1400, 750);
 
-  // 1. Badge / Small Caps Header
+  // 1. Badge / Category Header
   if (badge) {
-    ctx.font = '600 22px "Space Mono", monospace';
+    ctx.font = '700 20px "Space Mono", monospace';
     ctx.fillStyle = '#d8b888';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-    ctx.shadowBlur = 10;
-    ctx.fillText(badge.toUpperCase(), 512, 90);
+    ctx.shadowBlur = 8;
+    ctx.fillText(badge.toUpperCase(), 700, 70);
   }
 
-  // 2. Main Title (Handwritten Script)
-  ctx.font = '700 58px "Caveat", "Marck Script", cursive';
-  ctx.fillStyle = '#fff4dc';
+  // 2. Main Title in Casual Handwritten Script
+  ctx.font = '700 44px "Caveat", "Marck Script", cursive';
+  ctx.fillStyle = '#fff6ea';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.shadowColor = 'rgba(216, 184, 136, 0.95)';
-  ctx.shadowBlur = 24;
-  ctx.fillText(title, 512, 140);
+  ctx.shadowBlur = 20;
+  ctx.fillText(title, 700, 120);
 
-  // 3. Subtitle / Story Line (Poetic Handwritten Script)
-  if (subtitle) {
-    ctx.font = '500 32px "Caveat", "Marck Script", cursive';
-    ctx.fillStyle = '#e8dcc0';
+  // 3. Poetic Authentic Story Lines
+  if (bodyLines && bodyLines.length > 0) {
+    ctx.font = '500 28px "Caveat", "Marck Script", cursive';
+    ctx.fillStyle = '#f0e4d2';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-    ctx.shadowBlur = 12;
-    
-    const words = subtitle.split(' ');
-    let line = '';
-    let y = 230;
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + ' ';
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > 860 && n > 0) {
-        ctx.fillText(line, 512, y);
-        line = words[n] + ' ';
-        y += 44;
-      } else {
-        line = testLine;
-      }
+    ctx.shadowBlur = 10;
+
+    let y = 205;
+    for (let i = 0; i < bodyLines.length; i++) {
+      ctx.fillText(bodyLines[i], 700, y);
+      y += 42;
     }
-    ctx.fillText(line, 512, y);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -374,7 +367,8 @@ function createSlanted3DText(badge, title, subtitle, pos, rotY = 0, sectionIndex
     opacity: sectionIndex === 0 ? 1.0 : 0.0
   });
 
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 4.25), mat);
+  // Perfectly proportioned 3D plane that fills ~55% of the screen without cropping
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 3.3), mat);
   plane.position.copy(pos);
   plane.rotation.y = rotY;
   plane.userData = {
@@ -388,52 +382,75 @@ function createSlanted3DText(badge, title, subtitle, pos, rotY = 0, sectionIndex
 }
 
 function build3DStoryTypography() {
-  // Beat 0: Prologue (Center Front)
-  createSlanted3DText(
-    'DEUSFLOW ARCHIVES · FOLIO 00',
-    'Олег Ро',
-    'Ніч у чарівній бібліотеці: історія про те, як дитяча допитливість перетворюється на ремесло.',
-    new THREE.Vector3(0, 1.8, 1),
+  // Chapter 0: Prologue (Exact text from docs/txt.md)
+  createHandwrittenText(
+    'DEUSFLOW // ВСТУП',
+    '«То що тебе сюди занесло?»',
+    [
+      'Пристебніть ремені: раз ви зайшли на цю сторінку, ви або дуже допитливі,',
+      'або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?',
+      'Ну ж бо… Я все ж намагався…'
+    ],
+    new THREE.Vector3(0, 1.8, -0.5),
     0,
     0
   );
 
-  // Beat 1: Childhood & Craft (Left side, slanted diagonally into the distance)
-  createSlanted3DText(
-    '01 // CRAFT & EMBROIDERY',
-    'Дитяча Допитливість',
-    'Усе життя я любив малювати й перемальовувати картинки на свій лад. Праця, вишивка та перші кроки у світ форми.',
-    new THREE.Vector3(-3.8, 1.6, -18),
-    0.32, // Slanted ~18 degrees into the distance
+  // Chapter 1: Childhood & Craft (Left side, slanted ~18 degrees)
+  createHandwrittenText(
+    '01 // ДИТИНСТВО ТА ТВОРЧІСТЬ',
+    '«Любив щось творити і витворювати»',
+    [
+      'Усе життя, скільки себе пам\'ятаю, я любив щось творити і витворювати.',
+      'Я любив малювати й перемальовувати з розмальовок картинки на свій лад…',
+      'Уроки праці в мене були з дівчатами, оскільки хлопців було мало,',
+      'тому ми там плели, вишивали і так далі…'
+    ],
+    new THREE.Vector3(-3.4, 1.6, -18.0),
+    0.30,
     1
   );
 
-  // Beat 2: The First Lens (Right side, slanted diagonally into the distance)
-  createSlanted3DText(
-    '02 // THE FIRST LENS · 35MM',
-    'Олімпус та Крим',
-    'Бабуся подарувала мені плівкову камеру. Перші невпевнені кадри, море, Крим та зародження любові до світла.',
-    new THREE.Vector3(3.8, 1.5, -38),
-    -0.32, // Slanted ~ -18 degrees into the distance
+  // Chapter 2: The First Camera & Crimea (Right side, slanted ~ -18 degrees)
+  createHandwrittenText(
+    '02 // ПЕРША КАМЕРА ТА КРИМ',
+    '«Бабуся подарувала Olympus»',
+    [
+      'Бабуся подарувала на день народження мені плівкову камеру, це був Olympus…',
+      'Через пару років з\'явився Canon 1000D. Я навіть не знав, навіщо об\'єктиви',
+      'і як отримувати розмитий фон. Я просто фотографував, робив фотокопії чогось,',
+      'особливо фотографії з Криму… Це був мій перший і останній «Крим».'
+    ],
+    new THREE.Vector3(3.4, 1.5, -38.0),
+    -0.30,
     2
   );
 
-  // Beat 3: Digital Dawn (Left side, slanted diagonally into the distance)
-  createSlanted3DText(
-    '03 // DIGITAL DAWN · CANON EOS',
-    'Пошук Власного Почерку',
-    'Через пару років з’явився Canon 1000D. Сотні туторіалів, ночі за фотошопом та візуальна поезія.',
-    new THREE.Vector3(-3.5, 1.4, -58),
-    0.28, // Slanted ~16 degrees into the distance
+  // Chapter 3: The Factory & Breakthrough (Left side, slanted ~16 degrees)
+  createHandwrittenText(
+    '03 // ЗАВОД ТА ПЕРЕЛОМНИЙ МОМЕНТ',
+    '«Весілля мене обрали самі»',
+    [
+      'Я працював на заводі Ferrexpo Mining електриком — це пекельна праця за $400.',
+      'У мене не було навіть надії на те, що я зможу стати фотографом…',
+      'але тут диво: мене почали наймати на зйомки, і 90% з них були весільні.',
+      'Тому я й кажу: весілля мене обрали самі :)'
+    ],
+    new THREE.Vector3(-3.2, 1.4, -58.0),
+    0.28,
     3
   );
 
-  // Beat 4: Epilogue (Facing the glowing Portal)
-  createSlanted3DText(
-    'EPILOGUE // THE PORTAL',
-    'Заклинання Миті',
-    'Кожен кадр — це заклинання, що затримує мить, яка більше ніколи не повториться.',
-    new THREE.Vector3(0, 1.2, -76),
+  // Chapter 4: Denmark & New Beginning (Facing Portal)
+  createHandwrittenText(
+    '04 // ДАНІЯ ТА НОВА СТОРІНКА',
+    '«Історія в Данії тільки почалася»',
+    [
+      'У Данії 13 серпня дорогою до лікарні народився мій син Даніель.',
+      'Історія мене в Данії ще не написана, вона тільки почалася…',
+      'Давайте спостерігати разом, як зміниться ця сторінка :)'
+    ],
+    new THREE.Vector3(0, 1.2, -75.5),
     0,
     4
   );
@@ -447,7 +464,7 @@ function initScrollTrigger() {
     end: 'bottom bottom',
     scrub: 1.2,
     snap: {
-      snapTo: [0.0, 0.25, 0.5, 0.75, 1.0], // Snaps to exactly each of the 5 chapters
+      snapTo: [0.0, 0.25, 0.5, 0.75, 1.0], // Snaps to each chapter squarely
       duration: { min: 0.35, max: 0.75 },
       delay: 0.12,
       ease: 'power2.out'
@@ -488,7 +505,6 @@ function animate() {
   if (cameraPathCurve && lookAtPathCurve) {
     const p = Math.max(0.001, Math.min(0.999, scrollProgress));
     
-    // Smooth camera position along the slalom curve
     const camPos = cameraPathCurve.getPointAt(p);
     
     // Subtle parallax mouse tilt
@@ -496,8 +512,8 @@ function animate() {
     const targetY = -(mouseY / window.innerHeight) * 2 + 1;
     
     const desiredPos = new THREE.Vector3(
-      camPos.x + targetX * 0.25,
-      camPos.y + targetY * 0.18,
+      camPos.x + targetX * 0.2,
+      camPos.y + targetY * 0.15,
       camPos.z
     );
 
@@ -517,32 +533,23 @@ function animate() {
       playerCapsule.start.z
     );
 
-    // Smooth camera gaze target that squarely aligns with the current chapter text
+    // Smooth camera gaze target squarely framing each chapter text
     const lookAtPos = lookAtPathCurve.getPointAt(p);
     camera.lookAt(lookAtPos);
   }
 
-  // 2. Animate Golden Sun Dust Motes
-  if (sunDustMesh) {
-    const dummy = new THREE.Object3D();
-    for (let i = 0; i < DUST_COUNT; i++) {
-      const d = dustData[i];
-      const y = d.baseY + Math.sin(time * d.speed + d.phase) * 0.2;
-      const x = d.baseX + Math.cos(time * 0.3 + d.phase) * 0.15;
-      
-      dummy.position.set(x, y, d.baseZ);
-      dummy.rotation.set(time * d.rotSpeed, time * d.rotSpeed * 1.2, 0);
-      dummy.scale.setScalar(d.scale * (0.8 + 0.2 * Math.sin(time * 2.0 + d.phase)));
-      dummy.updateMatrix();
-      sunDustMesh.setMatrixAt(i, dummy.matrix);
-    }
-    sunDustMesh.instanceMatrix.needsUpdate = true;
-  }
-
-  // 3. Gentle Flying Ship Wave Bobbing
+  // 2. Gentle Flying Ship Wave Bobbing
   if (shipMesh) {
     shipMesh.position.y = Math.sin(time * 1.1) * 0.12;
     shipMesh.rotation.z = Math.sin(time * 0.7) * 0.025;
+  }
+
+  // 3. Animate Floating 3D Magic Books
+  for (let i = 0; i < floatingBooks.length; i++) {
+    const b = floatingBooks[i];
+    b.rotation.y += b.userData.rotSpeed;
+    b.position.y = b.userData.baseY + Math.sin(time * 1.3 + b.userData.phase) * 0.12;
+    b.rotation.z = Math.sin(time * 0.8 + b.userData.phase) * 0.06;
   }
 
   // 4. Fade Text Plates per Chapter with Smooth Highlight
@@ -554,7 +561,7 @@ function animate() {
     
     p.material.opacity = alpha;
     p.visible = alpha > 0.02;
-    p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.06;
+    p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.05;
   }
 
   if (portalMesh) {
