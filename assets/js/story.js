@@ -88,7 +88,7 @@ function initThree() {
   window.addEventListener('resize', onWindowResize);
 }
 
-// ── PROCEDURAL VOLUMETRIC MIST PUFFS (360° Inner Wall & Ceiling Blanket) ──
+// ── PROCEDURAL VOLUMETRIC MIST (Dense Coat on Walls, Ceiling & Floor) ──
 function createCloudPuffTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -96,10 +96,10 @@ function createCloudPuffTexture() {
   const ctx = canvas.getContext('2d');
 
   const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-  grad.addColorStop(0.0, 'rgba(245, 236, 228, 0.65)');
-  grad.addColorStop(0.35, 'rgba(232, 218, 224, 0.42)');
-  grad.addColorStop(0.7, 'rgba(215, 202, 218, 0.16)');
-  grad.addColorStop(1.0, 'rgba(200, 190, 215, 0.0)');
+  grad.addColorStop(0.0, 'rgba(250, 242, 235, 0.90)');
+  grad.addColorStop(0.35, 'rgba(240, 228, 224, 0.68)');
+  grad.addColorStop(0.7, 'rgba(222, 208, 222, 0.28)');
+  grad.addColorStop(1.0, 'rgba(205, 195, 218, 0.0)');
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 256, 256);
@@ -112,12 +112,12 @@ function createCloudPuffTexture() {
 
 function initVolumetricMist() {
   const texture = createCloudPuffTexture();
-  const geometry = new THREE.PlaneGeometry(9, 9);
+  const geometry = new THREE.PlaneGeometry(8, 8);
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
     depthWrite: false,
-    opacity: 0.36,
+    opacity: 0.65,
     side: THREE.DoubleSide,
     blending: THREE.NormalBlending
   });
@@ -131,27 +131,32 @@ function initVolumetricMist() {
     const z = 14 - (i / MIST_COUNT) * 98 + (Math.random() - 0.5) * 4;
     let x = 0, y = 0;
     
-    // Distribute across 4 regions to envelope the entire interior
+    // Distribute strictly onto walls, ceiling, and deep floor
     const region = i % 4;
     if (region === 0) {
-      // Left inner wall contour
-      x = -8.5 - Math.random() * 4.0;
-      y = 0.8 + Math.random() * 5.0;
+      // Left wall: thick dense coat hugging the rocky left contour
+      x = -8.5 - Math.random() * 6.5;
+      y = -0.5 + Math.random() * 6.0;
     } else if (region === 1) {
-      // Right inner wall contour
-      x = 8.5 + Math.random() * 4.0;
-      y = 0.8 + Math.random() * 5.0;
+      // Right wall: thick dense coat hugging the rocky right contour
+      x = 8.5 + Math.random() * 6.5;
+      y = -0.5 + Math.random() * 6.0;
     } else if (region === 2) {
-      // Ceiling arch contour
-      x = (Math.random() - 0.5) * 12;
-      y = 4.8 + Math.random() * 3.5;
-    } else {
-      // Floor & central cloud sea
+      // Ceiling arch: dense fluffy roof high above camera
       x = (Math.random() - 0.5) * 16;
-      y = -0.5 + Math.random() * 2.0;
+      y = 5.2 + Math.random() * 4.0;
+    } else {
+      // Floor bed: dense fluffy carpet well below camera flight level
+      x = (Math.random() - 0.5) * 18;
+      y = -2.2 + Math.random() * 1.2;
     }
 
-    const scale = 1.0 + Math.random() * 1.3;
+    // Safety check: ensure central flight corridor [-5.5, +5.5] is 100% clear of fog
+    if (Math.abs(x) < 5.5 && y > -0.8 && y < 4.8) {
+      x = x >= 0 ? x + 5.5 : x - 5.5;
+    }
+
+    const scale = 1.0 + Math.random() * 1.2;
     const rotZ = Math.random() * Math.PI * 2;
     const rotX = (Math.random() - 0.5) * 0.3;
     const rotY = (Math.random() - 0.5) * 0.3;
