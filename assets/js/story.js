@@ -23,9 +23,9 @@ let portalMesh;
 let floatingBooks = [];
 let textPlanes = [];
 
-// Volumetric Mist Puffs Blanket System
+// Volumetric 360° Mist Envelope System
 let mistMesh;
-const MIST_COUNT = 85;
+const MIST_COUNT = 160;
 const mistData = [];
 
 // Physics / Capsule Collision System
@@ -88,7 +88,7 @@ function initThree() {
   window.addEventListener('resize', onWindowResize);
 }
 
-// ── PROCEDURAL VOLUMETRIC MIST PUFFS (Fluffy Blanket) ─────────
+// ── PROCEDURAL VOLUMETRIC MIST PUFFS (360° Inner Wall & Ceiling Blanket) ──
 function createCloudPuffTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -96,9 +96,9 @@ function createCloudPuffTexture() {
   const ctx = canvas.getContext('2d');
 
   const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-  grad.addColorStop(0.0, 'rgba(235, 225, 215, 0.4)');
-  grad.addColorStop(0.4, 'rgba(225, 212, 220, 0.22)');
-  grad.addColorStop(0.75, 'rgba(210, 198, 215, 0.08)');
+  grad.addColorStop(0.0, 'rgba(245, 236, 228, 0.65)');
+  grad.addColorStop(0.35, 'rgba(232, 218, 224, 0.42)');
+  grad.addColorStop(0.7, 'rgba(215, 202, 218, 0.16)');
   grad.addColorStop(1.0, 'rgba(200, 190, 215, 0.0)');
 
   ctx.fillStyle = grad;
@@ -112,12 +112,12 @@ function createCloudPuffTexture() {
 
 function initVolumetricMist() {
   const texture = createCloudPuffTexture();
-  const geometry = new THREE.PlaneGeometry(7, 7);
+  const geometry = new THREE.PlaneGeometry(9, 9);
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
     depthWrite: false,
-    opacity: 0.18,
+    opacity: 0.36,
     side: THREE.DoubleSide,
     blending: THREE.NormalBlending
   });
@@ -128,15 +128,36 @@ function initVolumetricMist() {
   const dummy = new THREE.Object3D();
 
   for (let i = 0; i < MIST_COUNT; i++) {
-    // Distribute along the canyon floor from Z = +15 down to Z = -85
-    const z = 14 - (i / MIST_COUNT) * 98 + (Math.random() - 0.5) * 5;
-    const x = (Math.random() - 0.5) * 20;
-    const y = 0.1 + Math.random() * 2.0;
-    const scale = 0.9 + Math.random() * 1.4;
+    const z = 14 - (i / MIST_COUNT) * 98 + (Math.random() - 0.5) * 4;
+    let x = 0, y = 0;
+    
+    // Distribute across 4 regions to envelope the entire interior
+    const region = i % 4;
+    if (region === 0) {
+      // Left inner wall contour
+      x = -8.5 - Math.random() * 4.0;
+      y = 0.8 + Math.random() * 5.0;
+    } else if (region === 1) {
+      // Right inner wall contour
+      x = 8.5 + Math.random() * 4.0;
+      y = 0.8 + Math.random() * 5.0;
+    } else if (region === 2) {
+      // Ceiling arch contour
+      x = (Math.random() - 0.5) * 12;
+      y = 4.8 + Math.random() * 3.5;
+    } else {
+      // Floor & central cloud sea
+      x = (Math.random() - 0.5) * 16;
+      y = -0.5 + Math.random() * 2.0;
+    }
+
+    const scale = 1.0 + Math.random() * 1.3;
     const rotZ = Math.random() * Math.PI * 2;
+    const rotX = (Math.random() - 0.5) * 0.3;
+    const rotY = (Math.random() - 0.5) * 0.3;
 
     dummy.position.set(x, y, z);
-    dummy.rotation.set(0.1, 0.1, rotZ);
+    dummy.rotation.set(rotX, rotY, rotZ);
     dummy.scale.set(scale, scale, 1);
     dummy.updateMatrix();
     mistMesh.setMatrixAt(i, dummy.matrix);
@@ -147,8 +168,8 @@ function initVolumetricMist() {
       baseZ: z,
       scale: scale,
       rotZ: rotZ,
-      rotSpeed: (Math.random() - 0.5) * 0.0012,
-      driftSpeed: 0.2 + Math.random() * 0.3,
+      rotSpeed: (Math.random() - 0.5) * 0.001,
+      driftSpeed: 0.2 + Math.random() * 0.25,
       driftPhase: Math.random() * Math.PI * 2
     });
   }
