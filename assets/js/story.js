@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { Octree } from 'three/addons/math/Octree.js';
 import { Capsule } from 'three/addons/math/Capsule.js';
 
@@ -12,6 +13,8 @@ let targetScrollProgress = 0.0;
 let scrollVelocity = 0.0;
 let lastScrollY = 0;
 
+let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 let cameraPathCurve;
 let lookAtPathCurve;
 
@@ -20,6 +23,8 @@ let shipMesh;
 let portalMesh;
 let floatingBooks = [];
 let textPlanes = [];
+
+let loadingManager;
 
 // Physics / Capsule Collision System
 let worldOctree;
@@ -41,6 +46,8 @@ const sectionMeta = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
+  initLoadingManager();
+
   // Ensure casual Cyrillic handwriting font is loaded before drawing
   Promise.all([
     document.fonts.load('700 52px "Caveat"'),
@@ -153,8 +160,41 @@ function buildSlalomPath() {
 }
 
 // ── LOAD 3D ASSETS (Cleaned Model without Foreground Shards) ──
+function initLoadingManager() {
+  const loadingBar = document.getElementById('loading-bar');
+  const loadingText = document.getElementById('loading-text');
+  const loadingOverlay = document.getElementById('loading-overlay');
+
+  loadingManager = new THREE.LoadingManager();
+  
+  loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+    const progress = (itemsLoaded / itemsTotal) * 100;
+    if (loadingBar) loadingBar.style.width = `${progress}%`;
+    if (loadingText) loadingText.innerText = `Завантаження... ${Math.round(progress)}%`;
+  };
+
+  loadingManager.onLoad = () => {
+    if (loadingOverlay) {
+      setTimeout(() => {
+        loadingOverlay.classList.add('fade-out');
+        setTimeout(() => {
+          loadingOverlay.style.display = 'none';
+        }, 800);
+      }, 500);
+    }
+  };
+
+  loadingManager.onError = (url) => {
+    console.error('There was an error loading ' + url);
+  };
+}
+
 function loadAssets() {
-  const loader = new GLTFLoader();
+  const loader = new GLTFLoader(loadingManager);
+  
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+  loader.setDRACOLoader(dracoLoader);
 
   // 1. Original 4K Clouds Model & Flying Ship
   loader.load(
@@ -506,7 +546,13 @@ function animate() {
   const time = clock.getElapsedTime();
 
   scrollVelocity *= 0.9;
-  scrollProgress += (targetScrollProgress - scrollProgress) * 0.05;
+  
+  if (prefersReducedMotion) {
+    const idx = Math.min(sectionMeta.length - 1, Math.round(targetScrollProgress * (sectionMeta.length - 1)));
+    scrollProgress = idx / (sectionMeta.length - 1);
+  } else {
+    scrollProgress += (targetScrollProgress - scrollProgress) * 0.05;
+  }
 
   // 1. Slalom Flythrough Kinematics
   if (cameraPathCurve && lookAtPathCurve) {
@@ -546,7 +592,7 @@ function animate() {
   }
 
   // 2. Gentle Flying Ship Wave Bobbing
-  if (shipMesh) {
+  if (shipMesh && !prefersReducedMotion) {
     shipMesh.position.y = Math.sin(time * 1.1) * 0.12;
     shipMesh.rotation.z = Math.sin(time * 0.7) * 0.025;
   }
@@ -554,9 +600,11 @@ function animate() {
   // 3. Animate Floating 3D Magic Books
   for (let i = 0; i < floatingBooks.length; i++) {
     const b = floatingBooks[i];
-    b.rotation.y += b.userData.rotSpeed;
-    b.position.y = b.userData.baseY + Math.sin(time * 1.3 + b.userData.phase) * 0.12;
-    b.rotation.z = Math.sin(time * 0.8 + b.userData.phase) * 0.06;
+    if (!prefersReducedMotion) {
+      b.rotation.y += b.userData.rotSpeed;
+      b.position.y = b.userData.baseY + Math.sin(time * 1.3 + b.userData.phase) * 0.12;
+      b.rotation.z = Math.sin(time * 0.8 + b.userData.phase) * 0.06;
+    }
   }
 
   // 4. Fade Text Plates per Chapter with Smooth Highlight
@@ -564,11 +612,13 @@ function animate() {
     const p = textPlanes[i];
     const targetProgress = p.userData.sectionIndex / (textPlanes.length - 1);
     const diff = Math.abs(scrollProgress - targetProgress);
-    const alpha = Math.max(0.0, Math.min(1.0, 1.0 - (diff / 0.16)));
+    const alpha = prefersReducedMotion ? (diff < 0.05 ? 1.0 : 0.0) : Math.max(0.0, Math.min(1.0, 1.0 - (diff / 0.16)));
     
     p.material.opacity = alpha;
     p.visible = alpha > 0.02;
-    p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.05;
+    if (!prefersReducedMotion) {
+      p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.05;
+    }
   }
 
   if (portalMesh) {
