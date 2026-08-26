@@ -271,9 +271,9 @@ function loadAssets() {
   dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
   loader.setDRACOLoader(dracoLoader);
 
-  // 1. Original 4K Clouds Model & Flying Ship
+  // 1. Pristine 1K Clouds Model & Flying Ship (Clean PNG Alpha)
   loader.load(
-    '/assets/models/%D0%BE%D0%B1%D0%BB%D0%B0%D0%BA%D0%B0%20%D1%81%20%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B0%D1%87%D0%B8%D0%BD%D0%B0%D0%B5%D0%BC.glb',
+    '/assets/models/%D0%9E%D0%91%D0%9B%D0%90%D0%9A%D0%90%201%D0%9A.glb',
     (gltf) => {
       const model = gltf.scene;
       
@@ -330,7 +330,6 @@ function loadAssets() {
             child.material.side = THREE.DoubleSide;
             child.material.transparent = true;
             child.material.depthWrite = false;
-            child.material.alphaTest = 0.001;
             if ('roughness' in child.material) child.material.roughness = 1.0;
             if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 2;
@@ -354,7 +353,7 @@ function loadAssets() {
       scene.add(cloudsContainer);
     },
     undefined,
-    (err) => { console.warn('4K Clouds model note:', err); }
+    (err) => { console.warn('1K Clouds model note:', err); }
   );
 
   // 2. Floating 3D Magic Books
