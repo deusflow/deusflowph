@@ -41,10 +41,10 @@ const sectionMeta = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Ensure handwritten Google Fonts are fully loaded before rendering 3D typography
+  // Ensure casual Cyrillic handwriting font is loaded before drawing
   Promise.all([
-    document.fonts.load('700 36px "Caveat"'),
-    document.fonts.load('500 24px "Caveat"'),
+    document.fonts.load('700 52px "Caveat"'),
+    document.fonts.load('500 32px "Caveat"'),
     document.fonts.ready
   ]).then(() => {
     initThree();
@@ -124,24 +124,24 @@ function initCollisionSystem() {
 
 // ── SLALOM CAMERA PATH & DYNAMIC LOOK-AT CHOREOGRAPHY ─────────
 function buildSlalomPath() {
-  // 1. Camera Eye Position: Starts inside clear airspace (Z = +4.5), weaves around the ship and frames each text
+  // 1. Camera Eye Position: 7.5 - 8.0 units away from text cards for comfortable viewing
   cameraPathCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.0, 1.8, 4.5),     // Beat 0: Front prologue in clear open airspace
-    new THREE.Vector3(-2.2, 1.7, -13.5),  // Beat 1: Glides left around ship, frames Text 1 comfortably
-    new THREE.Vector3(2.2, 1.6, -33.5),   // Beat 2: Sweeps diagonally right, frames Text 2
-    new THREE.Vector3(-2.0, 1.5, -53.5),  // Beat 3: Sweeps diagonally left, frames Text 3
-    new THREE.Vector3(0.0, 1.3, -70.5),   // Beat 4: Approaching the Portal
-    new THREE.Vector3(0.0, 1.2, -80.0)    // Beat 5: Stepping into the Portal
+    new THREE.Vector3(0.0, 2.2, 6.0),     // Beat 0: Clean blue open sky, looking comfortably at Prologue
+    new THREE.Vector3(-0.6, 1.8, -10.5),  // Beat 1: Glides left around ship, frames Text 1 from 7.5m
+    new THREE.Vector3(0.6, 1.7, -30.5),   // Beat 2: Sweeps diagonally right, frames Text 2 from 7.5m
+    new THREE.Vector3(-0.5, 1.6, -50.5),  // Beat 3: Sweeps diagonally left, frames Text 3 from 7.5m
+    new THREE.Vector3(0.0, 1.4, -68.0),   // Beat 4: Enters center approaching Portal
+    new THREE.Vector3(0.0, 1.2, -81.0)    // Beat 5: Gliding into the Portal
   ]);
   cameraPathCurve.tension = 0.45;
 
-  // 2. Camera Look-At Target: Points directly at the slanted text cards from comfortable reading distance
+  // 2. Camera Look-At Target: Points directly at the center of each slanted text card
   lookAtPathCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.0, 1.8, -0.5),    // Beat 0 LookAt: Center prologue
-    new THREE.Vector3(-3.4, 1.6, -18.0),  // Beat 1 LookAt: Left slanted Text 1
-    new THREE.Vector3(3.4, 1.5, -38.0),   // Beat 2 LookAt: Right slanted Text 2
-    new THREE.Vector3(-3.2, 1.4, -58.0),  // Beat 3 LookAt: Left slanted Text 3
-    new THREE.Vector3(0.0, 1.2, -75.5),   // Beat 4 LookAt: Portal epilogue
+    new THREE.Vector3(0.0, 2.2, -2.0),    // Beat 0 LookAt: Center prologue
+    new THREE.Vector3(-3.2, 1.8, -18.0),  // Beat 1 LookAt: Left slanted Text 1
+    new THREE.Vector3(3.2, 1.7, -38.0),   // Beat 2 LookAt: Right slanted Text 2
+    new THREE.Vector3(-3.0, 1.6, -58.0),  // Beat 3 LookAt: Left slanted Text 3
+    new THREE.Vector3(0.0, 1.4, -76.0),   // Beat 4 LookAt: Portal epilogue
     new THREE.Vector3(0.0, 1.2, -85.0)    // Beat 5 LookAt: Core of Portal
   ]);
   lookAtPathCurve.tension = 0.45;
@@ -152,7 +152,7 @@ function buildSlalomPath() {
   camera.lookAt(lookPos);
 }
 
-// ── LOAD 3D ASSETS (Model, Ship, Floating Books & Portal) ─────
+// ── LOAD 3D ASSETS (Cleaned Model without Foreground Shards) ──
 function loadAssets() {
   const loader = new GLTFLoader();
 
@@ -185,11 +185,13 @@ function loadAssets() {
           child.frustumCulled = false;
           
           if (child.name && child.name.includes('Sky')) {
+            // Pristine solid background sky hemisphere
             child.material.side = THREE.BackSide;
             child.material.depthWrite = false;
             child.material.transparent = false;
             child.renderOrder = 0;
           } else if (child.name && child.name.includes('Boot')) {
+            // Flying Ship
             shipMesh = child;
             child.material.side = THREE.DoubleSide;
             child.material.depthWrite = true;
@@ -197,7 +199,11 @@ function loadAssets() {
             if ('roughness' in child.material) child.material.roughness = 0.7;
             if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 1;
+          } else if (child.name && (child.name.includes('Cloud_3') || child.name.includes('Cloud_2'))) {
+            // HIDE the foreground jagged shards that cut across the start screen
+            child.visible = false;
           } else if (child.name && child.name.includes('Poly')) {
+            // Deep canyon floor & mountains
             child.material.side = THREE.DoubleSide;
             child.material.depthWrite = true;
             child.material.transparent = false;
@@ -205,6 +211,7 @@ function loadAssets() {
             if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 1;
           } else {
+            // Soft background cloud layer 1
             child.material.side = THREE.DoubleSide;
             child.material.transparent = true;
             child.material.depthWrite = false;
@@ -234,19 +241,19 @@ function loadAssets() {
     (err) => { console.warn('4K Clouds model note:', err); }
   );
 
-  // 2. Floating 3D Magic Books in the Clouds
+  // 2. Floating 3D Magic Books
   loader.load(
     '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
     (gltf) => {
       const bookTemplate = gltf.scene;
       
       const bookPositions = [
-        { pos: new THREE.Vector3(-1.8, 2.0, -4.0), rot: new THREE.Vector3(0.2, 0.4, -0.15), scale: 0.35, phase: 0.0 },
-        { pos: new THREE.Vector3(2.4, 1.8, -14.0), rot: new THREE.Vector3(-0.15, -0.6, 0.2), scale: 0.32, phase: 1.2 },
-        { pos: new THREE.Vector3(-3.0, 1.7, -26.0), rot: new THREE.Vector3(0.25, 0.8, -0.1), scale: 0.36, phase: 2.4 },
-        { pos: new THREE.Vector3(2.8, 1.5, -46.0), rot: new THREE.Vector3(-0.2, -0.4, 0.25), scale: 0.34, phase: 3.6 },
-        { pos: new THREE.Vector3(-2.4, 1.4, -62.0), rot: new THREE.Vector3(0.18, 0.5, -0.2), scale: 0.33, phase: 4.8 },
-        { pos: new THREE.Vector3(1.6, 1.3, -73.0), rot: new THREE.Vector3(-0.1, -0.7, 0.15), scale: 0.35, phase: 5.5 }
+        { pos: new THREE.Vector3(2.2, 2.2, 1.0), rot: new THREE.Vector3(0.2, 0.4, -0.15), scale: 0.35, phase: 0.0 },
+        { pos: new THREE.Vector3(-2.4, 2.0, -12.0), rot: new THREE.Vector3(-0.15, -0.6, 0.2), scale: 0.32, phase: 1.2 },
+        { pos: new THREE.Vector3(2.8, 1.8, -25.0), rot: new THREE.Vector3(0.25, 0.8, -0.1), scale: 0.36, phase: 2.4 },
+        { pos: new THREE.Vector3(-3.0, 1.7, -45.0), rot: new THREE.Vector3(-0.2, -0.4, 0.25), scale: 0.34, phase: 3.6 },
+        { pos: new THREE.Vector3(2.4, 1.5, -62.0), rot: new THREE.Vector3(0.18, 0.5, -0.2), scale: 0.33, phase: 4.8 },
+        { pos: new THREE.Vector3(-1.8, 1.3, -73.0), rot: new THREE.Vector3(-0.1, -0.7, 0.15), scale: 0.35, phase: 5.5 }
       ];
 
       bookPositions.forEach((bp) => {
@@ -312,45 +319,45 @@ function loadAssets() {
 // ── 3D HANDWRITTEN STORY TYPOGRAPHY (True Oleg Ro Narrative) ──
 function createHandwrittenText(badge, title, bodyLines, pos, rotY = 0, sectionIndex = 0) {
   const canvas = document.createElement('canvas');
-  canvas.width = 1400;
-  canvas.height = 750;
+  canvas.width = 1600;
+  canvas.height = 900;
   const ctx = canvas.getContext('2d');
 
-  ctx.clearRect(0, 0, 1400, 750);
+  ctx.clearRect(0, 0, 1600, 900);
 
-  // 1. Badge / Category Header
+  // 1. Category Badge
   if (badge) {
-    ctx.font = '700 20px "Space Mono", monospace';
+    ctx.font = '700 24px "Space Mono", monospace';
     ctx.fillStyle = '#d8b888';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
     ctx.shadowBlur = 8;
-    ctx.fillText(badge.toUpperCase(), 700, 70);
+    ctx.fillText(badge.toUpperCase(), 800, 90);
   }
 
   // 2. Main Title in Casual Handwritten Script
-  ctx.font = '700 44px "Caveat", "Marck Script", cursive';
+  ctx.font = '700 52px "Caveat", "Marck Script", cursive';
   ctx.fillStyle = '#fff6ea';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.shadowColor = 'rgba(216, 184, 136, 0.95)';
   ctx.shadowBlur = 20;
-  ctx.fillText(title, 700, 120);
+  ctx.fillText(title, 800, 150);
 
-  // 3. Poetic Authentic Story Lines
+  // 3. Story Paragraph Lines
   if (bodyLines && bodyLines.length > 0) {
-    ctx.font = '500 28px "Caveat", "Marck Script", cursive';
-    ctx.fillStyle = '#f0e4d2';
+    ctx.font = '500 32px "Caveat", "Marck Script", cursive';
+    ctx.fillStyle = '#f2e6d6';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
 
-    let y = 205;
+    let y = 250;
     for (let i = 0; i < bodyLines.length; i++) {
-      ctx.fillText(bodyLines[i], 700, y);
-      y += 42;
+      ctx.fillText(bodyLines[i], 800, y);
+      y += 48;
     }
   }
 
@@ -367,8 +374,8 @@ function createHandwrittenText(badge, title, bodyLines, pos, rotY = 0, sectionIn
     opacity: sectionIndex === 0 ? 1.0 : 0.0
   });
 
-  // Perfectly proportioned 3D plane that fills ~55% of the screen without cropping
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 3.3), mat);
+  // Perfectly proportioned 3D plane that fills ~45% of the screen with spacious margins
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 2.9), mat);
   plane.position.copy(pos);
   plane.rotation.y = rotY;
   plane.userData = {
@@ -391,7 +398,7 @@ function build3DStoryTypography() {
       'або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?',
       'Ну ж бо… Я все ж намагався…'
     ],
-    new THREE.Vector3(0, 1.8, -0.5),
+    new THREE.Vector3(0.0, 2.2, -2.0),
     0,
     0
   );
@@ -406,8 +413,8 @@ function build3DStoryTypography() {
       'Уроки праці в мене були з дівчатами, оскільки хлопців було мало,',
       'тому ми там плели, вишивали і так далі…'
     ],
-    new THREE.Vector3(-3.4, 1.6, -18.0),
-    0.30,
+    new THREE.Vector3(-3.2, 1.8, -18.0),
+    0.32,
     1
   );
 
@@ -421,12 +428,12 @@ function build3DStoryTypography() {
       'і як отримувати розмитий фон. Я просто фотографував, робив фотокопії чогось,',
       'особливо фотографії з Криму… Це був мій перший і останній «Крим».'
     ],
-    new THREE.Vector3(3.4, 1.5, -38.0),
-    -0.30,
+    new THREE.Vector3(3.2, 1.7, -38.0),
+    -0.32,
     2
   );
 
-  // Chapter 3: The Factory & Breakthrough (Left side, slanted ~16 degrees)
+  // Chapter 3: The Factory & Breakthrough (Left side, slanted ~17 degrees)
   createHandwrittenText(
     '03 // ЗАВОД ТА ПЕРЕЛОМНИЙ МОМЕНТ',
     '«Весілля мене обрали самі»',
@@ -436,8 +443,8 @@ function build3DStoryTypography() {
       'але тут диво: мене почали наймати на зйомки, і 90% з них були весільні.',
       'Тому я й кажу: весілля мене обрали самі :)'
     ],
-    new THREE.Vector3(-3.2, 1.4, -58.0),
-    0.28,
+    new THREE.Vector3(-3.0, 1.6, -58.0),
+    0.30,
     3
   );
 
@@ -450,7 +457,7 @@ function build3DStoryTypography() {
       'Історія мене в Данії ще не написана, вона тільки почалася…',
       'Давайте спостерігати разом, як зміниться ця сторінка :)'
     ],
-    new THREE.Vector3(0, 1.2, -75.5),
+    new THREE.Vector3(0.0, 1.4, -76.0),
     0,
     4
   );
@@ -462,11 +469,11 @@ function initScrollTrigger() {
     trigger: document.body,
     start: 'top top',
     end: 'bottom bottom',
-    scrub: 1.2,
+    scrub: 1.0,
     snap: {
-      snapTo: [0.0, 0.25, 0.5, 0.75, 1.0], // Snaps to each chapter squarely
-      duration: { min: 0.35, max: 0.75 },
-      delay: 0.12,
+      snapTo: [0.0, 0.25, 0.5, 0.75, 1.0], // Snaps gently to each chapter
+      duration: { min: 0.4, max: 0.8 },
+      delay: 0.15,
       ease: 'power2.out'
     },
     onUpdate: (self) => {
@@ -499,7 +506,7 @@ function animate() {
   const time = clock.getElapsedTime();
 
   scrollVelocity *= 0.9;
-  scrollProgress += (targetScrollProgress - scrollProgress) * 0.06;
+  scrollProgress += (targetScrollProgress - scrollProgress) * 0.05;
 
   // 1. Slalom Flythrough Kinematics
   if (cameraPathCurve && lookAtPathCurve) {
