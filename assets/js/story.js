@@ -13,10 +13,13 @@ let targetScrollProgress = 0.0;
 let scrollVelocity = 0.0;
 let lastScrollY = 0;
 
-let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+let prefersReducedMotion = motionQuery.matches;
+motionQuery.addEventListener('change', e => { prefersReducedMotion = e.matches; });
 
 let cameraPathCurve;
 let lookAtPathCurve;
+let pathSamples = [];
 
 let cloudsContainer;
 let shipMesh;
@@ -38,11 +41,81 @@ const hudActLabel = document.getElementById('hud-act-label');
 const stepDots = document.querySelectorAll('.step-dot');
 
 const sectionMeta = [
-  { title: 'PROLOGUE // THE INNER SANCTUM', timecode: 'FOLIO 01 / 05', act: 'ACT I // ROOTS' },
-  { title: '01 // CHILDHOOD & CRAFT', timecode: 'FOLIO 02 / 05', act: 'ACT I // ROOTS' },
-  { title: '02 // THE FIRST 35MM LENS', timecode: 'FOLIO 03 / 05', act: 'ACT I // ROOTS' },
-  { title: '03 // THE DIGITAL DAWN', timecode: 'FOLIO 04 / 05', act: 'ACT I // ROOTS' },
-  { title: 'EPILOGUE // THE PORTAL', timecode: 'FOLIO 05 / 05', act: 'ACT I // ROOTS' }
+  { 
+    title: 'PROLOGUE // THE THRESHOLD', timecode: 'FOLIO 01 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
+    header: 'DEUSFLOW // ВСТУП',
+    subheader: '«То що тебе сюди занесло?»',
+    body: [
+      'Пристебніть ремені: раз ви зайшли на цю сторінку, ви або дуже допитливі,',
+      'або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?',
+      'Ну ж бо… Я все ж намагався…'
+    ],
+    pos: new THREE.Vector3(0.0, 2.2, -2.0),
+    rotY: 0
+  },
+  { 
+    title: '01 // CHILDHOOD & CRAFT', timecode: 'FOLIO 02 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
+    header: '01 // ДИТИНСТВО ТА ТВОРЧІСТЬ',
+    subheader: '«Любив щось творити і витворювати»',
+    body: [
+      'Усе життя, скільки себе пам\'ятаю, я любив щось творити і витворювати.',
+      'Я любив малювати й перемальовувати з розмальовок картинки на свій лад…',
+      'Уроки праці в мене були з дівчатами, оскільки хлопців було мало,',
+      'тому ми там плели, вишивали і так далі…'
+    ],
+    pos: new THREE.Vector3(-3.2, 1.8, -18.0),
+    rotY: 0.32
+  },
+  { 
+    title: '02 // THE FIRST 35MM LENS', timecode: 'FOLIO 03 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
+    header: '02 // ПЕРША КАМЕРА ТА КРИМ',
+    subheader: '«Бабуся подарувала Olympus»',
+    body: [
+      'Бабуся подарувала на день народження мені плівкову камеру, це був Olympus…',
+      'Через пару років з\'явився Canon 1000D. Я навіть не знав, навіщо об\'єктиви',
+      'і як отримувати розмитий фон. Я просто фотографував, робив фотокопії чогось,',
+      'особливо фотографії з Криму… Це був мій перший і останній «Крим».'
+    ],
+    pos: new THREE.Vector3(3.2, 1.7, -38.0),
+    rotY: -0.32
+  },
+  { 
+    title: '03 // THE DIGITAL DAWN', timecode: 'FOLIO 04 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
+    header: '03 // ЗАВОД ТА ПЕРЕЛОМНИЙ МОМЕНТ',
+    subheader: '«Весілля мене обрали самі»',
+    body: [
+      'Я працював на заводі Ferrexpo Mining електриком — це пекельна праця за $400.',
+      'У мене не було навіть надії на те, що я зможу стати фотографом…',
+      'але тут диво: мене почали наймати на зйомки, і 90% з них були весільні.',
+      'Тому я й кажу: весілля мене обрали самі :)'
+    ],
+    pos: new THREE.Vector3(-3.0, 1.6, -58.0),
+    rotY: 0.32
+  },
+  { 
+    title: '04 // DENMARK & NEW PAGE', timecode: 'FOLIO 05 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
+    header: '04 // ДАНІЯ ТА НОВА СТОРІНКА',
+    subheader: '«Історія в Данії тільки почалася»',
+    body: [
+      'У Данії 13 серпня дорогою до лікарні народився мій син Даніель.',
+      'Історія мене в Данії ще не написана, вона тільки почалася…',
+      'Давайте спостерігати разом, як зміниться ця сторінка :)'
+    ],
+    pos: new THREE.Vector3(0.0, 1.4, -76.0),
+    rotY: 0
+  },
+  { 
+    title: 'EPILOGUE // THE PORTAL HORIZON', timecode: 'FOLIO 06 / 06', act: 'ACT II // HORIZONS',
+    header: 'DEUSFLOW // ФІНАЛ',
+    subheader: '«Далі буде...»',
+    body: [
+      'Попереду ще сотні історій, нові весілля та нові кадри.',
+      'Дякую, що пройшли цей шлях зі мною.',
+      'Натисніть вгорі «DeusFlow», щоб повернутися до головного портфоліо.'
+    ],
+    pos: new THREE.Vector3(0.0, 1.2, -83.0),
+    rotY: 0
+  }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -153,6 +226,8 @@ function buildSlalomPath() {
   ]);
   lookAtPathCurve.tension = 0.45;
 
+  pathSamples = cameraPathCurve.getSpacedPoints(1000);
+
   const startPos = cameraPathCurve.getPointAt(0.001);
   const lookPos = lookAtPathCurve.getPointAt(0.001);
   camera.position.copy(startPos);
@@ -261,17 +336,9 @@ function loadAssets() {
             child.renderOrder = 2;
           }
 
-          // Zero out specular/Fresnel glare in GLSL
-          child.material.onBeforeCompile = (shader) => {
-            shader.fragmentShader = shader.fragmentShader.replace(
-              '#include <lights_fragment_end>',
-              `
-              reflectedLight.directSpecular = vec3( 0.0 );
-              reflectedLight.indirectSpecular = vec3( 0.0 );
-              #include <lights_fragment_end>
-              `
-            );
-          };
+          // Safe non-destructive diffuse calibration (no brittle onBeforeCompile regex)
+          if ('envMapIntensity' in child.material) child.material.envMapIntensity = 0.0;
+          if ('specularIntensity' in child.material) child.material.specularIntensity = 0.0;
         }
       });
 
@@ -428,98 +495,61 @@ function createHandwrittenText(badge, title, bodyLines, pos, rotY = 0, sectionIn
   return plane;
 }
 
+function findArcLengthFraction(targetPoint) {
+  let closest = 0, minDist = Infinity;
+  for (let i = 0; i < pathSamples.length; i++) {
+    const d = pathSamples[i].distanceTo(targetPoint);
+    if (d < minDist) { minDist = d; closest = i; }
+  }
+  return closest / (pathSamples.length - 1);
+}
+
+function renderAccessibleNarrative() {
+  const container = document.createElement('div');
+  container.className = 'sr-only';
+  container.innerHTML = '<h1>The Story · Oleg Ro</h1>';
+  sectionMeta.forEach(ch => {
+    const heading = `${ch.header} · ${ch.subheader}`;
+    container.insertAdjacentHTML('beforeend', `<section><h2>${heading}</h2><p>${ch.body.join(' ')}</p></section>`);
+  });
+  document.body.appendChild(container);
+}
+
 function build3DStoryTypography() {
-  // Chapter 0: Prologue (Exact text from docs/txt.md)
-  createHandwrittenText(
-    'DEUSFLOW // ВСТУП',
-    '«То що тебе сюди занесло?»',
-    [
-      'Пристебніть ремені: раз ви зайшли на цю сторінку, ви або дуже допитливі,',
-      'або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?',
-      'Ну ж бо… Я все ж намагався…'
-    ],
-    new THREE.Vector3(0.0, 2.2, -2.0),
-    0,
-    0
-  );
-
-  // Chapter 1: Childhood & Craft (Left side, slanted ~18 degrees)
-  createHandwrittenText(
-    '01 // ДИТИНСТВО ТА ТВОРЧІСТЬ',
-    '«Любив щось творити і витворювати»',
-    [
-      'Усе життя, скільки себе пам\'ятаю, я любив щось творити і витворювати.',
-      'Я любив малювати й перемальовувати з розмальовок картинки на свій лад…',
-      'Уроки праці в мене були з дівчатами, оскільки хлопців було мало,',
-      'тому ми там плели, вишивали і так далі…'
-    ],
-    new THREE.Vector3(-3.2, 1.8, -18.0),
-    0.32,
-    1
-  );
-
-  // Chapter 2: The First Camera & Crimea (Right side, slanted ~ -18 degrees)
-  createHandwrittenText(
-    '02 // ПЕРША КАМЕРА ТА КРИМ',
-    '«Бабуся подарувала Olympus»',
-    [
-      'Бабуся подарувала на день народження мені плівкову камеру, це був Olympus…',
-      'Через пару років з\'явився Canon 1000D. Я навіть не знав, навіщо об\'єктиви',
-      'і як отримувати розмитий фон. Я просто фотографував, робив фотокопії чогось,',
-      'особливо фотографії з Криму… Це був мій перший і останній «Крим».'
-    ],
-    new THREE.Vector3(3.2, 1.7, -38.0),
-    -0.32,
-    2
-  );
-
-  // Chapter 3: The Factory & Breakthrough (Left side, slanted ~17 degrees)
-  createHandwrittenText(
-    '03 // ЗАВОД ТА ПЕРЕЛОМНИЙ МОМЕНТ',
-    '«Весілля мене обрали самі»',
-    [
-      'Я працював на заводі Ferrexpo Mining електриком — це пекельна праця за $400.',
-      'У мене не було навіть надії на те, що я зможу стати фотографом…',
-      'але тут диво: мене почали наймати на зйомки, і 90% з них були весільні.',
-      'Тому я й кажу: весілля мене обрали самі :)'
-    ],
-    new THREE.Vector3(-3.0, 1.6, -58.0),
-    0.30,
-    3
-  );
-
-  // Chapter 4: Denmark & New Beginning (Facing Portal)
-  createHandwrittenText(
-    '04 // ДАНІЯ ТА НОВА СТОРІНКА',
-    '«Історія в Данії тільки почалася»',
-    [
-      'У Данії 13 серпня дорогою до лікарні народився мій син Даніель.',
-      'Історія мене в Данії ще не написана, вона тільки почалася…',
-      'Давайте спостерігати разом, як зміниться ця сторінка :)'
-    ],
-    new THREE.Vector3(0.0, 1.4, -76.0),
-    0,
-    4
-  );
+  renderAccessibleNarrative();
+  
+  sectionMeta.forEach((meta, idx) => {
+    const plane = createHandwrittenText(meta.header, meta.subheader, meta.body, meta.pos, meta.rotY, idx);
+    const targetCamPos = cameraPathCurve.points[idx];
+    plane.userData.arcLengthProgress = findArcLengthFraction(targetCamPos);
+  });
 }
 
 // ── GSAP MAGNETIC SNAP SCROLL INTEGRATION ────────────────────
 function initScrollTrigger() {
+  const snapPoints = textPlanes.map(p => p.userData.arcLengthProgress);
+  
   ScrollTrigger.create({
     trigger: document.body,
     start: 'top top',
     end: 'bottom bottom',
     scrub: 1.0,
     snap: {
-      snapTo: [0.0, 0.25, 0.5, 0.75, 1.0], // Snaps gently to each chapter
+      snapTo: snapPoints, // Snaps precisely to the arc-lengths of the text plates
       duration: { min: 0.4, max: 0.8 },
       delay: 0.15,
       ease: 'power2.out'
     },
     onUpdate: (self) => {
       targetScrollProgress = self.progress;
-      const idx = Math.min(sectionMeta.length - 1, Math.round(self.progress * (sectionMeta.length - 1)));
-      updateHUD(idx);
+      
+      let closestIdx = 0;
+      let minDiff = Infinity;
+      snapPoints.forEach((p, idx) => {
+        const diff = Math.abs(self.progress - p);
+        if (diff < minDiff) { minDiff = diff; closestIdx = idx; }
+      });
+      updateHUD(closestIdx);
     }
   });
 
@@ -540,18 +570,27 @@ function updateHUD(index) {
   });
 }
 
+let lastTime = 0;
+
 // ── RENDER & ANIMATION LOOP ──────────────────────────────────
 function animate() {
   requestAnimationFrame(animate);
   const time = clock.getElapsedTime();
+  const dt = time - lastTime;
+  lastTime = time;
 
   scrollVelocity *= 0.9;
   
   if (prefersReducedMotion) {
-    const idx = Math.min(sectionMeta.length - 1, Math.round(targetScrollProgress * (sectionMeta.length - 1)));
-    scrollProgress = idx / (sectionMeta.length - 1);
+    let closestProg = 0;
+    let minDiff = Infinity;
+    textPlanes.forEach((p) => {
+      const diff = Math.abs(targetScrollProgress - p.userData.arcLengthProgress);
+      if (diff < minDiff) { minDiff = diff; closestProg = p.userData.arcLengthProgress; }
+    });
+    scrollProgress = closestProg;
   } else {
-    scrollProgress += (targetScrollProgress - scrollProgress) * 0.05;
+    scrollProgress = THREE.MathUtils.damp(scrollProgress, targetScrollProgress, 4.0, dt);
   }
 
   // 1. Slalom Flythrough Kinematics
@@ -601,7 +640,7 @@ function animate() {
   for (let i = 0; i < floatingBooks.length; i++) {
     const b = floatingBooks[i];
     if (!prefersReducedMotion) {
-      b.rotation.y += b.userData.rotSpeed;
+      b.rotation.y += b.userData.rotSpeed * dt * 60.0;
       b.position.y = b.userData.baseY + Math.sin(time * 1.3 + b.userData.phase) * 0.12;
       b.rotation.z = Math.sin(time * 0.8 + b.userData.phase) * 0.06;
     }
@@ -610,9 +649,9 @@ function animate() {
   // 4. Fade Text Plates per Chapter with Smooth Highlight
   for (let i = 0; i < textPlanes.length; i++) {
     const p = textPlanes[i];
-    const targetProgress = p.userData.sectionIndex / (textPlanes.length - 1);
+    const targetProgress = p.userData.arcLengthProgress;
     const diff = Math.abs(scrollProgress - targetProgress);
-    const alpha = prefersReducedMotion ? (diff < 0.05 ? 1.0 : 0.0) : Math.max(0.0, Math.min(1.0, 1.0 - (diff / 0.16)));
+    const alpha = prefersReducedMotion ? (diff < 0.05 ? 1.0 : 0.0) : Math.max(0.0, Math.min(1.0, 1.0 - (diff / 0.12)));
     
     p.material.opacity = alpha;
     p.visible = alpha > 0.02;
