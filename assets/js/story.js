@@ -336,9 +336,18 @@ function loadAssets() {
             child.renderOrder = 2;
           }
 
-          // Safe non-destructive diffuse calibration (no brittle onBeforeCompile regex)
-          if ('envMapIntensity' in child.material) child.material.envMapIntensity = 0.0;
-          if ('specularIntensity' in child.material) child.material.specularIntensity = 0.0;
+          // Neutralize Fresnel reflection glare on hand-painted dark surfaces
+          child.material.onBeforeCompile = (shader) => {
+            shader.fragmentShader = shader.fragmentShader.replace(
+              '#include <lights_fragment_end>',
+              `
+              reflectedLight.directSpecular = vec3( 0.0 );
+              reflectedLight.indirectSpecular = vec3( 0.0 );
+              #include <lights_fragment_end>
+              `
+            );
+          };
+          child.material.needsUpdate = true;
         }
       });
 
