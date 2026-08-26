@@ -314,11 +314,11 @@ function loadAssets() {
             if ('roughness' in child.material) child.material.roughness = 0.7;
             if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 1;
-          } else if (child.name && (child.name.includes('Cloud_3') || child.name.includes('Cloud_2'))) {
-            // HIDE the foreground jagged shards that cut across the start screen
+          } else if (child.name && (child.name.includes('Cloud_3') || child.name.includes('Cloud_2') || child.name.includes('Cloud_1'))) {
+            // HIDE the floating billboard cutout planes that contain hand-painted chalk zigzag edges
             child.visible = false;
           } else if (child.name && child.name.includes('Poly')) {
-            // Deep canyon floor & mountains
+            // Deep canyon floor & mountains (Clean continuous 3D geometry)
             child.material.side = THREE.DoubleSide;
             child.material.depthWrite = true;
             child.material.transparent = false;
@@ -326,13 +326,9 @@ function loadAssets() {
             if ('metalness' in child.material) child.material.metalness = 0.0;
             child.renderOrder = 1;
           } else {
-            // Soft background cloud layer 1
             child.material.side = THREE.DoubleSide;
-            child.material.transparent = true;
-            child.material.depthWrite = false;
             if ('roughness' in child.material) child.material.roughness = 1.0;
             if ('metalness' in child.material) child.material.metalness = 0.0;
-            child.renderOrder = 2;
           }
 
           // Neutralize Fresnel reflection glare on hand-painted dark surfaces
