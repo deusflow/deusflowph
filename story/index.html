@@ -1,32 +1,55 @@
 <!DOCTYPE html>
-<html lang="uk" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>The Story · Oleg Ro (DeusFlow)</title>
-  <meta name="description" content="Ніч у бібліотеці: історія життя, випробувань і творчої філософії Олега Ро, викарбувана на пергаменті." />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20260824" />
-  <link rel="shortcut icon" href="/favicon.ico?v=20260824" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260824" />
+  <title>The Cinematic Story · Oleh Ro (DeusFlow)</title>
+  <meta name="description" content="A cinematic 3D journey through the celestial canyon: WebGL scrollytelling experience by Oleh Ro." />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20260904" />
+  <link rel="shortcut icon" href="/favicon.ico?v=20260904" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260904" />
   <meta name="theme-color" content="#0d0a08" />
 
-  <!-- Google Fonts: Handwriting & Monospace with Cyrillic -->
+  <!-- Canonical & Multilingual Hreflang -->
+  <link rel="canonical" href="https://deusflow.dk/story/" />
+  <link rel="alternate" hreflang="en" href="https://deusflow.dk/story/" />
+  <link rel="alternate" hreflang="da" href="https://deusflow.dk/story/?lang=da" />
+  <link rel="alternate" hreflang="uk" href="https://deusflow.dk/story/?lang=uk" />
+  <link rel="alternate" hreflang="x-default" href="https://deusflow.dk/story/" />
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Oleh Ro Photography" />
+  <meta property="og:title" content="The Cinematic Story · Oleh Ro (DeusFlow)" />
+  <meta property="og:description" content="A cinematic 3D journey through the celestial canyon: WebGL scrollytelling experience by Oleh Ro." />
+  <meta property="og:url" content="https://deusflow.dk/story/" />
+  <meta property="og:image" content="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="The Cinematic Story · Oleh Ro (DeusFlow)" />
+  <meta name="twitter:description" content="A cinematic 3D journey through the celestial canyon: WebGL scrollytelling experience by Oleh Ro." />
+  <meta name="twitter:image" content="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg" />
+
+  <!-- Google Fonts: Space Mono & Cinzel -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/assets/css/story.css?v=20260824-clouds-v3" />
+  <link rel="stylesheet" href="/assets/css/story.css?v=20260904-cinematic-v2" />
 
-  <!-- GSAP & ScrollTrigger -->
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <!-- GSAP & ScrollTrigger (3.15.0 latest stable release) -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
 
-  <!-- ES Module Import Map for Three.js -->
+  <!-- ES Module Import Map for Three.js (r185 latest stable release) -->
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/",
+      "three/addons/misc/Timer.js": "https://cdn.jsdelivr.net/npm/three@0.185.1/src/core/Timer.js"
     }
   }
   </script>
@@ -40,7 +63,7 @@
       <div class="loading-bar-container">
         <div id="loading-bar" class="loading-bar"></div>
       </div>
-      <div id="loading-text" class="loading-text">Завантаження... 0%</div>
+      <div id="loading-text" class="loading-text">Loading cinematic journey... 0%</div>
     </div>
   </div>
 
@@ -55,7 +78,7 @@
     <div class="candle-bokeh candle-4"></div>
   </div>
 
-  <!-- Fullscreen 3D WebGL Canvas for Transition-Only Shards & Embers -->
+  <!-- Fullscreen 3D WebGL Canvas for Cinematic Scroll Sequence -->
   <canvas id="webgl-canvas"></canvas>
 
   <!-- Archival Paper Vignette & Subtle Film Grain -->
@@ -69,47 +92,65 @@
     <div class="corner-filigree c-br"></div>
   </div>
 
-  <!-- Screen Reader & SEO Content (Dynamically generated by story.js) -->
-
-  <!-- HUD Interface -->
+  <!-- Cinematic HUD Interface -->
   <header class="folio-hud">
     <div class="hud-top">
       <a href="/" class="hud-link" id="hud-back">
-        <span>&larr; DeusFlow</span>
+        <span>&larr; DEUSFLOW</span>
       </a>
 
       <div class="folio-status-badge">
         <span class="gold-sparkle-dot"></span>
-        <span id="hud-act-label">ACT I // ROOTS & THE FIRST LENS</span>
+        <span id="hud-act-label">ACT I // THE THRESHOLD</span>
       </div>
 
-      <button class="hud-btn" id="audio-toggle" type="button" aria-label="Toggle Sound">
-        <span id="audio-status">SOUND: OFF</span>
-      </button>
+      <a href="/portfolio/" class="hud-link" id="hud-portfolio">
+        <span>PORTFOLIO &rarr;</span>
+      </a>
     </div>
 
     <div class="hud-bottom">
-      <div id="hud-scene-title">PROLOGUE // THE THRESHOLD</div>
-      <div id="hud-timecode">FOLIO 01 / 06</div>
+      <div id="hud-scene-title">01 // AWAKENING AT THE CANYON</div>
+      <div id="hud-timecode">PROGRESS // 0%</div>
     </div>
   </header>
 
-  <!-- Folio Section Stepper Navigation -->
-  <nav class="act-stepper" aria-label="Folio Milestones">
-    <button class="step-dot active" data-step="0" aria-label="Section 0: Threshold"></button>
-    <button class="step-dot" data-step="1" aria-label="Section 1: Name"></button>
-    <button class="step-dot" data-step="2" aria-label="Section 2: Childhood"></button>
-    <button class="step-dot" data-step="3" aria-label="Section 3: Crimea"></button>
-    <button class="step-dot" data-step="4" aria-label="Section 4: Camera"></button>
-    <button class="step-dot" data-step="5" aria-label="Section 5: Epilogue"></button>
-  </nav>
-
-  <!-- Tall Scroll Container for smooth trackpad pacing (800vh) -->
-  <div class="scroll-wrapper" style="height: 800vh; pointer-events: none;">
+  <!-- Scroll Prompt (Fades out when scrolling begins) -->
+  <div id="scroll-hint" class="scroll-hint">
+    <div class="scroll-hint-mouse">
+      <div class="scroll-hint-wheel"></div>
+    </div>
+    <span>SCROLL TO EXPLORE</span>
   </div>
 
-  <!-- Main 3D Story Journey Engine -->
-  <script type="module" src="/assets/js/story.js?v=20260826-clean-blue-v37"></script>
+  <!-- Stepper Navigation for 5 Key Chapters -->
+  <nav class="act-stepper" aria-label="Cinematic Milestones">
+    <button class="step-dot active" data-step="0" aria-label="Milestone 1"></button>
+    <button class="step-dot" data-step="1" aria-label="Milestone 2"></button>
+    <button class="step-dot" data-step="2" aria-label="Milestone 3"></button>
+    <button class="step-dot" data-step="3" aria-label="Milestone 4"></button>
+    <button class="step-dot" data-step="4" aria-label="Milestone 5"></button>
+  </nav>
+
+  <!-- Final Arrival Card (Revealed near 100% progress) -->
+  <div id="portal-finale-card" class="portal-finale-card">
+    <div class="finale-badge">CINEMATIC ODYSSEY</div>
+    <h2 class="finale-title">THE PORTAL HORIZON</h2>
+    <p class="finale-desc">You have traversed the celestial canyon. Ahead lie new visual worlds, heartfelt wedding stories, and creative horizons.</p>
+    <div class="finale-actions">
+      <a href="/portfolio/" class="finale-btn primary">EXPLORE PORTFOLIO</a>
+      <a href="/" class="finale-btn secondary">BACK TO HOME</a>
+    </div>
+  </div>
+
+  <!-- Tall Scroll Container for smooth trackpad pacing (600vh) -->
+  <div class="scroll-wrapper" style="height: 600vh; pointer-events: none;"></div>
+
+  <!-- Final Transition Fade-out Black Overlay (Idempotent 1.0 Scroll Redirect) -->
+  <div id="fade-overlay" class="fade-overlay"></div>
+
+  <!-- Main 3D Cinematic Story Journey Engine -->
+  <script type="module" src="/assets/js/story.js?v=20260904-cinematic-v2"></script>
 
 </body>
 </html>

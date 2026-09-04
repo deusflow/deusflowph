@@ -1,685 +1,682 @@
+/**
+ * ============================================================================
+ * DEUSFLOW · 3D CINEMATIC STORY ENGINE
+ * ============================================================================
+ * Architecture:
+ * 1. Scene Initialization & GLTF Camera Override
+ *    - Uses authored Camera from Story2.glb (Node 42).
+ *    - Completely bypasses Capsule+Octree physics collision loop.
+ * 2. Scrollytelling Animation Split Logic (GSAP + Three.js)
+ *    - Camera Animation: Strictly scroll-driven via cameraMixer.setTime().
+ *    - cameraDuration computed via Math.max across ALL camera tracks.
+ *    - Portal Animation (Sketchfab_model): Continuous loop in requestAnimationFrame.
+ * 3. Transparent Plane Sorting (Cloud & Fog Artifacts Fix)
+ *    - All Bilboard.* and FOG.* planes set to transparent: true, depthWrite: false, alphaTest: 0.01.
+ *    - Per-frame billboard orientation: mesh.lookAt(cameraWorldPos).
+ * 4. Procedural Fog & Dynamic Twinkling Stars
+ *    - Atmospheric THREE.Fog(0x0d0a08, 15, 200).
+ *    - Sinusoidal opacity modulation on stars mesh.
+ * 5. Full i18n Multilingual Support (UA / EN / DA)
+ *    - Dynamic translations for HUD, timecodes, hints, and finale portal card.
+ * 6. Resize Handling & Deep Memory Cleanup
+ *    - camera.aspect updates & camera.updateProjectionMatrix().
+ *    - Full disposal of geometries, materials, textures, and GSAP triggers.
+ * ============================================================================
+ */
+
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { Octree } from 'three/addons/math/Octree.js';
-import { Capsule } from 'three/addons/math/Capsule.js';
+import { Timer } from 'three/addons/misc/Timer.js';
 
-let scene, camera, renderer;
-let clock = new THREE.Clock();
+// --- i18n Dictionary Definition ---
+const STORY_I18N = {
+  en: {
+    loading: 'Loading cinematic journey...',
+    scrollHint: 'SCROLL TO EXPLORE',
+    progress: 'PROGRESS //',
+    navPortfolio: 'PORTFOLIO →',
+    chapters: [
+      { p: 0.00, act: 'ACT I // THE THRESHOLD', title: '01 // AWAKENING AT THE CANYON' },
+      { p: 0.25, act: 'ACT I // THE THRESHOLD', title: '02 // GLIDING THROUGH THE FOG' },
+      { p: 0.50, act: 'ACT II // CELESTIAL SHARDS', title: '03 // AMONG THE LIVING CLOUDS' },
+      { p: 0.75, act: 'ACT II // CELESTIAL SHARDS', title: '04 // APPROACHING THE SINGULARITY' },
+      { p: 1.00, act: 'ACT III // HORIZON GATE', title: 'EPILOGUE // THE PORTAL CORE' }
+    ],
+    finale: {
+      badge: 'CINEMATIC ODYSSEY',
+      title: 'THE PORTAL HORIZON',
+      desc: 'You have traversed the celestial canyon. Ahead lie new visual worlds, heartfelt wedding stories, and creative horizons.',
+      primaryBtn: 'EXPLORE PORTFOLIO',
+      secondaryBtn: 'BACK TO HOME'
+    }
+  },
+  uk: {
+    loading: 'Завантаження кінематографічної сцени...',
+    scrollHint: 'ГОРТАЙТЕ ДЛЯ ПОДОРОЖІ',
+    progress: 'ПРОГРЕС //',
+    navPortfolio: 'ПОРТФОЛІО →',
+    chapters: [
+      { p: 0.00, act: 'АКТ I // ПОРІГ', title: '01 // ПРОБУДЖЕННЯ НАД КАНЬЙОНОМ' },
+      { p: 0.25, act: 'АКТ I // ПОРІГ', title: '02 // ПОЛІТ КРІЗЬ ТУМАН' },
+      { p: 0.50, act: 'АКТ II // НЕБЕСНІ УЛАМКИ', title: '03 // СЕРЕД ЖИВИХ ХМАР' },
+      { p: 0.75, act: 'АКТ II // НЕБЕСНІ УЛАМКИ', title: '04 // НАБЛИЖЕННЯ ДО СИНГУЛЯРНОСТІ' },
+      { p: 1.00, act: 'АКТ III // БРАМА ГОРИЗОНТУ', title: 'ЕПІЛОГ // СЕРЦЕ ПОРТАЛУ' }
+    ],
+    finale: {
+      badge: 'КІНЕМАТОГРАФІЧНА ОДІССЕЯ',
+      title: 'ГОРИЗОНТ ПОРТАЛУ',
+      desc: 'Ви пройшли крізь небесний каньйон. Попереду — сотні історій, щирі весільні кадри та нові творчі горизонти.',
+      primaryBtn: 'ПЕРЕЙТИ ДО ПОРТФОЛІО',
+      secondaryBtn: 'ГОЛОВНА СТОРІНКА'
+    }
+  },
+  da: {
+    loading: 'Indlæser filmisk rejse...',
+    scrollHint: 'RUL FOR AT UDFORSKE',
+    progress: 'FREMGANG //',
+    navPortfolio: 'PORTFOLIO →',
+    chapters: [
+      { p: 0.00, act: 'AKT I // BEGYNDELSEN', title: '01 // OGVÅGNING VED KLØFTEN' },
+      { p: 0.25, act: 'AKT I // BEGYNDELSEN', title: '02 // GLIDENDE GENNEM TÅGEN' },
+      { p: 0.50, act: 'AKT II // HIMMELSKE SKÅR', title: '03 // BLANDT DE LEVENDE SKYER' },
+      { p: 0.75, act: 'AKT II // HIMMELSKE SKÅR', title: '04 // NÆRMER SIG SINGULARITETEN' },
+      { p: 1.00, act: 'AKT III // HORISONTENS PORT', title: 'EPILOG // PORTALENS KERNE' }
+    ],
+    finale: {
+      badge: 'FILMISK ODYSSÉ',
+      title: 'PORTALENS HORISONT',
+      desc: 'Du har rejst gennem den himmelske kløft. Forude venter nye visuelle verdener, ægte bryllupshistorier og kreative horisonter.',
+      primaryBtn: 'UDFORSK PORTFOLIO',
+      secondaryBtn: 'TIL FORSIDEN'
+    }
+  }
+};
 
-let mouseX = 0, mouseY = 0;
-let scrollProgress = 0.0;
-let targetScrollProgress = 0.0;
-let scrollVelocity = 0.0;
-let lastScrollY = 0;
+function getActiveStoryLang() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const queryLang = params.get('lang');
+    if (queryLang) {
+      if (queryLang === 'ua' || queryLang === 'uk') return 'uk';
+      if (queryLang === 'da') return 'da';
+      if (queryLang === 'en') return 'en';
+    }
+    const path = window.location.pathname.toLowerCase();
+    if (path.startsWith('/uk/') || path.startsWith('/ua/')) return 'uk';
+    if (path.startsWith('/da/')) return 'da';
+    const stored = localStorage.getItem('deusflow_lang');
+    if (stored === 'uk' || stored === 'ua') return 'uk';
+    if (stored === 'da') return 'da';
+  } catch (_e) {}
+  return 'en';
+}
 
-const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-let prefersReducedMotion = motionQuery.matches;
-motionQuery.addEventListener('change', e => { prefersReducedMotion = e.matches; });
+const currentLocale = getActiveStoryLang();
+const i18nStrings = STORY_I18N[currentLocale] || STORY_I18N.en;
 
-let cameraPathCurve;
-let lookAtPathCurve;
-let pathSamples = [];
+// --- Scene & Core Variables ---
+let scene = null;
+let camera = null;
+let renderer = null;
+const timer = new Timer();
+let animationFrameId = null;
 
-let cloudsContainer;
-let shipMesh;
-let portalMesh;
-let floatingBooks = [];
-let textPlanes = [];
+// --- Final 1.0 Scroll Redirect Configuration ---
+let hasRedirected = false;
+const FINAL_REDIRECT_URL = 'PLACEHOLDER_NEXT_PAGE_URL'; // Подставь свой целевой URL (напр. '/portfolio/' или '/#contact')
 
-let loadingManager;
+// --- Split Animation Mixers ---
+let cameraMixer = null;
+let portalMixer = null;
+let cameraDuration = 0;
+let cameraClipEntries = [];
 
-// Physics / Capsule Collision System
-let worldOctree;
-let playerCapsule;
-let collisionGroup;
+// --- Meshes & Visual Elements ---
+const billboardMeshes = [];
+let starsMesh = null;
+const cameraWorldPos = new THREE.Vector3();
 
-// DOM Elements
+// --- GSAP & Scroll State ---
+let scrollTriggerInstance = null;
+let resizeHandler = null;
+
+// --- DOM Elements ---
+const loadingOverlay = document.getElementById('loading-overlay');
+const loadingBar = document.getElementById('loading-bar');
+const loadingText = document.getElementById('loading-text');
 const hudSceneTitle = document.getElementById('hud-scene-title');
 const hudTimecode = document.getElementById('hud-timecode');
 const hudActLabel = document.getElementById('hud-act-label');
+const hudPortfolioLink = document.getElementById('hud-portfolio');
 const stepDots = document.querySelectorAll('.step-dot');
+const scrollHint = document.getElementById('scroll-hint');
+const scrollHintText = document.querySelector('#scroll-hint span');
+const finaleCard = document.getElementById('portal-finale-card');
 
-const sectionMeta = [
-  { 
-    title: 'PROLOGUE // THE THRESHOLD', timecode: 'FOLIO 01 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
-    header: 'DEUSFLOW // ВСТУП',
-    subheader: '«То що тебе сюди занесло?»',
-    body: [
-      'Пристебніть ремені: раз ви зайшли на цю сторінку, ви або дуже допитливі,',
-      'або це випадковість і ви її вмить покинете… Хоча, може, погортаєш тут трохи?',
-      'Ну ж бо… Я все ж намагався…'
-    ],
-    pos: new THREE.Vector3(0.0, 2.2, -2.0),
-    rotY: 0
-  },
-  { 
-    title: '01 // CHILDHOOD & CRAFT', timecode: 'FOLIO 02 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
-    header: '01 // ДИТИНСТВО ТА ТВОРЧІСТЬ',
-    subheader: '«Любив щось творити і витворювати»',
-    body: [
-      'Усе життя, скільки себе пам\'ятаю, я любив щось творити і витворювати.',
-      'Я любив малювати й перемальовувати з розмальовок картинки на свій лад…',
-      'Уроки праці в мене були з дівчатами, оскільки хлопців було мало,',
-      'тому ми там плели, вишивали і так далі…'
-    ],
-    pos: new THREE.Vector3(-3.2, 1.8, -18.0),
-    rotY: 0.32
-  },
-  { 
-    title: '02 // THE FIRST 35MM LENS', timecode: 'FOLIO 03 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
-    header: '02 // ПЕРША КАМЕРА ТА КРИМ',
-    subheader: '«Бабуся подарувала Olympus»',
-    body: [
-      'Бабуся подарувала на день народження мені плівкову камеру, це був Olympus…',
-      'Через пару років з\'явився Canon 1000D. Я навіть не знав, навіщо об\'єктиви',
-      'і як отримувати розмитий фон. Я просто фотографував, робив фотокопії чогось,',
-      'особливо фотографії з Криму… Це був мій перший і останній «Крим».'
-    ],
-    pos: new THREE.Vector3(3.2, 1.7, -38.0),
-    rotY: -0.32
-  },
-  { 
-    title: '03 // THE DIGITAL DAWN', timecode: 'FOLIO 04 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
-    header: '03 // ЗАВОД ТА ПЕРЕЛОМНИЙ МОМЕНТ',
-    subheader: '«Весілля мене обрали самі»',
-    body: [
-      'Я працював на заводі Ferrexpo Mining електриком — це пекельна праця за $400.',
-      'У мене не було навіть надії на те, що я зможу стати фотографом…',
-      'але тут диво: мене почали наймати на зйомки, і 90% з них були весільні.',
-      'Тому я й кажу: весілля мене обрали самі :)'
-    ],
-    pos: new THREE.Vector3(-3.0, 1.6, -58.0),
-    rotY: 0.32
-  },
-  { 
-    title: '04 // DENMARK & NEW PAGE', timecode: 'FOLIO 05 / 06', act: 'ACT I // ROOTS & THE FIRST LENS',
-    header: '04 // ДАНІЯ ТА НОВА СТОРІНКА',
-    subheader: '«Історія в Данії тільки почалася»',
-    body: [
-      'У Данії 13 серпня дорогою до лікарні народився мій син Даніель.',
-      'Історія мене в Данії ще не написана, вона тільки почалася…',
-      'Давайте спостерігати разом, як зміниться ця сторінка :)'
-    ],
-    pos: new THREE.Vector3(0.0, 1.4, -76.0),
-    rotY: 0
-  },
-  { 
-    title: 'EPILOGUE // THE PORTAL HORIZON', timecode: 'FOLIO 06 / 06', act: 'ACT II // HORIZONS',
-    header: 'DEUSFLOW // ФІНАЛ',
-    subheader: '«Далі буде...»',
-    body: [
-      'Попереду ще сотні історій, нові весілля та нові кадри.',
-      'Дякую, що пройшли цей шлях зі мною.',
-      'Натисніть вгорі «DeusFlow», щоб повернутися до головного портфоліо.'
-    ],
-    pos: new THREE.Vector3(0.0, 1.2, -83.0),
-    rotY: 0
-  }
-];
-
-document.addEventListener('DOMContentLoaded', () => {
-  initLoadingManager();
-
-  // Ensure casual Cyrillic handwriting font is loaded before drawing
-  Promise.all([
-    document.fonts.load('700 52px "Caveat"'),
-    document.fonts.load('500 32px "Caveat"'),
-    document.fonts.ready
-  ]).then(() => {
-    initThree();
-    initCollisionSystem();
-    buildSlalomPath();
-    loadAssets();
-    build3DStoryTypography();
-    initScrollTrigger();
-    initMouseListener();
-    animate();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    applyInitialI18n();
+    initStoryEngine();
   });
-});
+} else {
+  applyInitialI18n();
+  initStoryEngine();
+}
 
-function initThree() {
+function applyInitialI18n() {
+  if (scrollHintText) scrollHintText.innerText = i18nStrings.scrollHint;
+  if (hudPortfolioLink) hudPortfolioLink.querySelector('span').innerText = i18nStrings.navPortfolio;
+  if (hudActLabel) hudActLabel.innerText = i18nStrings.chapters[0].act;
+  if (hudSceneTitle) hudSceneTitle.innerText = i18nStrings.chapters[0].title;
+  if (hudTimecode) hudTimecode.innerText = `${i18nStrings.progress} 0%`;
+
+  if (finaleCard) {
+    const badge = finaleCard.querySelector('.finale-badge');
+    const title = finaleCard.querySelector('.finale-title');
+    const desc = finaleCard.querySelector('.finale-desc');
+    const primaryBtn = finaleCard.querySelector('.finale-btn.primary');
+    const secondaryBtn = finaleCard.querySelector('.finale-btn.secondary');
+
+    if (badge) badge.innerText = i18nStrings.finale.badge;
+    if (title) title.innerText = i18nStrings.finale.title;
+    if (desc) desc.innerText = i18nStrings.finale.desc;
+    if (primaryBtn) primaryBtn.innerText = i18nStrings.finale.primaryBtn;
+    if (secondaryBtn) secondaryBtn.innerText = i18nStrings.finale.secondaryBtn;
+  }
+}
+
+async function initStoryEngine() {
   const canvas = document.getElementById('webgl-canvas');
+  if (!canvas) {
+    console.error('[StoryEngine] WebGL canvas not found!');
+    return;
+  }
+
+  // 1. SETUP SCENE, LIGHTING & PROCEDURAL FOG (Requirement 4)
   scene = new THREE.Scene();
 
-  camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 250);
-  scene.add(camera);
+  // Dark amber / Hogwarts library night atmosphere
+  const fogColor = new THREE.Color(0x0d0a08);
+  scene.background = fogColor;
+  scene.fog = new THREE.Fog(fogColor, 15, 200);
 
+  // Calibrated lighting: place_WEB and rock_WEB are unlit (MeshBasicMaterial)
+  // AmbientLight provides gentle base illumination for standard portal parts
+  const ambientLight = new THREE.AmbientLight(0xffedd8, 0.85);
+  scene.add(ambientLight);
+
+  const keyLight = new THREE.DirectionalLight(0xffe2c0, 0.7);
+  keyLight.position.set(-15, 35, 20);
+  scene.add(keyLight);
+
+  // 2. RENDERER SETUP
   renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
-    alpha: true,
+    alpha: false,
     powerPreference: 'high-performance'
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.0; // Clean 1.0 exposure to prevent blown-out baked textures
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.6);
-  scene.add(ambientLight);
+  // 3. LOAD STORY2.GLB WITH PROGRESS
+  const loader = new GLTFLoader();
 
-  window.addEventListener('resize', onWindowResize);
-}
-
-// ── COLLISION & CAPSULE SYSTEM ────────────────────────────────
-function initCollisionSystem() {
-  worldOctree = new Octree();
-  
-  playerCapsule = new Capsule(
-    new THREE.Vector3(0, -0.4, 0),
-    new THREE.Vector3(0, 0.4, 0),
-    0.35
-  );
-
-  collisionGroup = new THREE.Group();
-  collisionGroup.visible = false;
-
-  const floorGeo = new THREE.PlaneGeometry(60, 140);
-  floorGeo.rotateX(-Math.PI / 2);
-  const floorMesh = new THREE.Mesh(floorGeo, new THREE.MeshBasicMaterial());
-  floorMesh.position.set(0, -14, -40);
-  collisionGroup.add(floorMesh);
-
-  const ceilGeo = new THREE.PlaneGeometry(60, 140);
-  ceilGeo.rotateX(Math.PI / 2);
-  const ceilMesh = new THREE.Mesh(ceilGeo, new THREE.MeshBasicMaterial());
-  ceilMesh.position.set(0, 14, -40);
-  collisionGroup.add(ceilMesh);
-
-  const wallLeftGeo = new THREE.PlaneGeometry(140, 30);
-  wallLeftGeo.rotateY(Math.PI / 2);
-  const wallLeft = new THREE.Mesh(wallLeftGeo, new THREE.MeshBasicMaterial());
-  wallLeft.position.set(-25.0, 0, -40);
-  collisionGroup.add(wallLeft);
-
-  const wallRight = new THREE.Mesh(wallLeftGeo.clone(), new THREE.MeshBasicMaterial());
-  wallRight.position.set(25.0, 0, -40);
-  collisionGroup.add(wallRight);
-
-  scene.add(collisionGroup);
-  worldOctree.fromGraphNode(collisionGroup);
-}
-
-// ── SLALOM CAMERA PATH & DYNAMIC LOOK-AT CHOREOGRAPHY ─────────
-function buildSlalomPath() {
-  // 1. Camera Eye Position: 7.5 - 8.0 units away from text cards for comfortable viewing
-  cameraPathCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.0, 2.2, 6.0),     // Beat 0: Clean blue open sky, looking comfortably at Prologue
-    new THREE.Vector3(-0.6, 1.8, -10.5),  // Beat 1: Glides left around ship, frames Text 1 from 7.5m
-    new THREE.Vector3(0.6, 1.7, -30.5),   // Beat 2: Sweeps diagonally right, frames Text 2 from 7.5m
-    new THREE.Vector3(-0.5, 1.6, -50.5),  // Beat 3: Sweeps diagonally left, frames Text 3 from 7.5m
-    new THREE.Vector3(0.0, 1.4, -68.0),   // Beat 4: Enters center approaching Portal
-    new THREE.Vector3(0.0, 1.2, -81.0)    // Beat 5: Gliding into the Portal
-  ]);
-  cameraPathCurve.tension = 0.45;
-
-  // 2. Camera Look-At Target: Points directly at the center of each slanted text card
-  lookAtPathCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.0, 2.2, -2.0),    // Beat 0 LookAt: Center prologue
-    new THREE.Vector3(-3.2, 1.8, -18.0),  // Beat 1 LookAt: Left slanted Text 1
-    new THREE.Vector3(3.2, 1.7, -38.0),   // Beat 2 LookAt: Right slanted Text 2
-    new THREE.Vector3(-3.0, 1.6, -58.0),  // Beat 3 LookAt: Left slanted Text 3
-    new THREE.Vector3(0.0, 1.4, -76.0),   // Beat 4 LookAt: Portal epilogue
-    new THREE.Vector3(0.0, 1.2, -85.0)    // Beat 5 LookAt: Core of Portal
-  ]);
-  lookAtPathCurve.tension = 0.45;
-
-  pathSamples = cameraPathCurve.getSpacedPoints(1000);
-
-  const startPos = cameraPathCurve.getPointAt(0.001);
-  const lookPos = lookAtPathCurve.getPointAt(0.001);
-  camera.position.copy(startPos);
-  camera.lookAt(lookPos);
-}
-
-// ── LOAD 3D ASSETS (Cleaned Model without Foreground Shards) ──
-function initLoadingManager() {
-  const loadingBar = document.getElementById('loading-bar');
-  const loadingText = document.getElementById('loading-text');
-  const loadingOverlay = document.getElementById('loading-overlay');
-
-  loadingManager = new THREE.LoadingManager();
-  
-  loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-    const progress = (itemsLoaded / itemsTotal) * 100;
-    if (loadingBar) loadingBar.style.width = `${progress}%`;
-    if (loadingText) loadingText.innerText = `Завантаження... ${Math.round(progress)}%`;
-  };
-
-  loadingManager.onLoad = () => {
-    if (loadingOverlay) {
-      setTimeout(() => {
-        loadingOverlay.classList.add('fade-out');
-        setTimeout(() => {
-          loadingOverlay.style.display = 'none';
-        }, 800);
-      }, 500);
-    }
-  };
-
-  loadingManager.onError = (url) => {
-    console.error('There was an error loading ' + url);
-  };
-}
-
-function loadAssets() {
-  const loader = new GLTFLoader(loadingManager);
-  
-  const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
-  loader.setDRACOLoader(dracoLoader);
-
-  // 1. Pristine 1K Clouds Model & Flying Ship (Clean PNG Alpha)
   loader.load(
-    '/assets/models/%D0%9E%D0%91%D0%9B%D0%90%D0%9A%D0%90%201%D0%9A.glb',
+    '/assets/models/Story2.glb',
     (gltf) => {
-      const model = gltf.scene;
-      
-      const box = new THREE.Box3().setFromObject(model);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      const center = new THREE.Vector3();
-      box.getCenter(center);
+      const root = gltf.scene;
+      scene.add(root);
 
-      model.position.sub(center);
+      // ======================================================================
+      // REQUIREMENT 1: EXTRACT GLTF CAMERA (No default camera instantiated)
+      // ======================================================================
+      let extractedCamera = gltf.cameras.find((c) => c.name === 'Camera');
 
-      cloudsContainer = new THREE.Group();
-      cloudsContainer.add(model);
-
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = 140 / (maxDim || 1);
-      cloudsContainer.scale.setScalar(scale);
-      
-      cloudsContainer.rotation.y = 0;
-      cloudsContainer.position.set(0, 0, -35);
-
-      model.traverse((child) => {
-        if (child.isMesh && child.material) {
-          child.frustumCulled = false;
-          
-          if (child.name && child.name.includes('Sky')) {
-            // Pristine solid background sky hemisphere
-            child.material.side = THREE.BackSide;
-            child.material.depthWrite = false;
-            child.material.transparent = false;
-            child.renderOrder = 0;
-          } else if (child.name && child.name.includes('Boot')) {
-            // Flying Ship
-            shipMesh = child;
-            child.material.side = THREE.DoubleSide;
-            child.material.depthWrite = true;
-            child.material.transparent = false;
-            if ('roughness' in child.material) child.material.roughness = 0.7;
-            if ('metalness' in child.material) child.material.metalness = 0.0;
-            child.renderOrder = 1;
-          } else if (child.name && (child.name.includes('Cloud_3') || child.name.includes('Cloud_2') || child.name.includes('Cloud_1'))) {
-            // HIDE the floating billboard cutout planes that contain hand-painted chalk zigzag edges
-            child.visible = false;
-          } else if (child.name && child.name.includes('Poly')) {
-            // Deep canyon floor & mountains (Clean continuous 3D geometry)
-            child.material.side = THREE.DoubleSide;
-            child.material.depthWrite = true;
-            child.material.transparent = false;
-            if ('roughness' in child.material) child.material.roughness = 1.0;
-            if ('metalness' in child.material) child.material.metalness = 0.0;
-            child.renderOrder = 1;
-          } else {
-            child.material.side = THREE.DoubleSide;
-            if ('roughness' in child.material) child.material.roughness = 1.0;
-            if ('metalness' in child.material) child.material.metalness = 0.0;
-          }
-
-          // Neutralize Fresnel reflection glare on hand-painted dark surfaces
-          child.material.onBeforeCompile = (shader) => {
-            shader.fragmentShader = shader.fragmentShader.replace(
-              '#include <lights_fragment_end>',
-              `
-              reflectedLight.directSpecular = vec3( 0.0 );
-              reflectedLight.indirectSpecular = vec3( 0.0 );
-              #include <lights_fragment_end>
-              `
-            );
-          };
-          child.material.needsUpdate = true;
-        }
-      });
-
-      scene.add(cloudsContainer);
-    },
-    undefined,
-    (err) => { console.warn('1K Clouds model note:', err); }
-  );
-
-  // 2. Floating 3D Magic Books
-  loader.load(
-    '/assets/models/%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0.glb',
-    (gltf) => {
-      const bookTemplate = gltf.scene;
-      
-      const bookPositions = [
-        { pos: new THREE.Vector3(2.2, 2.2, 1.0), rot: new THREE.Vector3(0.2, 0.4, -0.15), scale: 0.35, phase: 0.0 },
-        { pos: new THREE.Vector3(-2.4, 2.0, -12.0), rot: new THREE.Vector3(-0.15, -0.6, 0.2), scale: 0.32, phase: 1.2 },
-        { pos: new THREE.Vector3(2.8, 1.8, -25.0), rot: new THREE.Vector3(0.25, 0.8, -0.1), scale: 0.36, phase: 2.4 },
-        { pos: new THREE.Vector3(-3.0, 1.7, -45.0), rot: new THREE.Vector3(-0.2, -0.4, 0.25), scale: 0.34, phase: 3.6 },
-        { pos: new THREE.Vector3(2.4, 1.5, -62.0), rot: new THREE.Vector3(0.18, 0.5, -0.2), scale: 0.33, phase: 4.8 },
-        { pos: new THREE.Vector3(-1.8, 1.3, -73.0), rot: new THREE.Vector3(-0.1, -0.7, 0.15), scale: 0.35, phase: 5.5 }
-      ];
-
-      bookPositions.forEach((bp) => {
-        const book = bookTemplate.clone(true);
-        book.position.copy(bp.pos);
-        book.rotation.set(bp.rot.x, bp.rot.y, bp.rot.z);
-        book.scale.setScalar(bp.scale);
-        
-        book.traverse((c) => {
-          if (c.isMesh && c.material) {
-            c.material = c.material.clone();
-            c.material.side = THREE.DoubleSide;
+      if (!extractedCamera) {
+        root.traverse((node) => {
+          if (node.isCamera && (node.name === 'Camera' || !extractedCamera)) {
+            extractedCamera = node;
           }
         });
+      }
 
-        book.userData = {
-          baseY: bp.pos.y,
-          phase: bp.phase,
-          rotSpeed: 0.006 + Math.random() * 0.004
-        };
+      if (!extractedCamera) {
+        console.warn('[StoryEngine] Camera named "Camera" not found in GLTF, using fallback.');
+        extractedCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        scene.add(extractedCamera);
+      }
 
-        scene.add(book);
-        floatingBooks.push(book);
-      });
-    },
-    undefined,
-    (err) => { console.warn('Book model note:', err); }
-  );
+      camera = extractedCamera;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-  // 3. Destination Portal at Z = -84
-  loader.load(
-    '/assets/models/%D0%BF%D0%BE%D1%80%D1%82%D0%B0%D0%BB2.glb',
-    (gltf) => {
-      portalMesh = gltf.scene;
-      
-      const box = new THREE.Box3().setFromObject(portalMesh);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      const center = new THREE.Vector3();
-      box.getCenter(center);
-      portalMesh.position.sub(center);
+      // ======================================================================
+      // ARCHITECTURAL DIRECTIVE: CAPSULE + OCTREE COLLISION BYPASS
+      // ======================================================================
+      // In this cinematic scrollytelling sequence:
+      // Capsule collision, Octree intersections, and physics updates are 
+      // 100% BYPASSED. The camera is driven exclusively by the baked GLTF 
+      // keyframes via cameraMixer.setTime().
+      // ======================================================================
 
-      const portalContainer = new THREE.Group();
-      portalContainer.add(portalMesh);
-      
-      const maxDim = Math.max(size.x, size.y, size.z);
-      portalContainer.scale.setScalar(9.0 / (maxDim || 1));
-      portalContainer.position.set(0, 0, -84);
+      // ======================================================================
+      // REQUIREMENT 2: ANIMATION SPLIT LOGIC (GSAP + Three.js)
+      // ======================================================================
+      const cameraClips = [];
+      const ambientClips = [];
 
-      portalMesh.traverse((child) => {
-        if (child.isMesh && child.material) {
-          child.material.side = THREE.DoubleSide;
+      gltf.animations.forEach((clip) => {
+        const isCameraTargeted = clip.name.toLowerCase().includes('camera') ||
+          clip.tracks.some(track => track.name.toLowerCase().startsWith('camera'));
+
+        if (isCameraTargeted) {
+          cameraClips.push(clip);
+        } else {
+          ambientClips.push(clip);
         }
       });
 
-      scene.add(portalContainer);
+      // A) Camera Mixer: Scroll-driven via GSAP ScrollTrigger
+      // cameraDuration is strictly computed as Math.max across ALL camera clips
+      cameraClipEntries = [];
+      if (cameraClips.length > 0) {
+        cameraDuration = cameraClips.reduce((max, clip) => Math.max(max, clip.duration), 0);
+
+        cameraClips.forEach((clip) => {
+          const mixer = new THREE.AnimationMixer(root);
+          const action = mixer.clipAction(clip);
+          action.clampWhenFinished = true;
+          action.setLoop(THREE.LoopOnce);
+          action.play();
+          cameraClipEntries.push({ mixer, action, clip });
+        });
+
+        cameraMixer = cameraClipEntries[0]?.mixer || null;
+
+        initScrollInteraction();
+      }
+
+      // B) Portal & Ambient Mixer: Continuous loop for Sketchfab_model
+      if (ambientClips.length > 0) {
+        portalMixer = new THREE.AnimationMixer(root);
+
+        ambientClips.forEach((clip) => {
+          const action = portalMixer.clipAction(clip);
+          action.setLoop(THREE.LoopRepeat);
+          action.play();
+        });
+      }
+
+      // ======================================================================
+      // REQUIREMENT 3: TRANSPARENT PLANE SORTING & BILLBOARDS FIX
+      // ======================================================================
+      billboardMeshes.length = 0;
+
+      root.traverse((child) => {
+        if (child.isMesh) {
+          // UNLIT FIX for Cloud_Poly and Sky: emissive=[1,1,1] in GLTF causes blowout under scene lights.
+          // Convert to THREE.MeshBasicMaterial (copying map and color) to make them completely unlit.
+          if (child.name === 'Cloud_Poly' || child.name === 'Sky') {
+            const oldMat = child.material;
+            const tex = oldMat.map || oldMat.emissiveMap;
+            const col = (oldMat.color && (oldMat.color.r > 0 || oldMat.color.g > 0 || oldMat.color.b > 0))
+              ? oldMat.color.clone()
+              : (oldMat.emissive ? oldMat.emissive.clone() : new THREE.Color(0xffffff));
+
+            child.material = new THREE.MeshBasicMaterial({
+              map: tex,
+              color: col,
+              side: oldMat.side || THREE.DoubleSide,
+              transparent: oldMat.transparent || false,
+              opacity: oldMat.opacity !== undefined ? oldMat.opacity : 1.0,
+              depthWrite: oldMat.depthWrite !== undefined ? oldMat.depthWrite : true
+            });
+            child.material.needsUpdate = true;
+            if (oldMat.dispose) oldMat.dispose();
+          }
+
+          const isBillboard = child.name.startsWith('Bilboard') || child.name.startsWith('FOG');
+
+          if (isBillboard) {
+            billboardMeshes.push(child);
+
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((mat) => {
+              mat.transparent = true;
+              mat.depthWrite = false; // Eliminates black rectangle artifacts
+              mat.alphaTest = 0.01;   // Discards transparent boundary pixels
+              mat.side = THREE.DoubleSide;
+              mat.needsUpdate = true;
+            });
+
+            // Draw transparent cloud/fog quads after solid geometry
+            child.renderOrder = 2;
+          }
+
+          // REQUIREMENT 4: Grab Stars Mesh for Twinkling
+          if (child.name.toLowerCase() === 'stars' || child.name.toLowerCase().includes('star')) {
+            starsMesh = child;
+            const starMaterials = Array.isArray(child.material) ? child.material : [child.material];
+            starMaterials.forEach((mat) => {
+              mat.transparent = true;
+              mat.depthWrite = false;
+              mat.needsUpdate = true;
+            });
+            child.renderOrder = 3;
+          }
+        }
+      });
+
+      // REQUIREMENT 5: Window Resize Listener
+      resizeHandler = onWindowResize;
+      window.addEventListener('resize', resizeHandler);
+
+      // Set initial frame (start of cinematic track)
+      setCameraScrollProgress(0);
+
+      // Expose debug state for verification testing
+      window.__STORY_STATE__ = {
+        cameraLoaded: !!camera,
+        cameraName: camera ? camera.name : null,
+        cameraDuration,
+        cameraClipsCount: cameraClips.length,
+        ambientClipsCount: ambientClips.length,
+        billboardCount: billboardMeshes.length,
+        hasStars: !!starsMesh,
+        setScrollProgress: (progress) => {
+          setCameraScrollProgress(progress);
+        },
+        getCameraPosition: () => camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null,
+        getMeshMaterialInfo: (name) => {
+          let found = null;
+          scene?.traverse((c) => {
+            if (c.name === name) {
+              found = {
+                name: c.name,
+                materialType: c.material?.type,
+                isMeshBasicMaterial: c.material?.isMeshBasicMaterial === true,
+                hasMap: !!c.material?.map,
+                color: c.material?.color ? c.material.color.toArray() : null
+              };
+            }
+          });
+          return found;
+        }
+      };
+
+      // Hide loading screen
+      hideLoadingOverlay();
+
+      // Start render loop
+      animate();
     },
-    undefined,
-    (err) => { console.warn('Portal model note:', err); }
+    (event) => {
+      if (event.total > 0) {
+        const progress = Math.round((event.loaded / event.total) * 100);
+        if (loadingBar) loadingBar.style.width = `${progress}%`;
+        if (loadingText) loadingText.innerText = `${i18nStrings.loading} ${progress}%`;
+      }
+    },
+    (err) => {
+      console.error('[StoryEngine] Failed to load Story2.glb:', err);
+      if (loadingText) loadingText.innerText = 'Error loading 3D scene';
+    }
   );
 }
 
-// ── 3D HANDWRITTEN STORY TYPOGRAPHY (True Oleg Ro Narrative) ──
-function createHandwrittenText(badge, title, bodyLines, pos, rotY = 0, sectionIndex = 0) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1600;
-  canvas.height = 900;
-  const ctx = canvas.getContext('2d');
+/**
+ * Scrubs camera animation clips safely based on normalized scroll progress [0, 1].
+ * Clamps playback time to prevent Three.js LoopOnce overflow/reset at 100%.
+ */
+function setCameraScrollProgress(progress) {
+  const p = Math.max(0, Math.min(1, progress));
+  if (cameraClipEntries.length > 0) {
+    cameraClipEntries.forEach(({ mixer, action, clip }) => {
+      action.paused = false;
+      const targetTime = Math.min(p * clip.duration, Math.max(0, clip.duration - 0.0001));
+      mixer.setTime(targetTime);
+    });
+  } else if (cameraMixer && cameraDuration > 0) {
+    const targetTime = Math.min(p * cameraDuration, Math.max(0, cameraDuration - 0.0001));
+    cameraMixer.setTime(targetTime);
+  }
+}
 
-  ctx.clearRect(0, 0, 1600, 900);
-
-  // 1. Category Badge
-  if (badge) {
-    ctx.font = '700 24px "Space Mono", monospace';
-    ctx.fillStyle = '#d8b888';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-    ctx.shadowBlur = 8;
-    ctx.fillText(badge.toUpperCase(), 800, 90);
+/**
+ * Binds camera animation scrub and HUD updates to GSAP ScrollTrigger.
+ */
+function initScrollInteraction() {
+  if (typeof window === 'undefined' || !window.ScrollTrigger) {
+    console.warn('[StoryEngine] ScrollTrigger is not available.');
+    return;
   }
 
-  // 2. Main Title in Casual Handwritten Script
-  ctx.font = '700 52px "Caveat", "Marck Script", cursive';
-  ctx.fillStyle = '#fff6ea';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.shadowColor = 'rgba(216, 184, 136, 0.95)';
-  ctx.shadowBlur = 20;
-  ctx.fillText(title, 800, 150);
+  const scrollWrapper = document.querySelector('.scroll-wrapper') || document.body;
 
-  // 3. Story Paragraph Lines
-  if (bodyLines && bodyLines.length > 0) {
-    ctx.font = '500 32px "Caveat", "Marck Script", cursive';
-    ctx.fillStyle = '#f2e6d6';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-    ctx.shadowBlur = 12;
-
-    let y = 250;
-    for (let i = 0; i < bodyLines.length; i++) {
-      ctx.fillText(bodyLines[i], 800, y);
-      y += 48;
-    }
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.minFilter = THREE.LinearFilter;
-  texture.generateMipmaps = false;
-
-  const mat = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-    alphaTest: 0.02,
-    opacity: sectionIndex === 0 ? 1.0 : 0.0
-  });
-
-  // Perfectly proportioned 3D plane that fills ~45% of the screen with spacious margins
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 2.9), mat);
-  plane.position.copy(pos);
-  plane.rotation.y = rotY;
-  plane.userData = {
-    baseY: pos.y,
-    sectionIndex: sectionIndex
-  };
-  plane.renderOrder = 4;
-  scene.add(plane);
-  textPlanes.push(plane);
-  return plane;
-}
-
-function findArcLengthFraction(targetPoint) {
-  let closest = 0, minDist = Infinity;
-  for (let i = 0; i < pathSamples.length; i++) {
-    const d = pathSamples[i].distanceTo(targetPoint);
-    if (d < minDist) { minDist = d; closest = i; }
-  }
-  return closest / (pathSamples.length - 1);
-}
-
-function renderAccessibleNarrative() {
-  const container = document.createElement('div');
-  container.className = 'sr-only';
-  container.innerHTML = '<h1>The Story · Oleg Ro</h1>';
-  sectionMeta.forEach(ch => {
-    const heading = `${ch.header} · ${ch.subheader}`;
-    container.insertAdjacentHTML('beforeend', `<section><h2>${heading}</h2><p>${ch.body.join(' ')}</p></section>`);
-  });
-  document.body.appendChild(container);
-}
-
-function build3DStoryTypography() {
-  renderAccessibleNarrative();
-  
-  sectionMeta.forEach((meta, idx) => {
-    const plane = createHandwrittenText(meta.header, meta.subheader, meta.body, meta.pos, meta.rotY, idx);
-    const targetCamPos = cameraPathCurve.points[idx];
-    plane.userData.arcLengthProgress = findArcLengthFraction(targetCamPos);
-  });
-}
-
-// ── GSAP MAGNETIC SNAP SCROLL INTEGRATION ────────────────────
-function initScrollTrigger() {
-  const snapPoints = textPlanes.map(p => p.userData.arcLengthProgress);
-  
-  ScrollTrigger.create({
-    trigger: document.body,
+  scrollTriggerInstance = window.ScrollTrigger.create({
+    trigger: scrollWrapper,
     start: 'top top',
     end: 'bottom bottom',
-    scrub: 1.0,
-    snap: {
-      snapTo: snapPoints, // Snaps precisely to the arc-lengths of the text plates
-      duration: { min: 0.4, max: 0.8 },
-      delay: 0.15,
-      ease: 'power2.out'
-    },
+    scrub: 1.2, // Premium cinematic inertial scrub
     onUpdate: (self) => {
-      targetScrollProgress = self.progress;
-      
-      let closestIdx = 0;
-      let minDiff = Infinity;
-      snapPoints.forEach((p, idx) => {
-        const diff = Math.abs(self.progress - p);
-        if (diff < minDiff) { minDiff = diff; closestIdx = idx; }
-      });
-      updateHUD(closestIdx);
-    }
-  });
+      const progress = self.progress;
 
-  window.addEventListener('scroll', () => {
-    const currentY = window.scrollY;
-    scrollVelocity = currentY - lastScrollY;
-    lastScrollY = currentY;
-  });
-}
+      // 1. Scrub Camera Animation
+      setCameraScrollProgress(progress);
 
-function updateHUD(index) {
-  const meta = sectionMeta[index] || sectionMeta[0];
-  if (hudSceneTitle) hudSceneTitle.innerText = meta.title;
-  if (hudTimecode) hudTimecode.innerText = meta.timecode;
-  if (hudActLabel) hudActLabel.innerText = meta.act;
-  stepDots.forEach((dot, i) => {
-    dot.classList.toggle('active', i === index);
-  });
-}
+      // 2. Hide Scroll Prompt on first scroll
+      if (scrollHint) {
+        if (progress > 0.02) {
+          scrollHint.classList.add('hidden');
+        } else {
+          scrollHint.classList.remove('hidden');
+        }
+      }
 
-let lastTime = 0;
+      // 3. Update HUD Chapter & Timecode
+      updateHUD(progress);
 
-// ── RENDER & ANIMATION LOOP ──────────────────────────────────
-function animate() {
-  requestAnimationFrame(animate);
-  const time = clock.getElapsedTime();
-  const dt = time - lastTime;
-  lastTime = time;
+      // 4. Reveal Finale Portal Card at the end of track
+      if (finaleCard) {
+        if (progress > 0.94) {
+          finaleCard.classList.add('visible');
+        } else {
+          finaleCard.classList.remove('visible');
+        }
+      }
 
-  scrollVelocity *= 0.9;
-  
-  if (prefersReducedMotion) {
-    let closestProg = 0;
-    let minDiff = Infinity;
-    textPlanes.forEach((p) => {
-      const diff = Math.abs(targetScrollProgress - p.userData.arcLengthProgress);
-      if (diff < minDiff) { minDiff = diff; closestProg = p.userData.arcLengthProgress; }
-    });
-    scrollProgress = closestProg;
-  } else {
-    scrollProgress = THREE.MathUtils.damp(scrollProgress, targetScrollProgress, 4.0, dt);
-  }
-
-  // 1. Slalom Flythrough Kinematics
-  if (cameraPathCurve && lookAtPathCurve) {
-    const p = Math.max(0.001, Math.min(0.999, scrollProgress));
-    
-    const camPos = cameraPathCurve.getPointAt(p);
-    
-    // Subtle parallax mouse tilt
-    const targetX = (mouseX / window.innerWidth) * 2 - 1;
-    const targetY = -(mouseY / window.innerHeight) * 2 + 1;
-    
-    const desiredPos = new THREE.Vector3(
-      camPos.x + targetX * 0.2,
-      camPos.y + targetY * 0.15,
-      camPos.z
-    );
-
-    playerCapsule.start.set(desiredPos.x, desiredPos.y - 0.4, desiredPos.z);
-    playerCapsule.end.set(desiredPos.x, desiredPos.y + 0.4, desiredPos.z);
-
-    if (worldOctree) {
-      const hit = worldOctree.capsuleIntersect(playerCapsule);
-      if (hit) {
-        playerCapsule.translate(hit.normal.multiplyScalar(hit.depth));
+      // 5. Final Idempotent Redirect at 100% Scroll
+      if (progress >= 0.999 && !hasRedirected) {
+        hasRedirected = true;
+        const fadeOverlay = document.getElementById('fade-overlay');
+        if (fadeOverlay) {
+          fadeOverlay.classList.add('active');
+        }
+        setTimeout(() => {
+          window.location.href = FINAL_REDIRECT_URL;
+        }, 800);
       }
     }
+  });
 
-    camera.position.set(
-      (playerCapsule.start.x + playerCapsule.end.x) * 0.5,
-      (playerCapsule.start.y + playerCapsule.end.y) * 0.5,
-      playerCapsule.start.z
-    );
-
-    // Smooth camera gaze target squarely framing each chapter text
-    const lookAtPos = lookAtPathCurve.getPointAt(p);
-    camera.lookAt(lookAtPos);
-  }
-
-  // 2. Gentle Flying Ship Wave Bobbing
-  if (shipMesh && !prefersReducedMotion) {
-    shipMesh.position.y = Math.sin(time * 1.1) * 0.12;
-    shipMesh.rotation.z = Math.sin(time * 0.7) * 0.025;
-  }
-
-  // 3. Animate Floating 3D Magic Books
-  for (let i = 0; i < floatingBooks.length; i++) {
-    const b = floatingBooks[i];
-    if (!prefersReducedMotion) {
-      b.rotation.y += b.userData.rotSpeed * dt * 60.0;
-      b.position.y = b.userData.baseY + Math.sin(time * 1.3 + b.userData.phase) * 0.12;
-      b.rotation.z = Math.sin(time * 0.8 + b.userData.phase) * 0.06;
-    }
-  }
-
-  // 4. Fade Text Plates per Chapter with Smooth Highlight
-  for (let i = 0; i < textPlanes.length; i++) {
-    const p = textPlanes[i];
-    const targetProgress = p.userData.arcLengthProgress;
-    const diff = Math.abs(scrollProgress - targetProgress);
-    const alpha = prefersReducedMotion ? (diff < 0.05 ? 1.0 : 0.0) : Math.max(0.0, Math.min(1.0, 1.0 - (diff / 0.12)));
-    
-    p.material.opacity = alpha;
-    p.visible = alpha > 0.02;
-    if (!prefersReducedMotion) {
-      p.position.y = p.userData.baseY + Math.sin(time * 0.8 + p.position.z * 0.1) * 0.05;
-    }
-  }
-
-  if (portalMesh) {
-    portalMesh.rotation.y = time * 0.12;
-  }
-
-  renderer.render(scene, camera);
+  // Allow clicking on stepper dots to smoothly scroll to corresponding milestone
+  stepDots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+      const targetP = i18nStrings.chapters[index] ? i18nStrings.chapters[index].p : index / (stepDots.length - 1);
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      window.scrollTo({
+        top: targetP * maxScroll,
+        behavior: 'smooth'
+      });
+    });
+  });
 }
 
+/**
+ * Updates HUD chapter name, progress percentage, and step indicator dots.
+ */
+function updateHUD(progress) {
+  const chaptersList = i18nStrings.chapters;
+  let currentChapter = chaptersList[0];
+  let currentIdx = 0;
+  for (let i = chaptersList.length - 1; i >= 0; i--) {
+    if (progress >= chaptersList[i].p - 0.05) {
+      currentChapter = chaptersList[i];
+      currentIdx = i;
+      break;
+    }
+  }
+
+  const pct = Math.round(progress * 100);
+
+  if (hudSceneTitle) hudSceneTitle.innerText = currentChapter.title;
+  if (hudActLabel) hudActLabel.innerText = currentChapter.act;
+  if (hudTimecode) hudTimecode.innerText = `${i18nStrings.progress} ${pct}%`;
+
+  stepDots.forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === currentIdx);
+  });
+}
+
+/**
+ * Smoothly hides the initial loading screen.
+ */
+function hideLoadingOverlay() {
+  if (loadingOverlay) {
+    loadingOverlay.classList.add('fade-out');
+    setTimeout(() => {
+      loadingOverlay.style.display = 'none';
+    }, 850);
+  }
+}
+
+/**
+ * Main Render & Animation Loop (60/120 FPS).
+ */
+function animate() {
+  animationFrameId = requestAnimationFrame(animate);
+
+  // Requirement 4: Timer protects portalMixer against delta spikes when tab is hidden
+  timer.update();
+  const delta = timer.getDelta();
+
+  // ==========================================================================
+  // [COLLISION BYPASS]: Physics / Capsule+Octree are completely omitted here.
+  // The camera follows the baked GLTF trajectory without obstacle conflicts.
+  // ==========================================================================
+
+  // 1. Ambient Portal Animation (Loops continuously regardless of scroll pause)
+  if (portalMixer) {
+    portalMixer.update(delta);
+  }
+
+  // 2. Orient all Bilboard and FOG planes towards the camera
+  if (camera && billboardMeshes.length > 0) {
+    camera.getWorldPosition(cameraWorldPos);
+    for (let i = 0; i < billboardMeshes.length; i++) {
+      billboardMeshes[i].lookAt(cameraWorldPos);
+    }
+  }
+
+  // 3. Dynamic Stars Twinkle using Math.sin(Date.now() * speed)
+  if (starsMesh && starsMesh.material) {
+    const starSpeed = 0.0035;
+    const opacity = 0.58 + Math.sin(Date.now() * starSpeed) * 0.38;
+
+    if (Array.isArray(starsMesh.material)) {
+      starsMesh.material.forEach((mat) => { mat.opacity = opacity; });
+    } else {
+      starsMesh.material.opacity = opacity;
+    }
+  }
+
+  // 4. Render Scene with extracted GLTF Camera
+  if (renderer && scene && camera) {
+    renderer.render(scene, camera);
+  }
+}
+
+/**
+ * Responsive Window Resize Handler.
+ */
 function onWindowResize() {
+  if (!camera || !renderer) return;
+
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 }
 
-function initMouseListener() {
-  window.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-  });
+/**
+ * Deep Cleanup & Unmount function to prevent SPA memory leaks.
+ */
+export function cleanup() {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler);
+    resizeHandler = null;
+  }
+
+  if (scrollTriggerInstance) {
+    scrollTriggerInstance.kill();
+    scrollTriggerInstance = null;
+  }
+
+  if (cameraMixer) {
+    cameraMixer.stopAllAction();
+    cameraMixer.uncacheRoot(cameraMixer.getRoot());
+    cameraMixer = null;
+  }
+
+  if (portalMixer) {
+    portalMixer.stopAllAction();
+    portalMixer.uncacheRoot(portalMixer.getRoot());
+    portalMixer = null;
+  }
+
+  if (scene) {
+    scene.traverse((object) => {
+      if (object.geometry) {
+        object.geometry.dispose();
+      }
+      if (object.material) {
+        const mats = Array.isArray(object.material) ? object.material : [object.material];
+        mats.forEach((mat) => {
+          for (const key of Object.keys(mat)) {
+            const val = mat[key];
+            if (val && typeof val === 'object' && 'dispose' in val && typeof val.dispose === 'function') {
+              val.dispose();
+            }
+          }
+          mat.dispose();
+        });
+      }
+    });
+
+    while (scene.children.length > 0) {
+      scene.remove(scene.children[0]);
+    }
+    scene = null;
+  }
+
+  if (renderer) {
+    renderer.dispose();
+    renderer = null;
+  }
+
+  camera = null;
+  clock = null;
+  starsMesh = null;
+  billboardMeshes.length = 0;
+  cameraDuration = 0;
 }
