@@ -63,6 +63,18 @@ export function applyBlueFireConfig(prop, val) {
     }
   } else if (prop === 'flamePower' && blueFireMaterial && blueFireMaterial.uniforms.uFlamePower) {
     blueFireMaterial.uniforms.uFlamePower.value = Number(val);
+  } else if (prop === 'flameTaper' && blueFireMaterial && blueFireMaterial.uniforms.uFlameTaper) {
+    const num = Number(val);
+    rawBlueFireConfig.flameTaper = num;
+    blueFireMaterial.uniforms.uFlameTaper.value = num;
+  } else if (prop === 'bottomSpread' && blueFireMaterial && blueFireMaterial.uniforms.uBottomSpread) {
+    const num = Number(val);
+    rawBlueFireConfig.bottomSpread = num;
+    blueFireMaterial.uniforms.uBottomSpread.value = num;
+  } else if (prop === 'bottomDensity' && blueFireMaterial && blueFireMaterial.uniforms.uBottomDensity) {
+    const num = Number(val);
+    rawBlueFireConfig.bottomDensity = num;
+    blueFireMaterial.uniforms.uBottomDensity.value = num;
   } else if (prop === 'flameHeight') {
     const h = Number(val);
     rawBlueFireConfig.flameHeight = h;
@@ -153,7 +165,10 @@ export function createBlueFireEffect(targetNode) {
       uColorMid: { value: BLUE_FIRE_CONFIG.midColor },
       uColorCore: { value: BLUE_FIRE_CONFIG.coreColor },
       uIntensity: { value: BLUE_FIRE_CONFIG.flameIntensity },
-      uFlamePower: { value: BLUE_FIRE_CONFIG.flamePower }
+      uFlamePower: { value: BLUE_FIRE_CONFIG.flamePower },
+      uFlameTaper: { value: BLUE_FIRE_CONFIG.flameTaper ?? 2.2 },
+      uBottomSpread: { value: BLUE_FIRE_CONFIG.bottomSpread ?? 1.2 },
+      uBottomDensity: { value: BLUE_FIRE_CONFIG.bottomDensity ?? 1.8 }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -184,6 +199,9 @@ export function createBlueFireEffect(targetNode) {
       uniform vec3 uColorCore;
       uniform float uIntensity;
       uniform float uFlamePower;
+      uniform float uFlameTaper;
+      uniform float uBottomSpread;
+      uniform float uBottomDensity;
 
       // 2D Simplex Noise
       vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
@@ -221,13 +239,20 @@ export function createBlueFireEffect(targetNode) {
         float n2 = snoise(scroll2);
         float flameNoise = n1 * 0.65 + n2 * 0.35;
 
-        // Organic flame teardrop silhouette
-        float taper = (1.0 - uv.y) * sqrt(clamp(uv.y * 3.8, 0.0, 1.0));
-        float dist = abs(uv.x - 0.5) * 2.0;
+        // Organic flame silhouette with configurable base width and top taper:
+        float normalizedY = clamp(uv.y, 0.0, 1.0);
+        float topTaper = pow(max(0.0, 1.0 - normalizedY), uFlameTaper);
+        float baseFullness = mix(uBottomSpread, 1.0, clamp(normalizedY * 3.5, 0.0, 1.0));
+        float taper = topTaper * baseFullness;
 
-        float shape = smoothstep(taper, taper * 0.18, dist - flameNoise * 0.38 * (1.0 - uv.y * 0.45));
-        // Soft base fade
-        shape *= smoothstep(0.0, 0.12, uv.y);
+        float dist = abs(uv.x - 0.5) * 2.0;
+        // Edge shape with upward tongue noise
+        float noiseAmount = flameNoise * 0.38 * (1.0 - normalizedY * 0.4);
+        float shape = smoothstep(taper, taper * 0.15, dist - noiseAmount);
+
+        // Soft ground contact fade (only softens bottom 4% so base is solid and touches ground)
+        shape *= smoothstep(0.0, 0.04, uv.y);
+
         // Vertical reach / flame stream power cutoff:
         float tipReach = clamp(0.40 + 0.45 * uFlamePower, 0.25, 0.98);
         shape *= smoothstep(tipReach, tipReach - 0.22, uv.y);
@@ -239,10 +264,13 @@ export function createBlueFireEffect(targetNode) {
         vec3 col = mix(uColorBase, uColorMid, smoothstep(0.12, 0.55, shape));
         col = mix(col, uColorCore, smoothstep(0.65, 0.95, coreMask));
 
-        float flicker = 0.88 + 0.12 * sin(uTime * 14.0 + uv.y * 4.0);
-        vec3 finalColor = col * uIntensity * flicker;
+        // Density modulation: dense and saturated at bottom, soft and airy at top
+        float heightDensity = mix(uBottomDensity, 0.5, clamp(normalizedY / tipReach, 0.0, 1.0));
 
-        gl_FragColor = vec4(finalColor, shape * 0.92);
+        float flicker = 0.88 + 0.12 * sin(uTime * 14.0 + uv.y * 4.0);
+        vec3 finalColor = col * uIntensity * flicker * heightDensity;
+
+        gl_FragColor = vec4(finalColor, shape * clamp(heightDensity * 0.85, 0.0, 1.0));
       }
     `,
     transparent: true,
@@ -298,8 +326,8 @@ export function createBlueFireEffect(targetNode) {
   });
   blueFireHaloMat = haloMat;
   blueFireHaloMesh = new THREE.Mesh(haloGeom, haloMat);
-  blueFireHaloMesh.scale.set(BLUE_FIRE_CONFIG.flameWidth * 2.2, BLUE_FIRE_CONFIG.flameHeight * 1.3, 1.0);
-  blueFireHaloMesh.position.set(0, BLUE_FIRE_CONFIG.flameHeight * 0.45, 0);
+  blueFireHaloMesh.scale.set(BLUE_FIRE_CONFIG.flameWidth * 2.4, BLUE_FIRE_CONFIG.flameHeight * 1.4, 1.0);
+  blueFireHaloMesh.position.set(0, BLUE_FIRE_CONFIG.flameHeight * 0.30, 0);
   blueFireHaloMesh.renderOrder = 4;
   blueFireGroup.add(blueFireHaloMesh);
 
