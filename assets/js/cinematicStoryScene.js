@@ -755,8 +755,10 @@ export async function initCinematicScene({
             console.log(`[CinematicScene] Scaled punctual light "${child.name}" (${child.type}): raw ${rawIntensity.toFixed(1)} -> scaled ${child.intensity.toFixed(2)}`);
           }
 
-          // Identify fire.001 empty node (do not mutate scene during traversal)
-          if (!fireTargetNode && (child.name === 'fire001' || child.name === 'fire.001' || (child.name.toLowerCase().startsWith('fire') && !child.name.includes('BlueFlame')))) {
+          // Identify target empty node for Procedural Blue Fire (prioritizing fog2, fallback to fire001)
+          if (child.name === 'fog2' || child.name.toLowerCase() === 'fog2') {
+            fireTargetNode = child;
+          } else if (!fireTargetNode && (child.name === 'fire001' || child.name === 'fire.001')) {
             fireTargetNode = child;
           }
 

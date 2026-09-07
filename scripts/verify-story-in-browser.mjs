@@ -288,12 +288,13 @@ async function runBrowserVerification() {
   });
   console.log(`- Star Dispersion Status: ${allStarsDispersed ? 'PASSED: Rigid linear rows cleanly dissolved into organic 3D starfield' : 'FAILED'}`);
 
-  // 3e. Procedural Blue Fire (Goblet of Fire on fire.001) Verification
+  // 3e. Procedural Blue Fire (Goblet of Fire on fog2 / fire.001) Verification
   const fireRes = await sendCmd('Runtime.evaluate', {
     expression: `
       (() => {
         return {
           hasBlueFire: !!window.__STORY_STATE__.hasBlueFire,
+          nodeName: window.__STORY_STATE__.blueFireNodeName,
           pos: window.__STORY_STATE__.blueFirePos,
           intensity: window.__STORY_STATE__.blueFireIntensity
         };
@@ -302,13 +303,14 @@ async function runBrowserVerification() {
     returnByValue: true
   });
   const fireState = fireRes.result.value || {};
-  console.log('\n=== 3e. PROCEDURAL BLUE FIRE (GOBLET OF FIRE ON fire.001) VERIFICATION ===');
+  console.log('\n=== 3e. PROCEDURAL BLUE FIRE (GOBLET OF FIRE) VERIFICATION ===');
   console.log(`- Blue Fire effect initialized: ${fireState.hasBlueFire}`);
+  console.log(`- Attached to target empty node: "${fireState.nodeName}"`);
   if (fireState.pos) {
-    console.log(`- Attached to empty node at position: [ X: ${fireState.pos[0].toFixed(2)}, Y: ${fireState.pos[1].toFixed(2)}, Z: ${fireState.pos[2].toFixed(2)} ]`);
+    console.log(`- Empty node position in scene: [ X: ${fireState.pos[0].toFixed(2)}, Y: ${fireState.pos[1].toFixed(2)}, Z: ${fireState.pos[2].toFixed(2)} ]`);
   }
   console.log(`- Dynamic PointLight flickering intensity: ${fireState.intensity?.toFixed(2) ?? 0}`);
-  console.log(`- Blue Fire Status: ${fireState.hasBlueFire ? 'PASSED: Procedural flame, volumetric halo, physical sparks and point light active' : 'FAILED'}`);
+  console.log(`- Blue Fire Status: ${fireState.hasBlueFire && fireState.nodeName === 'fog2' ? 'PASSED: Procedural flame, volumetric halo, physical sparks and point light active on fog2' : fireState.hasBlueFire ? 'PASSED: Active' : 'FAILED'}`);
 
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');
