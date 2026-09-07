@@ -1,14 +1,14 @@
-# Runtime config with public anon key and contact details
-config.js
+# Runtime config with public anon key and contact details (root only)
+/config.js
 
 # Local env files
 .env
 .env.*
 !.env.example
 
-# Optional local config variants
-config.local.js
-config.*.local.js
+# Optional local config variants (root only)
+/config.local.js
+/config.*.local.js
 
 # Keys and secret dumps
 *.pem

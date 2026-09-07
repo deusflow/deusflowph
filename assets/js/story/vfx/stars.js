@@ -9,7 +9,7 @@
  * - Multi-frequency scintillation & chromatic iridescence shader (warm amber -> sapphire -> diamond core)
  */
 import * as THREE from 'three';
-import { STAR_DISPERSION_CONFIG } from '../config.js';
+import { STAR_DISPERSION_CONFIG } from '../storyConfig.js';
 
 export const starUniforms = {
   uTime: { value: 0 }

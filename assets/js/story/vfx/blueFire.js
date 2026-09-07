@@ -10,7 +10,7 @@
  * - Dynamic flickering PointLight illuminating canyon walls
  */
 import * as THREE from 'three';
-import { BLUE_FIRE_CONFIG, rawBlueFireConfig, registerBlueFireConfigListener } from '../config.js';
+import { BLUE_FIRE_CONFIG, rawBlueFireConfig, registerBlueFireConfigListener } from '../storyConfig.js';
 
 let blueFireGroup = null;
 let blueFireLight = null;

@@ -14,8 +14,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Timer } from 'three/addons/misc/Timer.js';
 
-export { STORY_LIGHT_CONFIG, BLUE_FIRE_CONFIG, setBlueFireConfig } from './story/config.js';
-import { getLightConfigIntensity } from './story/config.js';
+export { STORY_LIGHT_CONFIG, BLUE_FIRE_CONFIG, setBlueFireConfig } from './story/storyConfig.js';
+import { getLightConfigIntensity } from './story/storyConfig.js';
 import { createBlueFire, updateBlueFire, cleanupBlueFire } from './story/vfx/blueFire.js';
 import { processStarMesh, updateStars, cleanupStars } from './story/vfx/stars.js';
 import {

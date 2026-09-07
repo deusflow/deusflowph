@@ -16,8 +16,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Timer } from 'three/addons/misc/Timer.js';
 
 // Re-export configs for external consumers & backwards compatibility
-export { STORY_LIGHT_CONFIG, BLUE_FIRE_CONFIG, setBlueFireConfig } from './story/config.js';
-import { getLightConfigIntensity, BLUE_FIRE_CONFIG } from './story/config.js';
+export { STORY_LIGHT_CONFIG, BLUE_FIRE_CONFIG, setBlueFireConfig } from './story/storyConfig.js';
+import { getLightConfigIntensity, BLUE_FIRE_CONFIG } from './story/storyConfig.js';
 import { getStoryI18n } from './story/i18n.js';
 import { createBlueFire, updateBlueFire, getBlueFireState, cleanupBlueFire } from './story/vfx/blueFire.js';
 import {
