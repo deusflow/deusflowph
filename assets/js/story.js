@@ -107,7 +107,7 @@ function getActiveStoryLang() {
     const stored = localStorage.getItem('deusflow_lang');
     if (stored === 'uk' || stored === 'ua') return 'uk';
     if (stored === 'da') return 'da';
-  } catch (_e) {}
+  } catch (_e) { }
   return 'en';
 }
 
@@ -130,10 +130,10 @@ const FINAL_REDIRECT_URL = 'PLACEHOLDER_NEXT_PAGE_URL'; // Подставь св
 // Clamps massive Blender export values (10,000 - 200,000) down to sane WebGL values (1.0 - 5.0).
 export const STORY_LIGHT_CONFIG = {
   'base light to portal': 3.5,
-  'contlight2': 2.8,
+  'contlight2': 20,
   'front light to portal': 3.0,
-  'Point': 1.8,
-  'portal l centr': 4.2
+  'Point': 100,
+  'portal l centr': 50
 };
 
 const gltfLights = new Map();
