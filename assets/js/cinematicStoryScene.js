@@ -285,6 +285,266 @@ function enhanceStarMaterial(mat) {
 }
 
 /**
+ * ============================================================================
+ * PROCEDURAL BLUE FIRE SYSTEM (Goblet of Fire style on fire.001 Empty node)
+ * ============================================================================
+ * 1. 3D Cross-quad Procedural Flame with ascending multi-octave Simplex noise.
+ * 2. Soft camera-facing radial volumetric halo glow.
+ * 3. Physical 3D polygonal rising sparks/embers (24 quads, NO gl_PointSize).
+ * 4. Dynamic flickering PointLight casting atmospheric blue illumination on rocks.
+ */
+let blueFireGroup = null;
+let blueFireLight = null;
+let blueFireHaloMesh = null;
+let blueFireSparksMesh = null;
+const blueFireUniforms = {
+  uTime: { value: 0 }
+};
+const sparkDummy = new THREE.Object3D();
+const SPARK_COUNT = 24;
+const sparkData = [];
+for (let i = 0; i < SPARK_COUNT; i++) {
+  sparkData.push({
+    speed: 0.35 + (i % 7) * 0.08,
+    offset: (i * 0.137) % 1.0,
+    radius: 0.08 + (i % 5) * 0.04,
+    angleOffset: (i * 1.256) % (Math.PI * 2),
+    baseScale: 0.7 + (i % 4) * 0.15
+  });
+}
+
+const BLUE_FIRE_CONFIG = {
+  flameHeight: 1.45,
+  flameWidth: 0.75,
+  lightIntensity: 2.4,
+  lightDistance: 7.5,
+  lightDecay: 1.8,
+  lightColor: 0x00c8ff,
+  baseColor: new THREE.Color(0x011470),
+  midColor: new THREE.Color(0x00d4ff),
+  coreColor: new THREE.Color(0xf0fbff)
+};
+
+function createBlueFireEffect(targetNode) {
+  if (!targetNode) return;
+
+  blueFireGroup = new THREE.Group();
+  blueFireGroup.name = 'BlueFlameVfx';
+
+  // 1. 3D Intersecting Flame Planes (3 double-sided planes rotated at 0, 60, 120 deg)
+  const flameGeom = new THREE.PlaneGeometry(BLUE_FIRE_CONFIG.flameWidth, BLUE_FIRE_CONFIG.flameHeight, 16, 24);
+  flameGeom.translate(0, BLUE_FIRE_CONFIG.flameHeight * 0.5, 0);
+
+  const flameMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: blueFireUniforms.uTime,
+      uColorBase: { value: BLUE_FIRE_CONFIG.baseColor },
+      uColorMid: { value: BLUE_FIRE_CONFIG.midColor },
+      uColorCore: { value: BLUE_FIRE_CONFIG.coreColor },
+      uIntensity: { value: 1.8 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vWorldPos;
+      uniform float uTime;
+
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+
+        // Natural flame wind sway increasing with height
+        float h = clamp(pos.y / 1.45, 0.0, 1.0);
+        float swayX = sin(uTime * 3.8 + pos.y * 2.5) * 0.06 * h;
+        float swayZ = cos(uTime * 3.1 + pos.y * 2.1) * 0.05 * h;
+        pos.x += swayX;
+        pos.z += swayZ;
+
+        vWorldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform vec3 uColorBase;
+      uniform vec3 uColorMid;
+      uniform vec3 uColorCore;
+      uniform float uIntensity;
+
+      // 2D Simplex Noise
+      vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
+      float snoise(vec2 v) {
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+        vec2 i  = floor(v + dot(v, C.yy));
+        vec2 x0 = v - i + dot(i, C.xx);
+        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod(i, 289.0);
+        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+        vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
+        m = m * m;
+        m = m * m;
+        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+        vec3 g;
+        g.x  = a0.x * x0.x + h.x * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
+      }
+
+      void main() {
+        vec2 uv = vUv;
+
+        // Upward-ascending multi-octave flame turbulence
+        vec2 scroll1 = vec2(uv.x * 2.8, uv.y * 3.4 - uTime * 2.8);
+        vec2 scroll2 = vec2(uv.x * 5.4 + 0.5, uv.y * 6.8 - uTime * 4.4);
+        float n1 = snoise(scroll1);
+        float n2 = snoise(scroll2);
+        float flameNoise = n1 * 0.65 + n2 * 0.35;
+
+        // Organic flame teardrop silhouette
+        float taper = (1.0 - uv.y) * sqrt(clamp(uv.y * 3.8, 0.0, 1.0));
+        float dist = abs(uv.x - 0.5) * 2.0;
+
+        float shape = smoothstep(taper, taper * 0.18, dist - flameNoise * 0.38 * (1.0 - uv.y * 0.45));
+        // Soft base & tip fades
+        shape *= smoothstep(0.0, 0.12, uv.y);
+        shape *= smoothstep(1.0, 0.82, uv.y);
+
+        if (shape <= 0.001) discard;
+
+        // Color mapping: sapphire base -> cyan body -> diamond white core
+        float coreMask = pow(clamp(shape, 0.0, 1.0), 2.2);
+        vec3 col = mix(uColorBase, uColorMid, smoothstep(0.12, 0.55, shape));
+        col = mix(col, uColorCore, smoothstep(0.65, 0.95, coreMask));
+
+        float flicker = 0.88 + 0.12 * sin(uTime * 14.0 + uv.y * 4.0);
+        vec3 finalColor = col * uIntensity * flicker;
+
+        gl_FragColor = vec4(finalColor, shape * 0.92);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide
+  });
+
+  const angles = [0, Math.PI / 3, (Math.PI * 2) / 3];
+  angles.forEach((ang) => {
+    const mesh = new THREE.Mesh(flameGeom, flameMat);
+    mesh.rotation.y = ang;
+    mesh.renderOrder = 4;
+    blueFireGroup.add(mesh);
+  });
+
+  // 2. Soft Volumetric Radial Halo (Billboard)
+  const haloGeom = new THREE.PlaneGeometry(1.6, 1.6);
+  const haloMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: blueFireUniforms.uTime
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform float uTime;
+      void main() {
+        float r = length(vUv - 0.5) * 2.0;
+        float glow = exp(-3.2 * r * r);
+        vec3 haloCol = mix(vec3(0.0, 0.82, 1.0), vec3(0.02, 0.22, 0.85), r);
+        float pulse = 0.38 + 0.08 * sin(uTime * 7.5);
+        gl_FragColor = vec4(haloCol * pulse * 1.5, glow * pulse);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide
+  });
+  blueFireHaloMesh = new THREE.Mesh(haloGeom, haloMat);
+  blueFireHaloMesh.position.set(0, 0.5, 0);
+  blueFireHaloMesh.renderOrder = 4;
+  blueFireGroup.add(blueFireHaloMesh);
+
+  // 3. Physical 3D Polygonal Rising Sparks (Quads, NO gl_PointSize)
+  const sparkGeom = new THREE.PlaneGeometry(0.038, 0.038);
+  const sparkMat = new THREE.MeshBasicMaterial({
+    color: 0x88eeff,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  blueFireSparksMesh = new THREE.InstancedMesh(sparkGeom, sparkMat, SPARK_COUNT);
+  blueFireSparksMesh.renderOrder = 5;
+  blueFireGroup.add(blueFireSparksMesh);
+
+  // 4. Local Dynamic Light for Illuminating Canyon Rock Walls
+  blueFireLight = new THREE.PointLight(
+    BLUE_FIRE_CONFIG.lightColor,
+    BLUE_FIRE_CONFIG.lightIntensity,
+    BLUE_FIRE_CONFIG.lightDistance,
+    BLUE_FIRE_CONFIG.lightDecay
+  );
+  blueFireLight.position.set(0, 0.5, 0.2);
+  blueFireGroup.add(blueFireLight);
+
+  // Attach to Blender empty node
+  targetNode.add(blueFireGroup);
+  console.log(`[CinematicScene] Procedural Blue Fire attached to node "${targetNode.name}" at [${targetNode.position.x.toFixed(2)}, ${targetNode.position.y.toFixed(2)}, ${targetNode.position.z.toFixed(2)}]`);
+}
+
+function updateBlueFire(time, cam) {
+  if (!blueFireGroup) return;
+
+  blueFireUniforms.uTime.value = time;
+
+  // 1. Dynamic light flicker
+  if (blueFireLight) {
+    blueFireLight.intensity = BLUE_FIRE_CONFIG.lightIntensity * (0.85 + 0.15 * Math.sin(time * 12.0) + 0.08 * Math.sin(time * 23.5));
+  }
+
+  // 2. Halo billboard orientation towards camera
+  if (blueFireHaloMesh && cam) {
+    blueFireHaloMesh.quaternion.copy(cam.quaternion);
+  }
+
+  // 3. Update rising 3D polygonal sparks
+  if (blueFireSparksMesh && cam) {
+    for (let i = 0; i < SPARK_COUNT; i++) {
+      const data = sparkData[i];
+      const p = ((time * data.speed + data.offset) % 1.0);
+      const y = p * 1.8;
+      const angle = time * 2.2 + data.angleOffset;
+      const r = data.radius * (0.3 + p * 0.7);
+      const x = Math.sin(angle) * r;
+      const z = Math.cos(angle) * r;
+
+      sparkDummy.position.set(x, y, z);
+      sparkDummy.quaternion.copy(cam.quaternion);
+
+      // Fade/shrink near top and near bottom
+      const scaleFade = Math.sin(p * Math.PI) * data.baseScale;
+      sparkDummy.scale.setScalar(Math.max(0.001, scaleFade));
+      sparkDummy.updateMatrix();
+
+      blueFireSparksMesh.setMatrixAt(i, sparkDummy.matrix);
+    }
+    blueFireSparksMesh.instanceMatrix.needsUpdate = true;
+  }
+}
+
+/**
  * Initializes the cinematic scroll-driven sequence.
  * 
  * @param {Object} options Configuration parameters
@@ -478,6 +738,7 @@ export async function initCinematicScene({
         // --------------------------------------------------------------------
         billboardMeshes.length = 0;
         gltfLights.clear();
+        let fireTargetNode = null;
 
         root.traverse((child) => {
           // PUNCTUAL LIGHTS SCALING: detect GLTF punctual lights and scale down massive raw values
@@ -492,6 +753,11 @@ export async function initCinematicScene({
             }
             gltfLights.set(child.name, child);
             console.log(`[CinematicScene] Scaled punctual light "${child.name}" (${child.type}): raw ${rawIntensity.toFixed(1)} -> scaled ${child.intensity.toFixed(2)}`);
+          }
+
+          // Identify fire.001 empty node (do not mutate scene during traversal)
+          if (!fireTargetNode && (child.name === 'fire001' || child.name === 'fire.001' || (child.name.toLowerCase().startsWith('fire') && !child.name.includes('BlueFlame')))) {
+            fireTargetNode = child;
           }
 
           if (child.isMesh) {
@@ -603,6 +869,11 @@ export async function initCinematicScene({
             }
           }
         });
+
+        // Attach Procedural Blue Fire to fire.001 empty node once traversal is complete
+        if (fireTargetNode) {
+          createBlueFireEffect(fireTargetNode);
+        }
 
         // --------------------------------------------------------------------
         // 7. WINDOW RESIZE HANDLING (Requirement 5)
@@ -743,7 +1014,13 @@ function animate() {
     }
   }
 
-  // 4. RENDER SCENE USING GLTF CAMERA
+  // 4. Update Procedural Blue Fire Effect (Flame, sparks, halo & light flicker)
+  const elapsedFireSec = (timer && timer.getElapsed)
+    ? timer.getElapsed()
+    : performance.now() * 0.001;
+  updateBlueFire(elapsedFireSec, camera);
+
+  // 5. RENDER SCENE USING GLTF CAMERA
   if (renderer && scene && camera) {
     renderer.render(scene, camera);
   }
@@ -835,6 +1112,24 @@ export function cleanup() {
   if (renderer) {
     renderer.dispose();
     renderer = null;
+  }
+
+  // Dispose Blue Fire Effect
+  if (blueFireGroup) {
+    blueFireGroup.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
+        else obj.material.dispose();
+      }
+    });
+    if (blueFireGroup.parent) {
+      blueFireGroup.parent.remove(blueFireGroup);
+    }
+    blueFireGroup = null;
+    blueFireLight = null;
+    blueFireHaloMesh = null;
+    blueFireSparksMesh = null;
   }
 
   // 7. Reset references
