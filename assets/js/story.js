@@ -222,6 +222,119 @@ function applyInitialI18n() {
 }
 
 /**
+ * Configuration for star spatial dispersion & line de-clustering
+ */
+const STAR_DISPERSION_CONFIG = {
+  borderCullRate: 0.65,    // Dissolve 65% of stars along Blender's rigid bounding perimeter lines
+  interiorDupeRate: 0.45,  // Keep 45% of interior duplicate quads to enrich 3D volume softly
+  jitterBorder: 0.65,      // Spatial displacement for perimeter stars
+  jitterInterior: 0.32,    // Spatial displacement for interior stars
+  depthSpreadZ: 2.2,       // Volumetric 3D canyon depth spread (converts 2D sheet into 3D airspace)
+  minScale: 0.50,          // Minimum quad scale (distant pinprick)
+  maxScale: 1.35           // Maximum quad scale (radiant jewel)
+};
+
+/**
+ * Disperses and dilutes rigid linear star rows and stacked duplicate quads:
+ * 1. Clones child.geometry so each star mesh instance has independent geometry buffers.
+ * 2. Identifies and dissolves the 500 stacked duplicate quads (quads 500..999 were exact twins of 0..499).
+ * 3. Thins out the dense rectangular perimeter rows/columns from Blender (X ≈ -5.32, X ≈ 0.13, Y ≈ -3.56, Y ≈ 1.89).
+ * 4. Applies quad-preserving 3D pseudo-random spatial displacement (X, Y, and canyon depth Z).
+ * 5. Applies astronomical scale variations (delicate pinpricks to radiant jewels).
+ */
+function disperseStarGeometry(child, meshIndex = 0) {
+  if (!child.geometry || !child.geometry.attributes.position) return;
+
+  // Clone geometry so each mesh instance gets independent, unshared vertex buffers
+  child.geometry = child.geometry.clone();
+  const pos = child.geometry.attributes.position;
+  const v = pos.array;
+  const quadCount = Math.floor(pos.count / 4);
+
+  // Deterministic pseudo-random hash per quad
+  function pHash(seed) {
+    const s = Math.sin(seed * 12.9898 + (meshIndex + 1) * 78.233) * 43758.5453;
+    return s - Math.floor(s);
+  }
+
+  // Detect whether a quad center lies on the rigid rectangular perimeter from Blender
+  function isPerimeter(cx, cy) {
+    const onLeft = Math.abs(cx - (-5.317)) < 0.06;
+    const onRight = Math.abs(cx - 0.127) < 0.06;
+    const onBottom = Math.abs(cy - (-3.556)) < 0.06;
+    const onTop = Math.abs(cy - 1.889) < 0.06;
+    return onLeft || onRight || onBottom || onTop;
+  }
+
+  for (let q = 0; q < quadCount; q++) {
+    const baseVertex = q * 4;
+    // Compute quad center
+    const cx = (v[baseVertex * 3] + v[(baseVertex + 1) * 3] + v[(baseVertex + 2) * 3] + v[(baseVertex + 3) * 3]) * 0.25;
+    const cy = (v[baseVertex * 3 + 1] + v[(baseVertex + 1) * 3 + 1] + v[(baseVertex + 2) * 3 + 1] + v[(baseVertex + 3) * 3 + 1]) * 0.25;
+    const cz = (v[baseVertex * 3 + 2] + v[(baseVertex + 1) * 3 + 2] + v[(baseVertex + 2) * 3 + 2] + v[(baseVertex + 3) * 3 + 2]) * 0.25;
+
+    const isDuplicateLayer = q >= 500;
+    const onBorder = isPerimeter(cx, cy);
+
+    let scale = 1.0;
+    let shouldCull = false;
+
+    if (onBorder) {
+      // Eliminate duplicate edge quads completely
+      if (isDuplicateLayer) {
+        shouldCull = true;
+      } else {
+        // Thin out dense edge line stars so the perimeter fence completely dissolves
+        const h = pHash(q * 7.31 + 1.1);
+        if (h < STAR_DISPERSION_CONFIG.borderCullRate) {
+          shouldCull = true;
+        }
+      }
+    } else if (isDuplicateLayer) {
+      // In the interior, keep a portion of duplicate stars to enrich celestial volume without clustering
+      const h = pHash(q * 11.17 + 2.3);
+      if (h >= STAR_DISPERSION_CONFIG.interiorDupeRate) {
+        shouldCull = true;
+      }
+    }
+
+    if (shouldCull) {
+      // Collapse quad to center (0 area) - GPU automatically discards zero-area degenerate triangles
+      for (let k = 0; k < 4; k++) {
+        const vi = (baseVertex + k) * 3;
+        v[vi] = cx;
+        v[vi + 1] = cy;
+        v[vi + 2] = cz;
+      }
+      continue;
+    }
+
+    // Varied astronomical scale (magnitude): minScale to maxScale
+    scale = STAR_DISPERSION_CONFIG.minScale + pHash(q * 33.7 + 5.9) * (STAR_DISPERSION_CONFIG.maxScale - STAR_DISPERSION_CONFIG.minScale);
+
+    // Organic spatial displacement
+    // If it was on a border line, give it wider dispersal to break the line cleanly
+    const jitterMagnitude = onBorder ? STAR_DISPERSION_CONFIG.jitterBorder : STAR_DISPERSION_CONFIG.jitterInterior;
+    const jx = (pHash(q * 17.3 + 3.1) - 0.5) * 2.0 * jitterMagnitude;
+    const jy = (pHash(q * 29.7 + 7.4) - 0.5) * 2.0 * jitterMagnitude;
+    // 3D canyon depth: transforms flat 2D sheet into a volumetric celestial starfield
+    const jz = (pHash(q * 43.1 + 11.8) - 0.5) * STAR_DISPERSION_CONFIG.depthSpreadZ;
+
+    // Apply quad-preserving rigid displacement + center-relative scaling
+    for (let k = 0; k < 4; k++) {
+      const vi = (baseVertex + k) * 3;
+      v[vi]     = cx + (v[vi] - cx) * scale + jx;
+      v[vi + 1] = cy + (v[vi + 1] - cy) * scale + jy;
+      v[vi + 2] = cz + (v[vi + 2] - cz) * scale + jz;
+    }
+  }
+
+  pos.needsUpdate = true;
+  child.geometry.computeBoundingBox();
+  child.geometry.computeBoundingSphere();
+}
+
+/**
  * Injects a multi-frequency star scintillation & chromatic iridescence shader.
  * - Every star quad has an independent phase & frequency derived from its 3D coordinates.
  * - Multi-frequency waves: slow atmospheric breathing + air flutter + sharp diamond sparkles.
@@ -574,7 +687,12 @@ async function initStoryEngine() {
           // REQUIREMENT 4: Grab Stars Meshes for Twinkling & Chromatic Scintillation
           if (child.name.toLowerCase() === 'stars' || child.name.toLowerCase().includes('star')) {
             starsMesh = child;
+            const starMeshIndex = starMeshes.length;
             starMeshes.push(child);
+
+            // Disperse Blender's rigid linear grid rows & deduplicate stacked quads
+            disperseStarGeometry(child, starMeshIndex);
+
             const starMaterials = Array.isArray(child.material) ? child.material : [child.material];
             starMaterials.forEach((mat) => {
               mat.transparent = true;
@@ -617,6 +735,109 @@ async function initStoryEngine() {
           setCameraScrollProgress(progress);
         },
         getCameraPosition: () => camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null,
+        getStarDispersionStats: () => {
+          return starMeshes.map((m) => {
+            const pos = m.geometry.attributes.position;
+            const v = pos.array;
+            let activeQuads = 0;
+            let culledQuads = 0;
+            const activeCenters = [];
+
+            for (let i = 0; i < pos.count; i += 4) {
+              const p0x = v[i * 3];
+              const p1x = v[(i + 1) * 3];
+              const p0y = v[i * 3 + 1];
+              const p1y = v[(i + 1) * 3 + 1];
+              const isCulled = Math.abs(p0x - p1x) < 1e-6 && Math.abs(p0y - p1y) < 1e-6;
+              if (isCulled) {
+                culledQuads++;
+              } else {
+                activeQuads++;
+                const cx = (v[i * 3] + v[(i + 1) * 3] + v[(i + 2) * 3] + v[(i + 3) * 3]) * 0.25;
+                const cy = (v[i * 3 + 1] + v[(i + 1) * 3 + 1] + v[(i + 2) * 3 + 1] + v[(i + 3) * 3 + 1]) * 0.25;
+                const cz = (v[i * 3 + 2] + v[(i + 1) * 3 + 2] + v[(i + 2) * 3 + 2] + v[(i + 3) * 3 + 2]) * 0.25;
+                activeCenters.push([cx, cy, cz]);
+              }
+            }
+
+            const xMap = new Map();
+            const yMap = new Map();
+            activeCenters.forEach((pt) => {
+              const kx = pt[0].toFixed(2);
+              const ky = pt[1].toFixed(2);
+              xMap.set(kx, (xMap.get(kx) || 0) + 1);
+              yMap.set(ky, (yMap.get(ky) || 0) + 1);
+            });
+
+            const maxColStars = Math.max(0, ...Array.from(xMap.values()));
+            const maxRowStars = Math.max(0, ...Array.from(yMap.values()));
+            const bb = m.geometry.boundingBox;
+            const depthSpreadZ = bb ? (bb.max.z - bb.min.z) : 0;
+
+            return {
+              meshName: m.name,
+              totalQuads: Math.floor(pos.count / 4),
+              activeQuads,
+              culledQuads,
+              maxColStars,
+              maxRowStars,
+              depthSpreadZ,
+              isDispersed: maxColStars <= 6 && maxRowStars <= 6 && depthSpreadZ > 1.5
+            };
+          });
+        },
+        getStarGeometryDetails: () => {
+          return starMeshes.map((m) => {
+            if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+            const pos = m.geometry.attributes.position;
+            const idx = m.geometry.index;
+            return {
+              name: m.name,
+              vertexCount: pos.count,
+              indexCount: idx ? idx.count : 0,
+              bounds: {
+                min: [m.geometry.boundingBox.min.x, m.geometry.boundingBox.min.y, m.geometry.boundingBox.min.z],
+                max: [m.geometry.boundingBox.max.x, m.geometry.boundingBox.max.y, m.geometry.boundingBox.max.z]
+              },
+              firstVertices: [
+                [pos.getX(0), pos.getY(0), pos.getZ(0)],
+                [pos.getX(1), pos.getY(1), pos.getZ(1)],
+                [pos.getX(2), pos.getY(2), pos.getZ(2)],
+                [pos.getX(3), pos.getY(3), pos.getZ(3)],
+                [pos.getX(4), pos.getY(4), pos.getZ(4)],
+                [pos.getX(5), pos.getY(5), pos.getZ(5)],
+                [pos.getX(6), pos.getY(6), pos.getZ(6)],
+                [pos.getX(7), pos.getY(7), pos.getZ(7)]
+              ],
+              firstIndices: idx ? Array.from(idx.array.slice(0, 18)) : null
+            };
+          });
+        },
+        getStarQuadCenters: (meshIdx = 0) => {
+          const m = starMeshes[meshIdx];
+          if (!m) return [];
+          const pos = m.geometry.attributes.position;
+          const centers = [];
+          for (let i = 0; i < pos.count; i += 4) {
+            const cx = (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2) + pos.getX(i + 3)) * 0.25;
+            const cy = (pos.getY(i) + pos.getY(i + 1) + pos.getY(i + 2) + pos.getY(i + 3)) * 0.25;
+            const cz = (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2) + pos.getZ(i + 3)) * 0.25;
+            centers.push([cx, cy, cz]);
+          }
+          return centers;
+        },
+        getQuadVertices: (meshIdx = 0, quadIdx = 0) => {
+          const m = starMeshes[meshIdx];
+          if (!m) return [];
+          const pos = m.geometry.attributes.position;
+          const start = quadIdx * 4;
+          return [
+            [pos.getX(start), pos.getY(start), pos.getZ(start)],
+            [pos.getX(start + 1), pos.getY(start + 1), pos.getZ(start + 1)],
+            [pos.getX(start + 2), pos.getY(start + 2), pos.getZ(start + 2)],
+            [pos.getX(start + 3), pos.getY(start + 3), pos.getZ(start + 3)]
+          ];
+        },
         getAllObjects: (filter) => {
           const res = [];
           scene?.traverse((c) => {
@@ -971,6 +1192,7 @@ export function cleanup() {
   camera = null;
   clock = null;
   starsMesh = null;
+  starMeshes.length = 0;
   billboardMeshes.length = 0;
   cameraDuration = 0;
 }

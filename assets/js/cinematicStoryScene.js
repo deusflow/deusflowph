@@ -84,6 +84,119 @@ let scrollTriggerInstance = null;
 let resizeHandler = null;
 
 /**
+ * Configuration for star spatial dispersion & line de-clustering
+ */
+const STAR_DISPERSION_CONFIG = {
+  borderCullRate: 0.65,    // Dissolve 65% of stars along Blender's rigid bounding perimeter lines
+  interiorDupeRate: 0.45,  // Keep 45% of interior duplicate quads to enrich 3D volume softly
+  jitterBorder: 0.65,      // Spatial displacement for perimeter stars
+  jitterInterior: 0.32,    // Spatial displacement for interior stars
+  depthSpreadZ: 2.2,       // Volumetric 3D canyon depth spread (converts 2D sheet into 3D airspace)
+  minScale: 0.50,          // Minimum quad scale (distant pinprick)
+  maxScale: 1.35           // Maximum quad scale (radiant jewel)
+};
+
+/**
+ * Disperses and dilutes rigid linear star rows and stacked duplicate quads:
+ * 1. Clones child.geometry so each star mesh instance has independent geometry buffers.
+ * 2. Identifies and dissolves the 500 stacked duplicate quads (quads 500..999 were exact twins of 0..499).
+ * 3. Thins out the dense rectangular perimeter rows/columns from Blender (X ≈ -5.32, X ≈ 0.13, Y ≈ -3.56, Y ≈ 1.89).
+ * 4. Applies quad-preserving 3D pseudo-random spatial displacement (X, Y, and canyon depth Z).
+ * 5. Applies astronomical scale variations (delicate pinpricks to radiant jewels).
+ */
+function disperseStarGeometry(child, meshIndex = 0) {
+  if (!child.geometry || !child.geometry.attributes.position) return;
+
+  // Clone geometry so each mesh instance gets independent, unshared vertex buffers
+  child.geometry = child.geometry.clone();
+  const pos = child.geometry.attributes.position;
+  const v = pos.array;
+  const quadCount = Math.floor(pos.count / 4);
+
+  // Deterministic pseudo-random hash per quad
+  function pHash(seed) {
+    const s = Math.sin(seed * 12.9898 + (meshIndex + 1) * 78.233) * 43758.5453;
+    return s - Math.floor(s);
+  }
+
+  // Detect whether a quad center lies on the rigid rectangular perimeter from Blender
+  function isPerimeter(cx, cy) {
+    const onLeft = Math.abs(cx - (-5.317)) < 0.06;
+    const onRight = Math.abs(cx - 0.127) < 0.06;
+    const onBottom = Math.abs(cy - (-3.556)) < 0.06;
+    const onTop = Math.abs(cy - 1.889) < 0.06;
+    return onLeft || onRight || onBottom || onTop;
+  }
+
+  for (let q = 0; q < quadCount; q++) {
+    const baseVertex = q * 4;
+    // Compute quad center
+    const cx = (v[baseVertex * 3] + v[(baseVertex + 1) * 3] + v[(baseVertex + 2) * 3] + v[(baseVertex + 3) * 3]) * 0.25;
+    const cy = (v[baseVertex * 3 + 1] + v[(baseVertex + 1) * 3 + 1] + v[(baseVertex + 2) * 3 + 1] + v[(baseVertex + 3) * 3 + 1]) * 0.25;
+    const cz = (v[baseVertex * 3 + 2] + v[(baseVertex + 1) * 3 + 2] + v[(baseVertex + 2) * 3 + 2] + v[(baseVertex + 3) * 3 + 2]) * 0.25;
+
+    const isDuplicateLayer = q >= 500;
+    const onBorder = isPerimeter(cx, cy);
+
+    let scale = 1.0;
+    let shouldCull = false;
+
+    if (onBorder) {
+      // Eliminate duplicate edge quads completely
+      if (isDuplicateLayer) {
+        shouldCull = true;
+      } else {
+        // Thin out dense edge line stars so the perimeter fence completely dissolves
+        const h = pHash(q * 7.31 + 1.1);
+        if (h < STAR_DISPERSION_CONFIG.borderCullRate) {
+          shouldCull = true;
+        }
+      }
+    } else if (isDuplicateLayer) {
+      // In the interior, keep a portion of duplicate stars to enrich celestial volume without clustering
+      const h = pHash(q * 11.17 + 2.3);
+      if (h >= STAR_DISPERSION_CONFIG.interiorDupeRate) {
+        shouldCull = true;
+      }
+    }
+
+    if (shouldCull) {
+      // Collapse quad to center (0 area) - GPU automatically discards zero-area degenerate triangles
+      for (let k = 0; k < 4; k++) {
+        const vi = (baseVertex + k) * 3;
+        v[vi] = cx;
+        v[vi + 1] = cy;
+        v[vi + 2] = cz;
+      }
+      continue;
+    }
+
+    // Varied astronomical scale (magnitude): minScale to maxScale
+    scale = STAR_DISPERSION_CONFIG.minScale + pHash(q * 33.7 + 5.9) * (STAR_DISPERSION_CONFIG.maxScale - STAR_DISPERSION_CONFIG.minScale);
+
+    // Organic spatial displacement
+    // If it was on a border line, give it wider dispersal to break the line cleanly
+    const jitterMagnitude = onBorder ? STAR_DISPERSION_CONFIG.jitterBorder : STAR_DISPERSION_CONFIG.jitterInterior;
+    const jx = (pHash(q * 17.3 + 3.1) - 0.5) * 2.0 * jitterMagnitude;
+    const jy = (pHash(q * 29.7 + 7.4) - 0.5) * 2.0 * jitterMagnitude;
+    // 3D canyon depth: transforms flat 2D sheet into a volumetric celestial starfield
+    const jz = (pHash(q * 43.1 + 11.8) - 0.5) * STAR_DISPERSION_CONFIG.depthSpreadZ;
+
+    // Apply quad-preserving rigid displacement + center-relative scaling
+    for (let k = 0; k < 4; k++) {
+      const vi = (baseVertex + k) * 3;
+      v[vi]     = cx + (v[vi] - cx) * scale + jx;
+      v[vi + 1] = cy + (v[vi + 1] - cy) * scale + jy;
+      v[vi + 2] = cz + (v[vi + 2] - cz) * scale + jz;
+    }
+  }
+
+  pos.needsUpdate = true;
+  child.geometry.computeBoundingBox();
+  child.geometry.computeBoundingSphere();
+}
+
+/**
  * Injects a multi-frequency star scintillation & chromatic iridescence shader.
  * - Every star quad has an independent phase & frequency derived from its 3D coordinates.
  * - Multi-frequency waves: slow atmospheric breathing + air flutter + sharp diamond sparkles.
@@ -468,7 +581,12 @@ export async function initCinematicScene({
             // ----------------------------------------------------------------
             if (child.name.toLowerCase() === 'stars' || child.name.toLowerCase().includes('star')) {
               starsMesh = child;
+              const starMeshIndex = starMeshes.length;
               starMeshes.push(child);
+
+              // Disperse Blender's rigid linear grid rows & deduplicate stacked quads
+              disperseStarGeometry(child, starMeshIndex);
+
               const starMaterials = Array.isArray(child.material) ? child.material : [child.material];
               starMaterials.forEach((mat) => {
                 mat.transparent = true;
@@ -723,6 +841,7 @@ export function cleanup() {
   camera = null;
   clock = null;
   starsMesh = null;
+  starMeshes.length = 0;
   billboardMeshes.length = 0;
   cameraDuration = 0;
 }

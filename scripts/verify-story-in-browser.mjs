@@ -271,6 +271,23 @@ async function runBrowserVerification() {
     console.log('- Punctual Lights Status: PASSED (No KHR_lights_punctual present in active GLB export; STORY_LIGHT_CONFIG ready)');
   }
 
+  // 3d. Star Geometry Dispersion & De-Gridding Verification
+  const starStatsRes = await sendCmd('Runtime.evaluate', {
+    expression: 'window.__STORY_STATE__.getStarDispersionStats ? window.__STORY_STATE__.getStarDispersionStats() : []',
+    returnByValue: true
+  });
+  const starStats = starStatsRes.result.value || [];
+  console.log('\n=== 3d. STAR GEOMETRY DISPERSION & DE-GRIDDING VERIFICATION ===');
+  console.log(`- Star Meshes evaluated: ${starStats.length}`);
+  let allStarsDispersed = starStats.length > 0;
+  starStats.forEach((s) => {
+    console.log(`  * Mesh "${s.meshName}": Active Quads = ${s.activeQuads} (Culled dense duplicates/fences = ${s.culledQuads})`);
+    console.log(`    Max stars in single row/column: ${Math.max(s.maxColStars, s.maxRowStars)} (Down from 91/84 linear rows)`);
+    console.log(`    Volumetric 3D depth spread (Z): ${s.depthSpreadZ.toFixed(3)} units (Transformed from flat 2D sheet)`);
+    if (!s.isDispersed) allStarsDispersed = false;
+  });
+  console.log(`- Star Dispersion Status: ${allStarsDispersed ? 'PASSED: Rigid linear rows cleanly dissolved into organic 3D starfield' : 'FAILED'}`);
+
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');
   const scrollMilestones = [0.0, 0.25, 0.5, 0.75, 1.0];
