@@ -298,6 +298,7 @@ let blueFireLight = null;
 let blueFireHaloMesh = null;
 let blueFireSparksMesh = null;
 let blueFireMaterial = null;
+let flameMeshes = [];
 const blueFireUniforms = {
   uTime: { value: 0 }
 };
@@ -314,32 +315,67 @@ for (let i = 0; i < SPARK_COUNT; i++) {
   });
 }
 
+/* ====================================================================
+ * НАСТРОЙКИ СИНЕГО ПЛАМЕНИ (FOG2) / BLUE FIRE CONFIGURATION
+ * Изменяйте значения прямо в этом объекте (в коде) для сохранения,
+ * либо в консоли браузера в реальном времени: BLUE_FIRE_CONFIG.<параметр> = ...
+ * ==================================================================== */
 const rawBlueFireConfig = {
-  flameHeight: 1.45,
-  flameWidth: 0.75,
-  flameIntensity: 1.8,
-  lightIntensity: 2.4,
-  lightDistance: 7.5,
-  lightDecay: 1.8,
-  lightColor: 0x00c8ff,
-  baseColor: new THREE.Color(0x011470),
-  midColor: new THREE.Color(0x00d4ff),
-  coreColor: new THREE.Color(0xf0fbff),
-  scale: [1, 1, 1],
-  offset: [0, 0, 0]
+  // 1. Высота и мощность пламени:
+  flameHeight: 0.65,     // Физическая высота языков пламени (было 1.45 — уменьшено, чтобы не било высоко)
+  flameWidth: 0.42,      // Ширина пламени у основания
+  flamePower: 0.75,      // Мощность / сила вертикальной тяги и длина выброса (0.2 - тихий огонёк, 1.5 - мощный столб)
+  flameIntensity: 1.8,   // Накал и свечение шейдера самого огня
+
+  // 2. Общий масштаб и позиционирование:
+  scale: [1.0, 1.0, 1.0], // Общий масштаб эффекта [X, Y, Z] или число (масштабирует пламя, искры, ореол и свет!)
+  offset: [0, 0, 0],      // Смещение относительно пустышки fog2 [X, Y, Z]
+
+  // 3. Динамический источник света на скалах каньона (PointLight):
+  lightIntensity: 2.4,   // Яркость мерцающего света на стенах каньона
+  lightDistance: 7.5,    // Радиус освещения стен каньона
+  lightDecay: 1.8,       // Скорость затухания света
+  lightColor: 0x00c8ff,  // Бирюзово-голубой цвет света
+
+  // 4. Цвета пламени:
+  baseColor: new THREE.Color(0x011470), // Глубокий сапфировый низ
+  midColor: new THREE.Color(0x00d4ff),  // Бирюзовое тело
+  coreColor: new THREE.Color(0xf0fbff)  // Белое ядро накала
 };
 
 function applyBlueFireConfig(prop, val) {
   if (prop === 'lightColor' && blueFireLight) {
     blueFireLight.color.set(val);
   } else if (prop === 'lightDistance' && blueFireLight) {
-    blueFireLight.distance = Number(val);
+    rawBlueFireConfig.lightDistance = Number(val);
+    const avgScale = blueFireGroup ? (blueFireGroup.scale.x + blueFireGroup.scale.y + blueFireGroup.scale.z) / 3 : 1;
+    blueFireLight.distance = Number(val) * Math.max(0.001, avgScale);
   } else if (prop === 'lightDecay' && blueFireLight) {
     blueFireLight.decay = Number(val);
   } else if (prop === 'lightIntensity' && blueFireLight) {
     rawBlueFireConfig.lightIntensity = Number(val);
   } else if (prop === 'flameIntensity' && blueFireMaterial && blueFireMaterial.uniforms.uIntensity) {
     blueFireMaterial.uniforms.uIntensity.value = Number(val);
+  } else if (prop === 'flamePower' && blueFireMaterial && blueFireMaterial.uniforms.uFlamePower) {
+    blueFireMaterial.uniforms.uFlamePower.value = Number(val);
+  } else if (prop === 'flameHeight') {
+    const h = Number(val);
+    rawBlueFireConfig.flameHeight = h;
+    flameMeshes.forEach((m) => { m.scale.y = h; });
+    if (blueFireHaloMesh) {
+      blueFireHaloMesh.scale.y = h * 1.3;
+      blueFireHaloMesh.position.y = h * 0.45;
+    }
+    if (blueFireLight) {
+      blueFireLight.position.y = h * 0.4;
+    }
+  } else if (prop === 'flameWidth') {
+    const w = Number(val);
+    rawBlueFireConfig.flameWidth = w;
+    flameMeshes.forEach((m) => { m.scale.x = w; m.scale.z = w; });
+    if (blueFireHaloMesh) {
+      blueFireHaloMesh.scale.x = w * 2.2;
+    }
   } else if (prop === 'baseColor' && blueFireMaterial && blueFireMaterial.uniforms.uColorBase) {
     if (val instanceof THREE.Color) blueFireMaterial.uniforms.uColorBase.value.copy(val);
     else blueFireMaterial.uniforms.uColorBase.value.set(val);
@@ -350,10 +386,22 @@ function applyBlueFireConfig(prop, val) {
     if (val instanceof THREE.Color) blueFireMaterial.uniforms.uColorCore.value.copy(val);
     else blueFireMaterial.uniforms.uColorCore.value.set(val);
   } else if (prop === 'scale' && blueFireGroup) {
-    if (Array.isArray(val)) blueFireGroup.scale.set(val[0], val[1], val[2]);
-    else blueFireGroup.scale.setScalar(Number(val));
+    let sx = 1, sy = 1, sz = 1;
+    if (Array.isArray(val)) {
+      sx = Number(val[0]) || 1;
+      sy = Number(val[1]) || 1;
+      sz = Number(val[2]) || 1;
+    } else {
+      sx = sy = sz = Number(val) || 1;
+    }
+    blueFireGroup.scale.set(sx, sy, sz);
+    // Scale point light distance proportionally so shrinking to 0.001 visibly scales the light glow too
+    if (blueFireLight) {
+      const avg = (sx + sy + sz) / 3;
+      blueFireLight.distance = (Number(rawBlueFireConfig.lightDistance) || 7.5) * Math.max(0.001, avg);
+    }
   } else if (prop === 'offset' && blueFireGroup && Array.isArray(val)) {
-    blueFireGroup.position.set(val[0], val[1], val[2]);
+    blueFireGroup.position.set(Number(val[0]) || 0, Number(val[1]) || 0, Number(val[2]) || 0);
   }
 }
 
@@ -386,18 +434,28 @@ function createBlueFireEffect(targetNode) {
   blueFireGroup.name = 'BlueFlameVfx';
 
   // Apply configurable initial scale and offset
+  let sx = 1, sy = 1, sz = 1;
   if (Array.isArray(BLUE_FIRE_CONFIG.scale)) {
-    blueFireGroup.scale.set(BLUE_FIRE_CONFIG.scale[0], BLUE_FIRE_CONFIG.scale[1], BLUE_FIRE_CONFIG.scale[2]);
+    sx = Number(BLUE_FIRE_CONFIG.scale[0]) || 1;
+    sy = Number(BLUE_FIRE_CONFIG.scale[1]) || 1;
+    sz = Number(BLUE_FIRE_CONFIG.scale[2]) || 1;
   } else if (typeof BLUE_FIRE_CONFIG.scale === 'number') {
-    blueFireGroup.scale.setScalar(BLUE_FIRE_CONFIG.scale);
+    sx = sy = sz = Number(BLUE_FIRE_CONFIG.scale) || 1;
   }
+  blueFireGroup.scale.set(sx, sy, sz);
+
   if (Array.isArray(BLUE_FIRE_CONFIG.offset)) {
-    blueFireGroup.position.set(BLUE_FIRE_CONFIG.offset[0], BLUE_FIRE_CONFIG.offset[1], BLUE_FIRE_CONFIG.offset[2]);
+    blueFireGroup.position.set(
+      Number(BLUE_FIRE_CONFIG.offset[0]) || 0,
+      Number(BLUE_FIRE_CONFIG.offset[1]) || 0,
+      Number(BLUE_FIRE_CONFIG.offset[2]) || 0
+    );
   }
 
   // 1. 3D Intersecting Flame Planes (3 double-sided planes rotated at 0, 60, 120 deg)
-  const flameGeom = new THREE.PlaneGeometry(BLUE_FIRE_CONFIG.flameWidth, BLUE_FIRE_CONFIG.flameHeight, 16, 24);
-  flameGeom.translate(0, BLUE_FIRE_CONFIG.flameHeight * 0.5, 0);
+  // Base unit geometry (1.0 x 1.0) anchored at bottom center
+  const flameGeom = new THREE.PlaneGeometry(1.0, 1.0, 16, 24);
+  flameGeom.translate(0, 0.5, 0);
 
   const flameMat = new THREE.ShaderMaterial({
     uniforms: {
@@ -405,21 +463,23 @@ function createBlueFireEffect(targetNode) {
       uColorBase: { value: BLUE_FIRE_CONFIG.baseColor },
       uColorMid: { value: BLUE_FIRE_CONFIG.midColor },
       uColorCore: { value: BLUE_FIRE_CONFIG.coreColor },
-      uIntensity: { value: BLUE_FIRE_CONFIG.flameIntensity }
+      uIntensity: { value: BLUE_FIRE_CONFIG.flameIntensity },
+      uFlamePower: { value: BLUE_FIRE_CONFIG.flamePower }
     },
     vertexShader: `
       varying vec2 vUv;
       varying vec3 vWorldPos;
       uniform float uTime;
+      uniform float uFlamePower;
 
       void main() {
         vUv = uv;
         vec3 pos = position;
 
-        // Natural flame wind sway increasing with height
-        float h = clamp(pos.y / 1.45, 0.0, 1.0);
-        float swayX = sin(uTime * 3.8 + pos.y * 2.5) * 0.06 * h;
-        float swayZ = cos(uTime * 3.1 + pos.y * 2.1) * 0.05 * h;
+        // Natural flame wind sway increasing with height (scaled by flamePower)
+        float h = clamp(pos.y, 0.0, 1.0);
+        float swayX = sin(uTime * 3.8 + pos.y * 2.5) * (0.05 * uFlamePower) * h;
+        float swayZ = cos(uTime * 3.1 + pos.y * 2.1) * (0.04 * uFlamePower) * h;
         pos.x += swayX;
         pos.z += swayZ;
 
@@ -434,6 +494,7 @@ function createBlueFireEffect(targetNode) {
       uniform vec3 uColorMid;
       uniform vec3 uColorCore;
       uniform float uIntensity;
+      uniform float uFlamePower;
 
       // 2D Simplex Noise
       vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
@@ -463,9 +524,10 @@ function createBlueFireEffect(targetNode) {
       void main() {
         vec2 uv = vUv;
 
-        // Upward-ascending multi-octave flame turbulence
-        vec2 scroll1 = vec2(uv.x * 2.8, uv.y * 3.4 - uTime * 2.8);
-        vec2 scroll2 = vec2(uv.x * 5.4 + 0.5, uv.y * 6.8 - uTime * 4.4);
+        // Upward-ascending multi-octave flame turbulence (speed tied to flamePower)
+        float speed = max(0.25, uFlamePower);
+        vec2 scroll1 = vec2(uv.x * 2.8, uv.y * 3.4 - uTime * (2.8 * speed));
+        vec2 scroll2 = vec2(uv.x * 5.4 + 0.5, uv.y * 6.8 - uTime * (4.4 * speed));
         float n1 = snoise(scroll1);
         float n2 = snoise(scroll2);
         float flameNoise = n1 * 0.65 + n2 * 0.35;
@@ -475,9 +537,11 @@ function createBlueFireEffect(targetNode) {
         float dist = abs(uv.x - 0.5) * 2.0;
 
         float shape = smoothstep(taper, taper * 0.18, dist - flameNoise * 0.38 * (1.0 - uv.y * 0.45));
-        // Soft base & tip fades
+        // Soft base fade
         shape *= smoothstep(0.0, 0.12, uv.y);
-        shape *= smoothstep(1.0, 0.82, uv.y);
+        // Vertical reach / flame stream power cutoff:
+        float tipReach = clamp(0.40 + 0.45 * uFlamePower, 0.25, 0.98);
+        shape *= smoothstep(tipReach, tipReach - 0.22, uv.y);
 
         if (shape <= 0.001) discard;
 
@@ -499,17 +563,20 @@ function createBlueFireEffect(targetNode) {
   });
 
   blueFireMaterial = flameMat;
+  flameMeshes = [];
 
   const angles = [0, Math.PI / 3, (Math.PI * 2) / 3];
   angles.forEach((ang) => {
     const mesh = new THREE.Mesh(flameGeom, flameMat);
     mesh.rotation.y = ang;
+    mesh.scale.set(BLUE_FIRE_CONFIG.flameWidth, BLUE_FIRE_CONFIG.flameHeight, BLUE_FIRE_CONFIG.flameWidth);
     mesh.renderOrder = 4;
     blueFireGroup.add(mesh);
+    flameMeshes.push(mesh);
   });
 
   // 2. Soft Volumetric Radial Halo (Billboard)
-  const haloGeom = new THREE.PlaneGeometry(1.6, 1.6);
+  const haloGeom = new THREE.PlaneGeometry(1.0, 1.0);
   const haloMat = new THREE.ShaderMaterial({
     uniforms: {
       uTime: blueFireUniforms.uTime
@@ -538,7 +605,8 @@ function createBlueFireEffect(targetNode) {
     side: THREE.DoubleSide
   });
   blueFireHaloMesh = new THREE.Mesh(haloGeom, haloMat);
-  blueFireHaloMesh.position.set(0, 0.5, 0);
+  blueFireHaloMesh.scale.set(BLUE_FIRE_CONFIG.flameWidth * 2.2, BLUE_FIRE_CONFIG.flameHeight * 1.3, 1.0);
+  blueFireHaloMesh.position.set(0, BLUE_FIRE_CONFIG.flameHeight * 0.45, 0);
   blueFireHaloMesh.renderOrder = 4;
   blueFireGroup.add(blueFireHaloMesh);
 
@@ -556,13 +624,14 @@ function createBlueFireEffect(targetNode) {
   blueFireGroup.add(blueFireSparksMesh);
 
   // 4. Local Dynamic Light for Illuminating Canyon Rock Walls
+  const initAvgScale = (blueFireGroup.scale.x + blueFireGroup.scale.y + blueFireGroup.scale.z) / 3;
   blueFireLight = new THREE.PointLight(
     BLUE_FIRE_CONFIG.lightColor,
     BLUE_FIRE_CONFIG.lightIntensity,
-    BLUE_FIRE_CONFIG.lightDistance,
+    BLUE_FIRE_CONFIG.lightDistance * Math.max(0.001, initAvgScale),
     BLUE_FIRE_CONFIG.lightDecay
   );
-  blueFireLight.position.set(0, 0.5, 0.2);
+  blueFireLight.position.set(0, BLUE_FIRE_CONFIG.flameHeight * 0.4, 0.1);
   blueFireGroup.add(blueFireLight);
 
   // Attach to Blender empty node
@@ -577,8 +646,9 @@ function updateBlueFire(time, cam) {
 
   // 1. Dynamic light flicker & live config sync
   if (blueFireLight) {
+    const avgScale = (blueFireGroup.scale.x + blueFireGroup.scale.y + blueFireGroup.scale.z) / 3;
     blueFireLight.color.set(BLUE_FIRE_CONFIG.lightColor);
-    blueFireLight.distance = BLUE_FIRE_CONFIG.lightDistance;
+    blueFireLight.distance = (Number(rawBlueFireConfig.lightDistance) || 7.5) * Math.max(0.001, avgScale);
     blueFireLight.decay = BLUE_FIRE_CONFIG.lightDecay;
     blueFireLight.intensity = BLUE_FIRE_CONFIG.lightIntensity * (0.85 + 0.15 * Math.sin(time * 12.0) + 0.08 * Math.sin(time * 23.5));
   }
@@ -588,12 +658,13 @@ function updateBlueFire(time, cam) {
     blueFireHaloMesh.quaternion.copy(cam.quaternion);
   }
 
-  // 3. Update rising 3D polygonal sparks
+  // 3. Update rising 3D polygonal sparks (height tied to flameHeight and flamePower)
   if (blueFireSparksMesh && cam) {
+    const currentH = (Number(rawBlueFireConfig.flameHeight) || 0.65) * (Number(rawBlueFireConfig.flamePower) || 0.75);
     for (let i = 0; i < SPARK_COUNT; i++) {
       const data = sparkData[i];
       const p = ((time * data.speed + data.offset) % 1.0);
-      const y = p * 1.8;
+      const y = p * currentH * 1.35;
       const angle = time * 2.2 + data.angleOffset;
       const r = data.radius * (0.3 + p * 0.7);
       const x = Math.sin(angle) * r;

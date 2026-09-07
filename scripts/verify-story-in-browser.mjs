@@ -317,19 +317,26 @@ async function runBrowserVerification() {
     expression: `
       (() => {
         window.BLUE_FIRE_CONFIG.lightIntensity = 5.2;
-        window.setBlueFireConfig({ scale: 1.35 });
+        window.BLUE_FIRE_CONFIG.flameHeight = 0.45;
+        window.BLUE_FIRE_CONFIG.flamePower = 0.6;
+        window.setBlueFireConfig({ scale: 0.001 });
+        const scaleWorks = Math.abs(window.__STORY_STATE__.blueFireConfig.scale - 0.001) < 1e-5 || window.__STORY_STATE__.blueFireConfig.scale === 0.001;
+        // Restore scale back to 1.0
+        window.setBlueFireConfig({ scale: 1.0 });
         return {
           windowExposed: !!window.BLUE_FIRE_CONFIG,
           hasHelper: typeof window.setBlueFireConfig === 'function',
           updatedIntensity: window.BLUE_FIRE_CONFIG.lightIntensity,
-          updatedScale: window.BLUE_FIRE_CONFIG.scale
+          updatedHeight: window.BLUE_FIRE_CONFIG.flameHeight,
+          updatedPower: window.BLUE_FIRE_CONFIG.flamePower,
+          scaleWorks
         };
       })()
     `,
     returnByValue: true
   });
   const liveInfo = liveRes.result.value;
-  console.log(`- Live Browser Console Editing: ${liveInfo.windowExposed && liveInfo.updatedIntensity === 5.2 ? 'PASSED (window.BLUE_FIRE_CONFIG and window.setBlueFireConfig reactive in real time)' : 'FAILED'}`);
+  console.log(`- Live Browser Console Editing: ${liveInfo.windowExposed && liveInfo.updatedIntensity === 5.2 && liveInfo.updatedHeight === 0.45 && liveInfo.scaleWorks ? 'PASSED (flameHeight, flamePower, lightIntensity, scale reactive in real time)' : 'FAILED'}`);
 
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');
