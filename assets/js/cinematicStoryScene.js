@@ -297,6 +297,7 @@ let blueFireGroup = null;
 let blueFireLight = null;
 let blueFireHaloMesh = null;
 let blueFireSparksMesh = null;
+let blueFireMaterial = null;
 const blueFireUniforms = {
   uTime: { value: 0 }
 };
@@ -313,23 +314,86 @@ for (let i = 0; i < SPARK_COUNT; i++) {
   });
 }
 
-const BLUE_FIRE_CONFIG = {
+const rawBlueFireConfig = {
   flameHeight: 1.45,
   flameWidth: 0.75,
+  flameIntensity: 1.8,
   lightIntensity: 2.4,
   lightDistance: 7.5,
   lightDecay: 1.8,
   lightColor: 0x00c8ff,
   baseColor: new THREE.Color(0x011470),
   midColor: new THREE.Color(0x00d4ff),
-  coreColor: new THREE.Color(0xf0fbff)
+  coreColor: new THREE.Color(0xf0fbff),
+  scale: [1, 1, 1],
+  offset: [0, 0, 0]
 };
+
+function applyBlueFireConfig(prop, val) {
+  if (prop === 'lightColor' && blueFireLight) {
+    blueFireLight.color.set(val);
+  } else if (prop === 'lightDistance' && blueFireLight) {
+    blueFireLight.distance = Number(val);
+  } else if (prop === 'lightDecay' && blueFireLight) {
+    blueFireLight.decay = Number(val);
+  } else if (prop === 'lightIntensity' && blueFireLight) {
+    rawBlueFireConfig.lightIntensity = Number(val);
+  } else if (prop === 'flameIntensity' && blueFireMaterial && blueFireMaterial.uniforms.uIntensity) {
+    blueFireMaterial.uniforms.uIntensity.value = Number(val);
+  } else if (prop === 'baseColor' && blueFireMaterial && blueFireMaterial.uniforms.uColorBase) {
+    if (val instanceof THREE.Color) blueFireMaterial.uniforms.uColorBase.value.copy(val);
+    else blueFireMaterial.uniforms.uColorBase.value.set(val);
+  } else if (prop === 'midColor' && blueFireMaterial && blueFireMaterial.uniforms.uColorMid) {
+    if (val instanceof THREE.Color) blueFireMaterial.uniforms.uColorMid.value.copy(val);
+    else blueFireMaterial.uniforms.uColorMid.value.set(val);
+  } else if (prop === 'coreColor' && blueFireMaterial && blueFireMaterial.uniforms.uColorCore) {
+    if (val instanceof THREE.Color) blueFireMaterial.uniforms.uColorCore.value.copy(val);
+    else blueFireMaterial.uniforms.uColorCore.value.set(val);
+  } else if (prop === 'scale' && blueFireGroup) {
+    if (Array.isArray(val)) blueFireGroup.scale.set(val[0], val[1], val[2]);
+    else blueFireGroup.scale.setScalar(Number(val));
+  } else if (prop === 'offset' && blueFireGroup && Array.isArray(val)) {
+    blueFireGroup.position.set(val[0], val[1], val[2]);
+  }
+}
+
+const BLUE_FIRE_CONFIG = new Proxy(rawBlueFireConfig, {
+  set(target, prop, val) {
+    target[prop] = val;
+    applyBlueFireConfig(prop, val);
+    return true;
+  }
+});
+
+function setBlueFireConfig(newConfig = {}) {
+  if (!newConfig || typeof newConfig !== 'object') return BLUE_FIRE_CONFIG;
+  for (const [key, val] of Object.entries(newConfig)) {
+    BLUE_FIRE_CONFIG[key] = val;
+  }
+  console.log('[CinematicScene] BLUE_FIRE_CONFIG updated live:', BLUE_FIRE_CONFIG);
+  return BLUE_FIRE_CONFIG;
+}
+
+if (typeof window !== 'undefined' && !window.BLUE_FIRE_CONFIG) {
+  window.BLUE_FIRE_CONFIG = BLUE_FIRE_CONFIG;
+  window.setBlueFireConfig = setBlueFireConfig;
+}
 
 function createBlueFireEffect(targetNode) {
   if (!targetNode) return;
 
   blueFireGroup = new THREE.Group();
   blueFireGroup.name = 'BlueFlameVfx';
+
+  // Apply configurable initial scale and offset
+  if (Array.isArray(BLUE_FIRE_CONFIG.scale)) {
+    blueFireGroup.scale.set(BLUE_FIRE_CONFIG.scale[0], BLUE_FIRE_CONFIG.scale[1], BLUE_FIRE_CONFIG.scale[2]);
+  } else if (typeof BLUE_FIRE_CONFIG.scale === 'number') {
+    blueFireGroup.scale.setScalar(BLUE_FIRE_CONFIG.scale);
+  }
+  if (Array.isArray(BLUE_FIRE_CONFIG.offset)) {
+    blueFireGroup.position.set(BLUE_FIRE_CONFIG.offset[0], BLUE_FIRE_CONFIG.offset[1], BLUE_FIRE_CONFIG.offset[2]);
+  }
 
   // 1. 3D Intersecting Flame Planes (3 double-sided planes rotated at 0, 60, 120 deg)
   const flameGeom = new THREE.PlaneGeometry(BLUE_FIRE_CONFIG.flameWidth, BLUE_FIRE_CONFIG.flameHeight, 16, 24);
@@ -341,7 +405,7 @@ function createBlueFireEffect(targetNode) {
       uColorBase: { value: BLUE_FIRE_CONFIG.baseColor },
       uColorMid: { value: BLUE_FIRE_CONFIG.midColor },
       uColorCore: { value: BLUE_FIRE_CONFIG.coreColor },
-      uIntensity: { value: 1.8 }
+      uIntensity: { value: BLUE_FIRE_CONFIG.flameIntensity }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -434,6 +498,8 @@ function createBlueFireEffect(targetNode) {
     side: THREE.DoubleSide
   });
 
+  blueFireMaterial = flameMat;
+
   const angles = [0, Math.PI / 3, (Math.PI * 2) / 3];
   angles.forEach((ang) => {
     const mesh = new THREE.Mesh(flameGeom, flameMat);
@@ -509,8 +575,11 @@ function updateBlueFire(time, cam) {
 
   blueFireUniforms.uTime.value = time;
 
-  // 1. Dynamic light flicker
+  // 1. Dynamic light flicker & live config sync
   if (blueFireLight) {
+    blueFireLight.color.set(BLUE_FIRE_CONFIG.lightColor);
+    blueFireLight.distance = BLUE_FIRE_CONFIG.lightDistance;
+    blueFireLight.decay = BLUE_FIRE_CONFIG.lightDecay;
     blueFireLight.intensity = BLUE_FIRE_CONFIG.lightIntensity * (0.85 + 0.15 * Math.sin(time * 12.0) + 0.08 * Math.sin(time * 23.5));
   }
 

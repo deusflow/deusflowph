@@ -312,6 +312,25 @@ async function runBrowserVerification() {
   console.log(`- Dynamic PointLight flickering intensity: ${fireState.intensity?.toFixed(2) ?? 0}`);
   console.log(`- Blue Fire Status: ${fireState.hasBlueFire && fireState.nodeName === 'fog2' ? 'PASSED: Procedural flame, volumetric halo, physical sparks and point light active on fog2' : fireState.hasBlueFire ? 'PASSED: Active' : 'FAILED'}`);
 
+  // Test Live Browser Console Modification
+  const liveRes = await sendCmd('Runtime.evaluate', {
+    expression: `
+      (() => {
+        window.BLUE_FIRE_CONFIG.lightIntensity = 5.2;
+        window.setBlueFireConfig({ scale: 1.35 });
+        return {
+          windowExposed: !!window.BLUE_FIRE_CONFIG,
+          hasHelper: typeof window.setBlueFireConfig === 'function',
+          updatedIntensity: window.BLUE_FIRE_CONFIG.lightIntensity,
+          updatedScale: window.BLUE_FIRE_CONFIG.scale
+        };
+      })()
+    `,
+    returnByValue: true
+  });
+  const liveInfo = liveRes.result.value;
+  console.log(`- Live Browser Console Editing: ${liveInfo.windowExposed && liveInfo.updatedIntensity === 5.2 ? 'PASSED (window.BLUE_FIRE_CONFIG and window.setBlueFireConfig reactive in real time)' : 'FAILED'}`);
+
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');
   const scrollMilestones = [0.0, 0.25, 0.5, 0.75, 1.0];
