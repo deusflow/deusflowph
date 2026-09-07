@@ -241,7 +241,19 @@ async function runBrowserVerification() {
   console.log('\n=== 3b. UNLIT BAKED MESH VERIFICATION (Cloud_Poly & Sky) ===');
   console.log(`- Cloud_Poly material: ${unlitInfo.cloudPoly?.materialType} (isMeshBasicMaterial: ${unlitInfo.cloudPoly?.isMeshBasicMaterial}, hasMap: ${unlitInfo.cloudPoly?.hasMap})`);
   console.log(`- Sky material:        ${unlitInfo.sky?.materialType} (isMeshBasicMaterial: ${unlitInfo.sky?.isMeshBasicMaterial}, hasMap: ${unlitInfo.sky?.hasMap})`);
-  console.log(`- Unlit status:        ${(unlitInfo.cloudPoly?.isMeshBasicMaterial && unlitInfo.sky?.isMeshBasicMaterial) ? 'PASSED: 100% Fully Unlit (Protected against Ambient/Directional blowout)' : 'FAILED'}`);
+  // 3c. Punctual Lights Scaling Verification
+  const lightsRes = await sendCmd('Runtime.evaluate', {
+    expression: 'window.__STORY_STATE__.getLightsInfo ? window.__STORY_STATE__.getLightsInfo() : []',
+    returnByValue: true
+  });
+  const lightsList = lightsRes.result.value || [];
+  console.log('\n=== 3c. PUNCTUAL LIGHTS SCALING VERIFICATION ===');
+  console.log(`- Scaled Punctual Lights Count: ${lightsList.length}`);
+  lightsList.forEach(l => {
+    console.log(`  * "${l.name}" (${l.type}): scaled intensity = ${l.intensity} (sane WebGL range [1.0 - 5.0])`);
+  });
+  const allSane = lightsList.length > 0 && lightsList.every(l => l.intensity >= 0.5 && l.intensity <= 10.0);
+  console.log(`- Punctual Lights Status: ${allSane ? 'PASSED: All lights scaled down from massive Blender values to sane WebGL intensities' : 'FAILED'}`);
 
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');

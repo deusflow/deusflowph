@@ -125,6 +125,38 @@ let animationFrameId = null;
 let hasRedirected = false;
 const FINAL_REDIRECT_URL = 'PLACEHOLDER_NEXT_PAGE_URL'; // Подставь свой целевой URL (напр. '/portfolio/' или '/#contact')
 
+// --- GLTF Punctual Lights Configuration (KHR_lights_punctual) ---
+// Easily fine-tune individual light brightness here without re-exporting the model.
+// Clamps massive Blender export values (10,000 - 200,000) down to sane WebGL values (1.0 - 5.0).
+export const STORY_LIGHT_CONFIG = {
+  'base light to portal': 3.5,
+  'contlight2': 2.8,
+  'front light to portal': 3.0,
+  'Point': 1.8,
+  'portal l centr': 4.2
+};
+
+const gltfLights = new Map();
+
+/**
+ * Resolves configured intensity for a light by name (supporting spaces, underscores, and case insensitivity).
+ */
+function getLightConfigIntensity(name) {
+  if (!name) return null;
+  if (STORY_LIGHT_CONFIG[name] !== undefined) return STORY_LIGHT_CONFIG[name];
+  const spaced = name.replace(/_/g, ' ').trim();
+  if (STORY_LIGHT_CONFIG[spaced] !== undefined) return STORY_LIGHT_CONFIG[spaced];
+  const underscored = name.replace(/\s+/g, '_').trim();
+  if (STORY_LIGHT_CONFIG[underscored] !== undefined) return STORY_LIGHT_CONFIG[underscored];
+  const lower = spaced.toLowerCase();
+  for (const [key, val] of Object.entries(STORY_LIGHT_CONFIG)) {
+    if (key.toLowerCase().replace(/_/g, ' ').trim() === lower) {
+      return val;
+    }
+  }
+  return null;
+}
+
 // --- Split Animation Mixers ---
 let cameraMixer = null;
 let portalMixer = null;
@@ -316,7 +348,23 @@ async function initStoryEngine() {
       // ======================================================================
       billboardMeshes.length = 0;
 
+      gltfLights.clear();
+
       root.traverse((child) => {
+        // PUNCTUAL LIGHTS SCALING: detect GLTF punctual lights and scale down massive raw values
+        if (child.isLight) {
+          const configIntensity = getLightConfigIntensity(child.name) ?? (child.parent ? getLightConfigIntensity(child.parent.name) : null);
+          const rawIntensity = child.intensity;
+          if (configIntensity !== null) {
+            child.intensity = configIntensity;
+          } else if (child.intensity > 10) {
+            // Safe clamp / remap fallback for any unconfigured punctual light (clamps to 1.0 - 5.0)
+            child.intensity = THREE.MathUtils.clamp(child.intensity / 2500, 1.0, 5.0);
+          }
+          gltfLights.set(child.name, child);
+          console.log(`[StoryEngine] Scaled punctual light "${child.name}" (${child.type}): raw ${rawIntensity.toFixed(1)} -> scaled ${child.intensity.toFixed(2)}`);
+        }
+
         if (child.isMesh) {
           // UNLIT FIX for Cloud_Poly and Sky: emissive=[1,1,1] in GLTF causes blowout under scene lights.
           // Convert to THREE.MeshBasicMaterial (copying map and color) to make them completely unlit.
@@ -405,6 +453,27 @@ async function initStoryEngine() {
             }
           });
           return found;
+        },
+        getLightsInfo: () => {
+          const list = [];
+          gltfLights.forEach((light, name) => {
+            list.push({
+              name,
+              type: light.type,
+              intensity: light.intensity,
+              color: light.color.getHexString()
+            });
+          });
+          return list;
+        },
+        setLightIntensity: (name, intensity) => {
+          const light = gltfLights.get(name) || gltfLights.get(name.replace(/\s+/g, '_')) || gltfLights.get(name.replace(/_/g, ' '));
+          if (light) {
+            light.intensity = intensity;
+            console.log(`[StoryEngine] Light "${name}" intensity dynamically updated to ${intensity}`);
+            return true;
+          }
+          return false;
         }
       };
 
