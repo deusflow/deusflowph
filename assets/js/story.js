@@ -163,9 +163,12 @@ let portalMixer = null;
 let cameraDuration = 0;
 let cameraClipEntries = [];
 
-// --- Meshes & Visual Elements ---
 const billboardMeshes = [];
 let starsMesh = null;
+const starMeshes = [];
+const starUniforms = {
+  uTime: { value: 0 }
+};
 const cameraWorldPos = new THREE.Vector3();
 const meshWorldPos = new THREE.Vector3();
 
@@ -216,6 +219,94 @@ function applyInitialI18n() {
     if (primaryBtn) primaryBtn.innerText = i18nStrings.finale.primaryBtn;
     if (secondaryBtn) secondaryBtn.innerText = i18nStrings.finale.secondaryBtn;
   }
+}
+
+/**
+ * Injects a multi-frequency star scintillation & chromatic iridescence shader.
+ * - Every star quad has an independent phase & frequency derived from its 3D coordinates.
+ * - Multi-frequency waves: slow atmospheric breathing + air flutter + sharp diamond sparkles.
+ * - Chromatic iridescence: shifts dynamically between Hogwarts warm amber, deep burning ember,
+ *   subtle celestial sapphire blue-white, and brilliant diamond white at peak glints.
+ */
+function enhanceStarMaterial(mat) {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = starUniforms.uTime;
+
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      `#include <common>
+      varying vec3 vStarWorldPos;
+      `
+    );
+
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      `#include <begin_vertex>
+      vStarWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+      `
+    );
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <common>',
+      `#include <common>
+      varying vec3 vStarWorldPos;
+      uniform float uTime;
+
+      // Spatial hash for deterministic per-star phase & scintillation speed
+      float starHash(vec3 p) {
+        vec3 q = floor(p * 4.5);
+        return fract(sin(dot(q, vec3(127.1, 311.7, 74.7))) * 43758.5453123);
+      }
+      `
+    );
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <emissivemap_fragment>',
+      `#include <emissivemap_fragment>
+
+      // 1. Independent per-star phase & speed from unique 3D space position
+      float sPhase = starHash(vStarWorldPos) * 6.2831853;
+      float sFreq = 1.6 + fract(sPhase * 0.17) * 2.8;
+
+      // 2. Multi-frequency organic scintillation:
+      // a) Deep slow breathing swell
+      float wave1 = sin(uTime * sFreq + sPhase);
+      // b) Medium flutter
+      float wave2 = sin(uTime * (sFreq * 3.6) + sPhase * 2.3);
+      // c) High-frequency needle-sharp glimmers
+      float wave3 = sin(uTime * (sFreq * 8.2) + sPhase * 4.9);
+
+      // Normalized scintillation factor [0, 1]
+      float rawTwinkle = 0.5 + 0.28 * wave1 + 0.14 * wave2 + 0.08 * wave3;
+      // Exponential curve produces sharp celestial diamond glints / sparks
+      float twinkle = pow(clamp(rawTwinkle, 0.0, 1.0), 2.2);
+
+      // 3. Chromatic Iridescence / Atmospheric dispersion (переливание цвета):
+      vec3 colAmber = vec3(1.0, 0.58, 0.16);  // Warm Hogwarts library gold/amber
+      vec3 colWhite = vec3(1.0, 0.98, 0.93);  // Piercing diamond white core
+      vec3 colPrism = vec3(0.68, 0.84, 1.0);  // Subtle celestial sapphire blue-white flare
+      vec3 colEmber = vec3(1.0, 0.30, 0.05);  // Deep burning ember red-gold
+
+      float colorPhase = sin(uTime * (sFreq * 1.3) + sPhase * 3.1);
+      vec3 shimmerCol = mix(colAmber, colEmber, clamp(colorPhase, 0.0, 1.0));
+      shimmerCol = mix(shimmerCol, colPrism, clamp(-colorPhase, 0.0, 1.0) * 0.45);
+      // Flare up to brilliant diamond white at twinkle peaks
+      shimmerCol = mix(shimmerCol, colWhite, smoothstep(0.60, 0.98, twinkle));
+
+      // 4. Emissive radiance modulation
+      float starlightIntensity = 1.6 + twinkle * 6.2;
+      totalEmissiveRadiance = shimmerCol * starlightIntensity;
+      `
+    );
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <dithering_fragment>',
+      `#include <dithering_fragment>
+      // Modulate transparency dynamically so stars softly glimmer in opacity as well
+      gl_FragColor.a *= clamp(0.35 + twinkle * 0.65, 0.0, 1.0);
+      `
+    );
+  };
 }
 
 async function initStoryEngine() {
@@ -480,14 +571,21 @@ async function initStoryEngine() {
             child.renderOrder = 2;
           }
 
-          // REQUIREMENT 4: Grab Stars Mesh for Twinkling
+          // REQUIREMENT 4: Grab Stars Meshes for Twinkling & Chromatic Scintillation
           if (child.name.toLowerCase() === 'stars' || child.name.toLowerCase().includes('star')) {
             starsMesh = child;
+            starMeshes.push(child);
             const starMaterials = Array.isArray(child.material) ? child.material : [child.material];
             starMaterials.forEach((mat) => {
               mat.transparent = true;
               mat.depthWrite = false;
               mat.needsUpdate = true;
+
+              // Inject celestial scintillation & chromatic iridescence shader
+              if (!mat.userData.hasStarShader) {
+                mat.userData.hasStarShader = true;
+                enhanceStarMaterial(mat);
+              }
             });
             child.renderOrder = 3;
           }
@@ -513,7 +611,8 @@ async function initStoryEngine() {
         billboardCount: billboardMeshes.length,
         mistCloudCount: billboardMeshes.filter((m) => m.userData.isMist).length,
         denseCloudCount: billboardMeshes.filter((m) => !m.userData.isMist).length,
-        hasStars: !!starsMesh,
+        hasStars: starMeshes.length > 0 || !!starsMesh,
+        starsCount: starMeshes.length,
         setScrollProgress: (progress) => {
           setCameraScrollProgress(progress);
         },
@@ -774,11 +873,14 @@ function animate() {
     }
   }
 
-  // 3. Dynamic Stars Twinkle using Math.sin(Date.now() * speed)
-  if (starsMesh && starsMesh.material) {
+  // 3. Dynamic Celestial Stars Scintillation & Chromatic Shimmer
+  if (starMeshes.length > 0) {
+    starUniforms.uTime.value = (typeof timer !== 'undefined' && timer.getElapsed)
+      ? timer.getElapsed()
+      : performance.now() * 0.001;
+  } else if (starsMesh && starsMesh.material) {
     const starSpeed = 0.0035;
     const opacity = 0.58 + Math.sin(Date.now() * starSpeed) * 0.38;
-
     if (Array.isArray(starsMesh.material)) {
       starsMesh.material.forEach((mat) => { mat.opacity = opacity; });
     } else {
