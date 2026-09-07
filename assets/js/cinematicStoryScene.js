@@ -55,7 +55,7 @@ let resizeHandler = null;
  * @param {Object} options Configuration parameters
  * @param {HTMLCanvasElement} options.canvas The target WebGL canvas
  * @param {HTMLElement|string} [options.scrollContainer] The element driving GSAP scroll (defaults to document.body)
- * @param {string} [options.glbUrl='/assets/models/Story2.glb'] Path to the cinematic GLB asset
+ * @param {string} [options.glbUrl='/assets/models/Story3.glb'] Path to the cinematic GLB asset
  * @param {Function} [options.onProgress] Optional loading progress callback (0 - 100)
  * @param {Function} [options.onLoaded] Optional callback fired once the scene is ready and playing
  * @returns {Promise<Object>} API object containing { scene, camera, renderer, cleanup }
@@ -63,7 +63,7 @@ let resizeHandler = null;
 export async function initCinematicScene({
   canvas,
   scrollContainer = document.body,
-  glbUrl = '/assets/models/Story2.glb',
+  glbUrl = '/assets/models/Story3.glb',
   onProgress = null,
   onLoaded = null
 }) {

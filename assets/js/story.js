@@ -4,7 +4,7 @@
  * ============================================================================
  * Architecture:
  * 1. Scene Initialization & GLTF Camera Override
- *    - Uses authored Camera from Story2.glb (Node 42).
+ *    - Uses authored Camera from Story3.glb.
  *    - Completely bypasses Capsule+Octree physics collision loop.
  * 2. Scrollytelling Animation Split Logic (GSAP + Three.js)
  *    - Camera Animation: Strictly scroll-driven via cameraMixer.setTime().
@@ -222,11 +222,11 @@ async function initStoryEngine() {
   renderer.toneMappingExposure = 1.0; // Clean 1.0 exposure to prevent blown-out baked textures
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-  // 3. LOAD STORY2.GLB WITH PROGRESS
+  // 3. LOAD STORY3.GLB WITH PROGRESS
   const loader = new GLTFLoader();
 
   loader.load(
-    '/assets/models/Story2.glb',
+    '/assets/models/Story3.glb',
     (gltf) => {
       const root = gltf.scene;
       scene.add(root);
@@ -422,7 +422,7 @@ async function initStoryEngine() {
       }
     },
     (err) => {
-      console.error('[StoryEngine] Failed to load Story2.glb:', err);
+      console.error('[StoryEngine] Failed to load Story3.glb:', err);
       if (loadingText) loadingText.innerText = 'Error loading 3D scene';
     }
   );

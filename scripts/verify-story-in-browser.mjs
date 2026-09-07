@@ -150,7 +150,7 @@ async function runBrowserVerification() {
   await sendCmd('Runtime.enable');
   await sendCmd('Page.enable');
 
-  console.log('[TestRunner] Waiting for Story2.glb to load in Three.js...');
+  console.log('[TestRunner] Waiting for Story3.glb to load in Three.js...');
   let sceneLoaded = false;
   for (let i = 0; i < 80; i++) {
     await sleep(500);
