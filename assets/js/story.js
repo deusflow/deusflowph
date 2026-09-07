@@ -298,27 +298,59 @@ async function initStoryEngine() {
       // ======================================================================
       // REQUIREMENT 2: ANIMATION SPLIT LOGIC (GSAP + Three.js)
       // ======================================================================
-      const cameraClips = [];
-      const ambientClips = [];
+      // REQUIREMENT 2: ANIMATION SPLIT LOGIC (GSAP vs RAF Autoplay)
+      // ALL animation clips (Camera, Clouds, and any other baked movement)
+      // are assigned to the scroll-driven GSAP mixer (mixer.setTime()).
+      // The ONLY animation in continuous autoplay loop (RAF) is Sketchfab_model (the portal).
+      // ======================================================================
+      const scrollClips = [];
+      const portalClips = [];
+
+      // Identify the portal root node and all its descendant node names
+      const portalNode = root.getObjectByName('Sketchfab_model') || root.getObjectByName('portal');
+      const portalNodeNames = new Set();
+      if (portalNode) {
+        portalNode.traverse((obj) => {
+          if (obj.name) portalNodeNames.add(obj.name.toLowerCase());
+        });
+      }
+
+      function isPortalAnimation(clip) {
+        const nameLower = clip.name.toLowerCase();
+        // Explicit name match
+        if (nameLower.includes('sketchfab') || nameLower.includes('portal')) return true;
+        // Target match: check if tracks target Sketchfab_model hierarchy
+        if (portalNodeNames.size > 0) {
+          const targetsPortal = clip.tracks.some((track) => {
+            const trackTargetName = track.name.split('.')[0].toLowerCase();
+            return portalNodeNames.has(trackTargetName);
+          });
+          if (targetsPortal) return true;
+        }
+        // Fallback for default Sketchfab export take
+        return nameLower.includes('take 001');
+      }
 
       gltf.animations.forEach((clip) => {
-        const isCameraTargeted = clip.name.toLowerCase().includes('camera') ||
-          clip.tracks.some(track => track.name.toLowerCase().startsWith('camera'));
-
-        if (isCameraTargeted) {
-          cameraClips.push(clip);
+        if (isPortalAnimation(clip)) {
+          portalClips.push(clip);
         } else {
-          ambientClips.push(clip);
+          scrollClips.push(clip);
         }
       });
 
-      // A) Camera Mixer: Scroll-driven via GSAP ScrollTrigger
-      // cameraDuration is strictly computed as Math.max across ALL camera clips
-      cameraClipEntries = [];
-      if (cameraClips.length > 0) {
-        cameraDuration = cameraClips.reduce((max, clip) => Math.max(max, clip.duration), 0);
+      console.log(`[StoryEngine] Animations sorted: ${scrollClips.length} scroll-driven clips (${scrollClips.map(c => c.name).join(', ')}), ${portalClips.length} continuous portal clips (${portalClips.map(c => c.name).join(', ')})`);
 
-        cameraClips.forEach((clip) => {
+      // A) Scroll-driven Mixer: GSAP ScrollTrigger drives Camera, Clouds, and all scene movement
+      cameraClipEntries = [];
+      if (scrollClips.length > 0) {
+        // Master timeline duration across all scroll-driven clips
+        cameraDuration = scrollClips.reduce((max, clip) => Math.max(max, clip.duration), 0);
+
+        scrollClips.forEach((clip) => {
+          // Extend clip duration to master timeline so Three.js LoopOnce doesn't prematurely clamp/reset
+          clip.duration = Math.max(clip.duration, cameraDuration);
+
           const mixer = new THREE.AnimationMixer(root);
           const action = mixer.clipAction(clip);
           action.clampWhenFinished = true;
@@ -332,11 +364,11 @@ async function initStoryEngine() {
         initScrollInteraction();
       }
 
-      // B) Portal & Ambient Mixer: Continuous loop for Sketchfab_model
-      if (ambientClips.length > 0) {
-        portalMixer = new THREE.AnimationMixer(root);
+      // B) Portal Mixer: ONLY Sketchfab_model (the portal) in continuous autoplay loop
+      if (portalClips.length > 0) {
+        portalMixer = new THREE.AnimationMixer(portalNode || root);
 
-        ambientClips.forEach((clip) => {
+        portalClips.forEach((clip) => {
           const action = portalMixer.clipAction(clip);
           action.setLoop(THREE.LoopRepeat);
           action.play();
@@ -387,7 +419,8 @@ async function initStoryEngine() {
             if (oldMat.dispose) oldMat.dispose();
           }
 
-          const isBillboard = child.name.startsWith('Bilboard') || child.name.startsWith('FOG');
+          const isBillboard = child.name.startsWith('Bilboard');
+          const isGroundFog = child.name.startsWith('FOG') || child.name.toLowerCase().includes('fog');
 
           if (isBillboard) {
             billboardMeshes.push(child);
@@ -401,7 +434,19 @@ async function initStoryEngine() {
               mat.needsUpdate = true;
             });
 
-            // Draw transparent cloud/fog quads after solid geometry
+            // Draw transparent cloud quads after solid geometry
+            child.renderOrder = 2;
+          } else if (isGroundFog) {
+            // Ground Fog (M_BottomFog): static horizontal fog layer, do NOT add to billboardMeshes (NO lookAt)!
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((mat) => {
+              mat.transparent = true;
+              mat.depthWrite = false;
+              mat.alphaTest = 0.01;
+              mat.side = THREE.DoubleSide;
+              mat.needsUpdate = true;
+            });
+
             child.renderOrder = 2;
           }
 
@@ -431,14 +476,35 @@ async function initStoryEngine() {
         cameraLoaded: !!camera,
         cameraName: camera ? camera.name : null,
         cameraDuration,
-        cameraClipsCount: cameraClips.length,
-        ambientClipsCount: ambientClips.length,
+        cameraClipsCount: scrollClips.length,
+        ambientClipsCount: portalClips.length,
+        scrollClipsCount: scrollClips.length,
+        portalClipsCount: portalClips.length,
         billboardCount: billboardMeshes.length,
         hasStars: !!starsMesh,
         setScrollProgress: (progress) => {
           setCameraScrollProgress(progress);
         },
         getCameraPosition: () => camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null,
+        getAllObjects: (filter) => {
+          const res = [];
+          scene?.traverse((c) => {
+            if (!filter || c.name.toLowerCase().includes(filter.toLowerCase())) {
+              res.push({
+                name: c.name,
+                type: c.type,
+                isMesh: !!c.isMesh,
+                visible: c.visible,
+                position: [c.position.x, c.position.y, c.position.z],
+                scale: [c.scale.x, c.scale.y, c.scale.z],
+                parentName: c.parent?.name,
+                materialName: c.material?.name,
+                materialType: c.material?.type
+              });
+            }
+          });
+          return res;
+        },
         getMeshMaterialInfo: (name) => {
           let found = null;
           scene?.traverse((c) => {
