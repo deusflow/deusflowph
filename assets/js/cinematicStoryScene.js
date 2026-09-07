@@ -185,7 +185,7 @@ function disperseStarGeometry(child, meshIndex = 0) {
     // Apply quad-preserving rigid displacement + center-relative scaling
     for (let k = 0; k < 4; k++) {
       const vi = (baseVertex + k) * 3;
-      v[vi]     = cx + (v[vi] - cx) * scale + jx;
+      v[vi] = cx + (v[vi] - cx) * scale + jx;
       v[vi + 1] = cy + (v[vi + 1] - cy) * scale + jy;
       v[vi + 2] = cz + (v[vi + 2] - cz) * scale + jz;
     }
@@ -323,8 +323,8 @@ for (let i = 0; i < SPARK_COUNT; i++) {
 const rawBlueFireConfig = {
   // 1. Высота и мощность пламени:
   flameHeight: 0.65,     // Физическая высота языков пламени (было 1.45 — уменьшено, чтобы не било высоко)
-  flameWidth: 0.52,      // Ширина пламени у основания
-  flamePower: 0.45,      // Мощность / сила вертикальной тяги и длина выброса (0.2 - тихий огонёк, 1.5 - мощный столб)
+  flameWidth: 5.52,      // Ширина пламени у основания
+  flamePower: 2.5,      // Мощность / сила вертикальной тяги и длина выброса (0.2 - тихий огонёк, 1.5 - мощный столб)
   flameIntensity: 8.8,   // Накал и свечение шейдера самого огня
 
   // 2. Общий масштаб и позиционирование:
@@ -867,7 +867,7 @@ export async function initCinematicScene({
         // B) PORTAL MIXER: ONLY Sketchfab_model (the portal) in continuous autoplay loop
         if (portalClips.length > 0) {
           portalMixer = new THREE.AnimationMixer(portalNode || root);
-          
+
           portalClips.forEach((clip) => {
             const action = portalMixer.clipAction(clip);
             action.setLoop(THREE.LoopRepeat);
