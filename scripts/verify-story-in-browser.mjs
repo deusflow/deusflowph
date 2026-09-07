@@ -198,7 +198,9 @@ async function runBrowserVerification() {
   console.log(`- cameraDuration (Math.max): ${storyState.cameraDuration.toFixed(4)}s`);
   console.log(`- Scroll-driven Clips count (Camera, Clouds, etc.): ${storyState.scrollClipsCount ?? storyState.cameraClipsCount}`);
   console.log(`- Continuous Portal Loop Clips count (Sketchfab_model only): ${storyState.portalClipsCount ?? storyState.ambientClipsCount}`);
-  console.log(`- Transparent Billboard & FOG Meshes: ${storyState.billboardCount}`);
+  console.log(`- Transparent Billboard Meshes: ${storyState.billboardCount}`);
+  console.log(`  * Dense Cloud Cores: ${storyState.denseCloudCount} (opacity = 0.95)`);
+  console.log(`  * Volumetric Misty Halos: ${storyState.mistCloudCount} (opacity = 0.44, scale +18%, alphaTest = 0.001)`);
   console.log(`- Dynamic Stars Mesh Found: ${storyState.hasStars}`);
 
   const animationSortingValid = (storyState.scrollClipsCount ?? storyState.cameraClipsCount) === 3 &&

@@ -71,6 +71,7 @@ function getLightConfigIntensity(name) {
 const billboardMeshes = [];
 let starsMesh = null;
 const cameraWorldPos = new THREE.Vector3();
+const meshWorldPos = new THREE.Vector3();
 
 // GSAP ScrollTrigger reference for cleanup
 let scrollTriggerInstance = null;
@@ -316,17 +317,46 @@ export async function initCinematicScene({
             if (isBillboard) {
               billboardMeshes.push(child);
 
-              const materials = Array.isArray(child.material) ? child.material : [child.material];
-              materials.forEach((mat) => {
-                mat.transparent = true;
-                mat.depthWrite = false; // Prevents black rectangular stripe sorting artifacts
-                mat.alphaTest = 0.01;   // Discards pure black/transparent pixels
-                mat.side = THREE.DoubleSide;
-                mat.needsUpdate = true;
-              });
+              // Layered density distribution: ~43% of billboards become soft, airy misty halos
+              const num = parseInt(child.name.replace(/\D/g, ''), 10) || 0;
+              const isMistLayer = (num % 3 === 0 || num % 7 === 0);
 
-              // Assign explicit render order to draw transparent planes after solid terrain
-              child.renderOrder = 2;
+              if (isMistLayer) {
+                // Clone material so mist opacity does not affect dense shared cloud materials
+                child.material = Array.isArray(child.material)
+                  ? child.material.map((m) => m.clone())
+                  : child.material.clone();
+
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
+                materials.forEach((mat) => {
+                  mat.transparent = true;
+                  mat.depthWrite = false;
+                  mat.alphaTest = 0.001; // Buttery soft gradient edges without dither cutouts
+                  mat.side = THREE.DoubleSide;
+                  mat.opacity = 0.44;     // Delicate, luminous atmospheric mist
+                  mat.needsUpdate = true;
+                });
+
+                child.userData.baseOpacity = 0.44;
+                child.userData.isMist = true;
+                // Expand slightly (+18%) to form an enveloping misty halo around cloud cores
+                child.scale.multiplyScalar(1.18);
+                child.renderOrder = 3;
+              } else {
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
+                materials.forEach((mat) => {
+                  mat.transparent = true;
+                  mat.depthWrite = false;
+                  mat.alphaTest = 0.01;
+                  mat.side = THREE.DoubleSide;
+                  mat.opacity = 0.95;     // Dense cloud core
+                  mat.needsUpdate = true;
+                });
+
+                child.userData.baseOpacity = 0.95;
+                child.userData.isMist = false;
+                child.renderOrder = 2;
+              }
             } else if (isGroundFog) {
               // Static ground fog layer (M_BottomFog): do NOT add to billboardMeshes (NO lookAt)!
               const materials = Array.isArray(child.material) ? child.material : [child.material];
@@ -448,11 +478,36 @@ function animate() {
     portalMixer.update(delta);
   }
 
-  // 2. BILLBOARD & FOG ORIENTATION (Always face camera)
+  // 2. Orient all Bilboard planes towards camera & calculate smooth camera near-dissolve
   if (camera && billboardMeshes.length > 0) {
     camera.getWorldPosition(cameraWorldPos);
     for (let i = 0; i < billboardMeshes.length; i++) {
-      billboardMeshes[i].lookAt(cameraWorldPos);
+      const mesh = billboardMeshes[i];
+      mesh.lookAt(cameraWorldPos);
+
+      // Camera distance near-fade: dissolves billboards gently when camera flies in close
+      // Prevents 2D flat plane clipping artifacts across the near clipping plane
+      const baseOp = mesh.userData.baseOpacity ?? 1.0;
+      mesh.getWorldPosition(meshWorldPos);
+      const distToCam = cameraWorldPos.distanceTo(meshWorldPos);
+
+      const nearFadeDistance = 2.5;
+      const minClipDistance = 0.8;
+      if (distToCam < nearFadeDistance) {
+        const factor = Math.max(0, Math.min(1, (distToCam - minClipDistance) / (nearFadeDistance - minClipDistance)));
+        const targetOpacity = baseOp * factor;
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach((m) => { m.opacity = targetOpacity; });
+        } else if (mesh.material) {
+          mesh.material.opacity = targetOpacity;
+        }
+      } else {
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach((m) => { m.opacity = baseOp; });
+        } else if (mesh.material && mesh.material.opacity !== baseOp) {
+          mesh.material.opacity = baseOp;
+        }
+      }
     }
   }
 
