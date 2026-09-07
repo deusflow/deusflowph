@@ -130,7 +130,7 @@ const FINAL_REDIRECT_URL = 'PLACEHOLDER_NEXT_PAGE_URL'; // Подставь св
 // Clamps massive Blender export values (10,000 - 200,000) down to sane WebGL values (1.0 - 5.0).
 export const STORY_LIGHT_CONFIG = {
   'base light to portal': 3.5,
-  'contlight2': 20,
+  'contlight2': 200,
   'front light to portal': 3.0,
   'Point': 100,
   'portal l centr': 50
