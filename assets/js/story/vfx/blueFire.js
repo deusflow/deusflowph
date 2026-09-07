@@ -15,6 +15,7 @@ import { BLUE_FIRE_CONFIG, rawBlueFireConfig, registerBlueFireConfigListener } f
 let blueFireGroup = null;
 let blueFireLight = null;
 let blueFireHaloMesh = null;
+let blueFireHaloMat = null;
 let blueFireSparksMesh = null;
 let blueFireMaterial = null;
 let flameMeshes = [];
@@ -51,8 +52,15 @@ export function applyBlueFireConfig(prop, val) {
     blueFireLight.decay = Number(val);
   } else if (prop === 'lightIntensity' && blueFireLight) {
     rawBlueFireConfig.lightIntensity = Number(val);
-  } else if (prop === 'flameIntensity' && blueFireMaterial && blueFireMaterial.uniforms.uIntensity) {
-    blueFireMaterial.uniforms.uIntensity.value = Number(val);
+  } else if (prop === 'flameIntensity') {
+    const num = Number(val);
+    rawBlueFireConfig.flameIntensity = num;
+    if (blueFireMaterial && blueFireMaterial.uniforms.uIntensity) {
+      blueFireMaterial.uniforms.uIntensity.value = num;
+    }
+    if (blueFireHaloMat && blueFireHaloMat.uniforms.uIntensity) {
+      blueFireHaloMat.uniforms.uIntensity.value = num;
+    }
   } else if (prop === 'flamePower' && blueFireMaterial && blueFireMaterial.uniforms.uFlamePower) {
     blueFireMaterial.uniforms.uFlamePower.value = Number(val);
   } else if (prop === 'flameHeight') {
@@ -260,7 +268,8 @@ export function createBlueFireEffect(targetNode) {
   const haloGeom = new THREE.PlaneGeometry(1.0, 1.0);
   const haloMat = new THREE.ShaderMaterial({
     uniforms: {
-      uTime: blueFireUniforms.uTime
+      uTime: blueFireUniforms.uTime,
+      uIntensity: { value: BLUE_FIRE_CONFIG.flameIntensity }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -272,12 +281,14 @@ export function createBlueFireEffect(targetNode) {
     fragmentShader: `
       varying vec2 vUv;
       uniform float uTime;
+      uniform float uIntensity;
       void main() {
         float r = length(vUv - 0.5) * 2.0;
         float glow = exp(-3.2 * r * r);
         vec3 haloCol = mix(vec3(0.0, 0.82, 1.0), vec3(0.02, 0.22, 0.85), r);
         float pulse = 0.38 + 0.08 * sin(uTime * 7.5);
-        gl_FragColor = vec4(haloCol * pulse * 1.5, glow * pulse);
+        float intensityFactor = clamp(uIntensity / 8.8, 0.05, 3.5);
+        gl_FragColor = vec4(haloCol * pulse * 1.5 * intensityFactor, glow * pulse * intensityFactor);
       }
     `,
     transparent: true,
@@ -285,6 +296,7 @@ export function createBlueFireEffect(targetNode) {
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide
   });
+  blueFireHaloMat = haloMat;
   blueFireHaloMesh = new THREE.Mesh(haloGeom, haloMat);
   blueFireHaloMesh.scale.set(BLUE_FIRE_CONFIG.flameWidth * 2.2, BLUE_FIRE_CONFIG.flameHeight * 1.3, 1.0);
   blueFireHaloMesh.position.set(0, BLUE_FIRE_CONFIG.flameHeight * 0.45, 0);
@@ -410,6 +422,7 @@ export function cleanupBlueFire() {
     if (blueFireHaloMesh.material) blueFireHaloMesh.material.dispose();
     blueFireHaloMesh = null;
   }
+  blueFireHaloMat = null;
 
   if (blueFireSparksMesh) {
     if (blueFireSparksMesh.geometry) blueFireSparksMesh.geometry.dispose();
