@@ -308,6 +308,9 @@ export function initStoryEngine() {
       let altarFog1Node = null;
       let altarFire001Node = null;
       let fog004MeshNode = null;
+      let fog005MeshNode = null;
+      let fog006MeshNode = null;
+      let fog002MeshNode = null;
 
       root.traverse((child) => {
         // Punctual lights scaling
@@ -348,6 +351,12 @@ export function initStoryEngine() {
           } else if (isGroundFog) {
             if (child.name === 'FOG004' || child.name === 'FOG.004') {
               fog004MeshNode = child;
+            } else if (child.name === 'FOG006' || child.name === 'FOG.006') {
+              fog006MeshNode = child;
+            } else if (child.name === 'FOG005' || child.name === 'FOG.005') {
+              fog005MeshNode = child;
+            } else if (child.name === 'FOG002' || child.name === 'FOG.002') {
+              fog002MeshNode = child;
             }
             processGroundFog(child);
           }
@@ -364,9 +373,9 @@ export function initStoryEngine() {
         createBlueFire(fireTargetNode);
       }
 
-      // 4b. Attach Altar Mist & Billowing Steam ("Пар над алтарем") to fog2 (bowl) and altar nodes
-      if (fireTargetNode || altarFog1Node || altarFire001Node || fog004MeshNode) {
-        createAltarMist(altarFog1Node, altarFire001Node, fog004MeshNode, fireTargetNode);
+      // 4b. Attach Altar Mist & Cascading Flow to altar nodes (FOG.004, FOG.006, FOG.005, FOG.002) and bowl (fog2)
+      if (fireTargetNode || altarFog1Node || altarFire001Node || fog004MeshNode || fog006MeshNode) {
+        createAltarMist(altarFog1Node, altarFire001Node, fog004MeshNode, fireTargetNode, fog006MeshNode, fog005MeshNode, fog002MeshNode);
       }
 
       // 5. Setup Window Resize & ScrollTrigger

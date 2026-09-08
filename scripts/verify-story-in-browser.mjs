@@ -234,23 +234,22 @@ async function runBrowserVerification() {
   const fogRes = await sendCmd('Runtime.evaluate', {
     expression: `
       (() => {
-        let f4 = null;
-        for (const o of window.__STORY_STATE__.getAllObjects('FOG004')) {
-          f4 = o;
-        }
-        let worldVerts = [];
-        // Traverse scene to find the real THREE.Mesh object
-        // We can inspect its geometry
+        const mistState = window.__STORY_STATE__.altarMistState || {};
+        const allFogs = window.__STORY_STATE__.getAllObjects('FOG');
         return {
-          fog004Info: window.__STORY_STATE__.getMeshMaterialInfo('FOG004'),
-          fogInfo: window.__STORY_STATE__.getMeshMaterialInfo('FOG')
+          altarMistState: mistState,
+          allFogObjects: allFogs.map(o => ({ name: o.name, pos: o.position, scale: o.scale }))
         };
       })()
     `,
     returnByValue: true
   });
-  console.log(`\n=== 3-FOG. FOG004 DETAILED INSPECTION ===`);
-  console.log(JSON.stringify(fogRes.result.value, null, 2));
+  console.log(`\n=== 3-FOG. FOG MESHES RUNTIME INSPECTION ===`);
+  if (fogRes.exceptionDetails) {
+    console.error('Exception in fogRes:', fogRes.exceptionDetails);
+  } else {
+    console.log(JSON.stringify(fogRes.result.value, null, 2));
+  }
 
   // 3b. UNLIT Verification for Cloud_Poly and Sky
   const unlitRes = await sendCmd('Runtime.evaluate', {
@@ -379,6 +378,9 @@ async function runBrowserVerification() {
           bowlAnchor: finalState.bowlAnchor,
           fog004Active: !!finalState.fog004Active,
           fog004Hidden: finalState.fog004Hidden,
+          fog006Active: !!finalState.fog006Active,
+          fog005Active: !!finalState.fog005Active,
+          fog002Active: !!finalState.fog002Active,
           fog1Active: !!finalState.fog1Active,
           fire001Active: !!finalState.fire001Active,
           emptiesPuffsVisible: !!finalState.emptiesPuffsVisible,
@@ -406,6 +408,9 @@ async function runBrowserVerification() {
   console.log(`- Dual-scale Opacity Input Normalization: 55% -> ${mistState.normalized55}, 0.45 -> ${mistState.direct045} (${mistState.normalized55 === 0.55 && mistState.direct045 === 0.45 ? 'PASSED' : 'FAILED'})`);
   console.log(`- Multiplier Input Normalization (10.45): opacity -> ${mistState.normalized1045}, carpetDensity -> ${mistState.carpetDensityAfter1045} (${mistState.normalized1045 === 1.0 && mistState.carpetDensityAfter1045 >= 1.25 ? 'PASSED' : 'FAILED'})`);
   console.log(`- FOG004 ground plane on floor active: ${mistState.fog004Active}`);
+  console.log(`- FOG006 canyon cascade plane active: ${mistState.fog006Active}`);
+  console.log(`- FOG005 altar base cascade plane active: ${mistState.fog005Active}`);
+  console.log(`- FOG002 cliff transition cascade plane active: ${mistState.fog002Active}`);
   console.log(`- Empties puffs visible: ${mistState.emptiesPuffsVisible} (false = no floating balls in air behind altar)`);
   console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.steamConfigExposed && mistState.updatedSteamHeight === 0.55 && mistState.updatedFlowSpeed === 0.3 ? 'PASSED (opacity, steamHeight, steamRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
   console.log(`- Altar Steam Status: ${mistState.hasSteam && mistState.steamPlumesCount === 5 ? 'PASSED: Billowing steam plumes wafting gracefully above bowl & slab' : 'FAILED'}`);
@@ -414,13 +419,13 @@ async function runBrowserVerification() {
   await sendCmd('Runtime.evaluate', {
     expression: `
       window.setAltarMistConfig({
-        opacity: 0.85,
-        carpetDensity: 1.25,
-        carpetSpread: 1.20,
-        flowSpeed: 0.28,
-        steamHeight: 0.45,
-        steamRadius: 0.45,
-        yOffset: 0.02,
+        opacity: 0.65,
+        carpetDensity: 1.05,
+        carpetSpread: 1.0,
+        flowSpeed: 0.38,
+        steamHeight: 0.40,
+        steamRadius: 0.40,
+        yOffset: 0.015,
         hideFOG004: false
       });
     `

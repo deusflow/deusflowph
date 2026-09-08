@@ -1,17 +1,15 @@
 /**
  * assets/js/story/vfx/altarMist.js
  * 
- * Dense Altar Mist Carpet & Billowing Steam ("Плотный ковер тумана и пар на алтаре") for DeusFlow Cinematic Story.
- * Implements a rich, tangible, milky-white creeping fog blanket directly across the stone altar surfaces:
- * - Layer 1: Floor platform mist carpet across FOG.004 (covers circular stone floor, stairs, and crevices).
- * - Layer 2: Altar slab mist cushion directly on fog2 (covers raised stone slab, altar base, and surroundings).
- * - Layer 3: Secondary semi-translucent volumetric tendril cushion for deep fluid layering.
- * - Layer 4: Low-elevation, subtle celestial steam wisps rising directly from the blue fire bowl into the air.
- * - 4-Edge perimeter feathering (smoothstep 0.0 to 0.08) guaranteeing 100% solid floor coverage with ZERO hard edges.
- * - Multi-octave simplex curl turbulence for continuous, silky, organic creeping motion.
- * - High baseline density: mix(0.82, 1.0, noise), preventing thin holes or washed-out patches.
- * - Unlit celestial luminous palette: cream-white mist body (#d5e8f7), subtle cyan core (#a5e0f7), pearl highlight (#f5faff).
- * - Physical 3D polygonal geometry (100% compliant with AGENTS.md, NO gl_PointSize).
+ * Dense Altar Mist Carpet & Cascading Canyon Flow ("Плотный ковер тумана и каскад в каньон") for DeusFlow Cinematic Story.
+ * Implements a rich, organic, seamless blanket of fog across the altar and canyon:
+ * - FOG.004: Altar platform floor carpet (softly hugs circular stone floor and steps, zero knife-cut clipping).
+ * - FOG.006 & FOG.005: Canyon cascade planes (mist gently cascades off the altar ledge into the canyon below).
+ * - fog2 (bowl): Delicate, low-elevation ascending steam wisps (NO flat slicing quads across rocks/steps).
+ * - Wide boundary feathering (15-18%) ensuring 100% seamless transition with zero hard geometric cuts.
+ * - Multi-octave simplex curl turbulence flowing naturally across the platform and down the canyon airway.
+ * - Luminous celestial palette: cream-white mist body (#d5e8f7), subtle cyan core (#a5e0f7), pearl highlight (#f5faff).
+ * - 100% physical 3D polygonal geometry (compliant with AGENTS.md, NO gl_PointSize).
  */
 import * as THREE from 'three';
 import { ALTAR_MIST_CONFIG, rawAltarMistConfig, registerAltarMistConfigListener } from '../storyConfig.js';
@@ -19,32 +17,39 @@ import { ALTAR_MIST_CONFIG, rawAltarMistConfig, registerAltarMistConfigListener 
 let fog2BowlAnchorNode = null;
 let altarSteamGroup = null;
 let steamPlumes = [];
-let steamMaterial = null;
+let fog004MeshRef = null;
+let fog004Material = null;
+const FOG004_BASELINE_Y = -0.96;
+let fog004InitialY = FOG004_BASELINE_Y;
 
-let altarSlabMistMesh = null;
-let altarSlabSecondaryMesh = null;
-let slabCarpetMaterial = null;
-let slabSecondaryMaterial = null;
+let fog006MeshRef = null;
+let fog006Material = null;
+let fog006InitialY = -1.449;
+
+let fog005MeshRef = null;
+let fog005Material = null;
+let fog005InitialY = -1.458;
+
+let fog002MeshRef = null;
+let fog002Material = null;
+let fog002InitialY = -1.223;
 
 let fog1RootGroup = null;
 let fire001RootGroup = null;
 let puffBillboards = [];
 let puffMaterial = null;
 
-let fog004MeshRef = null;
-let fog004Material = null;
-let fog004InitialY = -1.269;
-
 export function registerFOG004Mesh(mesh) {
   fog004MeshRef = mesh;
   if (fog004MeshRef) {
     fog004MeshRef.visible = !rawAltarMistConfig.hideFOG004;
+    updateFOG004ScaleAndPosition();
   }
 }
 
 // Initial normalized opacity
 let initialOpacity = Number(ALTAR_MIST_CONFIG.opacity);
-if (isNaN(initialOpacity)) initialOpacity = 0.85;
+if (isNaN(initialOpacity)) initialOpacity = 0.65;
 if (initialOpacity > 100.0) {
   initialOpacity = 1.0;
 } else if (initialOpacity >= 20.0 && initialOpacity <= 100.0) {
@@ -58,8 +63,8 @@ if (initialOpacity > 100.0) {
 const altarMistUniforms = {
   uTime: { value: 0 },
   uOpacity: { value: initialOpacity },
-  uCarpetDensity: { value: Number(rawAltarMistConfig.carpetDensity) || 1.25 },
-  uFlowSpeed: { value: Number(rawAltarMistConfig.flowSpeed) || 0.28 },
+  uCarpetDensity: { value: Number(rawAltarMistConfig.carpetDensity) || 1.05 },
+  uFlowSpeed: { value: Number(rawAltarMistConfig.flowSpeed) || 0.38 },
   uColor: { value: (rawAltarMistConfig.color || rawAltarMistConfig.puffColor) ? (rawAltarMistConfig.color || rawAltarMistConfig.puffColor).clone() : new THREE.Color(0xd5e8f7) },
   uCoreColor: { value: rawAltarMistConfig.coreColor ? rawAltarMistConfig.coreColor.clone() : new THREE.Color(0xa5e0f7) },
   uRimColor: { value: rawAltarMistConfig.rimColor ? rawAltarMistConfig.rimColor.clone() : new THREE.Color(0xf5faff) },
@@ -95,21 +100,22 @@ float snoise(vec2 v) {
 `;
 
 function updateSteamPlumeScales() {
-  const h = Number(rawAltarMistConfig.steamHeight || 0.45);
-  const r = Number(rawAltarMistConfig.steamRadius || 0.45);
+  const h = Number(rawAltarMistConfig.steamHeight || 0.40);
+  const r = Number(rawAltarMistConfig.steamRadius || 0.40);
   steamPlumes.forEach((item) => {
     item.mesh.scale.set(r * item.widthMult, h * item.heightMult, 1.0);
   });
 }
 
-function updateCarpetScales() {
-  const spread = Number(rawAltarMistConfig.carpetSpread || 1.20);
-  if (altarSlabMistMesh) {
-    altarSlabMistMesh.scale.set(spread * 2.8, spread * 2.4, 1.0);
-  }
-  if (altarSlabSecondaryMesh) {
-    altarSlabSecondaryMesh.scale.set(spread * 3.1, spread * 2.7, 1.0);
-  }
+function updateFOG004ScaleAndPosition() {
+  if (!fog004MeshRef) return;
+  const spread = Number(rawAltarMistConfig.carpetSpread || 1.0);
+  // Scale dynamically based on carpetSpread (spread = 3.0 covers circular stone floor ~5.4m)
+  const targetScale = 1.79 * (1.0 + (spread - 1.0) * 0.25);
+  fog004MeshRef.scale.set(targetScale, targetScale, targetScale);
+  const yOff = rawAltarMistConfig.yOffset !== undefined ? Number(rawAltarMistConfig.yOffset) : 0.015;
+  // FOG004_BASELINE_Y (-0.96) places the mist plane right across the stone surface (median -0.936)
+  fog004MeshRef.position.y = FOG004_BASELINE_Y + yOff;
 }
 
 /**
@@ -118,15 +124,14 @@ function updateCarpetScales() {
 export function applyAltarMistConfig(prop, val) {
   if (prop === 'opacity') {
     let num = Number(val);
-    if (isNaN(num)) num = 0.85;
+    if (isNaN(num)) num = 0.65;
     if (num > 100.0) {
       num = 1.0;
     } else if (num >= 20.0 && num <= 100.0) {
-      // Interpreted as percentage (e.g. 55 -> 0.55, 85 -> 0.85)
+      // Interpreted as percentage (e.g. 55 -> 0.55, 65 -> 0.65)
       num = num / 100.0;
     } else if (num > 1.0 && num < 20.0) {
       // User entered an intensity multiplier like 10.45 or 2.0 or 5.0
-      // Boost carpetDensity and set opacity to 1.0 (100% solid carpet)
       const densityBoost = Math.min(Math.max(num, 1.0), 3.0);
       rawAltarMistConfig.carpetDensity = densityBoost;
       altarMistUniforms.uCarpetDensity.value = densityBoost;
@@ -137,11 +142,11 @@ export function applyAltarMistConfig(prop, val) {
     rawAltarMistConfig.opacity = num;
     altarMistUniforms.uOpacity.value = num;
   } else if (prop === 'carpetDensity' || prop === 'density') {
-    const num = Number(val) || 1.25;
+    const num = Number(val) || 1.05;
     rawAltarMistConfig.carpetDensity = num;
     altarMistUniforms.uCarpetDensity.value = num;
   } else if (prop === 'flowSpeed') {
-    const num = Number(val) || 0.28;
+    const num = Number(val) || 0.38;
     rawAltarMistConfig.flowSpeed = num;
     altarMistUniforms.uFlowSpeed.value = num;
   } else if (prop === 'steamHeight') {
@@ -151,19 +156,17 @@ export function applyAltarMistConfig(prop, val) {
     rawAltarMistConfig.steamRadius = Number(val);
     updateSteamPlumeScales();
   } else if (prop === 'carpetSpread' || prop === 'waftSpread') {
-    const num = Number(val) || 1.20;
+    const num = Number(val) || 1.0;
     rawAltarMistConfig.carpetSpread = num;
     rawAltarMistConfig.waftSpread = num;
-    updateCarpetScales();
+    updateFOG004ScaleAndPosition();
   } else if (prop === 'yOffset') {
-    const num = Number(val) || 0.02;
+    const num = Number(val) || 0.015;
     rawAltarMistConfig.yOffset = num;
     if (altarSteamGroup) {
       altarSteamGroup.position.y = num;
     }
-    if (fog004MeshRef) {
-      fog004MeshRef.position.y = fog004InitialY + num;
-    }
+    updateFOG004ScaleAndPosition();
   } else if (prop === 'color' || prop === 'puffColor' || prop === 'groundColor') {
     if (val instanceof THREE.Color) {
       altarMistUniforms.uColor.value.copy(val);
@@ -198,139 +201,16 @@ export function applyAltarMistConfig(prop, val) {
 registerAltarMistConfigListener(applyAltarMistConfig);
 
 /**
- * Creates the Altar Mist Carpet & Billowing Steam System:
- * 1. Primary horizontal mist carpet across the raised stone altar slab
- * 2. Secondary elevated mist cushion for deep volumetric richness
- * 3. Low-elevation billowing steam wisps rising directly from the blue fire bowl
+ * Creates the Altar Steam System directly above the bowl (fog2):
+ * - Gentle, low-elevation rising steam plumes (NO rigid slicing quads across altar rocks).
  */
 function createAltarSteamSystem(bowlNode) {
   fog2BowlAnchorNode = bowlNode;
   altarSteamGroup = new THREE.Group();
   altarSteamGroup.name = 'AltarSteamGroup';
-  altarSteamGroup.position.set(0, rawAltarMistConfig.yOffset || 0.02, 0);
+  altarSteamGroup.position.set(0, rawAltarMistConfig.yOffset || 0.015, 0);
 
-  // 1. Primary Horizontal Dense Carpet Material (Altar Slab)
-  slabCarpetMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      uTime: altarMistUniforms.uTime,
-      uOpacity: altarMistUniforms.uOpacity,
-      uCarpetDensity: altarMistUniforms.uCarpetDensity,
-      uFlowSpeed: altarMistUniforms.uFlowSpeed,
-      uColor: altarMistUniforms.uColor,
-      uCoreColor: altarMistUniforms.uCoreColor,
-      uRimColor: altarMistUniforms.uRimColor
-    },
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    blending: THREE.NormalBlending,
-    vertexShader: `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec2 vUv;
-      uniform float uTime;
-      uniform float uOpacity;
-      uniform float uCarpetDensity;
-      uniform float uFlowSpeed;
-      uniform vec3 uColor;
-      uniform vec3 uCoreColor;
-      uniform vec3 uRimColor;
-
-      ${simplexNoiseGLSL}
-
-      void main() {
-        vec2 centeredUv = (vUv - 0.5) * 2.0;
-        float dist = length(centeredUv);
-        // Organic radial falloff pooling across the stone slab around the bowl
-        float slabMask = smoothstep(1.02, 0.25, dist);
-
-        // Fluid drifting vapor across the slab
-        vec2 flowUv1 = vUv * 2.5 + vec2(
-          sin(uTime * 0.05 * uFlowSpeed + vUv.y * 1.6) * 0.12 + uTime * 0.04 * uFlowSpeed,
-          -uTime * 0.06 * uFlowSpeed
-        );
-        vec2 flowUv2 = vUv * 4.4 + vec2(
-          -uTime * 0.03 * uFlowSpeed,
-          cos(uTime * 0.04 * uFlowSpeed + vUv.x * 1.8) * 0.10
-        );
-        float n1 = snoise(flowUv1);
-        float n2 = snoise(flowUv2);
-        float noise = (n1 * 0.65 + n2 * 0.35) * 0.5 + 0.5;
-
-        // Rich billowing density: dense creeping carpet pooling around the altar
-        float billow = smoothstep(0.20, 0.80, noise);
-        float carpet = mix(0.45, 1.0, billow);
-
-        float alpha = clamp(slabMask * carpet * uOpacity * uCarpetDensity * 0.85, 0.0, 0.90);
-
-        // Luminous turquoise glow near bowl with creamy mist body
-        vec3 col = mix(uCoreColor, uColor, clamp(dist * 0.75, 0.0, 1.0));
-        col = mix(col, uRimColor, clamp(pow(billow, 1.6) * 0.50, 0.0, 1.0));
-
-        gl_FragColor = vec4(col, alpha);
-      }
-    `
-  });
-
-  // 2. Secondary Elevated Volumetric Tendril Material (for rich depth)
-  slabSecondaryMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      uTime: altarMistUniforms.uTime,
-      uOpacity: altarMistUniforms.uOpacity,
-      uCarpetDensity: altarMistUniforms.uCarpetDensity,
-      uFlowSpeed: altarMistUniforms.uFlowSpeed,
-      uColor: altarMistUniforms.uColor,
-      uRimColor: altarMistUniforms.uRimColor
-    },
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    blending: THREE.NormalBlending,
-    vertexShader: `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec2 vUv;
-      uniform float uTime;
-      uniform float uOpacity;
-      uniform float uCarpetDensity;
-      uniform float uFlowSpeed;
-      uniform vec3 uColor;
-      uniform vec3 uRimColor;
-
-      ${simplexNoiseGLSL}
-
-      void main() {
-        float edgeDistX = min(vUv.x, 1.0 - vUv.x);
-        float edgeDistY = min(vUv.y, 1.0 - vUv.y);
-        float edgeFade = smoothstep(0.0, 0.12, min(edgeDistX, edgeDistY));
-
-        // Counter-flowing secondary ribbons
-        vec2 flowUv = vUv * 3.2 + vec2(
-          -uTime * 0.05 * uFlowSpeed,
-          sin(uTime * 0.06 * uFlowSpeed + vUv.x * 2.0) * 0.14
-        );
-        float n = snoise(flowUv) * 0.5 + 0.5;
-        float ribbon = smoothstep(0.20, 0.85, n);
-
-        float alpha = clamp(edgeFade * ribbon * uOpacity * uCarpetDensity * 0.55, 0.0, 1.0);
-        vec3 col = mix(uColor, uRimColor, clamp(n * 0.45, 0.0, 1.0));
-
-        gl_FragColor = vec4(col, alpha);
-      }
-    `
-  });
-
-  // 3. Billowing Steam Plumes Material (Low-elevation subtle wisps)
+  // Billowing Steam Plumes Material (Low-elevation subtle wisps rising out of the bowl)
   steamMaterial = new THREE.ShaderMaterial({
     uniforms: {
       uTime: altarMistUniforms.uTime,
@@ -388,27 +268,7 @@ function createAltarSteamSystem(bowlNode) {
     `
   });
 
-  // Layer 1: Altar Slab Mist Carpet Mesh (Flat horizontal plane hugging the slab)
-  const slabGeom = new THREE.PlaneGeometry(1.0, 1.0);
-  altarSlabMistMesh = new THREE.Mesh(slabGeom, slabCarpetMaterial);
-  altarSlabMistMesh.name = 'AltarSlabMistCarpet';
-  altarSlabMistMesh.rotation.x = -Math.PI / 2;
-  altarSlabMistMesh.position.set(-0.10, 0.02, -0.20);
-  altarSlabMistMesh.renderOrder = 2;
-  altarSteamGroup.add(altarSlabMistMesh);
-
-  // Layer 2: Secondary Elevated Volumetric Tendril Shroud
-  const secGeom = new THREE.PlaneGeometry(1.0, 1.0);
-  altarSlabSecondaryMesh = new THREE.Mesh(secGeom, slabSecondaryMaterial);
-  altarSlabSecondaryMesh.name = 'AltarSlabSecondaryMist';
-  altarSlabSecondaryMesh.rotation.x = -Math.PI / 2;
-  altarSlabSecondaryMesh.position.set(-0.10, 0.05, -0.20);
-  altarSlabSecondaryMesh.renderOrder = 2;
-  altarSteamGroup.add(altarSlabSecondaryMesh);
-
-  updateCarpetScales();
-
-  // Layer 3: Subtle, Low-elevation Rising Steam Wisps
+  // Subtle, Low-elevation Rising Steam Wisps
   const plumeConfigs = [
     { x: 0.00, y: 0.16, z: 0.00, wMult: 0.85, hMult: 0.90, speed: 0.32, seed: 1.14, rotZ: 0.00 },
     { x: -0.10, y: 0.22, z: -0.12, wMult: 0.95, hMult: 1.00, speed: 0.36, seed: 2.37, rotZ: 0.15 },
@@ -417,8 +277,8 @@ function createAltarSteamSystem(bowlNode) {
     { x: -0.06, y: 0.14, z: 0.08, wMult: 0.75, hMult: 0.80, speed: 0.28, seed: 5.92, rotZ: -0.10 }
   ];
 
-  const sh = rawAltarMistConfig.steamHeight || 0.45;
-  const sr = rawAltarMistConfig.steamRadius || 0.45;
+  const sh = rawAltarMistConfig.steamHeight || 0.40;
+  const sr = rawAltarMistConfig.steamRadius || 0.40;
 
   plumeConfigs.forEach((cfg) => {
     const geom = new THREE.PlaneGeometry(1.0, 1.0);
@@ -441,7 +301,7 @@ function createAltarSteamSystem(bowlNode) {
   });
 
   bowlNode.add(altarSteamGroup);
-  console.log(`[AltarMist] Attached Dense Mist Carpet & Billowing Steam to bowl node "${bowlNode.name}" at`, bowlNode.position.toArray());
+  console.log(`[AltarMist] Attached Billowing Steam System to bowl node "${bowlNode.name}" at`, bowlNode.position.toArray());
 }
 
 /**
@@ -482,23 +342,21 @@ function createFluffyCloudCluster(puffRadius, puffHeight) {
 }
 
 /**
- * Initializes Altar Mist & Steam systems:
- * - Direct dense horizontal carpet on the altar slab (fog2).
- * - Borderless dense creeping carpet on FOG.004 covering the altar platform floor.
- * - Optional puff billboards on fog1 & fire001 empties.
+ * Initializes Altar Mist & Cascading Canyon Flow:
+ * - FOG.004: Soft, organic mist carpet hugging the circular altar floor & steps (zero knife cuts).
+ * - FOG.006 & FOG.005: Canyon cascade planes (mist gently cascades off the altar into the canyon below).
+ * - fog2: Gentle rising steam plumes above the sacrificial fire bowl.
  */
-export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2Node = null) {
-  // 1. Primary: Dense Mist Carpet & Billowing Steam on the altar slab (fog2)
+export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2Node = null, fog006Node = null, fog005Node = null, fog002Node = null) {
+  // 1. Billowing steam plumes above the bowl (fog2)
   if (fog2Node) {
     createAltarSteamSystem(fog2Node);
   }
 
-  // 2. FOG.004 on the altar platform floor
+  // 2. FOG.004 — Altar Platform Floor Carpet (Organic contour, soft contact dissipation, NO razor cuts)
   if (fog004Node) {
     fog004MeshRef = fog004Node;
-    fog004InitialY = fog004MeshRef.position.y;
-    const yOff = rawAltarMistConfig.yOffset !== undefined ? rawAltarMistConfig.yOffset : 0.02;
-    fog004MeshRef.position.y = fog004InitialY + yOff;
+    updateFOG004ScaleAndPosition();
 
     fog004Material = new THREE.ShaderMaterial({
       uniforms: {
@@ -534,35 +392,35 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
         ${simplexNoiseGLSL}
 
         void main() {
-          vec2 centeredUv = (vUv - 0.5) * 2.0;
-          float dist = length(centeredUv);
-          // Organic radial contour matching the circular altar platform:
-          // Fully dense across the platform interior, feathering softly towards the circular edge
-          float circleMask = smoothstep(1.05, 0.40, dist);
+          // Soft boundary feathering on all edges to eliminate hard mesh ribs and knife cuts
+          float edgeDistX = min(vUv.x, 1.0 - vUv.x);
+          float edgeDistY = min(vUv.y, 1.0 - vUv.y);
+          float edgeFade = smoothstep(0.0, 0.15, min(edgeDistX, edgeDistY));
 
-          // Multi-octave organic creeping fluid drift
-          vec2 flowUv1 = vUv * 2.6 + vec2(
-            sin(uTime * 0.05 * uFlowSpeed + vUv.y * 1.6) * 0.14 + uTime * 0.04 * uFlowSpeed,
+          // Multi-octave organic creeping fluid drift across the altar platform
+          vec2 flowUv1 = vUv * 2.5 + vec2(
+            sin(uTime * 0.05 * uFlowSpeed + vUv.y * 1.5) * 0.12 + uTime * 0.04 * uFlowSpeed,
             -uTime * 0.06 * uFlowSpeed
           );
-          vec2 flowUv2 = vUv * 4.6 + vec2(
-            -uTime * 0.04 * uFlowSpeed,
-            cos(uTime * 0.05 * uFlowSpeed + vUv.x * 1.8) * 0.12
+          vec2 flowUv2 = vUv * 4.4 + vec2(
+            -uTime * 0.03 * uFlowSpeed,
+            cos(uTime * 0.04 * uFlowSpeed + vUv.x * 1.8) * 0.10
           );
           float n1 = snoise(flowUv1);
           float n2 = snoise(flowUv2);
           float noise = (n1 * 0.62 + n2 * 0.38) * 0.5 + 0.5;
 
-          // Billowing creeping carpet: dense milky ridges with visible valleys
-          float billow = smoothstep(0.22, 0.82, noise);
-          float carpet = mix(0.40, 1.0, billow);
+          // Natural billowing density: dense creeping carpet that hugs the stones,
+          // allowing concentric circular tiles to breathe through valleys
+          float billow = smoothstep(0.18, 0.78, noise);
+          float carpet = mix(0.35, 1.0, billow);
 
-          // Alpha: dense rich carpet that hugs the stones
-          float alpha = clamp(circleMask * carpet * uOpacity * uCarpetDensity * 0.82, 0.0, 0.90);
+          // Alpha: rich dense carpet with soft contact dissipation
+          float alpha = clamp(edgeFade * carpet * uOpacity * uCarpetDensity * 0.82, 0.0, 0.88);
 
           // Rich luminous celestial colors:
-          vec3 col = mix(uColor, uCoreColor, clamp((1.0 - dist * 0.8) * 0.35, 0.0, 1.0));
-          col = mix(col, uRimColor, clamp(pow(billow, 1.6) * 0.50, 0.0, 1.0));
+          vec3 col = mix(uCoreColor, uColor, clamp((vUv.y * 0.8 + 0.2), 0.0, 1.0));
+          col = mix(col, uRimColor, clamp(pow(billow, 1.6) * 0.45, 0.0, 1.0));
 
           gl_FragColor = vec4(col, alpha);
         }
@@ -572,10 +430,155 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
     fog004MeshRef.material = fog004Material;
     fog004MeshRef.visible = !rawAltarMistConfig.hideFOG004;
     fog004MeshRef.renderOrder = 2;
-    console.log(`[AltarMist] Enhanced FOG004 dense mist carpet (visible: ${fog004MeshRef.visible}).`);
+    console.log(`[AltarMist] Enhanced FOG004 altar platform mist (visible: ${fog004MeshRef.visible}).`);
   }
 
-  // 3. Empties Puffs (fog1 & fire.001, disabled by default)
+  // 3. FOG.006 & FOG.005 — Canyon Cascade Planes (Mist gently cascades off the altar into the canyon)
+  const cascadeFragmentShader = `
+    varying vec2 vUv;
+    uniform float uTime;
+    uniform float uOpacity;
+    uniform float uCarpetDensity;
+    uniform float uFlowSpeed;
+    uniform vec3 uColor;
+    uniform vec3 uCoreColor;
+    uniform vec3 uRimColor;
+
+    ${simplexNoiseGLSL}
+
+    void main() {
+      // Soft seamless perimeter feathering across all 4 boundaries
+      float edgeDistX = min(vUv.x, 1.0 - vUv.x);
+      float edgeDistY = min(vUv.y, 1.0 - vUv.y);
+      float edgeFade = smoothstep(0.0, 0.18, min(edgeDistX, edgeDistY));
+
+      // Directional downward cascade from the altar ledge down into the canyon
+      vec2 flowUv1 = vUv * 2.2 + vec2(
+        uTime * 0.04 * uFlowSpeed,
+        -uTime * 0.07 * uFlowSpeed + sin(uTime * 0.04 * uFlowSpeed + vUv.x * 2.0) * 0.10
+      );
+      vec2 flowUv2 = vUv * 4.0 + vec2(
+        -uTime * 0.03 * uFlowSpeed,
+        -uTime * 0.05 * uFlowSpeed
+      );
+      float n1 = snoise(flowUv1);
+      float n2 = snoise(flowUv2);
+      float noise = (n1 * 0.65 + n2 * 0.35) * 0.5 + 0.5;
+
+      float billow = smoothstep(0.15, 0.75, noise);
+      float carpet = mix(0.30, 1.0, billow);
+
+      // Harmonized opacity with FOG.004 so it smoothly pours from the altar
+      float alpha = clamp(edgeFade * carpet * uOpacity * uCarpetDensity * 0.75, 0.0, 0.85);
+
+      vec3 col = mix(uColor, uRimColor, clamp(pow(billow, 1.5) * 0.45, 0.0, 1.0));
+      gl_FragColor = vec4(col, alpha);
+    }
+  `;
+
+  if (fog006Node) {
+    fog006MeshRef = fog006Node;
+    fog006InitialY = fog006MeshRef.position.y;
+    fog006MeshRef.position.y = fog006InitialY + 0.01;
+
+    fog006Material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: altarMistUniforms.uTime,
+        uOpacity: altarMistUniforms.uOpacity,
+        uCarpetDensity: altarMistUniforms.uCarpetDensity,
+        uFlowSpeed: altarMistUniforms.uFlowSpeed,
+        uColor: altarMistUniforms.uColor,
+        uCoreColor: altarMistUniforms.uCoreColor,
+        uRimColor: altarMistUniforms.uRimColor
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: cascadeFragmentShader
+    });
+
+    fog006MeshRef.material = fog006Material;
+    fog006MeshRef.renderOrder = 2;
+    console.log(`[AltarMist] Enhanced FOG006 canyon cascade plane.`);
+  }
+
+  if (fog005Node) {
+    fog005MeshRef = fog005Node;
+    fog005InitialY = fog005MeshRef.position.y;
+    fog005MeshRef.position.y = fog005InitialY + 0.01;
+
+    fog005Material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: altarMistUniforms.uTime,
+        uOpacity: altarMistUniforms.uOpacity,
+        uCarpetDensity: altarMistUniforms.uCarpetDensity,
+        uFlowSpeed: altarMistUniforms.uFlowSpeed,
+        uColor: altarMistUniforms.uColor,
+        uCoreColor: altarMistUniforms.uCoreColor,
+        uRimColor: altarMistUniforms.uRimColor
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: cascadeFragmentShader
+    });
+
+    fog005MeshRef.material = fog005Material;
+    fog005MeshRef.renderOrder = 2;
+    console.log(`[AltarMist] Enhanced FOG005 altar base cascade plane.`);
+  }
+
+  if (fog002Node) {
+    fog002MeshRef = fog002Node;
+    fog002InitialY = fog002MeshRef.position.y;
+    fog002MeshRef.position.y = fog002InitialY + 0.01;
+
+    fog002Material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: altarMistUniforms.uTime,
+        uOpacity: altarMistUniforms.uOpacity,
+        uCarpetDensity: altarMistUniforms.uCarpetDensity,
+        uFlowSpeed: altarMistUniforms.uFlowSpeed,
+        uColor: altarMistUniforms.uColor,
+        uCoreColor: altarMistUniforms.uCoreColor,
+        uRimColor: altarMistUniforms.uRimColor
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: cascadeFragmentShader
+    });
+
+    fog002MeshRef.material = fog002Material;
+    fog002MeshRef.renderOrder = 2;
+    console.log(`[AltarMist] Enhanced FOG002 cliff cascade transition plane.`);
+  }
+
+  // 4. Empties Puffs (fog1 & fire.001, disabled by default)
   if (!puffMaterial && (fog1Node || fire001Node)) {
     puffMaterial = new THREE.ShaderMaterial({
       uniforms: altarMistUniforms,
@@ -730,26 +733,6 @@ export function cleanupAltarMist() {
     steamMaterial = null;
   }
 
-  if (altarSlabMistMesh) {
-    if (altarSlabMistMesh.geometry) altarSlabMistMesh.geometry.dispose();
-    altarSlabMistMesh = null;
-  }
-
-  if (slabCarpetMaterial) {
-    slabCarpetMaterial.dispose();
-    slabCarpetMaterial = null;
-  }
-
-  if (altarSlabSecondaryMesh) {
-    if (altarSlabSecondaryMesh.geometry) altarSlabSecondaryMesh.geometry.dispose();
-    altarSlabSecondaryMesh = null;
-  }
-
-  if (slabSecondaryMaterial) {
-    slabSecondaryMaterial.dispose();
-    slabSecondaryMaterial = null;
-  }
-
   if (altarSteamGroup) {
     altarSteamGroup.parent?.remove(altarSteamGroup);
     altarSteamGroup = null;
@@ -770,6 +753,16 @@ export function cleanupAltarMist() {
     fog004Material = null;
   }
 
+  if (fog006Material) {
+    fog006Material.dispose();
+    fog006Material = null;
+  }
+
+  if (fog005Material) {
+    fog005Material.dispose();
+    fog005Material = null;
+  }
+
   if (fog1RootGroup) {
     fog1RootGroup.parent?.remove(fog1RootGroup);
     fog1RootGroup = null;
@@ -785,6 +778,26 @@ export function cleanupAltarMist() {
     fog004MeshRef = null;
   }
 
+  if (fog006MeshRef) {
+    fog006MeshRef.visible = true;
+    fog006MeshRef = null;
+  }
+
+  if (fog005MeshRef) {
+    fog005MeshRef.visible = true;
+    fog005MeshRef = null;
+  }
+
+  if (fog002Material) {
+    fog002Material.dispose();
+    fog002Material = null;
+  }
+
+  if (fog002MeshRef) {
+    fog002MeshRef.visible = true;
+    fog002MeshRef = null;
+  }
+
   fog2BowlAnchorNode = null;
 }
 
@@ -793,12 +806,15 @@ export function cleanupAltarMist() {
  */
 export function getAltarMistState() {
   return {
-    hasAltarMist: !!(altarSteamGroup || fog004MeshRef || fog1RootGroup || fire001RootGroup),
+    hasAltarMist: !!(altarSteamGroup || fog004MeshRef || fog006MeshRef || fog005MeshRef || fog002MeshRef || fog1RootGroup || fire001RootGroup),
     hasSteam: !!altarSteamGroup,
     steamPlumesCount: steamPlumes.length,
     bowlAnchor: fog2BowlAnchorNode ? fog2BowlAnchorNode.name : null,
     fog004Active: !!fog004MeshRef && fog004MeshRef.visible,
     fog004Pos: fog004MeshRef ? fog004MeshRef.position.toArray() : null,
+    fog006Active: !!fog006MeshRef && fog006MeshRef.visible,
+    fog005Active: !!fog005MeshRef && fog005MeshRef.visible,
+    fog002Active: !!fog002MeshRef && fog002MeshRef.visible,
     fog1Active: !!fog1RootGroup,
     fire001Active: !!fire001RootGroup,
     cloudPuffsCount: puffBillboards.length,
