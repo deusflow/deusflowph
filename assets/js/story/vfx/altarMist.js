@@ -709,6 +709,10 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
   // Enhance deep canyon mist plane (FOG007) with soft noise cascade shader
   if (fog007Node) {
     fog007Node.visible = true;
+    // Constrain width and lower into canyon floor bed like FOG006 so it flows along the gorge without slicing walls:
+    fog007Node.scale.set(2.2, 5.826, 4.2);
+    fog007Node.position.set(-0.15, -1.40, -12.92);
+
     fog007Node.material = new THREE.ShaderMaterial({
       uniforms: {
         uTime: altarMistUniforms.uTime,
