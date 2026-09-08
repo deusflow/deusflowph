@@ -124,21 +124,19 @@ if (typeof window !== 'undefined') {
  * ALTAR_MIST_CONFIG.<параметр> = ...
  * ==================================================================== */
 export const rawAltarMistConfig = {
-  // 1. Напольный туман FOG, FOG.001 ... FOG.007 (стелется по всей плоскости пола вдоль каньона):
-  opacity: 0.55,          // Прозрачность тумана на полу (0.35 - тонкая дымка, 0.55 - оптимум, 0.85 - плотнее; поддерживает 0..1 и 0..100)
+  // 1. Напольный туман FOG.004 (стелется по плоскости пола перед алтарем):
+  opacity: 0.38,          // Прозрачность тумана на полу (0.15 - тонкая дымка, 0.38 - оптимум, 0.7 - густой)
   flowSpeed: 0.25,        // Скорость мягкого перекатывания дымки по полу
   yOffset: 0.015,         // Микро-подъем (1.5 см) над плитами для устранения мерцания (z-fighting)
-  hideFOG: false,         // Напольный туман активен
-  hideFOG004: false,      // Для совместимости
+  hideFOG004: false,      // FOG004 активен прямо на полу с мягким бесшовным шейдером без ребер!
 
-  // 2. Светлая палитра тумана (светлый небесно-серебристый, никогда не темный/черный):
-  color: new THREE.Color(0xc0d8ec),       // Светлый шелковый туман (#c0d8ec)
-  puffColor: new THREE.Color(0xc0d8ec),   // Для обратной совместимости
-  groundColor: new THREE.Color(0xc0d8ec), // Для обратной совместимости
-  rimColor: new THREE.Color(0xf0f7ff),    // Мягкий сияющий перламутровый оттенок (#f0f7ff)
+  // 2. Атмосферная палитра тумана (#7b8a9c - оригинальный цвет тумана сцены):
+  puffColor: new THREE.Color(0x7b8a9c),   // Мягкий серебристо-дымчатый цвет тумана сцены (#7b8a9c)
+  groundColor: new THREE.Color(0x7b8a9c), // Для совместимости
+  rimColor: new THREE.Color(0x9cb5ce),    // Нежный серебристо-голубой ореол на просвет
 
   // 3. Пустышки fog1 и fire.001 (парящие облачка в воздухе сзади/сбоку алтаря):
-  enableEmptiesPuffs: false, // Выключены по умолчанию (false, чтобы не было висящих шаров)
+  enableEmptiesPuffs: false, // Выключены по умолчанию (чтобы не было висящих шаров в воздухе)
   puffRadius: 1.65,       // Ширина клубов облачков
   puffHeight: 0.85,       // Высота подъема клубов облачков
   cloudSpread: 1.35,      // Радиус разброса клубов вокруг алтаря
@@ -178,7 +176,5 @@ export function setAltarMistConfig(newConfig = {}) {
 if (typeof window !== 'undefined') {
   window.ALTAR_MIST_CONFIG = ALTAR_MIST_CONFIG;
   window.setAltarMistConfig = setAltarMistConfig;
-  window.GROUND_FOG_CONFIG = ALTAR_MIST_CONFIG;
-  window.setGroundFogConfig = setAltarMistConfig;
 }
 

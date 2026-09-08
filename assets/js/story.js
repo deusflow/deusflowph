@@ -308,7 +308,6 @@ export function initStoryEngine() {
       let altarFog1Node = null;
       let altarFire001Node = null;
       let fog004MeshNode = null;
-      const allGroundFogNodes = [];
 
       root.traverse((child) => {
         // Punctual lights scaling
@@ -347,10 +346,10 @@ export function initStoryEngine() {
           if (isBillboard) {
             processBillboardCloud(child);
           } else if (isGroundFog) {
-            allGroundFogNodes.push(child);
             if (child.name === 'FOG004' || child.name === 'FOG.004') {
               fog004MeshNode = child;
             }
+            processGroundFog(child);
           }
 
           // Stars de-gridding & scintillation shader
@@ -365,9 +364,9 @@ export function initStoryEngine() {
         createBlueFire(fireTargetNode);
       }
 
-      // 4b. Attach Altar Mist & Ground Fog Corridor to all FOG nodes & empties
-      if (altarFog1Node || altarFire001Node || allGroundFogNodes.length > 0) {
-        createAltarMist(altarFog1Node, altarFire001Node, fog004MeshNode, allGroundFogNodes);
+      // 4b. Attach Hybrid Altar Mist (Option 1 + Option 2) to altar empty nodes (fog1 & fire.001)
+      if (altarFog1Node || altarFire001Node || fog004MeshNode) {
+        createAltarMist(altarFog1Node, altarFire001Node, fog004MeshNode);
       }
 
       // 5. Setup Window Resize & ScrollTrigger
@@ -456,8 +455,7 @@ export function initStoryEngine() {
                 geometryType: c.geometry?.type,
                 position: [c.position.x, c.position.y, c.position.z],
                 scale: [c.scale.x, c.scale.y, c.scale.z],
-                worldVertices: verts,
-                uvs: c.geometry?.attributes?.uv ? Array.from(c.geometry.attributes.uv.array).map(x=>+x.toFixed(4)) : null
+                worldVertices: verts
               };
             }
           });
