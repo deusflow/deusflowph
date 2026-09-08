@@ -433,7 +433,7 @@ async function runBrowserVerification() {
 
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');
-  const scrollMilestones = [0.0, 0.25, 0.5, 0.75, 1.0];
+  const scrollMilestones = [0.0, 0.25, 0.38, 0.45, 0.5, 0.75, 1.0];
   const cameraPositions = [];
 
   for (const p of scrollMilestones) {
@@ -449,7 +449,7 @@ async function runBrowserVerification() {
       `
     });
 
-    await sleep(150);
+    await sleep(200);
 
     const posRes = await sendCmd('Runtime.evaluate', {
       expression: 'window.__STORY_STATE__.getCameraPosition()',
@@ -460,7 +460,7 @@ async function runBrowserVerification() {
     console.log(`- Scroll ${(p * 100).toFixed(0)}%: Camera Position = [ X: ${pos.x.toFixed(4)}, Y: ${pos.y.toFixed(4)}, Z: ${pos.z.toFixed(4)} ]`);
 
     // Capture screenshots only if explicitly requested (e.g. SAVE_SCREENSHOTS=1)
-    if (process.env.SAVE_SCREENSHOTS === '1' && (p === 0.0 || p === 0.5 || p === 0.75 || p === 1.0)) {
+    if (process.env.SAVE_SCREENSHOTS === '1') {
       const shotRes = await sendCmd('Page.captureScreenshot', { format: 'png' });
       const shotBuf = Buffer.from(shotRes.data, 'base64');
       const shotFile = path.resolve(`story_scroll_${Math.round(p * 100)}.png`);

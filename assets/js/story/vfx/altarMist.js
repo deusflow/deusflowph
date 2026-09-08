@@ -359,7 +359,7 @@ function createFluffyCloudCluster(puffRadius, puffHeight) {
  * - FOG.006 & FOG.005: Canyon cascade planes (mist gently cascades off the altar into the canyon below).
  * - fog2: Gentle rising steam plumes above the sacrificial fire bowl.
  */
-export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2Node = null, fog006Node = null, fog005Node = null, fog002Node = null) {
+export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2Node = null, fog006Node = null, fog005Node = null, fog002Node = null, fogRootNode = null, fog001Node = null) {
   // 1. Billowing steam plumes above the bowl (fog2)
   if (fog2Node) {
     createAltarSteamSystem(fog2Node);
@@ -404,19 +404,35 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
         ${simplexNoiseGLSL}
 
         void main() {
-          // Soft boundary feathering on all edges to eliminate hard mesh ribs and knife cuts
+          // 1. Organic Radial Dissipation ("Растечение по камням")
+          // UV coordinates centered from (-1.0 to +1.0)
+          vec2 centeredUv = (vUv - vec2(0.5, 0.5)) * 2.0;
+          
+          // Perspective compensation for the angled altar platform:
+          float dist = length(centeredUv * vec2(1.0, 1.18));
+
+          // Multi-octave Simplex Noise modulating the boundary into organic creeping tendrils:
+          vec2 edgeUv1 = vUv * 3.4 + vec2(uTime * 0.04 * uFlowSpeed, -uTime * 0.05 * uFlowSpeed);
+          vec2 edgeUv2 = vUv * 6.2 + vec2(-uTime * 0.03 * uFlowSpeed, uTime * 0.035 * uFlowSpeed);
+          float edgeNoise = (snoise(edgeUv1) * 0.65 + snoise(edgeUv2) * 0.35) * 0.28;
+
+          // Radial falloff: reaches 0.0 well before touching any rock walls or polygon corners!
+          float radialFade = smoothstep(0.92, 0.20, dist + edgeNoise);
+
+          // Quad perimeter feathering for safety:
           float edgeDistX = min(vUv.x, 1.0 - vUv.x);
           float edgeDistY = min(vUv.y, 1.0 - vUv.y);
-          float edgeFade = smoothstep(0.0, 0.15, min(edgeDistX, edgeDistY));
+          float quadFade = smoothstep(0.0, 0.22, min(edgeDistX, edgeDistY));
+          float fluidMask = radialFade * quadFade;
 
-          // Multi-octave organic creeping fluid drift across the altar platform
-          vec2 flowUv1 = vUv * 2.5 + vec2(
-            sin(uTime * 0.05 * uFlowSpeed + vUv.y * 1.5) * 0.12 + uTime * 0.04 * uFlowSpeed,
+          // 2. Multi-octave organic creeping fluid drift across the altar platform
+          vec2 flowUv1 = vUv * 2.6 + vec2(
+            sin(uTime * 0.05 * uFlowSpeed + vUv.y * 1.8) * 0.14 + uTime * 0.04 * uFlowSpeed,
             -uTime * 0.06 * uFlowSpeed
           );
-          vec2 flowUv2 = vUv * 4.4 + vec2(
-            -uTime * 0.03 * uFlowSpeed,
-            cos(uTime * 0.04 * uFlowSpeed + vUv.x * 1.8) * 0.10
+          vec2 flowUv2 = vUv * 4.8 + vec2(
+            -uTime * 0.035 * uFlowSpeed,
+            cos(uTime * 0.04 * uFlowSpeed + vUv.x * 2.0) * 0.12
           );
           float n1 = snoise(flowUv1);
           float n2 = snoise(flowUv2);
@@ -424,14 +440,14 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
 
           // Natural billowing density: dense creeping carpet that hugs the stones,
           // allowing concentric circular tiles to breathe through valleys
-          float billow = smoothstep(0.18, 0.78, noise);
-          float carpet = mix(0.35, 1.0, billow);
+          float billow = smoothstep(0.16, 0.76, noise);
+          float carpet = mix(0.38, 1.0, billow);
 
-          // Alpha: rich dense carpet with soft contact dissipation
-          float alpha = clamp(edgeFade * carpet * uOpacity * uCarpetDensity * 0.82, 0.0, 0.88);
+          // Alpha: rich dense carpet with soft contact dissipation - NEVER cuts like a blade
+          float alpha = clamp(fluidMask * carpet * uOpacity * uCarpetDensity * 0.85, 0.0, 0.90);
 
           // Rich luminous celestial colors:
-          vec3 col = mix(uCoreColor, uColor, clamp((vUv.y * 0.8 + 0.2), 0.0, 1.0));
+          vec3 col = mix(uCoreColor, uColor, clamp((dist * 0.75 + 0.25), 0.0, 1.0));
           col = mix(col, uRimColor, clamp(pow(billow, 1.6) * 0.45, 0.0, 1.0));
 
           gl_FragColor = vec4(col, alpha);
@@ -459,12 +475,22 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
     ${simplexNoiseGLSL}
 
     void main() {
-      // Soft seamless perimeter feathering across all 4 boundaries
+      // 1. Organic Elliptical Radial Boundary Fade:
+      vec2 centeredUv = (vUv - vec2(0.5, 0.5)) * 2.0;
+      float dist = length(centeredUv * vec2(1.0, 0.88));
+
+      // Multi-octave edge erosion noise so boundaries are undulating natural wisps
+      vec2 edgeUv = vUv * 3.0 + vec2(uTime * 0.04 * uFlowSpeed, -uTime * 0.06 * uFlowSpeed);
+      float edgeNoise = (snoise(edgeUv) * 0.65 + snoise(edgeUv * 2.2) * 0.35) * 0.26;
+      float radialFade = smoothstep(0.92, 0.18, dist + edgeNoise);
+
+      // Soft seamless perimeter feathering across all 4 quad boundaries
       float edgeDistX = min(vUv.x, 1.0 - vUv.x);
       float edgeDistY = min(vUv.y, 1.0 - vUv.y);
-      float edgeFade = smoothstep(0.0, 0.18, min(edgeDistX, edgeDistY));
+      float quadFade = smoothstep(0.0, 0.25, min(edgeDistX, edgeDistY));
+      float edgeFade = radialFade * quadFade;
 
-      // Directional downward cascade from the altar ledge down into the canyon
+      // 2. Directional downward cascade from the altar ledge down into the canyon
       vec2 flowUv1 = vUv * 2.2 + vec2(
         uTime * 0.04 * uFlowSpeed,
         -uTime * 0.07 * uFlowSpeed + sin(uTime * 0.04 * uFlowSpeed + vUv.x * 2.0) * 0.10
@@ -492,6 +518,9 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
     fog006MeshRef = fog006Node;
     fog006InitialY = fog006MeshRef.position.y;
     fog006MeshRef.position.y = fog006InitialY + 0.01;
+    // Constrain X width and center in canyon chasm so it NEVER penetrates the altar base/stone idol
+    fog006MeshRef.scale.set(2.4, 5.826, 5.826);
+    fog006MeshRef.position.x = -0.3;
 
     fog006Material = new THREE.ShaderMaterial({
       uniforms: {
@@ -588,6 +617,63 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
     fog002MeshRef.material = fog002Material;
     fog002MeshRef.renderOrder = 2;
     console.log(`[AltarMist] Enhanced FOG002 cliff cascade transition plane.`);
+  }
+
+  // Enhance main canyon floor fog planes (FOG and FOG001) with soft noise cascade shader
+  if (fogRootNode) {
+    fogRootNode.material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: altarMistUniforms.uTime,
+        uOpacity: altarMistUniforms.uOpacity,
+        uCarpetDensity: altarMistUniforms.uCarpetDensity,
+        uFlowSpeed: altarMistUniforms.uFlowSpeed,
+        uColor: altarMistUniforms.uColor,
+        uCoreColor: altarMistUniforms.uCoreColor,
+        uRimColor: altarMistUniforms.uRimColor
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: cascadeFragmentShader
+    });
+    fogRootNode.renderOrder = 2;
+    console.log(`[AltarMist] Enhanced canyon floor FOG plane.`);
+  }
+
+  if (fog001Node) {
+    fog001Node.material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: altarMistUniforms.uTime,
+        uOpacity: altarMistUniforms.uOpacity,
+        uCarpetDensity: altarMistUniforms.uCarpetDensity,
+        uFlowSpeed: altarMistUniforms.uFlowSpeed,
+        uColor: altarMistUniforms.uColor,
+        uCoreColor: altarMistUniforms.uCoreColor,
+        uRimColor: altarMistUniforms.uRimColor
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: cascadeFragmentShader
+    });
+    fog001Node.renderOrder = 2;
+    console.log(`[AltarMist] Enhanced canyon floor FOG001 plane.`);
   }
 
   // 4. Empties Puffs (fog1 & fire.001, disabled by default)

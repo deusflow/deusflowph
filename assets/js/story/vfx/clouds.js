@@ -60,6 +60,13 @@ export function processBillboardCloud(child) {
     child.userData.isMist = false;
     child.renderOrder = 2;
   }
+
+  // Billboards nestled directly against the altar monolith (Bilboard.006, 016, 032)
+  // must NOT rotate dynamically towards camera because rotating swings flat quad corners through solid rock
+  if (child.name.includes('006') || child.name.includes('016') || child.name.includes('032')) {
+    child.userData.lockRotation = true;
+  }
+
   return child;
 }
 
@@ -68,11 +75,22 @@ export function processBillboardCloud(child) {
  * Crucial: static horizontal plane, must NOT rotate towards camera.
  */
 export function processGroundFog(child) {
+  // Hide problematic planes that slice through canyon rock walls:
+  // - FOG.007: 11.6m wide plane slicing directly into mountain at Z = -12.9
+  // - FOG.003: floating plane at Y = +1.25 slicing through airspace
+  if (
+    child.name === 'FOG.007' || child.name === 'FOG007' ||
+    child.name === 'FOG.003' || child.name === 'FOG003'
+  ) {
+    child.visible = false;
+    return child;
+  }
+
   const materials = Array.isArray(child.material) ? child.material : [child.material];
   materials.forEach((mat) => {
     mat.transparent = true;
     mat.depthWrite = false;
-    mat.alphaTest = 0.01;
+    mat.alphaTest = 0.001;
     mat.side = THREE.DoubleSide;
     mat.needsUpdate = true;
   });
@@ -116,7 +134,9 @@ export function updateClouds(camera) {
   camera.getWorldPosition(cameraWorldPos);
   for (let i = 0; i < billboardMeshes.length; i++) {
     const mesh = billboardMeshes[i];
-    mesh.lookAt(cameraWorldPos);
+    if (!mesh.userData.lockRotation) {
+      mesh.lookAt(cameraWorldPos);
+    }
 
     // Camera distance near-fade: dissolves billboards gently when camera flies in close
     const baseOp = mesh.userData.baseOpacity ?? 1.0;
