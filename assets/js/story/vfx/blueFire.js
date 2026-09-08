@@ -75,6 +75,8 @@ export function applyBlueFireConfig(prop, val) {
     const num = Number(val);
     rawBlueFireConfig.bottomDensity = num;
     blueFireMaterial.uniforms.uBottomDensity.value = num;
+  } else if (prop === 'sparkScale') {
+    rawBlueFireConfig.sparkScale = Number(val);
   } else if (prop === 'flameHeight') {
     const h = Number(val);
     rawBlueFireConfig.flameHeight = h;
@@ -331,8 +333,8 @@ export function createBlueFireEffect(targetNode) {
   blueFireHaloMesh.renderOrder = 4;
   blueFireGroup.add(blueFireHaloMesh);
 
-  // 3. Physical 3D Polygonal Rising Sparks (Quads, NO gl_PointSize)
-  const sparkGeom = new THREE.PlaneGeometry(0.038, 0.038);
+  // 3. Physical 3D Polygonal Rising Sparks (Quads, NO gl_PointSize) - reduced by 75%
+  const sparkGeom = new THREE.PlaneGeometry(0.0095, 0.0095);
   const sparkMat = new THREE.MeshBasicMaterial({
     color: 0x88eeff,
     transparent: true,
@@ -399,9 +401,12 @@ export function updateBlueFire(time, cam) {
       sparkDummy.position.set(x, y, z);
       sparkDummy.quaternion.copy(cam.quaternion);
 
-      // Fade/shrink near top and near bottom
-      const scaleFade = Math.sin(p * Math.PI) * data.baseScale;
-      sparkDummy.scale.setScalar(Math.max(0.001, scaleFade));
+      // Fade/shrink near top and near bottom, modulated by sparkScale
+      const sparkFactor = (Number(rawBlueFireConfig.sparkScale) !== undefined && !isNaN(Number(rawBlueFireConfig.sparkScale)))
+        ? Number(rawBlueFireConfig.sparkScale)
+        : 1.0;
+      const scaleFade = Math.sin(p * Math.PI) * data.baseScale * sparkFactor;
+      sparkDummy.scale.setScalar(Math.max(0.0001, scaleFade));
       sparkDummy.updateMatrix();
 
       blueFireSparksMesh.setMatrixAt(i, sparkDummy.matrix);
