@@ -384,6 +384,9 @@ async function runBrowserVerification() {
           fog1Active: !!finalState.fog1Active,
           fire001Active: !!finalState.fire001Active,
           emptiesPuffsVisible: !!finalState.emptiesPuffsVisible,
+          hasCanyonCluster: !!finalState.hasCanyonCluster,
+          canyonPlumesCount: finalState.canyonPlumesCount,
+          fog007Visible: !!finalState.fog007Visible,
           windowExposed: !!window.ALTAR_MIST_CONFIG,
           steamConfigExposed: !!window.ALTAR_STEAM_CONFIG,
           normalized55,
@@ -411,9 +414,11 @@ async function runBrowserVerification() {
   console.log(`- FOG006 canyon cascade plane active: ${mistState.fog006Active}`);
   console.log(`- FOG005 altar base cascade plane active: ${mistState.fog005Active}`);
   console.log(`- FOG002 cliff transition cascade plane active: ${mistState.fog002Active}`);
+  console.log(`- Canyon Mist Cluster active: ${mistState.hasCanyonCluster} (Physical plumes: ${mistState.canyonPlumesCount}, FOG.007 rigid plane hidden: ${!mistState.fog007Visible})`);
   console.log(`- Empties puffs visible: ${mistState.emptiesPuffsVisible} (false = no floating balls in air behind altar)`);
   console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.steamConfigExposed && mistState.updatedSteamHeight === 0.55 && mistState.updatedFlowSpeed === 0.3 ? 'PASSED (opacity, steamHeight, steamRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
   console.log(`- Altar Steam Status: ${mistState.hasSteam && mistState.steamPlumesCount === 5 ? 'PASSED: Billowing steam plumes wafting gracefully above bowl & slab' : 'FAILED'}`);
+  console.log(`- Canyon Mist Status: ${mistState.hasCanyonCluster && mistState.canyonPlumesCount === 8 && !mistState.fog007Visible ? 'PASSED: Soft volumetric mist cluster active, rigid knife-cutting FOG.007 hidden' : 'FAILED'}`);
 
   // Restore calibrated dense carpet settings for balanced screenshot
   await sendCmd('Runtime.evaluate', {
@@ -433,7 +438,7 @@ async function runBrowserVerification() {
 
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');
-  const scrollMilestones = [0.0, 0.25, 0.38, 0.45, 0.5, 0.75, 1.0];
+  const scrollMilestones = [0.0, 0.25, 0.38, 0.45, 0.50, 0.58, 0.65, 0.75, 1.0];
   const cameraPositions = [];
 
   for (const p of scrollMilestones) {

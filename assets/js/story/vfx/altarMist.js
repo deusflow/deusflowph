@@ -38,6 +38,12 @@ let fire001RootGroup = null;
 let puffBillboards = [];
 let puffMaterial = null;
 
+let canyonMistGroup = null;
+let canyonPlumes = [];
+let canyonMistBedMaterial = null;
+let canyonMistPuffMaterial = null;
+let fog007MeshRef = null;
+
 export function registerFOG004Mesh(mesh) {
   fog004MeshRef = mesh;
   if (fog004MeshRef) {
@@ -68,7 +74,8 @@ const altarMistUniforms = {
   uCoreColor: { value: rawAltarMistConfig.coreColor ? rawAltarMistConfig.coreColor.clone() : new THREE.Color(0xa5e0f7) },
   uRimColor: { value: rawAltarMistConfig.rimColor ? rawAltarMistConfig.rimColor.clone() : new THREE.Color(0xf5faff) },
   uPuffDensity: { value: Number(rawAltarMistConfig.puffDensity) || 1.0 },
-  uPuffColor: { value: (rawAltarMistConfig.puffColor || rawAltarMistConfig.color) ? (rawAltarMistConfig.puffColor || rawAltarMistConfig.color).clone() : new THREE.Color(0xd5e8f7) }
+  uPuffColor: { value: (rawAltarMistConfig.puffColor || rawAltarMistConfig.color) ? (rawAltarMistConfig.puffColor || rawAltarMistConfig.color).clone() : new THREE.Color(0xd5e8f7) },
+  uCanyonMistDensity: { value: Number(rawAltarMistConfig.canyonMistDensity) || 1.10 }
 };
 
 // Common GLSL 2D Simplex Noise for organic fluid drift
@@ -103,6 +110,13 @@ function updateSteamPlumeScales() {
   const r = Number(rawAltarMistConfig.steamRadius || 0.40);
   steamPlumes.forEach((item) => {
     item.mesh.scale.set(r * item.widthMult, h * item.heightMult, 1.0);
+  });
+}
+
+function updateCanyonMistScales() {
+  const spread = Number(rawAltarMistConfig.canyonMistSpread || 1.0);
+  canyonPlumes.forEach((item) => {
+    item.mesh.scale.set(item.baseW * spread, item.baseH * spread, 1.0);
   });
 }
 
@@ -206,6 +220,20 @@ export function applyAltarMistConfig(prop, val) {
     const num = Number(val);
     rawAltarMistConfig.puffDensity = num;
     altarMistUniforms.uPuffDensity.value = num;
+  } else if (prop === 'canyonMistDensity') {
+    const num = Number(val) || 1.10;
+    rawAltarMistConfig.canyonMistDensity = num;
+    altarMistUniforms.uCanyonMistDensity.value = num;
+  } else if (prop === 'canyonMistSpread') {
+    const num = Number(val) || 1.0;
+    rawAltarMistConfig.canyonMistSpread = num;
+    updateCanyonMistScales();
+  } else if (prop === 'canyonMistYOffset') {
+    const num = Number(val) || 0.0;
+    rawAltarMistConfig.canyonMistYOffset = num;
+    if (canyonMistGroup) {
+      canyonMistGroup.position.y = num;
+    }
   }
 }
 
@@ -354,10 +382,231 @@ function createFluffyCloudCluster(puffRadius, puffHeight) {
 }
 
 /**
+ * Creates the Volumetric Canyon Mist Cluster (Option B - Physical 3D Clouds):
+ * Staggered along the gorge airway floor (Z: -11.2 to -14.8) between the altar and portal.
+ * Replaces the oversized rigid 2D sheet FOG.007 to eliminate knife-cut clipping artifacts.
+ */
+function createCanyonMistCluster(parentGroup) {
+  if (canyonMistGroup) return;
+
+  canyonMistGroup = new THREE.Group();
+  canyonMistGroup.name = 'CanyonMistCluster';
+  canyonMistGroup.position.set(0, rawAltarMistConfig.canyonMistYOffset || 0.0, 0);
+
+  // 1. Canyon Mist Bed Material (Horizontal ground-hugging mist in gorge floor)
+  canyonMistBedMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: altarMistUniforms.uTime,
+      uOpacity: altarMistUniforms.uOpacity,
+      uCarpetDensity: altarMistUniforms.uCarpetDensity,
+      uCanyonMistDensity: altarMistUniforms.uCanyonMistDensity,
+      uFlowSpeed: altarMistUniforms.uFlowSpeed,
+      uColor: altarMistUniforms.uColor,
+      uCoreColor: altarMistUniforms.uCoreColor,
+      uRimColor: altarMistUniforms.uRimColor
+    },
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending: THREE.NormalBlending,
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform float uOpacity;
+      uniform float uCarpetDensity;
+      uniform float uCanyonMistDensity;
+      uniform float uFlowSpeed;
+      uniform vec3 uColor;
+      uniform vec3 uCoreColor;
+      uniform vec3 uRimColor;
+
+      ${simplexNoiseGLSL}
+
+      void main() {
+        // Centered coordinates from -1.0 to +1.0
+        vec2 centeredUv = (vUv - vec2(0.5, 0.5)) * 2.0;
+        float distSq = dot(centeredUv, centeredUv);
+
+        // Edge noise erosion: undulating fluid tendrils
+        vec2 edgeUv = vUv * 3.2 + vec2(uTime * 0.03 * uFlowSpeed, -uTime * 0.05 * uFlowSpeed);
+        float edgeNoise = (snoise(edgeUv) * 0.60 + snoise(edgeUv * 2.4) * 0.40) * 0.22;
+
+        // Gaussian radial falloff combined with smoothstep to ensure it reaches EXACT ZERO well before boundary
+        float radialFade = exp(-distSq * 3.6) * smoothstep(0.95, 0.20, sqrt(distSq) + edgeNoise);
+
+        // Perimeter safety feathering across all 4 quad boundaries
+        float edgeDistX = min(vUv.x, 1.0 - vUv.x);
+        float edgeDistY = min(vUv.y, 1.0 - vUv.y);
+        float quadFade = smoothstep(0.0, 0.22, min(edgeDistX, edgeDistY));
+        float fluidMask = radialFade * quadFade;
+
+        // Multi-octave Simplex curl turbulence flowing along the canyon gorge
+        vec2 flowUv1 = vUv * 2.4 + vec2(
+          uTime * 0.035 * uFlowSpeed + sin(uTime * 0.04 * uFlowSpeed + vUv.y * 2.2) * 0.10,
+          -uTime * 0.065 * uFlowSpeed
+        );
+        vec2 flowUv2 = vUv * 4.5 + vec2(
+          -uTime * 0.025 * uFlowSpeed,
+          -uTime * 0.045 * uFlowSpeed
+        );
+        float n1 = snoise(flowUv1);
+        float n2 = snoise(flowUv2);
+        float noise = (n1 * 0.65 + n2 * 0.35) * 0.5 + 0.5;
+
+        float billow = smoothstep(0.18, 0.76, noise);
+        float mistBody = mix(0.35, 1.0, billow);
+
+        // Rich dense canyon fog that dissolves smoothly to 0 before touching rocks - ZERO knife cuts!
+        float alpha = clamp(fluidMask * mistBody * uOpacity * uCarpetDensity * uCanyonMistDensity * 0.85, 0.0, 0.90);
+
+        // Palette: celestial cream with cyan undertone and luminous pearl highlights
+        vec3 col = mix(uColor, uRimColor, clamp(pow(billow, 1.5) * 0.45, 0.0, 1.0));
+        col = mix(uCoreColor, col, clamp(distSq * 0.6 + 0.4, 0.0, 1.0));
+
+        gl_FragColor = vec4(col, alpha);
+      }
+    `
+  });
+
+  // 2. Canyon Mist Puff Material (Camera-facing volumetric vapor wisps rising from gorge)
+  canyonMistPuffMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: altarMistUniforms.uTime,
+      uOpacity: altarMistUniforms.uOpacity,
+      uCarpetDensity: altarMistUniforms.uCarpetDensity,
+      uCanyonMistDensity: altarMistUniforms.uCanyonMistDensity,
+      uFlowSpeed: altarMistUniforms.uFlowSpeed,
+      uColor: altarMistUniforms.uColor,
+      uCoreColor: altarMistUniforms.uCoreColor,
+      uRimColor: altarMistUniforms.uRimColor
+    },
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending: THREE.NormalBlending,
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform float uOpacity;
+      uniform float uCarpetDensity;
+      uniform float uCanyonMistDensity;
+      uniform float uFlowSpeed;
+      uniform vec3 uColor;
+      uniform vec3 uCoreColor;
+      uniform vec3 uRimColor;
+
+      ${simplexNoiseGLSL}
+
+      void main() {
+        vec2 uv = (vUv - vec2(0.5, 0.5)) * 2.0;
+        float dist = length(uv);
+
+        // Soft volumetric spherical falloff
+        float radial = exp(-dist * dist * 3.8) * smoothstep(1.0, 0.20, dist);
+
+        vec2 cloudUv = uv * 1.8 + vec2(
+          sin(uTime * 0.05 * uFlowSpeed + uv.y * 1.6) * 0.12,
+          -uTime * 0.08 * uFlowSpeed
+        );
+        float n = (snoise(cloudUv) * 0.65 + snoise(cloudUv * 2.2) * 0.35) * 0.5 + 0.5;
+        float billow = smoothstep(0.20, 0.75, n);
+        float puff = radial * mix(0.40, 1.0, billow);
+
+        float alpha = clamp(puff * uOpacity * uCarpetDensity * uCanyonMistDensity * 0.65, 0.0, 0.80);
+        vec3 col = mix(uCoreColor, uColor, clamp(dist * 0.8 + 0.2, 0.0, 1.0));
+        col = mix(col, uRimColor, clamp(pow(billow, 1.5) * 0.40, 0.0, 1.0));
+
+        gl_FragColor = vec4(col, alpha);
+      }
+    `
+  });
+
+  const spread = Number(rawAltarMistConfig.canyonMistSpread || 1.0);
+
+  // Staggered horizontal beds along canyon floor (Z: -11.2 to -14.8)
+  const bedConfigs = [
+    { x: -0.22, y: -1.44, z: -11.2, w: 2.4, l: 2.6, rotX: -Math.PI / 2 + 0.05, rotZ: 0.08, speed: 0.20, seed: 1.14 },
+    { x: -0.18, y: -1.42, z: -12.1, w: 2.6, l: 2.8, rotX: -Math.PI / 2 + 0.03, rotZ: -0.06, speed: 0.25, seed: 2.37 },
+    { x: -0.15, y: -1.39, z: -13.0, w: 2.5, l: 2.7, rotX: -Math.PI / 2 + 0.02, rotZ: 0.05, speed: 0.22, seed: 3.65 },
+    { x: -0.12, y: -1.37, z: -13.9, w: 2.6, l: 2.8, rotX: -Math.PI / 2 - 0.02, rotZ: -0.04, speed: 0.28, seed: 4.88 },
+    { x: -0.08, y: -1.34, z: -14.8, w: 2.4, l: 2.6, rotX: -Math.PI / 2 - 0.04, rotZ: 0.06, speed: 0.24, seed: 6.12 }
+  ];
+
+  bedConfigs.forEach((cfg) => {
+    const geom = new THREE.PlaneGeometry(1.0, 1.0);
+    const mesh = new THREE.Mesh(geom, canyonMistBedMaterial);
+    mesh.position.set(cfg.x, cfg.y, cfg.z);
+    mesh.rotation.x = cfg.rotX;
+    mesh.rotation.z = cfg.rotZ;
+    mesh.scale.set(cfg.w * spread, cfg.l * spread, 1.0);
+    mesh.renderOrder = 2;
+
+    canyonPlumes.push({
+      mesh,
+      basePos: new THREE.Vector3(cfg.x, cfg.y, cfg.z),
+      baseW: cfg.w,
+      baseH: cfg.l,
+      speed: cfg.speed,
+      seed: cfg.seed,
+      isPuff: false
+    });
+
+    canyonMistGroup.add(mesh);
+  });
+
+  // Soft rising volumetric vapor clouds nestled slightly higher in the airway
+  const puffConfigs = [
+    { x: -0.20, y: -1.24, z: -11.6, w: 1.8, h: 1.5, speed: 0.22, seed: 1.82 },
+    { x: -0.16, y: -1.20, z: -12.8, w: 2.0, h: 1.6, speed: 0.26, seed: 3.45 },
+    { x: -0.10, y: -1.16, z: -14.1, w: 1.9, h: 1.5, speed: 0.24, seed: 5.18 }
+  ];
+
+  puffConfigs.forEach((cfg) => {
+    const geom = new THREE.PlaneGeometry(1.0, 1.0);
+    const mesh = new THREE.Mesh(geom, canyonMistPuffMaterial);
+    mesh.position.set(cfg.x, cfg.y, cfg.z);
+    mesh.scale.set(cfg.w * spread, cfg.h * spread, 1.0);
+    mesh.renderOrder = 2;
+
+    canyonPlumes.push({
+      mesh,
+      basePos: new THREE.Vector3(cfg.x, cfg.y, cfg.z),
+      baseW: cfg.w,
+      baseH: cfg.h,
+      speed: cfg.speed,
+      seed: cfg.seed,
+      isPuff: true
+    });
+
+    canyonMistGroup.add(mesh);
+  });
+
+  if (parentGroup) {
+    parentGroup.add(canyonMistGroup);
+  }
+  console.log(`[AltarMist] Created Canyon Mist Cluster (${canyonPlumes.length} volumetric physical 3D elements) replacing FOG.007.`);
+}
+
+/**
  * Initializes Altar Mist & Cascading Canyon Flow:
  * - FOG.004: Soft, organic mist carpet hugging the circular altar floor & steps (zero knife cuts).
  * - FOG.006 & FOG.005: Canyon cascade planes (mist gently cascades off the altar into the canyon below).
  * - fog2: Gentle rising steam plumes above the sacrificial fire bowl.
+ * - Canyon Mist Cluster: Soft billowing physical clouds filling the gorge, replacing FOG.007.
  */
 export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2Node = null, fog006Node = null, fog005Node = null, fog002Node = null, fogRootNode = null, fog001Node = null, fog003Node = null, fog007Node = null) {
   // 1. Billowing steam plumes above the bowl (fog2)
@@ -706,38 +955,15 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
     console.log(`[AltarMist] Enhanced upper canyon FOG003 plane.`);
   }
 
-  // Enhance deep canyon mist plane (FOG007) with soft noise cascade shader
+  // 3b. Canyon Mist Cluster (replacing FOG.007 knife-cutting plane)
+  // We completely HIDE the oversized rigid 2D plane FOG.007 to eliminate the knife-cut artifact,
+  // and replace it with a living cluster of soft volumetric 3D physical mist clouds!
   if (fog007Node) {
-    fog007Node.visible = true;
-    // Constrain width and lower into canyon floor bed like FOG006 so it flows along the gorge without slicing walls:
-    fog007Node.scale.set(2.2, 5.826, 4.2);
-    fog007Node.position.set(-0.15, -1.40, -12.92);
-
-    fog007Node.material = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: altarMistUniforms.uTime,
-        uOpacity: altarMistUniforms.uOpacity,
-        uCarpetDensity: altarMistUniforms.uCarpetDensity,
-        uFlowSpeed: altarMistUniforms.uFlowSpeed,
-        uColor: altarMistUniforms.uColor,
-        uCoreColor: altarMistUniforms.uCoreColor,
-        uRimColor: altarMistUniforms.uRimColor
-      },
-      transparent: true,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      blending: THREE.NormalBlending,
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: cascadeFragmentShader
-    });
-    fog007Node.renderOrder = 2;
-    console.log(`[AltarMist] Enhanced deep canyon FOG007 plane.`);
+    fog007MeshRef = fog007Node;
+    fog007Node.visible = false;
+    createCanyonMistCluster(fog007Node.parent);
+  } else if (fog006Node) {
+    createCanyonMistCluster(fog006Node.parent);
   }
 
   // 4. Empties Puffs (fog1 & fire.001, disabled by default)
@@ -879,6 +1105,32 @@ export function updateAltarMist(elapsed, delta, camera) {
       item.mesh.position.z = (item.basePos.z * spread);
     });
   }
+
+  // 3. Animate Canyon Mist Cluster (breathing fluid drift & camera-aligned volumetric vapor)
+  if (canyonPlumes.length > 0) {
+    canyonPlumes.forEach((item) => {
+      if (item.isPuff) {
+        if (camera) {
+          if (item.mesh.parent) {
+            item.mesh.parent.getWorldQuaternion(_tempParentQuat);
+            _parentInvQuat.copy(_tempParentQuat).invert();
+            item.mesh.quaternion.copy(_parentInvQuat).multiply(camera.quaternion);
+          } else {
+            item.mesh.quaternion.copy(camera.quaternion);
+          }
+        }
+        const floatY = Math.sin(elapsed * item.speed * flow * 2.0 + item.seed) * 0.025;
+        const floatX = Math.cos(elapsed * item.speed * flow * 1.6 + item.seed) * 0.018;
+        item.mesh.position.y = item.basePos.y + floatY;
+        item.mesh.position.x = item.basePos.x + floatX;
+      } else {
+        const floatY = Math.sin(elapsed * item.speed * flow * 1.8 + item.seed) * 0.015;
+        const floatX = Math.cos(elapsed * item.speed * flow * 1.4 + item.seed) * 0.010;
+        item.mesh.position.y = item.basePos.y + floatY;
+        item.mesh.position.x = item.basePos.x + floatX;
+      }
+    });
+  }
 }
 
 /**
@@ -960,6 +1212,28 @@ export function cleanupAltarMist() {
     fog002MeshRef = null;
   }
 
+  canyonPlumes.forEach((item) => {
+    if (item.mesh.geometry) item.mesh.geometry.dispose();
+  });
+  canyonPlumes = [];
+
+  if (canyonMistBedMaterial) {
+    canyonMistBedMaterial.dispose();
+    canyonMistBedMaterial = null;
+  }
+  if (canyonMistPuffMaterial) {
+    canyonMistPuffMaterial.dispose();
+    canyonMistPuffMaterial = null;
+  }
+  if (canyonMistGroup) {
+    canyonMistGroup.parent?.remove(canyonMistGroup);
+    canyonMistGroup = null;
+  }
+  if (fog007MeshRef) {
+    fog007MeshRef.visible = true;
+    fog007MeshRef = null;
+  }
+
   fog2BowlAnchorNode = null;
 }
 
@@ -968,7 +1242,7 @@ export function cleanupAltarMist() {
  */
 export function getAltarMistState() {
   return {
-    hasAltarMist: !!(altarSteamGroup || fog004MeshRef || fog006MeshRef || fog005MeshRef || fog002MeshRef || fog1RootGroup || fire001RootGroup),
+    hasAltarMist: !!(altarSteamGroup || fog004MeshRef || fog006MeshRef || fog005MeshRef || fog002MeshRef || fog1RootGroup || fire001RootGroup || canyonMistGroup),
     hasSteam: !!altarSteamGroup,
     steamPlumesCount: steamPlumes.length,
     bowlAnchor: fog2BowlAnchorNode ? fog2BowlAnchorNode.name : null,
@@ -986,6 +1260,9 @@ export function getAltarMistState() {
     steamHeight: rawAltarMistConfig.steamHeight,
     steamRadius: rawAltarMistConfig.steamRadius,
     flowSpeed: altarMistUniforms.uFlowSpeed.value,
-    fog004Hidden: fog004MeshRef ? !fog004MeshRef.visible : false
+    fog004Hidden: fog004MeshRef ? !fog004MeshRef.visible : false,
+    hasCanyonCluster: !!canyonMistGroup,
+    canyonPlumesCount: canyonPlumes.length,
+    fog007Visible: fog007MeshRef ? fog007MeshRef.visible : false
   };
 }
