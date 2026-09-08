@@ -371,6 +371,19 @@ async function runBrowserVerification() {
   console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.updatedOpacity === 0.82 && mistState.updatedGroundRadius === 2.4 && mistState.updatedFlowSpeed === 0.55 ? 'PASSED (opacity, groundRadius, puffRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
   console.log(`- Altar Mist Shroud Status: ${mistState.hasAltarMist && mistState.fog1Active && mistState.fire001Active ? 'PASSED: Hybrid ground mist and volumetric smoke puffs active on altar' : 'FAILED'}`);
 
+  // Restore calibrated default opacity for balanced screenshot
+  await sendCmd('Runtime.evaluate', {
+    expression: `
+      window.setAltarMistConfig({
+        opacity: 0.38,
+        groundRadius: 2.0,
+        puffRadius: 1.3,
+        puffHeight: 0.5,
+        flowSpeed: 0.35
+      });
+    `
+  });
+
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');
   const scrollMilestones = [0.0, 0.25, 0.5, 0.75, 1.0];
@@ -400,7 +413,7 @@ async function runBrowserVerification() {
     console.log(`- Scroll ${(p * 100).toFixed(0)}%: Camera Position = [ X: ${pos.x.toFixed(4)}, Y: ${pos.y.toFixed(4)}, Z: ${pos.z.toFixed(4)} ]`);
 
     // Capture screenshots only if explicitly requested (e.g. SAVE_SCREENSHOTS=1)
-    if (process.env.SAVE_SCREENSHOTS === '1' && (p === 0.0 || p === 0.5 || p === 1.0)) {
+    if (process.env.SAVE_SCREENSHOTS === '1' && (p === 0.0 || p === 0.5 || p === 0.75 || p === 1.0)) {
       const shotRes = await sendCmd('Page.captureScreenshot', { format: 'png' });
       const shotBuf = Buffer.from(shotRes.data, 'base64');
       const shotFile = path.resolve(`story_scroll_${Math.round(p * 100)}.png`);

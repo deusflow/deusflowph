@@ -1,15 +1,18 @@
 /**
  * assets/js/story/vfx/altarMist.js
  * 
- * Hybrid Altar Mist & Volumetric Smoke Shroud (Option 1 + Option 2)
+ * Ethereal Luminous Blue Altar Mist & Volumetric Billboard Puffs
  * Designed for DeusFlow 3D Cinematic Story.
  * Fully compliant with AGENTS.md:
- * - Option 1: Ground Creeping Mist (horizontal multi-layered rotating cushions masking floor/base cracks)
- * - Option 2: Volumetric Soft Mist/Smoke Puffs (3D intersecting physical quads shrouding altar seams)
- * - Strict Prohibition: Zero gl_PointSize / gl_PointCoord (physical 3D polygonal quads only)
+ * - Solves "black sticks / ribs" issue:
+ *   1. Zero rigid intersecting planes. Volumetric puffs are camera-facing billboards (quaternion.copy(camera.quaternion))
+ *   2. Ultra-smooth Gaussian falloff exp(-dist * dist * 3.2) - ZERO sharp polygon lines or seams
+ *   3. THREE.AdditiveBlending with soft celestial blue/cyan tones (ZERO black soot or dirty smudges)
+ * - Ground Creeping Mist: horizontal soft luminous pool resting at the altar base
+ * - Volumetric Soft Puffs: gentle drifting glowing blue clouds floating around the altar seams
+ * - Strict Prohibition: Zero gl_PointSize / gl_PointCoord (physical 3D quads only)
  * - Depth-Write Integrity: depthWrite = false, renderOrder = 2, DoubleSide
- * - Atmospheric Aesthetic: Archival sapphire-ink and deep midnight blues complementing Hogwarts Library
- * - The One-Effect Rule: Quiet masking shroud that stays subordinate to the central Blue Goblet Fire at fog2
+ * - The One-Effect Rule: Subordinate, tranquil ambient glow supporting the central Goblet of Fire at fog2
  */
 import * as THREE from 'three';
 import { ALTAR_MIST_CONFIG, rawAltarMistConfig, registerAltarMistConfigListener } from '../storyConfig.js';
@@ -17,7 +20,7 @@ import { ALTAR_MIST_CONFIG, rawAltarMistConfig, registerAltarMistConfigListener 
 let fog1RootGroup = null;
 let fire001RootGroup = null;
 let groundMeshes = [];
-let puffMeshes = [];
+let puffBillboards = [];
 let groundMaterial = null;
 let puffMaterial = null;
 
@@ -31,7 +34,7 @@ const altarMistUniforms = {
   uRimColor: { value: ALTAR_MIST_CONFIG.rimColor }
 };
 
-// Common GLSL 2D Simplex Noise for procedural fluid turbulence
+// Common GLSL 2D Simplex Noise for organic fluid drift
 const simplexNoiseGLSL = `
 vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
 float snoise(vec2 v) {
@@ -84,10 +87,9 @@ export function applyAltarMistConfig(prop, val) {
   } else if (prop === 'puffRadius' || prop === 'puffHeight') {
     const r = Number(rawAltarMistConfig.puffRadius);
     const h = Number(rawAltarMistConfig.puffHeight);
-    puffMeshes.forEach((item) => {
+    puffBillboards.forEach((item) => {
       const mult = item.baseMultiplier || 1.0;
       item.mesh.scale.set(r * mult, h * mult, 1.0);
-      item.mesh.position.y = (h * mult) * 0.45;
     });
   } else if (prop === 'scale') {
     if (Array.isArray(val)) {
@@ -126,7 +128,7 @@ registerAltarMistConfigListener(applyAltarMistConfig);
 
 /**
  * Creates Ground Creeping Mist layer (Option 1).
- * Horizontal disc planes with soft radial alpha and rotational Simplex curl.
+ * Smooth horizontal Gaussian luminous pool resting right on the base stone.
  */
 function createGroundMistLayer(radius, yOffset, rotationZ, baseMultiplier, rotSpeed) {
   const geom = new THREE.PlaneGeometry(2.0, 2.0, 1, 1);
@@ -147,39 +149,45 @@ function createGroundMistLayer(radius, yOffset, rotationZ, baseMultiplier, rotSp
 }
 
 /**
- * Creates Volumetric Soft Mist Puff layer (Option 2).
- * Intersecting 3D polygonal planes with smooth radial falloff and ascending billow.
+ * Creates Volumetric Soft Mist Puff billboards (Option 2).
+ * Camera-facing billboards with Gaussian radial alpha to eliminate any intersecting stick lines.
  */
-function createVolumetricPuffCluster(puffRadius, puffHeight) {
+function createVolumetricPuffCluster(puffRadius, puffHeight, count = 3) {
   const cluster = new THREE.Group();
-  const angles = [0, Math.PI * 0.25, Math.PI * 0.5, Math.PI * 0.75];
 
-  angles.forEach((angle, idx) => {
+  for (let i = 0; i < count; i++) {
     const geom = new THREE.PlaneGeometry(2.0, 2.0, 1, 1);
     const mesh = new THREE.Mesh(geom, puffMaterial);
-    mesh.rotation.y = angle;
-    // Subtle tilt for 3D fullness
-    mesh.rotation.x = ((idx % 2 === 0 ? 1 : -1) * 0.08);
-    mesh.position.y = puffHeight * 0.45;
-    
-    const mult = 0.85 + (idx % 3) * 0.15;
+
+    // Distribute softly around the empty node
+    const angle = (i / count) * Math.PI * 2;
+    const dist = 0.25 + (i % 2) * 0.15;
+    const x = Math.cos(angle) * dist;
+    const z = Math.sin(angle) * dist;
+    const y = 0.15 + i * 0.18;
+
+    mesh.position.set(x, y, z);
+
+    const mult = 0.9 + (i % 3) * 0.2;
     mesh.scale.set(puffRadius * mult, puffHeight * mult, 1.0);
     mesh.renderOrder = 2;
 
-    puffMeshes.push({
+    puffBillboards.push({
       mesh,
+      basePos: new THREE.Vector3(x, y, z),
       baseMultiplier: mult,
-      seed: idx * 1.618
+      seed: i * 2.14,
+      floatSpeed: 0.6 + (i % 3) * 0.25
     });
 
     cluster.add(mesh);
-  });
+  }
 
   return cluster;
 }
 
 /**
- * Builds the hybrid Altar Mist system and attaches to fog1 and fire001 empty nodes.
+ * Builds the ethereal Altar Mist system and attaches to fog1 and fire001 empty nodes.
  */
 export function createAltarMist(fog1Node, fire001Node) {
   if (!fog1Node && !fire001Node) {
@@ -187,25 +195,22 @@ export function createAltarMist(fog1Node, fire001Node) {
     return;
   }
 
-  // 1. Initialize Ground Mist ShaderMaterial (Option 1)
+  // 1. Ground Mist ShaderMaterial (Option 1 - Additive Gaussian pool)
   groundMaterial = new THREE.ShaderMaterial({
     uniforms: altarMistUniforms,
     transparent: true,
     depthWrite: false,
+    blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
     vertexShader: `
       varying vec2 vUv;
-      varying vec3 vWorldPos;
-
       void main() {
         vUv = uv;
-        vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
       varying vec2 vUv;
-      varying vec3 vWorldPos;
       uniform float uTime;
       uniform float uOpacity;
       uniform float uFlowSpeed;
@@ -215,48 +220,46 @@ export function createAltarMist(fog1Node, fire001Node) {
       ${simplexNoiseGLSL}
 
       void main() {
-        vec2 centeredUv = vUv - 0.5;
-        float dist = length(centeredUv) * 2.0;
+        vec2 uv = vUv - 0.5;
+        float dist = length(uv) * 2.0;
 
-        // Smooth buttery radial falloff (zero harsh polygon edges)
-        float radialFade = smoothstep(1.0, 0.08, dist);
+        // Ultra-smooth Gaussian falloff (Zero hard polygon edges)
+        float radial = exp(-dist * dist * 3.2);
+        radial *= smoothstep(1.0, 0.15, dist);
 
-        // Procedural polar Simplex noise swirl
-        float angle = atan(centeredUv.y, centeredUv.x);
-        vec2 polarUv = vec2(dist * 1.8 - uTime * 0.08 * uFlowSpeed, angle * 1.27);
+        // Slow organic swirl
+        float angle = atan(uv.y, uv.x);
+        vec2 polarUv = vec2(dist * 2.2 - uTime * 0.05 * uFlowSpeed, angle * 1.5);
         float n1 = snoise(polarUv);
-        float n2 = snoise(vec2(vUv.x * 3.5 + uTime * 0.05 * uFlowSpeed, vUv.y * 3.5 - uTime * 0.04 * uFlowSpeed));
-        float curlNoise = n1 * 0.6 + n2 * 0.4;
+        float n2 = snoise(vec2(vUv.x * 3.0 + uTime * 0.04 * uFlowSpeed, vUv.y * 3.0 - uTime * 0.03 * uFlowSpeed));
+        float curlNoise = (n1 * 0.6 + n2 * 0.4) * 0.5 + 0.5;
 
-        float alpha = radialFade * smoothstep(-0.35, 0.65, curlNoise) * uOpacity;
+        float alpha = radial * mix(0.75, 1.25, curlNoise) * uOpacity;
 
-        // Rich archival blue gradient: deep ground tone blending to soft rim highlight
-        vec3 col = mix(uGroundColor, uRimColor, clamp((curlNoise + 0.3) * 0.65, 0.0, 1.0));
+        // Ethereal luminous blue-cyan tone
+        vec3 col = mix(uGroundColor, uRimColor, clamp(radial * curlNoise * 1.2, 0.0, 1.0));
 
         gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
       }
     `
   });
 
-  // 2. Initialize Volumetric Mist Puff ShaderMaterial (Option 2)
+  // 2. Volumetric Soft Mist Puff ShaderMaterial (Option 2 - Additive Billboard Clouds)
   puffMaterial = new THREE.ShaderMaterial({
     uniforms: altarMistUniforms,
     transparent: true,
     depthWrite: false,
+    blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
     vertexShader: `
       varying vec2 vUv;
-      varying vec3 vWorldPos;
-
       void main() {
         vUv = uv;
-        vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
       varying vec2 vUv;
-      varying vec3 vWorldPos;
       uniform float uTime;
       uniform float uOpacity;
       uniform float uPuffDensity;
@@ -267,21 +270,26 @@ export function createAltarMist(fog1Node, fire001Node) {
       ${simplexNoiseGLSL}
 
       void main() {
-        vec2 centeredUv = vUv - 0.5;
-        // Soft elliptical vertical volume
-        float dist = length(vec2(centeredUv.x, centeredUv.y * 1.15)) * 2.0;
-        float radialFade = smoothstep(0.98, 0.05, dist);
+        vec2 uv = vUv - 0.5;
+        float dist = length(uv) * 2.0;
 
-        // Rising billowing smoke turbulence
-        vec2 billowUv = vec2(vUv.x * 2.8, vUv.y * 2.2 - uTime * 0.14 * uFlowSpeed);
+        // Smooth Gaussian cloud puff - ZERO hard borders
+        float radial = exp(-dist * dist * 3.5);
+        radial *= smoothstep(1.0, 0.12, dist);
+
+        // Ascending drifting smoke turbulence
+        vec2 billowUv = vUv * 2.5 + vec2(
+          sin(uTime * 0.12 * uFlowSpeed + vUv.y * 2.0) * 0.15,
+          -uTime * 0.14 * uFlowSpeed
+        );
         float n1 = snoise(billowUv);
-        float n2 = snoise(billowUv * 1.85 + vec2(0.4, -uTime * 0.09 * uFlowSpeed));
-        float billow = n1 * 0.65 + n2 * 0.35;
+        float n2 = snoise(billowUv * 2.2 + vec2(0.4, -uTime * 0.09 * uFlowSpeed));
+        float billow = (n1 * 0.65 + n2 * 0.35) * 0.5 + 0.5;
 
-        float alpha = radialFade * smoothstep(-0.3, 0.7, billow) * uOpacity * uPuffDensity;
+        float alpha = radial * billow * uOpacity * uPuffDensity;
 
-        // Atmospheric soft smoky navy-sapphire tone
-        vec3 col = mix(uPuffColor, uRimColor, clamp((billow + 0.25) * 0.75, 0.0, 1.0));
+        // Luminous twilight sapphire to glowing cyan highlight
+        vec3 col = mix(uPuffColor, uRimColor, clamp(radial * 1.3, 0.0, 1.0));
 
         gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
       }
@@ -302,15 +310,15 @@ export function createAltarMist(fog1Node, fire001Node) {
     const sc = rawAltarMistConfig.scale;
     if (Array.isArray(sc)) fog1RootGroup.scale.set(sc[0], sc[1], sc[2]);
 
-    // Option 1: Ground Creeping Mist (2 counter-rotating layers)
-    fog1RootGroup.add(createGroundMistLayer(r, 0.02, 0.0, 1.0, 0.04));
-    fog1RootGroup.add(createGroundMistLayer(r, 0.05, Math.PI * 0.35, 1.18, -0.03));
+    // Option 1: Horizontal Ground Creeping Mist pool
+    fog1RootGroup.add(createGroundMistLayer(r, 0.02, 0.0, 1.0, 0.03));
+    fog1RootGroup.add(createGroundMistLayer(r, 0.04, Math.PI * 0.4, 1.15, -0.025));
 
-    // Option 2: Volumetric Soft Mist Puff cluster
-    fog1RootGroup.add(createVolumetricPuffCluster(pr, ph));
+    // Option 2: Volumetric Soft Billboard Puffs (3 billboards)
+    fog1RootGroup.add(createVolumetricPuffCluster(pr, ph, 3));
 
     fog1Node.add(fog1RootGroup);
-    console.log('[AltarMist] Attached hybrid mist shroud to "fog1" at', fog1Node.position.toArray());
+    console.log('[AltarMist] Attached luminous mist shroud to "fog1" at', fog1Node.position.toArray());
   }
 
   // 4. Build Node 2: fire.001 / fire001 (Left / rear side of altar)
@@ -323,20 +331,20 @@ export function createAltarMist(fog1Node, fire001Node) {
     const sc = rawAltarMistConfig.scale;
     if (Array.isArray(sc)) fire001RootGroup.scale.set(sc[0], sc[1], sc[2]);
 
-    // Option 1: Ground Creeping Mist (2 counter-rotating layers)
-    fire001RootGroup.add(createGroundMistLayer(r, 0.02, Math.PI * 0.5, 1.05, 0.035));
-    fire001RootGroup.add(createGroundMistLayer(r, 0.05, Math.PI * 0.85, 1.22, -0.028));
+    // Option 1: Horizontal Ground Creeping Mist pool
+    fire001RootGroup.add(createGroundMistLayer(r, 0.02, Math.PI * 0.3, 1.05, 0.028));
+    fire001RootGroup.add(createGroundMistLayer(r, 0.04, Math.PI * 0.7, 1.2, -0.022));
 
-    // Option 2: Volumetric Soft Mist Puff cluster
-    fire001RootGroup.add(createVolumetricPuffCluster(pr, ph));
+    // Option 2: Volumetric Soft Billboard Puffs (3 billboards)
+    fire001RootGroup.add(createVolumetricPuffCluster(pr, ph, 3));
 
     fire001Node.add(fire001RootGroup);
-    console.log('[AltarMist] Attached hybrid mist shroud to "fire001" at', fire001Node.position.toArray());
+    console.log('[AltarMist] Attached luminous mist shroud to "fire001" at', fire001Node.position.toArray());
   }
 }
 
 /**
- * Main animation update loop: advances procedural noise and subtle undulation.
+ * Main animation update loop: dynamically aligns billboards to camera and updates time.
  */
 export function updateAltarMist(elapsed, delta, camera) {
   if (!fog1RootGroup && !fire001RootGroup) return;
@@ -345,16 +353,24 @@ export function updateAltarMist(elapsed, delta, camera) {
 
   const flow = rawAltarMistConfig.flowSpeed;
 
-  // Gentle rotation of ground mist cushions
+  // 1. Slow rotation of horizontal ground pools
   groundMeshes.forEach((item) => {
     item.mesh.rotation.z += delta * item.rotSpeed * flow;
   });
 
-  // Gentle breathing undulation for volumetric smoke puffs
-  puffMeshes.forEach((item) => {
-    const breathe = Math.sin(elapsed * 0.85 * flow + item.seed) * 0.03;
-    item.mesh.position.y = (rawAltarMistConfig.puffHeight * item.baseMultiplier) * 0.45 + breathe;
-  });
+  // 2. Camera-facing billboards: orient smoothly to camera and apply gentle floating bob
+  if (camera) {
+    puffBillboards.forEach((item) => {
+      // Dynamic billboard orientation: always faces the camera to eliminate edge-on sticks
+      item.mesh.quaternion.copy(camera.quaternion);
+
+      // Subtle atmospheric floating
+      const floatY = Math.sin(elapsed * item.floatSpeed + item.seed) * 0.04;
+      const floatX = Math.cos(elapsed * (item.floatSpeed * 0.8) + item.seed) * 0.03;
+      item.mesh.position.y = item.basePos.y + floatY;
+      item.mesh.position.x = item.basePos.x + floatX;
+    });
+  }
 }
 
 /**
@@ -366,10 +382,10 @@ export function cleanupAltarMist() {
   });
   groundMeshes = [];
 
-  puffMeshes.forEach((item) => {
+  puffBillboards.forEach((item) => {
     if (item.mesh.geometry) item.mesh.geometry.dispose();
   });
-  puffMeshes = [];
+  puffBillboards = [];
 
   if (groundMaterial) {
     groundMaterial.dispose();
@@ -401,7 +417,7 @@ export function getAltarMistState() {
     fog1Active: !!fog1RootGroup,
     fire001Active: !!fire001RootGroup,
     groundLayersCount: groundMeshes.length,
-    puffLayersCount: puffMeshes.length,
+    puffLayersCount: puffBillboards.length,
     opacity: altarMistUniforms.uOpacity.value
   };
 }
