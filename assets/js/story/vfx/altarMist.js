@@ -133,6 +133,12 @@ export function applyAltarMistConfig(prop, val) {
     if (fog004MeshRef) {
       fog004MeshRef.visible = !val;
     }
+  } else if (prop === 'enableEmptiesPuffs') {
+    rawAltarMistConfig.enableEmptiesPuffs = !!val;
+    if (fog1RootGroup) fog1RootGroup.visible = !!val;
+    if (fire001RootGroup) fire001RootGroup.visible = !!val;
+  } else if (prop === 'yOffset' && fog004MeshRef) {
+    fog004MeshRef.position.y = fog004InitialY + Number(val);
   }
 }
 
@@ -186,16 +192,89 @@ function createFluffyCloudCluster(puffRadius, puffHeight) {
   return cluster;
 }
 
+let fog004InitialY = -1.269;
+let fog004Material = null;
+
 /**
- * Builds the volumetric cloud-mist system and attaches to fog1 and fire001 empty nodes.
+ * Builds the volumetric cloud-mist system:
+ * - Enhances FOG.004 on the floor with borderless soft ground-fog shader (zero hard edges/ribs).
+ * - Optionally attaches cloud puffs to fog1 and fire001 empties.
  */
 export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
   if (fog004Node) {
     fog004MeshRef = fog004Node;
-  }
-  if (fog004MeshRef) {
+    fog004InitialY = fog004MeshRef.position.y;
+    const yOff = rawAltarMistConfig.yOffset !== undefined ? rawAltarMistConfig.yOffset : 0.015;
+    fog004MeshRef.position.y = fog004InitialY + yOff;
+
+    // Grab original map if exists
+    const origMap = (fog004MeshRef.material && fog004MeshRef.material.map) ? fog004MeshRef.material.map : null;
+
+    fog004Material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: altarMistUniforms.uTime,
+        uOpacity: altarMistUniforms.uOpacity,
+        uFlowSpeed: altarMistUniforms.uFlowSpeed,
+        uColor: altarMistUniforms.uPuffColor,
+        uRimColor: altarMistUniforms.uRimColor,
+        uMap: { value: origMap },
+        uHasMap: { value: !!origMap }
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform float uTime;
+        uniform float uOpacity;
+        uniform float uFlowSpeed;
+        uniform vec3 uColor;
+        uniform vec3 uRimColor;
+        uniform sampler2D uMap;
+        uniform bool uHasMap;
+
+        ${simplexNoiseGLSL}
+
+        void main() {
+          vec2 centeredUv = vUv - 0.5;
+          float dist = length(centeredUv) * 2.0;
+
+          // Gentle perimeter fade: 1.0 throughout the body, smoothly zero at the border (0.7 to 1.0)
+          float borderFade = smoothstep(1.0, 0.70, dist);
+          float radial = clamp(1.0 - pow(dist, 2.2), 0.0, 1.0) * borderFade;
+
+          // Gentle rolling floor mist turbulence (no flat water appearance)
+          vec2 flowUv = vUv * 2.2 + vec2(
+            sin(uTime * 0.06 * uFlowSpeed + vUv.y * 1.8) * 0.10,
+            -uTime * 0.08 * uFlowSpeed
+          );
+          float n1 = snoise(flowUv);
+          float n2 = snoise(flowUv * 2.3 + vec2(0.35, -uTime * 0.06 * uFlowSpeed));
+          float noise = (n1 * 0.6 + n2 * 0.4) * 0.5 + 0.5;
+
+          // Soft translucent mist body
+          float mist = radial * mix(0.65, 1.0, noise);
+          float alpha = clamp(mist * uOpacity, 0.0, 1.0);
+
+          vec3 col = mix(uColor, uRimColor, clamp(radial * 0.35, 0.0, 1.0));
+
+          gl_FragColor = vec4(col, alpha);
+        }
+      `
+    });
+
+    fog004MeshRef.material = fog004Material;
     fog004MeshRef.visible = !rawAltarMistConfig.hideFOG004;
-    console.log(`[AltarMist] FOG004 mesh visibility set to: ${fog004MeshRef.visible} (hideFOG004: ${rawAltarMistConfig.hideFOG004})`);
+    fog004MeshRef.renderOrder = 2;
+    console.log(`[AltarMist] Enhanced FOG004 on floor at [${fog004MeshRef.position.toArray().map(v=>v.toFixed(2))}] with borderless soft ground-fog shader (visible: ${fog004MeshRef.visible}).`);
   }
 
   if (!fog1Node && !fire001Node) {
@@ -280,9 +359,10 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
 
     // Add 5-piece 3D volumetric cloud cluster
     fog1RootGroup.add(createFluffyCloudCluster(pr, ph));
+    fog1RootGroup.visible = !!rawAltarMistConfig.enableEmptiesPuffs;
 
     fog1Node.add(fog1RootGroup);
-    console.log('[AltarMist] Attached fluffy cloud cluster to "fog1" at', fog1Node.position.toArray());
+    console.log('[AltarMist] Attached cloud cluster to "fog1" at', fog1Node.position.toArray(), '(visible:', fog1RootGroup.visible, ')');
   }
 
   // 2. Build Node 2: fire.001 / fire001 (Left / rear side of altar)
@@ -297,9 +377,10 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
 
     // Add 5-piece 3D volumetric cloud cluster
     fire001RootGroup.add(createFluffyCloudCluster(pr, ph));
+    fire001RootGroup.visible = !!rawAltarMistConfig.enableEmptiesPuffs;
 
     fire001Node.add(fire001RootGroup);
-    console.log('[AltarMist] Attached fluffy cloud cluster to "fire001" at', fire001Node.position.toArray());
+    console.log('[AltarMist] Attached cloud cluster to "fire001" at', fire001Node.position.toArray(), '(visible:', fire001RootGroup.visible, ')');
   }
 }
 
@@ -311,15 +392,15 @@ const _tempParentQuat = new THREE.Quaternion();
  * Main animation update loop: dynamically aligns cloud billboards to camera and applies gentle floating.
  */
 export function updateAltarMist(elapsed, delta, camera) {
-  if (!fog1RootGroup && !fire001RootGroup) return;
-
   altarMistUniforms.uTime.value = elapsed;
+
+  if (!fog1RootGroup && !fire001RootGroup) return;
 
   const flow = rawAltarMistConfig.flowSpeed;
   const spread = rawAltarMistConfig.cloudSpread || 1.0;
 
   // Camera-facing billboards: orient smoothly to camera in WORLD space and apply gentle breathing float
-  if (camera) {
+  if (camera && (fog1RootGroup?.visible || fire001RootGroup?.visible)) {
     puffBillboards.forEach((item) => {
       // Compensate for parent node world orientation so billboards strictly face the camera
       if (item.mesh.parent) {
@@ -360,6 +441,11 @@ export function cleanupAltarMist() {
     puffMaterial = null;
   }
 
+  if (fog004Material) {
+    fog004Material.dispose();
+    fog004Material = null;
+  }
+
   if (fog1RootGroup) {
     fog1RootGroup.parent?.remove(fog1RootGroup);
     fog1RootGroup = null;
@@ -381,11 +467,14 @@ export function cleanupAltarMist() {
  */
 export function getAltarMistState() {
   return {
-    hasAltarMist: !!(fog1RootGroup || fire001RootGroup),
+    hasAltarMist: !!(fog004MeshRef || fog1RootGroup || fire001RootGroup),
+    fog004Active: !!fog004MeshRef && fog004MeshRef.visible,
+    fog004Pos: fog004MeshRef ? fog004MeshRef.position.toArray() : null,
     fog1Active: !!fog1RootGroup,
     fire001Active: !!fire001RootGroup,
     cloudPuffsCount: puffBillboards.length,
+    emptiesPuffsVisible: fog1RootGroup ? fog1RootGroup.visible : false,
     opacity: altarMistUniforms.uOpacity.value,
-    fog004Hidden: fog004MeshRef ? !fog004MeshRef.visible : true
+    fog004Hidden: fog004MeshRef ? !fog004MeshRef.visible : false
   };
 }

@@ -428,6 +428,17 @@ export function initStoryEngine() {
           let found = null;
           scene?.traverse((c) => {
             if (c.name === name || c.name.toLowerCase() === name.toLowerCase()) {
+              c.updateMatrixWorld(true);
+              const posAttr = c.geometry?.attributes?.position;
+              const verts = [];
+              if (posAttr) {
+                const v = new THREE.Vector3();
+                for (let i = 0; i < posAttr.count; i++) {
+                  v.fromBufferAttribute(posAttr, i);
+                  v.applyMatrix4(c.matrixWorld);
+                  verts.push([+v.x.toFixed(3), +v.y.toFixed(3), +v.z.toFixed(3)]);
+                }
+              }
               found = {
                 name: c.name,
                 materialType: c.material?.type,
@@ -443,7 +454,8 @@ export function initStoryEngine() {
                 vertexCount: c.geometry?.attributes?.position?.count,
                 geometryType: c.geometry?.type,
                 position: [c.position.x, c.position.y, c.position.z],
-                scale: [c.scale.x, c.scale.y, c.scale.z]
+                scale: [c.scale.x, c.scale.y, c.scale.z],
+                worldVertices: verts
               };
             }
           });

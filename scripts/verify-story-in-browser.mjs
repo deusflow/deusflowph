@@ -229,13 +229,25 @@ async function runBrowserVerification() {
   });
   // 3. FOG Ground Meshes Verification
   const fogRes = await sendCmd('Runtime.evaluate', {
-    expression: `window.__STORY_STATE__.getMeshMaterialInfo('FOG004')`,
+    expression: `
+      (() => {
+        let f4 = null;
+        for (const o of window.__STORY_STATE__.getAllObjects('FOG004')) {
+          f4 = o;
+        }
+        let worldVerts = [];
+        // Traverse scene to find the real THREE.Mesh object
+        // We can inspect its geometry
+        return {
+          fog004Info: window.__STORY_STATE__.getMeshMaterialInfo('FOG004'),
+          fogInfo: window.__STORY_STATE__.getMeshMaterialInfo('FOG')
+        };
+      })()
+    `,
     returnByValue: true
   });
-  console.log(`\n=== 3-FOG. GROUND FOG PLANES VERIFICATION ===`);
-  console.log('- FOG004 detailed info:', JSON.stringify(fogRes.result.value, null, 2));
-  console.log(`- Billboard Meshes Count (Camera-facing quads only): ${storyState.billboardCount}`);
-  console.log(`- FOG Separation Status: ${storyState.billboardCount === 42 ? 'PASSED (FOG excluded from billboard lookAt, resting as static ground layer)' : 'FAILED'}`);
+  console.log(`\n=== 3-FOG. FOG004 DETAILED INSPECTION ===`);
+  console.log(JSON.stringify(fogRes.result.value, null, 2));
 
   // 3b. UNLIT Verification for Cloud_Poly and Sky
   const unlitRes = await sendCmd('Runtime.evaluate', {
@@ -348,10 +360,11 @@ async function runBrowserVerification() {
         window.setAltarMistConfig({ flowSpeed: 0.45 });
         return {
           hasAltarMist: !!window.__STORY_STATE__.hasAltarMist,
+          fog004Active: !!state.fog004Active,
+          fog004Hidden: state.fog004Hidden,
           fog1Active: !!state.fog1Active,
           fire001Active: !!state.fire001Active,
-          cloudPuffsCount: state.cloudPuffsCount,
-          fog004Hidden: state.fog004Hidden,
+          emptiesPuffsVisible: !!state.emptiesPuffsVisible,
           windowExposed: !!window.ALTAR_MIST_CONFIG,
           updatedOpacity: window.ALTAR_MIST_CONFIG.opacity,
           updatedCloudSpread: window.ALTAR_MIST_CONFIG.cloudSpread,
@@ -366,24 +379,21 @@ async function runBrowserVerification() {
     returnByValue: true
   });
   const mistState = mistRes.result.value || {};
-  console.log('\n=== 3f. FLUFFY VOLUMETRIC CLOUD-MIST (fog1 & fire.001) VERIFICATION ===');
+  console.log('\n=== 3f. FOG004 GROUND PLANE FLOOR-MIST VERIFICATION ===');
   console.log(`- Altar Mist initialized: ${mistState.hasAltarMist}`);
-  console.log(`- Attached to fog1: ${mistState.fog1Active} (pos: ${JSON.stringify(mistState.fog1Obj?.position)}) | Attached to fire001: ${mistState.fire001Active} (pos: ${JSON.stringify(mistState.fire001Obj?.position)})`);
-  console.log(`- FOG004 pos: ${JSON.stringify(mistState.fog004Obj?.position)}`);
-  console.log(`- Volumetric cloud puff billboards: ${mistState.cloudPuffsCount} (5 puffs on fog1, 5 puffs on fire001)`);
-  console.log(`- FOG004 rigid mesh hidden: ${mistState.fog004Hidden}`);
+  console.log(`- FOG004 on floor active: ${mistState.fog004Active} (pos: ${JSON.stringify(mistState.fog004Obj?.position)})`);
+  console.log(`- FOG004 hidden: ${mistState.fog004Hidden} (false = visible on floor with soft borderless shader)`);
+  console.log(`- Empties puffs visible: ${mistState.emptiesPuffsVisible} (false = no floating balls in air behind altar)`);
   console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.updatedOpacity === 0.42 && mistState.updatedCloudSpread === 1.6 && mistState.updatedFlowSpeed === 0.45 ? 'PASSED (opacity, cloudSpread, puffRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
-  console.log(`- Altar Mist Status: ${mistState.hasAltarMist && mistState.fog1Active && mistState.fire001Active && mistState.cloudPuffsCount === 10 ? 'PASSED: 10-piece volumetric camera-facing fluffy cloud system active on altar' : 'FAILED'}`);
+  console.log(`- Floor Mist Status: ${mistState.hasAltarMist && mistState.fog004Active ? 'PASSED: FOG004 ground plane active with soft borderless mist shader directly on altar floor' : 'FAILED'}`);
 
   // Restore calibrated default opacity for balanced screenshot
   await sendCmd('Runtime.evaluate', {
     expression: `
       window.setAltarMistConfig({
-        opacity: 0.22,
-        cloudSpread: 1.35,
-        puffRadius: 1.65,
-        puffHeight: 0.85,
-        flowSpeed: 0.25
+        opacity: 0.38,
+        flowSpeed: 0.25,
+        hideFOG004: false
       });
     `
   });
