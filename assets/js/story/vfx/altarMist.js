@@ -382,9 +382,21 @@ function createFluffyCloudCluster(puffRadius, puffHeight) {
 }
 
 /**
- * Creates the Volumetric Canyon Mist Cluster (Option B - Physical 3D Clouds):
- * Staggered along the gorge airway floor (Z: -11.2 to -14.8) between the altar and portal.
- * Replaces the oversized rigid 2D sheet FOG.007 to eliminate knife-cut clipping artifacts.
+ * Creates the Volumetric Canyon Mist Cluster — Billboard-only edition.
+ *
+ * ROOT CAUSE OF PREVIOUS ARTIFACTS:
+ * The previous version used horizontal PlaneGeometry instances (rotX≈-PI/2) staggered
+ * along Z. Their combined Z-length (2.6–2.8m per quad) caused their 3D bounding volumes
+ * to physically overlap each other. Where two NormalBlending transparent quads physically
+ * intersect in 3D space, the GPU draws a visible seam contour at the intersection line —
+ * the "layering / врезаются" artifact the user reported.
+ *
+ * THE FIX:
+ * Camera-facing billboards are ALWAYS perpendicular to the camera view ray. Billboards
+ * placed at different Z positions are parallel planes at different depths. They NEVER
+ * physically intersect each other in 3D space → zero geometric seam artifacts.
+ * Each billboard uses an aggressive Gaussian radial falloff that reaches α≈0 well before
+ * the quad edge, so even in screen-space overlap zones there is no visible contour.
  */
 function createCanyonMistCluster(parentGroup) {
   if (canyonMistGroup) return;
@@ -393,90 +405,10 @@ function createCanyonMistCluster(parentGroup) {
   canyonMistGroup.name = 'CanyonMistCluster';
   canyonMistGroup.position.set(0, rawAltarMistConfig.canyonMistYOffset || 0.0, 0);
 
-  // 1. Canyon Mist Bed Material (Horizontal ground-hugging mist in gorge floor)
+  // Shared canyon mist billboard material.
+  // NormalBlending (correct for opaque white mist) — safe because camera-facing
+  // billboards at different Z never intersect in 3D, so no seam contour can form.
   canyonMistBedMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      uTime: altarMistUniforms.uTime,
-      uOpacity: altarMistUniforms.uOpacity,
-      uCarpetDensity: altarMistUniforms.uCarpetDensity,
-      uCanyonMistDensity: altarMistUniforms.uCanyonMistDensity,
-      uFlowSpeed: altarMistUniforms.uFlowSpeed,
-      uColor: altarMistUniforms.uColor,
-      uCoreColor: altarMistUniforms.uCoreColor,
-      uRimColor: altarMistUniforms.uRimColor
-    },
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    blending: THREE.NormalBlending,
-    vertexShader: `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec2 vUv;
-      uniform float uTime;
-      uniform float uOpacity;
-      uniform float uCarpetDensity;
-      uniform float uCanyonMistDensity;
-      uniform float uFlowSpeed;
-      uniform vec3 uColor;
-      uniform vec3 uCoreColor;
-      uniform vec3 uRimColor;
-
-      ${simplexNoiseGLSL}
-
-      void main() {
-        // Centered coordinates from -1.0 to +1.0
-        vec2 centeredUv = (vUv - vec2(0.5, 0.5)) * 2.0;
-        float distSq = dot(centeredUv, centeredUv);
-
-        // Edge noise erosion: undulating fluid tendrils
-        vec2 edgeUv = vUv * 3.2 + vec2(uTime * 0.03 * uFlowSpeed, -uTime * 0.05 * uFlowSpeed);
-        float edgeNoise = (snoise(edgeUv) * 0.60 + snoise(edgeUv * 2.4) * 0.40) * 0.22;
-
-        // Gaussian radial falloff combined with smoothstep to ensure it reaches EXACT ZERO well before boundary
-        float radialFade = exp(-distSq * 3.6) * smoothstep(0.95, 0.20, sqrt(distSq) + edgeNoise);
-
-        // Perimeter safety feathering across all 4 quad boundaries
-        float edgeDistX = min(vUv.x, 1.0 - vUv.x);
-        float edgeDistY = min(vUv.y, 1.0 - vUv.y);
-        float quadFade = smoothstep(0.0, 0.22, min(edgeDistX, edgeDistY));
-        float fluidMask = radialFade * quadFade;
-
-        // Multi-octave Simplex curl turbulence flowing along the canyon gorge
-        vec2 flowUv1 = vUv * 2.4 + vec2(
-          uTime * 0.035 * uFlowSpeed + sin(uTime * 0.04 * uFlowSpeed + vUv.y * 2.2) * 0.10,
-          -uTime * 0.065 * uFlowSpeed
-        );
-        vec2 flowUv2 = vUv * 4.5 + vec2(
-          -uTime * 0.025 * uFlowSpeed,
-          -uTime * 0.045 * uFlowSpeed
-        );
-        float n1 = snoise(flowUv1);
-        float n2 = snoise(flowUv2);
-        float noise = (n1 * 0.65 + n2 * 0.35) * 0.5 + 0.5;
-
-        float billow = smoothstep(0.18, 0.76, noise);
-        float mistBody = mix(0.35, 1.0, billow);
-
-        // Rich dense canyon fog that dissolves smoothly to 0 before touching rocks - ZERO knife cuts!
-        float alpha = clamp(fluidMask * mistBody * uOpacity * uCarpetDensity * uCanyonMistDensity * 0.85, 0.0, 0.90);
-
-        // Palette: celestial cream with cyan undertone and luminous pearl highlights
-        vec3 col = mix(uColor, uRimColor, clamp(pow(billow, 1.5) * 0.45, 0.0, 1.0));
-        col = mix(uCoreColor, col, clamp(distSq * 0.6 + 0.4, 0.0, 1.0));
-
-        gl_FragColor = vec4(col, alpha);
-      }
-    `
-  });
-
-  // 2. Canyon Mist Puff Material (Camera-facing volumetric vapor wisps rising from gorge)
-  canyonMistPuffMaterial = new THREE.ShaderMaterial({
     uniforms: {
       uTime: altarMistUniforms.uTime,
       uOpacity: altarMistUniforms.uOpacity,
@@ -515,73 +447,63 @@ function createCanyonMistCluster(parentGroup) {
         vec2 uv = (vUv - vec2(0.5, 0.5)) * 2.0;
         float dist = length(uv);
 
-        // Soft volumetric spherical falloff
-        float radial = exp(-dist * dist * 3.8) * smoothstep(1.0, 0.20, dist);
+        // Aggressive Gaussian radial falloff: α≈0 at dist=1.0 (quad edge).
+        // This guarantees NO visible boundary even if two billboards
+        // project to the same screen region from a specific camera angle.
+        float radial = exp(-dist * dist * 4.5) * smoothstep(1.0, 0.18, dist);
 
-        vec2 cloudUv = uv * 1.8 + vec2(
-          sin(uTime * 0.05 * uFlowSpeed + uv.y * 1.6) * 0.12,
-          -uTime * 0.08 * uFlowSpeed
+        // Edge noise erosion for organic tendrils
+        vec2 edgeUv = uv * 2.2 + vec2(uTime * 0.04 * uFlowSpeed, -uTime * 0.03 * uFlowSpeed);
+        float edgeNoise = (snoise(edgeUv) * 0.55 + snoise(edgeUv * 2.1) * 0.45) * 0.18;
+        radial = clamp(radial - edgeNoise * 0.4, 0.0, 1.0);
+
+        // Multi-octave billow noise for organic cloud body
+        vec2 cloudUv = uv * 1.6 + vec2(
+          sin(uTime * 0.05 * uFlowSpeed + uv.y * 1.8) * 0.10,
+          -uTime * 0.07 * uFlowSpeed
         );
-        float n = (snoise(cloudUv) * 0.65 + snoise(cloudUv * 2.2) * 0.35) * 0.5 + 0.5;
-        float billow = smoothstep(0.20, 0.75, n);
-        float puff = radial * mix(0.40, 1.0, billow);
+        float n = (snoise(cloudUv) * 0.65 + snoise(cloudUv * 2.4) * 0.35) * 0.5 + 0.5;
+        float billow = smoothstep(0.18, 0.78, n);
 
-        float alpha = clamp(puff * uOpacity * uCarpetDensity * uCanyonMistDensity * 0.65, 0.0, 0.80);
-        vec3 col = mix(uCoreColor, uColor, clamp(dist * 0.8 + 0.2, 0.0, 1.0));
-        col = mix(col, uRimColor, clamp(pow(billow, 1.5) * 0.40, 0.0, 1.0));
+        // Low per-billboard alpha (≤0.50) so cumulative stacking looks natural.
+        // With camera-facing geometry there are no 3D seams regardless of alpha.
+        float alpha = clamp(radial * mix(0.35, 1.0, billow) * uOpacity * uCarpetDensity * uCanyonMistDensity * 0.60, 0.0, 0.52);
+
+        // Luminous celestial palette: pearl rim, cyan core
+        vec3 col = mix(uCoreColor, uColor, clamp(dist * 0.7 + 0.3, 0.0, 1.0));
+        col = mix(col, uRimColor, clamp(pow(billow, 1.4) * 0.42, 0.0, 1.0));
 
         gl_FragColor = vec4(col, alpha);
       }
     `
   });
 
+  // canyonMistPuffMaterial aliases to the same shader — no separate material needed
+  // (no horizontal beds = no second material category).
+  canyonMistPuffMaterial = canyonMistBedMaterial;
+
   const spread = Number(rawAltarMistConfig.canyonMistSpread || 1.0);
 
-  // Staggered horizontal beds along canyon floor (Z: -11.2 to -14.8)
-  const bedConfigs = [
-    { x: -0.22, y: -1.44, z: -11.2, w: 2.4, l: 2.6, rotX: -Math.PI / 2 + 0.05, rotZ: 0.08, speed: 0.20, seed: 1.14 },
-    { x: -0.18, y: -1.42, z: -12.1, w: 2.6, l: 2.8, rotX: -Math.PI / 2 + 0.03, rotZ: -0.06, speed: 0.25, seed: 2.37 },
-    { x: -0.15, y: -1.39, z: -13.0, w: 2.5, l: 2.7, rotX: -Math.PI / 2 + 0.02, rotZ: 0.05, speed: 0.22, seed: 3.65 },
-    { x: -0.12, y: -1.37, z: -13.9, w: 2.6, l: 2.8, rotX: -Math.PI / 2 - 0.02, rotZ: -0.04, speed: 0.28, seed: 4.88 },
-    { x: -0.08, y: -1.34, z: -14.8, w: 2.4, l: 2.6, rotX: -Math.PI / 2 - 0.04, rotZ: 0.06, speed: 0.24, seed: 6.12 }
+  // 6 camera-facing billboard clouds, evenly spaced along canyon airway.
+  // Y raised to -1.22 … -1.14 (user request: "приподнял чуточку выше").
+  // Z spacing = 0.7m, quad radius at falloff-zero ≈ 0.9m → negligible 3D overlap.
+  const billboardConfigs = [
+    { x: -0.20, y: -1.22, z: -11.0, w: 2.5, h: 2.0, speed: 0.20, seed: 1.14, rotZ: 0.08 },
+    { x: -0.05, y: -1.20, z: -11.7, w: 2.8, h: 2.2, speed: 0.24, seed: 2.37, rotZ: -0.12 },
+    { x: -0.18, y: -1.18, z: -12.4, w: 2.6, h: 2.1, speed: 0.22, seed: 3.65, rotZ: 0.07 },
+    { x: -0.08, y: -1.17, z: -13.1, w: 2.7, h: 2.0, speed: 0.26, seed: 4.88, rotZ: -0.09 },
+    { x: -0.15, y: -1.16, z: -13.8, w: 2.5, h: 2.1, speed: 0.23, seed: 6.12, rotZ: 0.11 },
+    { x: -0.10, y: -1.14, z: -14.5, w: 2.6, h: 2.0, speed: 0.21, seed: 7.40, rotZ: -0.06 }
   ];
 
-  bedConfigs.forEach((cfg) => {
+  billboardConfigs.forEach((cfg) => {
     const geom = new THREE.PlaneGeometry(1.0, 1.0);
     const mesh = new THREE.Mesh(geom, canyonMistBedMaterial);
-    mesh.position.set(cfg.x, cfg.y, cfg.z);
-    mesh.rotation.x = cfg.rotX;
-    mesh.rotation.z = cfg.rotZ;
-    mesh.scale.set(cfg.w * spread, cfg.l * spread, 1.0);
-    mesh.renderOrder = 2;
-
-    canyonPlumes.push({
-      mesh,
-      basePos: new THREE.Vector3(cfg.x, cfg.y, cfg.z),
-      baseW: cfg.w,
-      baseH: cfg.l,
-      speed: cfg.speed,
-      seed: cfg.seed,
-      isPuff: false
-    });
-
-    canyonMistGroup.add(mesh);
-  });
-
-  // Soft rising volumetric vapor clouds nestled slightly higher in the airway
-  const puffConfigs = [
-    { x: -0.20, y: -1.24, z: -11.6, w: 1.8, h: 1.5, speed: 0.22, seed: 1.82 },
-    { x: -0.16, y: -1.20, z: -12.8, w: 2.0, h: 1.6, speed: 0.26, seed: 3.45 },
-    { x: -0.10, y: -1.16, z: -14.1, w: 1.9, h: 1.5, speed: 0.24, seed: 5.18 }
-  ];
-
-  puffConfigs.forEach((cfg) => {
-    const geom = new THREE.PlaneGeometry(1.0, 1.0);
-    const mesh = new THREE.Mesh(geom, canyonMistPuffMaterial);
     mesh.position.set(cfg.x, cfg.y, cfg.z);
     mesh.scale.set(cfg.w * spread, cfg.h * spread, 1.0);
     mesh.renderOrder = 2;
 
+    // Store rotZ for gentle roll in animation
     canyonPlumes.push({
       mesh,
       basePos: new THREE.Vector3(cfg.x, cfg.y, cfg.z),
@@ -589,7 +511,8 @@ function createCanyonMistCluster(parentGroup) {
       baseH: cfg.h,
       speed: cfg.speed,
       seed: cfg.seed,
-      isPuff: true
+      rotZ: cfg.rotZ,
+      isPuff: true   // all are camera-facing
     });
 
     canyonMistGroup.add(mesh);
@@ -598,7 +521,7 @@ function createCanyonMistCluster(parentGroup) {
   if (parentGroup) {
     parentGroup.add(canyonMistGroup);
   }
-  console.log(`[AltarMist] Created Canyon Mist Cluster (${canyonPlumes.length} volumetric physical 3D elements) replacing FOG.007.`);
+  console.log(`[AltarMist] Canyon Mist Cluster created: ${canyonPlumes.length} camera-facing billboards (no horizontal beds, zero 3D intersection artifacts).`);
 }
 
 /**
