@@ -423,13 +423,23 @@ export function initStoryEngine() {
         getMeshMaterialInfo: (name) => {
           let found = null;
           scene?.traverse((c) => {
-            if (c.name === name) {
+            if (c.name === name || c.name.toLowerCase() === name.toLowerCase()) {
               found = {
                 name: c.name,
                 materialType: c.material?.type,
+                materialName: c.material?.name,
                 isMeshBasicMaterial: c.material?.isMeshBasicMaterial === true,
                 hasMap: !!c.material?.map,
-                color: c.material?.color ? c.material.color.toArray() : null
+                color: c.material?.color ? c.material.color.toArray() : null,
+                opacity: c.material?.opacity,
+                transparent: c.material?.transparent,
+                depthWrite: c.material?.depthWrite,
+                alphaTest: c.material?.alphaTest,
+                blending: c.material?.blending,
+                vertexCount: c.geometry?.attributes?.position?.count,
+                geometryType: c.geometry?.type,
+                position: [c.position.x, c.position.y, c.position.z],
+                scale: [c.scale.x, c.scale.y, c.scale.z]
               };
             }
           });

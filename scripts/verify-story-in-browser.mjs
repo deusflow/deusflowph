@@ -229,12 +229,11 @@ async function runBrowserVerification() {
   });
   // 3. FOG Ground Meshes Verification
   const fogRes = await sendCmd('Runtime.evaluate', {
-    expression: 'window.__STORY_STATE__.getAllObjects("fog")',
+    expression: `window.__STORY_STATE__.getMeshMaterialInfo('FOG004')`,
     returnByValue: true
   });
-  const fogObjects = fogRes.result.value || [];
   console.log(`\n=== 3-FOG. GROUND FOG PLANES VERIFICATION ===`);
-  console.log(`- Ground FOG Meshes Count: ${fogObjects.length}`);
+  console.log('- FOG004 detailed info:', JSON.stringify(fogRes.result.value, null, 2));
   console.log(`- Billboard Meshes Count (Camera-facing quads only): ${storyState.billboardCount}`);
   console.log(`- FOG Separation Status: ${storyState.billboardCount === 42 ? 'PASSED (FOG excluded from billboard lookAt, resting as static ground layer)' : 'FAILED'}`);
 
