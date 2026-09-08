@@ -17,23 +17,32 @@ import { ALTAR_MIST_CONFIG, rawAltarMistConfig, registerAltarMistConfigListener 
 let fog1RootGroup = null;
 let fire001RootGroup = null;
 let fog004MeshRef = null;
+let groundFogMeshes = [];
+let groundFogMaterial = null;
 let puffBillboards = [];
 let puffMaterial = null;
+let fog004InitialY = -1.269;
 
 export function registerFOG004Mesh(mesh) {
   fog004MeshRef = mesh;
   if (fog004MeshRef) {
-    fog004MeshRef.visible = !rawAltarMistConfig.hideFOG004;
+    fog004MeshRef.visible = !rawAltarMistConfig.hideFOG && !rawAltarMistConfig.hideFOG004;
   }
 }
 
+// Initial normalized opacity
+let initialOpacity = Number(ALTAR_MIST_CONFIG.opacity);
+if (isNaN(initialOpacity)) initialOpacity = 0.55;
+if (initialOpacity > 1.0) initialOpacity = Math.min(initialOpacity / 100.0, 1.0);
+
 const altarMistUniforms = {
   uTime: { value: 0 },
-  uOpacity: { value: ALTAR_MIST_CONFIG.opacity },
-  uFlowSpeed: { value: ALTAR_MIST_CONFIG.flowSpeed },
-  uPuffDensity: { value: ALTAR_MIST_CONFIG.puffDensity },
-  uPuffColor: { value: ALTAR_MIST_CONFIG.puffColor },
-  uRimColor: { value: ALTAR_MIST_CONFIG.rimColor }
+  uOpacity: { value: initialOpacity },
+  uFlowSpeed: { value: Number(ALTAR_MIST_CONFIG.flowSpeed) || 0.25 },
+  uPuffDensity: { value: Number(ALTAR_MIST_CONFIG.puffDensity) || 1.0 },
+  uColor: { value: (ALTAR_MIST_CONFIG.color || ALTAR_MIST_CONFIG.puffColor) ? (ALTAR_MIST_CONFIG.color || ALTAR_MIST_CONFIG.puffColor).clone() : new THREE.Color(0xc0d8ec) },
+  uPuffColor: { value: (ALTAR_MIST_CONFIG.puffColor || ALTAR_MIST_CONFIG.color) ? (ALTAR_MIST_CONFIG.puffColor || ALTAR_MIST_CONFIG.color).clone() : new THREE.Color(0xc0d8ec) },
+  uRimColor: { value: ALTAR_MIST_CONFIG.rimColor ? ALTAR_MIST_CONFIG.rimColor.clone() : new THREE.Color(0xf0f7ff) }
 };
 
 // Common GLSL 2D Simplex Noise for organic fluid drift
@@ -64,21 +73,59 @@ float snoise(vec2 v) {
 `;
 
 /**
- * Live configuration applicator: called whenever ALTAR_MIST_CONFIG is changed in console or code.
+ * Live configuration applicator: called whenever ALTAR_MIST_CONFIG or GROUND_FOG_CONFIG is modified.
  */
 export function applyAltarMistConfig(prop, val) {
   if (prop === 'opacity') {
-    const num = Number(val);
+    let num = Number(val);
+    if (isNaN(num)) num = 0.55;
+    // Auto-normalize if user inputs percentage scale (e.g. 30.45, 60.45, 100) vs 0..1 scale (e.g. 0.85)
+    if (num > 1.0) {
+      num = Math.min(num / 100.0, 1.0);
+    } else {
+      num = Math.max(0.0, Math.min(num, 1.0));
+    }
     rawAltarMistConfig.opacity = num;
     altarMistUniforms.uOpacity.value = num;
+    console.log(`[AltarMist] Opacity set to ${num.toFixed(3)} across ${groundFogMeshes.length} ground fog planes.`);
+  } else if (prop === 'flowSpeed') {
+    const num = Number(val) || 0.25;
+    rawAltarMistConfig.flowSpeed = num;
+    altarMistUniforms.uFlowSpeed.value = num;
+  } else if (prop === 'yOffset') {
+    const off = Number(val) || 0.0;
+    rawAltarMistConfig.yOffset = off;
+    groundFogMeshes.forEach((mesh) => {
+      const initY = mesh.userData.initialY !== undefined ? mesh.userData.initialY : mesh.position.y;
+      mesh.position.y = initY + off;
+    });
+    console.log(`[AltarMist] yOffset set to ${off} across ${groundFogMeshes.length} ground fog planes.`);
+  } else if (prop === 'color' || prop === 'puffColor' || prop === 'groundColor') {
+    if (val instanceof THREE.Color) {
+      altarMistUniforms.uColor.value.copy(val);
+      altarMistUniforms.uPuffColor.value.copy(val);
+    } else {
+      altarMistUniforms.uColor.value.set(val);
+      altarMistUniforms.uPuffColor.value.set(val);
+    }
+  } else if (prop === 'rimColor') {
+    if (val instanceof THREE.Color) altarMistUniforms.uRimColor.value.copy(val);
+    else altarMistUniforms.uRimColor.value.set(val);
+  } else if (prop === 'hideFOG' || prop === 'hideFOG004' || prop === 'hideGroundFog') {
+    const hidden = !!val;
+    rawAltarMistConfig.hideFOG = hidden;
+    rawAltarMistConfig.hideFOG004 = hidden;
+    groundFogMeshes.forEach((mesh) => {
+      mesh.visible = !hidden;
+    });
+  } else if (prop === 'enableEmptiesPuffs') {
+    rawAltarMistConfig.enableEmptiesPuffs = !!val;
+    if (fog1RootGroup) fog1RootGroup.visible = !!val;
+    if (fire001RootGroup) fire001RootGroup.visible = !!val;
   } else if (prop === 'puffDensity') {
     const num = Number(val);
     rawAltarMistConfig.puffDensity = num;
     altarMistUniforms.uPuffDensity.value = num;
-  } else if (prop === 'flowSpeed') {
-    const num = Number(val);
-    rawAltarMistConfig.flowSpeed = num;
-    altarMistUniforms.uFlowSpeed.value = num;
   } else if (prop === 'puffRadius' || prop === 'puffHeight') {
     const r = Number(rawAltarMistConfig.puffRadius);
     const h = Number(rawAltarMistConfig.puffHeight);
@@ -122,23 +169,6 @@ export function applyAltarMistConfig(prop, val) {
       rawAltarMistConfig.offsetFire001 = val;
       fire001RootGroup.position.set(val[0], val[1], val[2]);
     }
-  } else if (prop === 'puffColor') {
-    if (val instanceof THREE.Color) altarMistUniforms.uPuffColor.value.copy(val);
-    else altarMistUniforms.uPuffColor.value.set(val);
-  } else if (prop === 'rimColor') {
-    if (val instanceof THREE.Color) altarMistUniforms.uRimColor.value.copy(val);
-    else altarMistUniforms.uRimColor.value.set(val);
-  } else if (prop === 'hideFOG004') {
-    rawAltarMistConfig.hideFOG004 = !!val;
-    if (fog004MeshRef) {
-      fog004MeshRef.visible = !val;
-    }
-  } else if (prop === 'enableEmptiesPuffs') {
-    rawAltarMistConfig.enableEmptiesPuffs = !!val;
-    if (fog1RootGroup) fog1RootGroup.visible = !!val;
-    if (fire001RootGroup) fire001RootGroup.visible = !!val;
-  } else if (prop === 'yOffset' && fog004MeshRef) {
-    fog004MeshRef.position.y = fog004InitialY + Number(val);
   }
 }
 
@@ -146,21 +176,16 @@ export function applyAltarMistConfig(prop, val) {
 registerAltarMistConfigListener(applyAltarMistConfig);
 
 /**
- * Creates a cluster of fluffy 3D volumetric cloud-puffs ("туман-тучка").
- * All puffs are camera-facing billboards with multi-octave FBM cloud billows.
+ * Creates a cluster of fluffy 3D volumetric cloud-puffs ("туман-тучка") on empties.
  */
 function createFluffyCloudCluster(puffRadius, puffHeight) {
   const cluster = new THREE.Group();
 
-  // Natural 3D cloud cluster: low ground cushions + mid-level billows + floating crests
   const puffConfigs = [
-    // Low ground wisps (hugging the rock base, but camera-facing so NOT a flat puddle):
     { x: 0.25, y: 0.08, z: 0.15, rMult: 1.25, hMult: 0.90, seed: 1.14, floatSpeed: 0.35, rotZ: 0.15 },
     { x: -0.30, y: 0.12, z: -0.20, rMult: 1.35, hMult: 0.95, seed: 2.37, floatSpeed: 0.30, rotZ: 1.25 },
-    // Mid-level fluffy cloud billows (covering the stone cracks and seams):
     { x: 0.15, y: 0.28, z: -0.30, rMult: 1.45, hMult: 1.10, seed: 3.65, floatSpeed: 0.42, rotZ: 2.45 },
     { x: -0.20, y: 0.40, z: 0.20, rMult: 1.30, hMult: 1.05, seed: 4.88, floatSpeed: 0.38, rotZ: 3.70 },
-    // Upper soft floating crest:
     { x: 0.05, y: 0.58, z: -0.05, rMult: 1.55, hMult: 1.15, seed: 5.92, floatSpeed: 0.48, rotZ: 5.10 }
   ];
 
@@ -192,38 +217,123 @@ function createFluffyCloudCluster(puffRadius, puffHeight) {
   return cluster;
 }
 
-let fog004InitialY = -1.269;
-let fog004Material = null;
-
 /**
- * Builds the volumetric cloud-mist system:
- * - Enhances FOG.004 on the floor with borderless soft ground-fog shader (zero hard edges/ribs).
+ * Builds the volumetric ground-fog and altar mist system:
+ * - Enhances ALL ground fog meshes (FOG, FOG.001 ... FOG.007) with full-plane rectangular feathering.
+ * - Guarantees full coverage across the plane (no center holes/circles), covering gaps between slabs.
+ * - Eliminates hard polygon seams/ribs through outer edge feathering.
+ * - Bright, radiant, celestial mist tone (never black or dark).
  * - Optionally attaches cloud puffs to fog1 and fire001 empties.
  */
-export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
-  if (fog004Node) {
-    fog004MeshRef = fog004Node;
-    fog004InitialY = fog004MeshRef.position.y;
+export function createAltarMist(fog1Node, fire001Node, fog004Node = null, allFogNodes = []) {
+  const fogNodesToProcess = (Array.isArray(allFogNodes) && allFogNodes.length > 0)
+    ? allFogNodes
+    : (fog004Node ? [fog004Node] : []);
+
+  if (fogNodesToProcess.length > 0) {
+    if (!groundFogMaterial) {
+      groundFogMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: altarMistUniforms.uTime,
+          uOpacity: altarMistUniforms.uOpacity,
+          uFlowSpeed: altarMistUniforms.uFlowSpeed,
+          uColor: altarMistUniforms.uColor,
+          uRimColor: altarMistUniforms.uRimColor
+        },
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        blending: THREE.NormalBlending,
+        vertexShader: `
+          varying vec2 vUv;
+          varying vec3 vWorldPos;
+          void main() {
+            vUv = uv;
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPos = worldPos.xyz;
+            gl_Position = projectionMatrix * viewMatrix * worldPos;
+          }
+        `,
+        fragmentShader: `
+          varying vec2 vUv;
+          varying vec3 vWorldPos;
+          uniform float uTime;
+          uniform float uOpacity;
+          uniform float uFlowSpeed;
+          uniform vec3 uColor;
+          uniform vec3 uRimColor;
+
+          ${simplexNoiseGLSL}
+
+          void main() {
+            // 4-edge rectangular perimeter feathering (0.0 to 0.08):
+            // Over 92% of the rectangular plane has 100% full coverage right up to the edges
+            // to thoroughly cover cracks and seams between floor slabs ("щели"),
+            // while smoothly fading the outer 8% margin to 0 to eliminate hard polygon cuts/ribs!
+            float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+            float borderFade = smoothstep(0.0, 0.08, edgeDist);
+
+            // World-space organic drift for seamless continuous flow between adjacent planes
+            vec2 flowUv = vWorldPos.xz * 0.25 + vec2(
+              sin(uTime * 0.04 * uFlowSpeed + vWorldPos.z * 0.18) * 0.15,
+              -uTime * 0.06 * uFlowSpeed
+            );
+            float n1 = snoise(flowUv);
+            float n2 = snoise(flowUv * 2.3 + vec2(0.42, -uTime * 0.05 * uFlowSpeed));
+            float noise = (n1 * 0.65 + n2 * 0.35) * 0.5 + 0.5;
+
+            // High-density mist body across the entire rectangular plane
+            float mist = borderFade * mix(0.72, 1.0, noise);
+            float alpha = clamp(mist * uOpacity, 0.0, 1.0);
+
+            // Luminous celestial mist color (bright silver-blue #c0d8ec, NEVER dark or black)
+            vec3 col = mix(uColor, uRimColor, noise * 0.45);
+
+            gl_FragColor = vec4(col, alpha);
+          }
+        `
+      });
+    }
+
     const yOff = rawAltarMistConfig.yOffset !== undefined ? rawAltarMistConfig.yOffset : 0.015;
-    fog004MeshRef.position.y = fog004InitialY + yOff;
 
-    // Grab original map if exists
-    const origMap = (fog004MeshRef.material && fog004MeshRef.material.map) ? fog004MeshRef.material.map : null;
+    fogNodesToProcess.forEach((mesh) => {
+      if (!mesh || !mesh.isMesh) return;
+      if (!groundFogMeshes.includes(mesh)) {
+        mesh.userData.initialY = mesh.position.y;
+        mesh.position.y = mesh.userData.initialY + yOff;
+        mesh.material = groundFogMaterial;
+        mesh.visible = !rawAltarMistConfig.hideFOG && !rawAltarMistConfig.hideFOG004;
+        mesh.renderOrder = 2;
+        groundFogMeshes.push(mesh);
 
-    fog004Material = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: altarMistUniforms.uTime,
-        uOpacity: altarMistUniforms.uOpacity,
-        uFlowSpeed: altarMistUniforms.uFlowSpeed,
-        uColor: altarMistUniforms.uPuffColor,
-        uRimColor: altarMistUniforms.uRimColor,
-        uMap: { value: origMap },
-        uHasMap: { value: !!origMap }
-      },
+        if (mesh.name === 'FOG004' || mesh.name === 'FOG.004') {
+          fog004MeshRef = mesh;
+          fog004InitialY = mesh.userData.initialY;
+        }
+      }
+    });
+
+    if (!fog004MeshRef && fog004Node) {
+      fog004MeshRef = fog004Node;
+      fog004InitialY = fog004MeshRef.position.y;
+    }
+
+    console.log(`[AltarMist] Enhanced ${groundFogMeshes.length} ground fog planes (${groundFogMeshes.map(m=>m.name).join(', ')}) with bright borderless planar mist shader.`);
+  }
+
+  if (!fog1Node && !fire001Node) {
+    return;
+  }
+
+  // Volumetric Fluffy Cloud ShaderMaterial on Empties
+  if (!puffMaterial) {
+    puffMaterial = new THREE.ShaderMaterial({
+      uniforms: altarMistUniforms,
       transparent: true,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
-      blending: THREE.NormalBlending,
       vertexShader: `
         varying vec2 vUv;
         void main() {
@@ -235,120 +345,50 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
         varying vec2 vUv;
         uniform float uTime;
         uniform float uOpacity;
+        uniform float uPuffDensity;
         uniform float uFlowSpeed;
-        uniform vec3 uColor;
+        uniform vec3 uPuffColor;
         uniform vec3 uRimColor;
-        uniform sampler2D uMap;
-        uniform bool uHasMap;
 
         ${simplexNoiseGLSL}
 
+        float cloudFBM(vec2 p) {
+          float f = 0.0;
+          f += 0.5200 * snoise(p); p = p * 2.05;
+          f += 0.2800 * snoise(p); p = p * 2.08;
+          f += 0.1400 * snoise(p);
+          return f * 0.5 + 0.5;
+        }
+
         void main() {
-          vec2 centeredUv = vUv - 0.5;
-          float dist = length(centeredUv) * 2.0;
+          vec2 uv = vUv - 0.5;
+          float dist = length(uv) * 2.0;
 
-          // Gentle perimeter fade: 1.0 throughout the body, smoothly zero at the border (0.7 to 1.0)
-          float borderFade = smoothstep(1.0, 0.70, dist);
-          float radial = clamp(1.0 - pow(dist, 2.2), 0.0, 1.0) * borderFade;
+          float radial = exp(-dist * dist * 3.8);
+          radial *= smoothstep(1.0, 0.2, dist);
 
-          // Gentle rolling floor mist turbulence (no flat water appearance)
-          vec2 flowUv = vUv * 2.2 + vec2(
-            sin(uTime * 0.06 * uFlowSpeed + vUv.y * 1.8) * 0.10,
-            -uTime * 0.08 * uFlowSpeed
+          vec2 cloudUv = uv * 2.2 + vec2(
+            sin(uTime * 0.08 * uFlowSpeed + uv.y * 1.5) * 0.12,
+            -uTime * 0.10 * uFlowSpeed
           );
-          float n1 = snoise(flowUv);
-          float n2 = snoise(flowUv * 2.3 + vec2(0.35, -uTime * 0.06 * uFlowSpeed));
-          float noise = (n1 * 0.6 + n2 * 0.4) * 0.5 + 0.5;
+          float n = cloudFBM(cloudUv);
 
-          // Soft translucent mist body
-          float mist = radial * mix(0.65, 1.0, noise);
-          float alpha = clamp(mist * uOpacity, 0.0, 1.0);
+          float billow = smoothstep(0.20, 0.75, n);
+          float cloud = radial * mix(0.40, 1.0, billow);
+          float alpha = clamp(cloud * uOpacity * uPuffDensity, 0.0, 1.0);
 
-          vec3 col = mix(uColor, uRimColor, clamp(radial * 0.35, 0.0, 1.0));
-
+          vec3 col = mix(uPuffColor, uRimColor, clamp(radial * 1.25, 0.0, 1.0));
           gl_FragColor = vec4(col, alpha);
         }
       `
     });
-
-    fog004MeshRef.material = fog004Material;
-    fog004MeshRef.visible = !rawAltarMistConfig.hideFOG004;
-    fog004MeshRef.renderOrder = 2;
-    console.log(`[AltarMist] Enhanced FOG004 on floor at [${fog004MeshRef.position.toArray().map(v=>v.toFixed(2))}] with borderless soft ground-fog shader (visible: ${fog004MeshRef.visible}).`);
   }
-
-  if (!fog1Node && !fire001Node) {
-    console.warn('[AltarMist] Neither "fog1" nor "fire001" found in scene.');
-    return;
-  }
-
-  // Volumetric Fluffy Cloud ShaderMaterial ("Туман-тучка" with Fractal Brownian Motion)
-  puffMaterial = new THREE.ShaderMaterial({
-    uniforms: altarMistUniforms,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    side: THREE.DoubleSide,
-    vertexShader: `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec2 vUv;
-      uniform float uTime;
-      uniform float uOpacity;
-      uniform float uPuffDensity;
-      uniform float uFlowSpeed;
-      uniform vec3 uPuffColor;
-      uniform vec3 uRimColor;
-
-      ${simplexNoiseGLSL}
-
-      // 3-Octave Fractal Brownian Motion for authentic fluffy cumulus cloud billows
-      float cloudFBM(vec2 p) {
-        float f = 0.0;
-        f += 0.5200 * snoise(p); p = p * 2.05;
-        f += 0.2800 * snoise(p); p = p * 2.08;
-        f += 0.1400 * snoise(p);
-        return f * 0.5 + 0.5;
-      }
-
-      void main() {
-        vec2 uv = vUv - 0.5;
-        float dist = length(uv) * 2.0;
-
-        // Ultra-smooth Gaussian radial envelope (Zero hard polygon edges)
-        float radial = exp(-dist * dist * 3.8);
-        radial *= smoothstep(1.0, 0.2, dist);
-
-        // Slow organic cloud turbulence
-        vec2 cloudUv = uv * 2.2 + vec2(
-          sin(uTime * 0.08 * uFlowSpeed + uv.y * 1.5) * 0.12,
-          -uTime * 0.10 * uFlowSpeed
-        );
-        float n = cloudFBM(cloudUv);
-
-        // Buttery-soft cloud billow density with smooth core (no harsh cutouts, no layers)
-        float billow = smoothstep(0.20, 0.75, n);
-        float cloud = radial * mix(0.40, 1.0, billow);
-        float alpha = clamp(cloud * uOpacity * uPuffDensity, 0.0, 1.0);
-
-        // Ethereal #7b8a9c mist tone with subtle luminous highlight
-        vec3 col = mix(uPuffColor, uRimColor, clamp(radial * 1.25, 0.0, 1.0));
-
-        gl_FragColor = vec4(col, alpha);
-      }
-    `
-  });
 
   const pr = rawAltarMistConfig.puffRadius;
   const ph = rawAltarMistConfig.puffHeight;
 
   // 1. Build Node 1: fog1 (Right side of altar)
-  if (fog1Node) {
+  if (fog1Node && !fog1RootGroup) {
     fog1RootGroup = new THREE.Group();
     fog1RootGroup.name = 'AltarMist_Fog1_Group';
     const off = rawAltarMistConfig.offsetFog1;
@@ -357,7 +397,6 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
     const sc = rawAltarMistConfig.scale;
     if (Array.isArray(sc)) fog1RootGroup.scale.set(sc[0], sc[1], sc[2]);
 
-    // Add 5-piece 3D volumetric cloud cluster
     fog1RootGroup.add(createFluffyCloudCluster(pr, ph));
     fog1RootGroup.visible = !!rawAltarMistConfig.enableEmptiesPuffs;
 
@@ -366,7 +405,7 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
   }
 
   // 2. Build Node 2: fire.001 / fire001 (Left / rear side of altar)
-  if (fire001Node) {
+  if (fire001Node && !fire001RootGroup) {
     fire001RootGroup = new THREE.Group();
     fire001RootGroup.name = 'AltarMist_Fire001_Group';
     const off = rawAltarMistConfig.offsetFire001;
@@ -375,7 +414,6 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
     const sc = rawAltarMistConfig.scale;
     if (Array.isArray(sc)) fire001RootGroup.scale.set(sc[0], sc[1], sc[2]);
 
-    // Add 5-piece 3D volumetric cloud cluster
     fire001RootGroup.add(createFluffyCloudCluster(pr, ph));
     fire001RootGroup.visible = !!rawAltarMistConfig.enableEmptiesPuffs;
 
@@ -399,16 +437,14 @@ export function updateAltarMist(elapsed, delta, camera) {
   const flow = rawAltarMistConfig.flowSpeed;
   const spread = rawAltarMistConfig.cloudSpread || 1.0;
 
-  // Camera-facing billboards: orient smoothly to camera in WORLD space and apply gentle breathing float
+  // Camera-facing billboards for empties puffs
   if (camera && (fog1RootGroup?.visible || fire001RootGroup?.visible)) {
     puffBillboards.forEach((item) => {
-      // Compensate for parent node world orientation so billboards strictly face the camera
       if (item.mesh.parent) {
         item.mesh.parent.getWorldQuaternion(_tempParentQuat);
         _parentInvQuat.copy(_tempParentQuat).invert();
         item.mesh.quaternion.copy(_parentInvQuat).multiply(camera.quaternion);
 
-        // Apply distinct roll angle so each puff's cloud shape is rotated uniquely
         if (item.rotZ !== undefined) {
           _rollQuat.setFromAxisAngle(new THREE.Vector3(0, 0, 1), item.rotZ + elapsed * 0.02 * flow);
           item.mesh.quaternion.multiply(_rollQuat);
@@ -417,7 +453,6 @@ export function updateAltarMist(elapsed, delta, camera) {
         item.mesh.quaternion.copy(camera.quaternion);
       }
 
-      // Subtle organic atmospheric floating
       const floatY = Math.sin(elapsed * item.floatSpeed * flow * 2.5 + item.seed) * 0.04;
       const floatX = Math.cos(elapsed * (item.floatSpeed * 0.7) * flow * 2.5 + item.seed) * 0.03;
       item.mesh.position.y = item.basePos.y + floatY;
@@ -441,9 +476,9 @@ export function cleanupAltarMist() {
     puffMaterial = null;
   }
 
-  if (fog004Material) {
-    fog004Material.dispose();
-    fog004Material = null;
+  if (groundFogMaterial) {
+    groundFogMaterial.dispose();
+    groundFogMaterial = null;
   }
 
   if (fog1RootGroup) {
@@ -456,10 +491,13 @@ export function cleanupAltarMist() {
     fire001RootGroup = null;
   }
 
-  if (fog004MeshRef) {
-    fog004MeshRef.visible = true;
-    fog004MeshRef = null;
-  }
+  groundFogMeshes.forEach((mesh) => {
+    if (mesh.userData.initialY !== undefined) {
+      mesh.position.y = mesh.userData.initialY;
+    }
+  });
+  groundFogMeshes = [];
+  fog004MeshRef = null;
 }
 
 /**
@@ -467,7 +505,9 @@ export function cleanupAltarMist() {
  */
 export function getAltarMistState() {
   return {
-    hasAltarMist: !!(fog004MeshRef || fog1RootGroup || fire001RootGroup),
+    hasAltarMist: !!(groundFogMeshes.length > 0 || fog1RootGroup || fire001RootGroup),
+    groundFogCount: groundFogMeshes.length,
+    groundFogNames: groundFogMeshes.map(m => m.name),
     fog004Active: !!fog004MeshRef && fog004MeshRef.visible,
     fog004Pos: fog004MeshRef ? fog004MeshRef.position.toArray() : null,
     fog1Active: !!fog1RootGroup,
@@ -475,6 +515,7 @@ export function getAltarMistState() {
     cloudPuffsCount: puffBillboards.length,
     emptiesPuffsVisible: fog1RootGroup ? fog1RootGroup.visible : false,
     opacity: altarMistUniforms.uOpacity.value,
-    fog004Hidden: fog004MeshRef ? !fog004MeshRef.visible : false
+    fog004Hidden: fog004MeshRef ? !fog004MeshRef.visible : false,
+    allFogHidden: groundFogMeshes.length > 0 ? !groundFogMeshes[0].visible : false
   };
 }
