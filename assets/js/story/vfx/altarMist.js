@@ -359,7 +359,7 @@ function createFluffyCloudCluster(puffRadius, puffHeight) {
  * - FOG.006 & FOG.005: Canyon cascade planes (mist gently cascades off the altar into the canyon below).
  * - fog2: Gentle rising steam plumes above the sacrificial fire bowl.
  */
-export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2Node = null, fog006Node = null, fog005Node = null, fog002Node = null, fogRootNode = null, fog001Node = null) {
+export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2Node = null, fog006Node = null, fog005Node = null, fog002Node = null, fogRootNode = null, fog001Node = null, fog003Node = null, fog007Node = null) {
   // 1. Billowing steam plumes above the bowl (fog2)
   if (fog2Node) {
     createAltarSteamSystem(fog2Node);
@@ -674,6 +674,66 @@ export function createAltarMist(fog1Node, fire001Node, fog004Node = null, fog2No
     });
     fog001Node.renderOrder = 2;
     console.log(`[AltarMist] Enhanced canyon floor FOG001 plane.`);
+  }
+
+  // Enhance upper canyon fog plane (FOG003) with soft celestial haze
+  if (fog003Node) {
+    fog003Node.visible = true;
+    fog003Node.material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: altarMistUniforms.uTime,
+        uOpacity: altarMistUniforms.uOpacity,
+        uCarpetDensity: altarMistUniforms.uCarpetDensity,
+        uFlowSpeed: altarMistUniforms.uFlowSpeed,
+        uColor: altarMistUniforms.uColor,
+        uCoreColor: altarMistUniforms.uCoreColor,
+        uRimColor: altarMistUniforms.uRimColor
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: cascadeFragmentShader
+    });
+    fog003Node.renderOrder = 2;
+    console.log(`[AltarMist] Enhanced upper canyon FOG003 plane.`);
+  }
+
+  // Enhance deep canyon mist plane (FOG007) with soft noise cascade shader
+  if (fog007Node) {
+    fog007Node.visible = true;
+    fog007Node.material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: altarMistUniforms.uTime,
+        uOpacity: altarMistUniforms.uOpacity,
+        uCarpetDensity: altarMistUniforms.uCarpetDensity,
+        uFlowSpeed: altarMistUniforms.uFlowSpeed,
+        uColor: altarMistUniforms.uColor,
+        uCoreColor: altarMistUniforms.uCoreColor,
+        uRimColor: altarMistUniforms.uRimColor
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: cascadeFragmentShader
+    });
+    fog007Node.renderOrder = 2;
+    console.log(`[AltarMist] Enhanced deep canyon FOG007 plane.`);
   }
 
   // 4. Empties Puffs (fog1 & fire.001, disabled by default)

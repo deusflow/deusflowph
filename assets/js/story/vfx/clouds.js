@@ -61,10 +61,56 @@ export function processBillboardCloud(child) {
     child.renderOrder = 2;
   }
 
-  // Billboards nestled directly against the altar monolith (Bilboard.006, 016, 032)
-  // must NOT rotate dynamically towards camera because rotating swings flat quad corners through solid rock
+  // Soft atmospheric radial falloff for altar-adjacent billboards (Bilboard.006, 016, 032)
+  // Preserves original hand-painted Ghibli texture, tracks camera freely, and dissolves edges so they never slice rock
   if (child.name.includes('006') || child.name.includes('016') || child.name.includes('032')) {
-    child.userData.lockRotation = true;
+    const origMat = Array.isArray(child.material) ? child.material[0] : child.material;
+    const tex = origMat.map || origMat.emissiveMap;
+
+    child.material = new THREE.ShaderMaterial({
+      uniforms: {
+        uMap: { value: tex },
+        uOpacity: { value: 0.68 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D uMap;
+        uniform float uOpacity;
+        varying vec2 vUv;
+        void main() {
+          vec4 texColor = texture2D(uMap, vUv);
+          vec2 centered = (vUv - vec2(0.5)) * 2.0;
+          float dist = length(centered);
+          float radialFade = smoothstep(0.95, 0.20, dist);
+          float alpha = texColor.a * radialFade * uOpacity;
+          if (alpha <= 0.001) discard;
+          gl_FragColor = vec4(texColor.rgb, alpha);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending
+    });
+
+    child.userData.baseOpacity = 0.68;
+    child.userData.isMist = false;
+    child.userData.lockRotation = false; // Freely tracks camera!
+    child.renderOrder = 3;
+
+    // Nudge 006 slightly forward so it floats gracefully in open air beside the monolith
+    if (child.name.includes('006')) {
+      child.position.x += 0.20;
+      child.position.z += 0.25;
+    }
+
+    return child;
   }
 
   return child;
@@ -75,16 +121,7 @@ export function processBillboardCloud(child) {
  * Crucial: static horizontal plane, must NOT rotate towards camera.
  */
 export function processGroundFog(child) {
-  // Hide problematic planes that slice through canyon rock walls:
-  // - FOG.007: 11.6m wide plane slicing directly into mountain at Z = -12.9
-  // - FOG.003: floating plane at Y = +1.25 slicing through airspace
-  if (
-    child.name === 'FOG.007' || child.name === 'FOG007' ||
-    child.name === 'FOG.003' || child.name === 'FOG003'
-  ) {
-    child.visible = false;
-    return child;
-  }
+  child.visible = true;
 
   const materials = Array.isArray(child.material) ? child.material : [child.material];
   materials.forEach((mat) => {
@@ -148,13 +185,17 @@ export function updateClouds(camera) {
     if (distToCam < nearFadeDistance) {
       const factor = Math.max(0, Math.min(1, (distToCam - minClipDistance) / (nearFadeDistance - minClipDistance)));
       const targetOpacity = baseOp * factor;
-      if (Array.isArray(mesh.material)) {
+      if (mesh.material?.uniforms?.uOpacity) {
+        mesh.material.uniforms.uOpacity.value = targetOpacity;
+      } else if (Array.isArray(mesh.material)) {
         mesh.material.forEach((m) => { m.opacity = targetOpacity; });
       } else if (mesh.material) {
         mesh.material.opacity = targetOpacity;
       }
     } else {
-      if (Array.isArray(mesh.material)) {
+      if (mesh.material?.uniforms?.uOpacity) {
+        mesh.material.uniforms.uOpacity.value = baseOp;
+      } else if (Array.isArray(mesh.material)) {
         mesh.material.forEach((m) => { m.opacity = baseOp; });
       } else if (mesh.material && mesh.material.opacity !== baseOp) {
         mesh.material.opacity = baseOp;
