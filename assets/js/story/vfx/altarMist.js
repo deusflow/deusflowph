@@ -19,10 +19,18 @@ import { ALTAR_MIST_CONFIG, rawAltarMistConfig, registerAltarMistConfigListener 
 
 let fog1RootGroup = null;
 let fire001RootGroup = null;
+let fog004MeshRef = null;
 let groundMeshes = [];
 let puffBillboards = [];
 let groundMaterial = null;
 let puffMaterial = null;
+
+export function registerFOG004Mesh(mesh) {
+  fog004MeshRef = mesh;
+  if (fog004MeshRef) {
+    fog004MeshRef.visible = !rawAltarMistConfig.hideFOG004;
+  }
+}
 
 const altarMistUniforms = {
   uTime: { value: 0 },
@@ -120,6 +128,11 @@ export function applyAltarMistConfig(prop, val) {
   } else if (prop === 'rimColor') {
     if (val instanceof THREE.Color) altarMistUniforms.uRimColor.value.copy(val);
     else altarMistUniforms.uRimColor.value.set(val);
+  } else if (prop === 'hideFOG004') {
+    rawAltarMistConfig.hideFOG004 = !!val;
+    if (fog004MeshRef) {
+      fog004MeshRef.visible = !val;
+    }
   }
 }
 
@@ -189,7 +202,15 @@ function createVolumetricPuffCluster(puffRadius, puffHeight, count = 3) {
 /**
  * Builds the ethereal Altar Mist system and attaches to fog1 and fire001 empty nodes.
  */
-export function createAltarMist(fog1Node, fire001Node) {
+export function createAltarMist(fog1Node, fire001Node, fog004Node = null) {
+  if (fog004Node) {
+    fog004MeshRef = fog004Node;
+  }
+  if (fog004MeshRef) {
+    fog004MeshRef.visible = !rawAltarMistConfig.hideFOG004;
+    console.log(`[AltarMist] FOG004 mesh visibility set to: ${fog004MeshRef.visible} (hideFOG004: ${rawAltarMistConfig.hideFOG004})`);
+  }
+
   if (!fog1Node && !fire001Node) {
     console.warn('[AltarMist] Neither "fog1" nor "fire001" found in scene.');
     return;
@@ -406,6 +427,11 @@ export function cleanupAltarMist() {
     fire001RootGroup.parent?.remove(fire001RootGroup);
     fire001RootGroup = null;
   }
+
+  if (fog004MeshRef) {
+    fog004MeshRef.visible = true;
+    fog004MeshRef = null;
+  }
 }
 
 /**
@@ -418,6 +444,7 @@ export function getAltarMistState() {
     fire001Active: !!fire001RootGroup,
     groundLayersCount: groundMeshes.length,
     puffLayersCount: puffBillboards.length,
-    opacity: altarMistUniforms.uOpacity.value
+    opacity: altarMistUniforms.uOpacity.value,
+    fog004Hidden: fog004MeshRef ? !fog004MeshRef.visible : true
   };
 }

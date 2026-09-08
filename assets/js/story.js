@@ -307,6 +307,7 @@ export function initStoryEngine() {
       let fireTargetNode = null;
       let altarFog1Node = null;
       let altarFire001Node = null;
+      let fog004MeshNode = null;
 
       root.traverse((child) => {
         // Punctual lights scaling
@@ -345,6 +346,9 @@ export function initStoryEngine() {
           if (isBillboard) {
             processBillboardCloud(child);
           } else if (isGroundFog) {
+            if (child.name === 'FOG004' || child.name === 'FOG.004') {
+              fog004MeshNode = child;
+            }
             processGroundFog(child);
           }
 
@@ -361,8 +365,8 @@ export function initStoryEngine() {
       }
 
       // 4b. Attach Hybrid Altar Mist (Option 1 + Option 2) to altar empty nodes (fog1 & fire.001)
-      if (altarFog1Node || altarFire001Node) {
-        createAltarMist(altarFog1Node, altarFire001Node);
+      if (altarFog1Node || altarFire001Node || fog004MeshNode) {
+        createAltarMist(altarFog1Node, altarFire001Node, fog004MeshNode);
       }
 
       // 5. Setup Window Resize & ScrollTrigger
