@@ -364,9 +364,9 @@ export function initStoryEngine() {
         createBlueFire(fireTargetNode);
       }
 
-      // 4b. Attach Hybrid Altar Mist (Option 1 + Option 2) to altar empty nodes (fog1 & fire.001)
-      if (altarFog1Node || altarFire001Node || fog004MeshNode) {
-        createAltarMist(altarFog1Node, altarFire001Node, fog004MeshNode);
+      // 4b. Attach Altar Mist & Billowing Steam ("Пар над алтарем") to fog2 (bowl) and altar nodes
+      if (fireTargetNode || altarFog1Node || altarFire001Node || fog004MeshNode) {
+        createAltarMist(altarFog1Node, altarFire001Node, fog004MeshNode, fireTargetNode);
       }
 
       // 5. Setup Window Resize & ScrollTrigger

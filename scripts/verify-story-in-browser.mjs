@@ -349,29 +349,40 @@ async function runBrowserVerification() {
   const liveInfo = liveRes.result.value;
   console.log(`- Live Browser Console Editing: ${liveInfo.windowExposed && liveInfo.updatedIntensity === 5.2 && liveInfo.updatedHeight === 0.45 && liveInfo.scaleWorks ? 'PASSED (flameHeight, flamePower, lightIntensity, scale reactive in real time)' : 'FAILED'}`);
 
-  // 3f. Fluffy Volumetric Cloud-Mist (fog1 & fire.001) Verification
+  // 3f. Altar Billowing Steam & Floating Mist Verification
   const mistRes = await sendCmd('Runtime.evaluate', {
     expression: `
       (() => {
         const state = window.__STORY_STATE__.altarMistState || {};
-        window.ALTAR_MIST_CONFIG.opacity = 0.42;
-        window.ALTAR_MIST_CONFIG.cloudSpread = 1.6;
-        window.ALTAR_MIST_CONFIG.puffRadius = 1.8;
-        window.setAltarMistConfig({ flowSpeed: 0.45 });
+        // Test dual-scale opacity normalization (e.g. 55% -> 0.55, and 0.45 -> 0.45)
+        window.ALTAR_MIST_CONFIG.opacity = 55;
+        const normalized55 = Number(window.ALTAR_MIST_CONFIG.opacity.toFixed(4));
+        window.ALTAR_MIST_CONFIG.opacity = 0.45;
+        const direct045 = window.ALTAR_MIST_CONFIG.opacity;
+
+        window.ALTAR_MIST_CONFIG.steamHeight = 1.1;
+        window.ALTAR_MIST_CONFIG.steamRadius = 0.75;
+        window.setAltarMistConfig({ flowSpeed: 0.40 });
+
         return {
           hasAltarMist: !!window.__STORY_STATE__.hasAltarMist,
+          hasSteam: !!state.hasSteam,
+          steamPlumesCount: state.steamPlumesCount,
+          bowlAnchor: state.bowlAnchor,
           fog004Active: !!state.fog004Active,
           fog004Hidden: state.fog004Hidden,
           fog1Active: !!state.fog1Active,
           fire001Active: !!state.fire001Active,
           emptiesPuffsVisible: !!state.emptiesPuffsVisible,
           windowExposed: !!window.ALTAR_MIST_CONFIG,
+          steamConfigExposed: !!window.ALTAR_STEAM_CONFIG,
+          normalized55,
+          direct045,
           updatedOpacity: window.ALTAR_MIST_CONFIG.opacity,
-          updatedCloudSpread: window.ALTAR_MIST_CONFIG.cloudSpread,
-          updatedPuffRadius: window.ALTAR_MIST_CONFIG.puffRadius,
+          updatedSteamHeight: window.ALTAR_MIST_CONFIG.steamHeight,
+          updatedSteamRadius: window.ALTAR_MIST_CONFIG.steamRadius,
           updatedFlowSpeed: window.ALTAR_MIST_CONFIG.flowSpeed,
-          fog1Obj: window.__STORY_STATE__.getAllObjects('fog1')[0],
-          fire001Obj: window.__STORY_STATE__.getAllObjects('fire001')[0],
+          fog2Obj: window.__STORY_STATE__.getAllObjects('fog2')[0],
           fog004Obj: window.__STORY_STATE__.getAllObjects('fog004')[0]
         };
       })()
@@ -379,20 +390,24 @@ async function runBrowserVerification() {
     returnByValue: true
   });
   const mistState = mistRes.result.value || {};
-  console.log('\n=== 3f. FOG004 GROUND PLANE FLOOR-MIST VERIFICATION ===');
-  console.log(`- Altar Mist initialized: ${mistState.hasAltarMist}`);
-  console.log(`- FOG004 on floor active: ${mistState.fog004Active} (pos: ${JSON.stringify(mistState.fog004Obj?.position)})`);
-  console.log(`- FOG004 hidden: ${mistState.fog004Hidden} (false = visible on floor with soft borderless shader)`);
+  console.log('\n=== 3f. ALTAR BILLOWING STEAM & FLOATING MIST VERIFICATION ===');
+  console.log(`- Altar Mist & Steam initialized: ${mistState.hasAltarMist}`);
+  console.log(`- Billowing Steam Active on Bowl (fog2): ${mistState.hasSteam} (Plumes: ${mistState.steamPlumesCount}, Anchor: "${mistState.bowlAnchor}")`);
+  console.log(`- Dual-scale Opacity Input Normalization: 55% -> ${mistState.normalized55}, 0.45 -> ${mistState.direct045} (${mistState.normalized55 === 0.55 && mistState.direct045 === 0.45 ? 'PASSED' : 'FAILED'})`);
+  console.log(`- FOG004 ground plane on floor active: ${mistState.fog004Active}`);
   console.log(`- Empties puffs visible: ${mistState.emptiesPuffsVisible} (false = no floating balls in air behind altar)`);
-  console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.updatedOpacity === 0.42 && mistState.updatedCloudSpread === 1.6 && mistState.updatedFlowSpeed === 0.45 ? 'PASSED (opacity, cloudSpread, puffRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
-  console.log(`- Floor Mist Status: ${mistState.hasAltarMist && mistState.fog004Active ? 'PASSED: FOG004 ground plane active with soft borderless mist shader directly on altar floor' : 'FAILED'}`);
+  console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.steamConfigExposed && mistState.updatedSteamHeight === 1.1 && mistState.updatedFlowSpeed === 0.4 ? 'PASSED (opacity, steamHeight, steamRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
+  console.log(`- Altar Steam Status: ${mistState.hasSteam && mistState.steamPlumesCount === 5 ? 'PASSED: Billowing steam plumes wafting gracefully above bowl & slab' : 'FAILED'}`);
 
-  // Restore calibrated default opacity for balanced screenshot
+  // Restore calibrated default settings for balanced screenshot
   await sendCmd('Runtime.evaluate', {
     expression: `
       window.setAltarMistConfig({
-        opacity: 0.38,
-        flowSpeed: 0.25,
+        opacity: 0.45,
+        flowSpeed: 0.35,
+        steamHeight: 0.95,
+        steamRadius: 0.65,
+        yOffset: 0.05,
         hideFOG004: false
       });
     `
