@@ -494,7 +494,8 @@ export function initStoryEngine() {
         getStarDispersionStats: getStarStats,
         getStarGeometryDetails: getStarGeometryDetails,
         getStarQuadCenters: getStarQuadCenters,
-        getQuadVertices: getQuadVertices
+        getQuadVertices: getQuadVertices,
+        getScene: () => scene
       };
 
       // Hide loading screen and start loop
