@@ -116,3 +116,64 @@ if (typeof window !== 'undefined') {
   window.BLUE_FIRE_CONFIG = BLUE_FIRE_CONFIG;
   window.setBlueFireConfig = setBlueFireConfig;
 }
+
+/* ====================================================================
+ * 4. ALTAR MIST & VOLUMETRIC SMOKE SHROUD (FOG1 & FIRE.001) CONFIGURATION
+ * НАСТРОЙКИ ТУМАНА У АЛТАРЯ (Стелющийся туман + объемные клубы):
+ * Меняйте параметры прямо здесь в коде, либо в консоли браузера:
+ * ALTAR_MIST_CONFIG.<параметр> = ...
+ * ==================================================================== */
+export const rawAltarMistConfig = {
+  // 1. Прозрачность и плотность:
+  opacity: 0.65,          // Общая прозрачность тумана (0.0 - выкл, 0.4 - тонкий, 0.7 - плотный, 1.0 - густой)
+  puffDensity: 0.75,      // Плотность объемных клубов тумана
+
+  // 2. Размеры зон маскировки:
+  groundRadius: 1.85,     // Радиус стелющейся подушки у основания алтаря (скрывает стык пола)
+  puffRadius: 1.25,       // Радиус объемных клубов тумана (скрывает дефекты геометрии по высоте)
+  puffHeight: 0.60,       // Высота подъема клубов тумана над пустышками
+
+  // 3. Скорость движения:
+  flowSpeed: 0.40,        // Скорость мягкого перекатывания и клубящегося движения
+
+  // 4. Позиционирование и масштабирование:
+  scale: [1.0, 1.0, 1.0], // Общий масштаб эффекта [X, Y, Z] или число
+  offsetFog1: [0, -0.05, 0],     // Смещение относительно пустышки fog1 [X, Y, Z]
+  offsetFire001: [0, -0.05, 0],  // Смещение относительно пустышки fire.001 [X, Y, Z]
+
+  // 5. Атмосферная палитра тумана:
+  groundColor: new THREE.Color(0x040c20), // Глубокий полуночно-синий придонный тон
+  puffColor: new THREE.Color(0x081a38),   // Мягкий дымчатый сапфировый цвет клубов
+  rimColor: new THREE.Color(0x143b66)     // Мягкий рассеянный отблеск на краях
+};
+
+let onAltarMistConfigChangeCallback = null;
+
+export function registerAltarMistConfigListener(fn) {
+  onAltarMistConfigChangeCallback = fn;
+}
+
+export const ALTAR_MIST_CONFIG = new Proxy(rawAltarMistConfig, {
+  set(target, prop, val) {
+    target[prop] = val;
+    if (onAltarMistConfigChangeCallback) {
+      onAltarMistConfigChangeCallback(prop, val);
+    }
+    return true;
+  }
+});
+
+export function setAltarMistConfig(newConfig = {}) {
+  if (!newConfig || typeof newConfig !== 'object') return ALTAR_MIST_CONFIG;
+  for (const [key, val] of Object.entries(newConfig)) {
+    ALTAR_MIST_CONFIG[key] = val;
+  }
+  console.log('[StoryConfig] ALTAR_MIST_CONFIG updated live in browser:', ALTAR_MIST_CONFIG);
+  return ALTAR_MIST_CONFIG;
+}
+
+if (typeof window !== 'undefined') {
+  window.ALTAR_MIST_CONFIG = ALTAR_MIST_CONFIG;
+  window.setAltarMistConfig = setAltarMistConfig;
+}
+

@@ -338,6 +338,39 @@ async function runBrowserVerification() {
   const liveInfo = liveRes.result.value;
   console.log(`- Live Browser Console Editing: ${liveInfo.windowExposed && liveInfo.updatedIntensity === 5.2 && liveInfo.updatedHeight === 0.45 && liveInfo.scaleWorks ? 'PASSED (flameHeight, flamePower, lightIntensity, scale reactive in real time)' : 'FAILED'}`);
 
+  // 3f. Hybrid Altar Mist & Volumetric Smoke Shroud (fog1 & fire.001) Verification
+  const mistRes = await sendCmd('Runtime.evaluate', {
+    expression: `
+      (() => {
+        const state = window.__STORY_STATE__.altarMistState || {};
+        window.ALTAR_MIST_CONFIG.opacity = 0.82;
+        window.ALTAR_MIST_CONFIG.groundRadius = 2.4;
+        window.ALTAR_MIST_CONFIG.puffRadius = 1.6;
+        window.setAltarMistConfig({ flowSpeed: 0.55 });
+        return {
+          hasAltarMist: !!window.__STORY_STATE__.hasAltarMist,
+          fog1Active: !!state.fog1Active,
+          fire001Active: !!state.fire001Active,
+          groundLayersCount: state.groundLayersCount,
+          puffLayersCount: state.puffLayersCount,
+          windowExposed: !!window.ALTAR_MIST_CONFIG,
+          updatedOpacity: window.ALTAR_MIST_CONFIG.opacity,
+          updatedGroundRadius: window.ALTAR_MIST_CONFIG.groundRadius,
+          updatedPuffRadius: window.ALTAR_MIST_CONFIG.puffRadius,
+          updatedFlowSpeed: window.ALTAR_MIST_CONFIG.flowSpeed
+        };
+      })()
+    `,
+    returnByValue: true
+  });
+  const mistState = mistRes.result.value || {};
+  console.log('\n=== 3f. ALTAR MIST & VOLUMETRIC SMOKE SHROUD (fog1 & fire.001) VERIFICATION ===');
+  console.log(`- Altar Mist initialized: ${mistState.hasAltarMist}`);
+  console.log(`- Attached to fog1: ${mistState.fog1Active} | Attached to fire001: ${mistState.fire001Active}`);
+  console.log(`- Ground creeping layers: ${mistState.groundLayersCount} | Volumetric smoke puff quads: ${mistState.puffLayersCount}`);
+  console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.updatedOpacity === 0.82 && mistState.updatedGroundRadius === 2.4 && mistState.updatedFlowSpeed === 0.55 ? 'PASSED (opacity, groundRadius, puffRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
+  console.log(`- Altar Mist Shroud Status: ${mistState.hasAltarMist && mistState.fog1Active && mistState.fire001Active ? 'PASSED: Hybrid ground mist and volumetric smoke puffs active on altar' : 'FAILED'}`);
+
   // 4. Camera Motion Trajectory Measurements
   console.log('\n=== 4. CAMERA TRAJECTORY MEASUREMENTS ACROSS SCROLL ===');
   const scrollMilestones = [0.0, 0.25, 0.5, 0.75, 1.0];

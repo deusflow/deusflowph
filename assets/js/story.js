@@ -16,10 +16,17 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Timer } from 'three/addons/misc/Timer.js';
 
 // Re-export configs for external consumers & backwards compatibility
-export { STORY_LIGHT_CONFIG, BLUE_FIRE_CONFIG, setBlueFireConfig } from './story/storyConfig.js';
-import { getLightConfigIntensity, BLUE_FIRE_CONFIG } from './story/storyConfig.js';
+export {
+  STORY_LIGHT_CONFIG,
+  BLUE_FIRE_CONFIG,
+  setBlueFireConfig,
+  ALTAR_MIST_CONFIG,
+  setAltarMistConfig
+} from './story/storyConfig.js';
+import { getLightConfigIntensity, BLUE_FIRE_CONFIG, ALTAR_MIST_CONFIG } from './story/storyConfig.js';
 import { getStoryI18n } from './story/i18n.js';
 import { createBlueFire, updateBlueFire, getBlueFireState, cleanupBlueFire } from './story/vfx/blueFire.js';
+import { createAltarMist, updateAltarMist, getAltarMistState, cleanupAltarMist } from './story/vfx/altarMist.js';
 import {
   processStarMesh,
   updateStars,
@@ -178,6 +185,9 @@ function animate() {
   // 4. Procedural blue fire & rock wall illumination
   updateBlueFire(elapsed, camera);
 
+  // 4b. Hybrid Altar creeping mist & volumetric smoke puffs (fog1 & fire.001)
+  updateAltarMist(elapsed, delta, camera);
+
   // 5. Render active scene with extracted GLTF camera
   if (renderer && scene && camera) {
     renderer.render(scene, camera);
@@ -295,6 +305,8 @@ export function initStoryEngine() {
       // 3. GLTF Scene Traversal
       gltfLights.clear();
       let fireTargetNode = null;
+      let altarFog1Node = null;
+      let altarFire001Node = null;
 
       root.traverse((child) => {
         // Punctual lights scaling
@@ -310,11 +322,17 @@ export function initStoryEngine() {
           console.log(`[StoryEngine] Scaled punctual light "${child.name}" (${child.type}): raw ${rawIntensity.toFixed(1)} -> scaled ${child.intensity.toFixed(2)}`);
         }
 
-        // Detect target empty node for Blue Fire (fog2 priority, fallback to fire001)
+        // Detect target empty node for Blue Fire (fog2 priority)
         if (child.name === 'fog2' || child.name.toLowerCase() === 'fog2') {
           fireTargetNode = child;
-        } else if (!fireTargetNode && (child.name === 'fire001' || child.name === 'fire.001')) {
-          fireTargetNode = child;
+        }
+
+        // Detect altar empty nodes for hybrid mist/smoke shroud (fog1 and fire.001)
+        if (child.name === 'fog1' || child.name.toLowerCase() === 'fog1') {
+          altarFog1Node = child;
+        }
+        if (child.name === 'fire001' || child.name === 'fire.001' || child.name.toLowerCase() === 'fire001' || child.name.toLowerCase() === 'fire.001') {
+          altarFire001Node = child;
         }
 
         if (child.isMesh) {
@@ -337,9 +355,14 @@ export function initStoryEngine() {
         }
       });
 
-      // 4. Attach Blue Fire to target empty node
+      // 4. Attach Blue Fire to target empty node (fog2)
       if (fireTargetNode) {
         createBlueFire(fireTargetNode);
+      }
+
+      // 4b. Attach Hybrid Altar Mist (Option 1 + Option 2) to altar empty nodes (fog1 & fire.001)
+      if (altarFog1Node || altarFire001Node) {
+        createAltarMist(altarFog1Node, altarFire001Node);
       }
 
       // 5. Setup Window Resize & ScrollTrigger
@@ -369,6 +392,9 @@ export function initStoryEngine() {
         get blueFirePos() { return getBlueFireState().pos; },
         get blueFireIntensity() { return getBlueFireState().intensity; },
         get blueFireConfig() { return BLUE_FIRE_CONFIG; },
+        get hasAltarMist() { return getAltarMistState().hasAltarMist; },
+        get altarMistState() { return getAltarMistState(); },
+        get altarMistConfig() { return ALTAR_MIST_CONFIG; },
         setScrollProgress: (progress) => {
           setCameraScrollProgress(progress);
           updateHud(progress, i18nStrings);
@@ -476,6 +502,7 @@ export function destroyStoryScene() {
   cleanupClouds();
   cleanupStars();
   cleanupBlueFire();
+  cleanupAltarMist();
 
   if (cameraMixer) {
     cameraMixer.stopAllAction();
