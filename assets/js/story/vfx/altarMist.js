@@ -17,10 +17,9 @@ import { ALTAR_MIST_CONFIG, rawAltarMistConfig, registerAltarMistConfigListener 
 let fog2BowlAnchorNode = null;
 let altarSteamGroup = null;
 let steamPlumes = [];
+let steamMaterial = null;
 let fog004MeshRef = null;
 let fog004Material = null;
-const FOG004_BASELINE_Y = -0.96;
-let fog004InitialY = FOG004_BASELINE_Y;
 
 let fog006MeshRef = null;
 let fog006Material = null;
@@ -107,15 +106,28 @@ function updateSteamPlumeScales() {
   });
 }
 
+const FOG004_BLENDER_QUAT = [0.09138163924217224, -0.40615639090538025, 0.03696654736995697, 0.9084712862968445];
+const FOG004_BASELINE_Y = -1.26969;
+let fog004InitialY = FOG004_BASELINE_Y;
+
 function updateFOG004ScaleAndPosition() {
   if (!fog004MeshRef) return;
   const spread = Number(rawAltarMistConfig.carpetSpread || 1.0);
-  // Scale dynamically based on carpetSpread (spread = 3.0 covers circular stone floor ~5.4m)
-  const targetScale = 1.79 * (1.0 + (spread - 1.0) * 0.25);
+  // Scale gracefully with carpetSpread (spread = 3.0 covers circular stone floor ~5.0m)
+  const targetScale = 1.79 * (1.0 + (spread - 1.0) * 0.20);
   fog004MeshRef.scale.set(targetScale, targetScale, targetScale);
-  const yOff = rawAltarMistConfig.yOffset !== undefined ? Number(rawAltarMistConfig.yOffset) : 0.015;
-  // FOG004_BASELINE_Y (-0.96) places the mist plane right across the stone surface (median -0.936)
-  fog004MeshRef.position.y = FOG004_BASELINE_Y + yOff;
+  
+  // Restore Blender-authored tilt (11.3°) that mathematically matches the sloping stone floor
+  fog004MeshRef.quaternion.set(
+    FOG004_BLENDER_QUAT[0],
+    FOG004_BLENDER_QUAT[1],
+    FOG004_BLENDER_QUAT[2],
+    FOG004_BLENDER_QUAT[3]
+  );
+
+  const yOff = rawAltarMistConfig.yOffset !== undefined ? Number(rawAltarMistConfig.yOffset) : 0.02;
+  // Positioned precisely over the altar stone floor with micro-lift to prevent z-fighting
+  fog004MeshRef.position.set(3.33189, FOG004_BASELINE_Y + yOff, -7.62437);
 }
 
 /**

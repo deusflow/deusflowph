@@ -421,11 +421,11 @@ async function runBrowserVerification() {
       window.setAltarMistConfig({
         opacity: 0.65,
         carpetDensity: 1.05,
-        carpetSpread: 1.0,
+        carpetSpread: 1.5,
         flowSpeed: 0.38,
         steamHeight: 0.40,
         steamRadius: 0.40,
-        yOffset: 0.015,
+        yOffset: 0.02,
         hideFOG004: false
       });
     `
