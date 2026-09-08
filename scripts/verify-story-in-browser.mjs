@@ -337,48 +337,53 @@ async function runBrowserVerification() {
   const liveInfo = liveRes.result.value;
   console.log(`- Live Browser Console Editing: ${liveInfo.windowExposed && liveInfo.updatedIntensity === 5.2 && liveInfo.updatedHeight === 0.45 && liveInfo.scaleWorks ? 'PASSED (flameHeight, flamePower, lightIntensity, scale reactive in real time)' : 'FAILED'}`);
 
-  // 3f. Hybrid Altar Mist & Volumetric Smoke Shroud (fog1 & fire.001) Verification
+  // 3f. Fluffy Volumetric Cloud-Mist (fog1 & fire.001) Verification
   const mistRes = await sendCmd('Runtime.evaluate', {
     expression: `
       (() => {
         const state = window.__STORY_STATE__.altarMistState || {};
-        window.ALTAR_MIST_CONFIG.opacity = 0.82;
-        window.ALTAR_MIST_CONFIG.groundRadius = 2.4;
-        window.ALTAR_MIST_CONFIG.puffRadius = 1.6;
-        window.setAltarMistConfig({ flowSpeed: 0.55 });
+        window.ALTAR_MIST_CONFIG.opacity = 0.42;
+        window.ALTAR_MIST_CONFIG.cloudSpread = 1.6;
+        window.ALTAR_MIST_CONFIG.puffRadius = 1.8;
+        window.setAltarMistConfig({ flowSpeed: 0.45 });
         return {
           hasAltarMist: !!window.__STORY_STATE__.hasAltarMist,
           fog1Active: !!state.fog1Active,
           fire001Active: !!state.fire001Active,
-          groundLayersCount: state.groundLayersCount,
-          puffLayersCount: state.puffLayersCount,
+          cloudPuffsCount: state.cloudPuffsCount,
+          fog004Hidden: state.fog004Hidden,
           windowExposed: !!window.ALTAR_MIST_CONFIG,
           updatedOpacity: window.ALTAR_MIST_CONFIG.opacity,
-          updatedGroundRadius: window.ALTAR_MIST_CONFIG.groundRadius,
+          updatedCloudSpread: window.ALTAR_MIST_CONFIG.cloudSpread,
           updatedPuffRadius: window.ALTAR_MIST_CONFIG.puffRadius,
-          updatedFlowSpeed: window.ALTAR_MIST_CONFIG.flowSpeed
+          updatedFlowSpeed: window.ALTAR_MIST_CONFIG.flowSpeed,
+          fog1Obj: window.__STORY_STATE__.getAllObjects('fog1')[0],
+          fire001Obj: window.__STORY_STATE__.getAllObjects('fire001')[0],
+          fog004Obj: window.__STORY_STATE__.getAllObjects('fog004')[0]
         };
       })()
     `,
     returnByValue: true
   });
   const mistState = mistRes.result.value || {};
-  console.log('\n=== 3f. ALTAR MIST & VOLUMETRIC SMOKE SHROUD (fog1 & fire.001) VERIFICATION ===');
+  console.log('\n=== 3f. FLUFFY VOLUMETRIC CLOUD-MIST (fog1 & fire.001) VERIFICATION ===');
   console.log(`- Altar Mist initialized: ${mistState.hasAltarMist}`);
-  console.log(`- Attached to fog1: ${mistState.fog1Active} | Attached to fire001: ${mistState.fire001Active}`);
-  console.log(`- Ground creeping layers: ${mistState.groundLayersCount} | Volumetric smoke puff quads: ${mistState.puffLayersCount}`);
-  console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.updatedOpacity === 0.82 && mistState.updatedGroundRadius === 2.4 && mistState.updatedFlowSpeed === 0.55 ? 'PASSED (opacity, groundRadius, puffRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
-  console.log(`- Altar Mist Shroud Status: ${mistState.hasAltarMist && mistState.fog1Active && mistState.fire001Active ? 'PASSED: Hybrid ground mist and volumetric smoke puffs active on altar' : 'FAILED'}`);
+  console.log(`- Attached to fog1: ${mistState.fog1Active} (pos: ${JSON.stringify(mistState.fog1Obj?.position)}) | Attached to fire001: ${mistState.fire001Active} (pos: ${JSON.stringify(mistState.fire001Obj?.position)})`);
+  console.log(`- FOG004 pos: ${JSON.stringify(mistState.fog004Obj?.position)}`);
+  console.log(`- Volumetric cloud puff billboards: ${mistState.cloudPuffsCount} (5 puffs on fog1, 5 puffs on fire001)`);
+  console.log(`- FOG004 rigid mesh hidden: ${mistState.fog004Hidden}`);
+  console.log(`- Live Browser Console Editing: ${mistState.windowExposed && mistState.updatedOpacity === 0.42 && mistState.updatedCloudSpread === 1.6 && mistState.updatedFlowSpeed === 0.45 ? 'PASSED (opacity, cloudSpread, puffRadius, flowSpeed reactive in real time)' : 'FAILED'}`);
+  console.log(`- Altar Mist Status: ${mistState.hasAltarMist && mistState.fog1Active && mistState.fire001Active && mistState.cloudPuffsCount === 10 ? 'PASSED: 10-piece volumetric camera-facing fluffy cloud system active on altar' : 'FAILED'}`);
 
   // Restore calibrated default opacity for balanced screenshot
   await sendCmd('Runtime.evaluate', {
     expression: `
       window.setAltarMistConfig({
-        opacity: 0.38,
-        groundRadius: 2.0,
-        puffRadius: 1.3,
-        puffHeight: 0.5,
-        flowSpeed: 0.35
+        opacity: 0.22,
+        cloudSpread: 1.35,
+        puffRadius: 1.65,
+        puffHeight: 0.85,
+        flowSpeed: 0.25
       });
     `
   });
