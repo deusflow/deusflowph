@@ -53,7 +53,7 @@ jobs:
                 CONTACT_EMAIL: process.env.CONTACT_EMAIL || "deuswork@icloud.com",
                 INSTAGRAM_HANDLE: process.env.INSTAGRAM_HANDLE || "@deusflow",
                 HERO_IMAGE_URL: process.env.HERO_IMAGE_URL || "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg",
-                FAVICON_URL: process.env.FAVICON_URL || "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png",
+                FAVICON_URL: process.env.FAVICON_URL || "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.jpg",
                 SITE_NAME: process.env.SITE_NAME || "Oleh Ro Photography",
                 SITE_URL: process.env.SITE_URL || "https://deusflow.dk",
                 DEFAULT_OG_IMAGE: process.env.DEFAULT_OG_IMAGE || "",

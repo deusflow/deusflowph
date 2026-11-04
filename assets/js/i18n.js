@@ -241,7 +241,7 @@ const rawDefaults = {
     whatsapp_subtitle: "Fastest for Europe & International couples",
     telegram_subtitle: "Direct Chat in Ukrainian & English",
     instagram_subtitle: "Portfolio, reels & live stories",
-    email_subtitle: "Email Direct",
+    email_subtitle: "deuswork@icloud.com",
     footer_desc: "Based in Denmark (Aarhus area), available across Europe.",
     floating_cta_note: "Calendar open for 2026-2027 weddings · See all contact options",
 
@@ -330,7 +330,7 @@ const rawDefaults = {
     whatsapp_subtitle: "Найшвидше для Європи та міжнародних пар",
     telegram_subtitle: "Прямий чат українською та англійською",
     instagram_subtitle: "Портфоліо, reels і live stories",
-    email_subtitle: "Email напряму",
+    email_subtitle: "deuswork@icloud.com",
     footer_desc: "Базуюся в Данії (район Орхуса), відкритий до зйомок по всій Європі.",
     floating_cta_note: "Бронювання весіль на сезон 2026-2027 відкрито · Усі способи зв'язку",
 

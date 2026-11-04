@@ -475,6 +475,7 @@ h3,
   /* Places buttons ABOVE h1 on desktop */
   align-items: center;
   justify-content: center;
+  gap: clamp(1.4rem, 3vh, 2.2rem);
 }
 
 .eyebrow {
@@ -505,8 +506,8 @@ h3,
   width: 100%;
   max-width: 760px;
   margin-inline: auto;
-  margin-top: 150px;
-  margin-bottom: 2.5rem;
+  margin-top: clamp(110px, 14vh, 150px);
+  margin-bottom: clamp(1.4rem, 3vh, 2.2rem);
   align-items: center;
   justify-content: center;
   justify-items: center;

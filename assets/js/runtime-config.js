@@ -7,9 +7,9 @@
     if (!favicon) {
       favicon = document.createElement("link");
       favicon.rel = "icon";
-      favicon.type = "image/png";
       document.head.appendChild(favicon);
     }
+    favicon.type = faviconUrl.includes(".jpg") || faviconUrl.includes(".jpeg") ? "image/jpeg" : "image/png";
     favicon.href = faviconUrl;
 
     let appleIcon = document.querySelector("link[rel='apple-touch-icon']");

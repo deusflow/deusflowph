@@ -4,7 +4,7 @@ window.APP_CONFIG = {
   CONTACT_EMAIL: "deuswork@icloud.com",
   INSTAGRAM_HANDLE: "@deusflow",
   HERO_IMAGE_URL: "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg",
-  FAVICON_URL: "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.png",
+  FAVICON_URL: "https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/favico%20copy.jpg",
   SITE_NAME: "Oleh Ro Photography",
   SITE_URL: "https://deusflow.dk",
   DEFAULT_OG_IMAGE: "",
