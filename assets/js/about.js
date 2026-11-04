@@ -19,21 +19,25 @@ const fallback = {
     "Originally from Ukraine, now based near Aarhus. I work across all of Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.",
   testimonials: [
     {
-      name: "Oleksandr Popov (Actor)",
-      quote: "Man, these shots look straight out of a movie. You have an incredible eye for cinematic detail. Working with you on set was effortless. Top-tier level."
-    },
-    {
-      name: "Amalie Frank",
+      name: "Amalie & Frederik (Aarhus, Denmark)",
       quote:
-        "Wow, hvor ser det godt ud! Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig."
+        "Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig, Oleh!"
     },
     {
       name: "Volodymyr Ostapchuk (TV Presenter)",
       quote: "We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!"
     },
     {
+      name: "Elena & Marcus (Copenhagen Elopement)",
+      quote: "We travelled from Munich to elope in Copenhagen. Oleh guided us through the most aesthetic corners of the city. The photos look like a Vogue editorial!"
+    },
+    {
       name: "Jerry Heil (Singer & Songwriter)",
       quote: "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."
+    },
+    {
+      name: "Oleksandr Popov (Actor)",
+      quote: "I worked with Oleh on a shoot for my TV series. He is an absolute professional with a great eye for cinematic detail."
     }
   ],
   gallery_photos: []
@@ -51,10 +55,16 @@ function normalizeTestimonials(value) {
   }
 
   const list = value
-    .map((item) => ({
-      name: String(item?.name || "").trim(),
-      quote: String(item?.quote || "").trim()
-    }))
+    .map((item) => {
+      let quote = String(item?.quote || "").trim();
+      if (quote) {
+        quote = quote.charAt(0).toUpperCase() + quote.slice(1);
+      }
+      return {
+        name: String(item?.name || "").trim(),
+        quote
+      };
+    })
     .filter((item) => item.name && item.quote);
 
   return list.length ? list : fallback.testimonials;

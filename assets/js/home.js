@@ -36,10 +36,16 @@ function normalizeTestimonials(value) {
   }
 
   const list = value
-    .map((item) => ({
-      name: String(item?.name || "").trim(),
-      quote: String(item?.quote || "").trim()
-    }))
+    .map((item) => {
+      let quote = String(item?.quote || "").trim();
+      if (quote) {
+        quote = quote.charAt(0).toUpperCase() + quote.slice(1);
+      }
+      return {
+        name: String(item?.name || "").trim(),
+        quote
+      };
+    })
     .filter((item) => item.name && item.quote);
 
   return list.length ? list : fallbackTestimonials;

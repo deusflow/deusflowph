@@ -578,21 +578,21 @@ function getDefaultAboutPayload() {
       "Originally from Ukraine, now based near Aarhus. I bring 10 years of wedding photography experience across Denmark and Europe. My visual language mixes documentary truth with editorial frames, so your gallery feels alive, elegant, and deeply personal.",
     testimonials: [
       {
+        name: "Amalie & Frederik (Aarhus, Denmark)",
+        quote:
+          "Tusind tusind tak for det — kæmpe anbefaling! Der har virkelig været stor ros for alle billederne fra alle gæster og slottet også. Det har været fantastisk at have arbejdet med dig, Oleh!"
+      },
+      {
         name: "Volodymyr Ostapchuk (TV Presenter)",
-        quote: "Oleh has an incredible talent for capturing genuine emotions. Our wedding photos tell the perfect story of our day. Highly recommended!"
+        quote: "We just went through the gallery and we have no words. You captured the exact vibe of our day. No stiff poses, just the real us. Thank you for this memory!"
+      },
+      {
+        name: "Elena & Marcus (Copenhagen Elopement)",
+        quote: "We travelled from Munich to elope in Copenhagen. Oleh guided us through the most aesthetic corners of the city. The photos look like a Vogue editorial!"
       },
       {
         name: "Jerry Heil (Singer & Songwriter)",
         quote: "We had a cozy winter photoshoot, and Oleh made the whole process effortless and comfortable. The final pictures are pure magic."
-      },
-      {
-        name: "Oleksandr Popov (Actor)",
-        quote: "I worked with Oleh on a shoot for my TV series. He is an absolute professional with a great eye for cinematic detail."
-      },
-      {
-        name: "Amalie Frank",
-        quote:
-          "Wow, hvor ser det godt ud! Tusind tusind tak for det - kaempe anbefaling! Der har virkelig vaeret stor ros for alle billederne fra alle gaester og slottet ogsaa. Det har vaeret fantastisk at have arbejdet med jer."
       }
     ],
     gallery_photos: []
@@ -602,10 +602,16 @@ function getDefaultAboutPayload() {
 function normalizeTestimonials(raw) {
   const source = Array.isArray(raw) ? raw : [];
   const normalized = source
-    .map((item) => ({
-      name: String(item?.name || "").trim(),
-      quote: String(item?.quote || "").trim()
-    }))
+    .map((item) => {
+      let quote = String(item?.quote || "").trim();
+      if (quote) {
+        quote = quote.charAt(0).toUpperCase() + quote.slice(1);
+      }
+      return {
+        name: String(item?.name || "").trim(),
+        quote
+      };
+    })
     .filter((item) => item.name && item.quote);
 
   return normalized.length > 0 ? normalized : getDefaultAboutPayload().testimonials;
