@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage, initScrollReveals, getOptimizedImageUrl, initSmartHeader, setupLightbox, escapeHTML } from "./ui.js?v=20260820-13";
+import { createStateMessage, initScrollReveals, getOptimizedImageUrl, initSmartHeader, setupLightbox, escapeHTML, applyPortraitFocalPoint, parsePortraitFocalPoint } from "./ui.js?v=20260820-13";
 
 const photoNode = document.getElementById("about-photo");
 const photoPanel = document.querySelector(".about-photo-panel");
@@ -145,8 +145,9 @@ function renderAbout(content) {
       photoNode.onload = () => {
         photoNode.style.opacity = "1";
       };
-      photoNode.src = getOptimizedImageUrl(about.photo_url, 1200);
-      photoNode.setAttribute("data-lightbox-src", about.photo_url);
+      applyPortraitFocalPoint(photoNode, getOptimizedImageUrl(about.photo_url, 1200));
+      const { url: cleanLightboxUrl } = parsePortraitFocalPoint(about.photo_url);
+      photoNode.setAttribute("data-lightbox-src", cleanLightboxUrl.split("?")[0]);
       photoNode.style.display = "block";
       photoNode.style.cursor = "zoom-in";
       if (photoNode.complete && photoNode.naturalWidth > 0) {

@@ -1,9 +1,10 @@
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor, initSmartHeader } from "./ui.js?v=20260820-13";
-import { fetchTestimonials, fetchFeaturedAlbums, fetchAlbumFallbackCover } from "./services/api.js";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor, initSmartHeader, applyPortraitFocalPoint } from "./ui.js?v=20260820-13";
+import { fetchHomeAboutData, fetchFeaturedAlbums, fetchAlbumFallbackCover } from "./services/api.js";
 
 const featuredGrid = document.getElementById("featured-grid");
 const heroImage = document.getElementById("hero-image");
 const testimonialsGrid = document.getElementById("testimonials-grid");
+const meetAvatar = document.querySelector(".meet-avatar");
 
 const fallbackTestimonials = [
   {
@@ -90,15 +91,26 @@ function buildFeaturedAlt(album) {
 }
 
 async function loadTestimonials() {
-  if (!testimonialsGrid) {
-    return;
-  }
+  // Apply cached portrait focal point immediately if available
+  try {
+    const cachedAbout = JSON.parse(localStorage.getItem("deusflow_about_cache") || "null");
+    if (cachedAbout?.photo_url && meetAvatar) {
+      applyPortraitFocalPoint(meetAvatar, getOptimizedImageUrl(cachedAbout.photo_url, 600));
+    }
+  } catch (_e) {}
 
   try {
-    const testimonials = await fetchTestimonials();
-    renderTestimonials(normalizeTestimonials(testimonials));
+    const { testimonials, photo_url } = await fetchHomeAboutData();
+    if (photo_url && meetAvatar) {
+      applyPortraitFocalPoint(meetAvatar, getOptimizedImageUrl(photo_url, 600));
+    }
+    if (testimonialsGrid) {
+      renderTestimonials(normalizeTestimonials(testimonials));
+    }
   } catch (error) {
-    renderTestimonials(fallbackTestimonials);
+    if (testimonialsGrid) {
+      renderTestimonials(fallbackTestimonials);
+    }
   }
 }
 

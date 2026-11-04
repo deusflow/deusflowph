@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260820-13";
+import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initCustomCursor, initSmartHeader } from "./ui.js?v=20260820-13";
 
 const list = document.getElementById("weddings-grid");
 
@@ -68,12 +68,15 @@ async function renderWeddings() {
 
     list.appendChild(fragment);
     observeLazyImages();
+    initRackFocusReveal();
   } catch (error) {
     list.innerHTML = "";
     list.appendChild(createStateMessage(`Could not load wedding albums. ${error.message}`));
   }
 }
 
+initCustomCursor();
+initSmartHeader();
 renderWeddings().then(() => {
   initScrollReveals();
 });

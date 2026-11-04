@@ -1,21 +1,33 @@
 import { getSupabase } from "../supabase-client.js";
 
 /**
- * Fetch testimonials for the homepage
- * @returns {Promise<Array>} Array of testimonial objects
+ * Fetch testimonials and portrait for the homepage in a single request
+ * @returns {Promise<{testimonials: Array|null, photo_url: string|null}>}
  */
-export async function fetchTestimonials() {
+export async function fetchHomeAboutData() {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("about_content")
-    .select("testimonials")
+    .select("testimonials, photo_url")
     .eq("id", 1)
     .maybeSingle();
 
   if (error) {
     throw error;
   }
-  return data?.testimonials || null;
+  return {
+    testimonials: data?.testimonials || null,
+    photo_url: data?.photo_url || null
+  };
+}
+
+/**
+ * Fetch testimonials for the homepage
+ * @returns {Promise<Array>} Array of testimonial objects
+ */
+export async function fetchTestimonials() {
+  const data = await fetchHomeAboutData();
+  return data.testimonials;
 }
 
 /**

@@ -250,9 +250,53 @@
                 </div>
                 <div class="card-body">
                   <div class="form-group">
-                    <label>Current Portrait</label>
+                    <label>Current Portrait &amp; Framing (About Page + Homepage "Behind the Lens")</label>
                     <div class="portrait-preview-box">
-                      <img id="about-photo-preview" class="admin-cover-preview hidden" src="" alt="About portrait preview" />
+                      <div class="portrait-dual-preview" style="display: flex; align-items: flex-end; gap: 1.25rem; flex-wrap: wrap;">
+                        <div>
+                          <span style="display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--admin-muted); margin-bottom: 0.35rem;">About Page (4:5)</span>
+                          <div id="about-photo-frame-wrap" style="width: 150px; aspect-ratio: 4/5; overflow: hidden; border-radius: 6px; border: 1px solid var(--admin-border); background: #121214; position: relative; cursor: grab;">
+                            <img id="about-photo-preview" class="admin-cover-preview hidden" src="" alt="About portrait preview" style="width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; margin: 0; border: none; max-height: none; user-select: none; -webkit-user-drag: none;" />
+                          </div>
+                        </div>
+                        <div>
+                          <span style="display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--admin-muted); margin-bottom: 0.35rem;">Homepage Circle</span>
+                          <div id="about-avatar-circle-wrap" style="width: 112px; height: 112px; border-radius: 50%; overflow: hidden; border: 2px solid var(--admin-gold, #d4ba95); background: #121214; position: relative; cursor: grab;">
+                            <img id="about-avatar-circle-preview" class="hidden" src="" alt="Homepage circle avatar preview" style="width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; display: block; user-select: none; -webkit-user-drag: none;" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div id="portrait-focal-controls" class="hidden" style="margin-top: 0.9rem; padding: 0.85rem 1rem; border: 1px solid var(--admin-border); border-radius: 6px; background: rgba(255,255,255,0.02);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem;">
+                          <span style="font-size: 0.76rem; font-weight: 500; color: var(--admin-gold, #d4ba95);">✦ Center &amp; Crop Portrait (Drag image or use sliders)</span>
+                          <button id="reset-portrait-focal-btn" type="button" class="admin-btn ghost micro" style="padding: 2px 8px; font-size: 0.7rem;">Reset Center</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem;">
+                          <div>
+                            <label for="portrait-pos-x" style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--admin-muted); margin-bottom: 0.2rem;">
+                              <span>Horizontal (X)</span>
+                              <span id="portrait-pos-x-val">50%</span>
+                            </label>
+                            <input id="portrait-pos-x" type="range" min="0" max="100" step="1" value="50" style="width: 100%; accent-color: #d4ba95;" />
+                          </div>
+                          <div>
+                            <label for="portrait-pos-y" style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--admin-muted); margin-bottom: 0.2rem;">
+                              <span>Vertical (Y)</span>
+                              <span id="portrait-pos-y-val">28%</span>
+                            </label>
+                            <input id="portrait-pos-y" type="range" min="0" max="100" step="1" value="28" style="width: 100%; accent-color: #d4ba95;" />
+                          </div>
+                          <div>
+                            <label for="portrait-scale" style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--admin-muted); margin-bottom: 0.2rem;">
+                              <span>Zoom</span>
+                              <span id="portrait-scale-val">100%</span>
+                            </label>
+                            <input id="portrait-scale" type="range" min="1" max="1.8" step="0.02" value="1" style="width: 100%; accent-color: #d4ba95;" />
+                          </div>
+                        </div>
+                      </div>
+
                       <button id="remove-about-photo-button" type="button" class="admin-btn danger small hidden" style="margin-top: 0.6rem;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         <span>Remove Portrait</span>
@@ -1939,6 +1983,17 @@
             </div>
             <div class="card-body">
               <p class="section-hint">Drag photo cards to reposition, or enter exact number in the position badge.</p>
+              <div id="portfolio-story-helper-bar" class="hidden" style="margin-bottom: 1rem; padding: 0.75rem 1rem; border: 1px solid rgba(212, 186, 149, 0.35); border-radius: 6px; background: rgba(212, 186, 149, 0.05); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="font-size: 0.82rem; color: var(--admin-text);">
+                  <strong style="color: var(--admin-gold, #d4ba95);">✦ Portfolio → Wedding Story Bridge:</strong>
+                  <span id="portfolio-story-link-stats">Use the dropdown under any photo card to link it to a full Wedding Story.</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  <button id="auto-match-stories-btn" type="button" class="admin-btn ghost micro" title="Automatically link portfolio photos that also appear in a Wedding Story">
+                    ✦ Auto-Match from Wedding Albums
+                  </button>
+                </div>
+              </div>
               <div id="photos-list" class="photos-grid compact-photo-grid"></div>
             </div>
           </div>

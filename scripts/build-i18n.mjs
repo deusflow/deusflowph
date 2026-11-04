@@ -209,6 +209,11 @@ function adjustRelativeAssetPaths(html, currentPrefix, targetPrefix) {
     const targetRef = targetPrefix ? `${targetPrefix}${a}` : a;
     out = out.split(`href="${srcRef}`).join(`href="${targetRef}`);
     out = out.split(`src="${srcRef}`).join(`src="${targetRef}`);
+    // Handle bare relative paths on root index.html (where currentPrefix is "./" but HTML uses "assets/..." or "config.js")
+    if (currentPrefix === "./") {
+      out = out.split(`href="${a}`).join(`href="${targetRef}`);
+      out = out.split(`src="${a}`).join(`src="${targetRef}`);
+    }
   }
   return out;
 }
@@ -284,7 +289,17 @@ function translateHtmlContent(html, lang, routePath) {
 
   // 10. Update internal links for language folder
   const langPrefix = `/${lang}/`;
-  const internalRoutes = ["about/", "weddings/", "pricing/", "portfolio/", "legal/"];
+  const internalRoutes = [
+    "about/",
+    "weddings/",
+    "pricing/",
+    "portfolio/",
+    "legal/",
+    "locations/aarhus/",
+    "locations/copenhagen/",
+    "locations/odense/",
+    "locations/aalborg/"
+  ];
   for (const r of internalRoutes) {
     // Replace relative links like href="weddings/" or href="../weddings/" with language-scoped links
     const relLinkRegex = new RegExp(`href="(\\.\\.\\/)*(${r})"`, "g");

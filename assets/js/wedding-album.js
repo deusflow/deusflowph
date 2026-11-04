@@ -1,35 +1,111 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, escapeHTML, getOptimizedImageUrl } from "./ui.js?v=20260820-13";
+import { observeLazyImages, createStateMessage, setupLightbox, initScrollReveals, escapeHTML, getOptimizedImageUrl, initCustomCursor, initSmartHeader } from "./ui.js?v=20260820-13";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
 const descriptionNode = document.getElementById("album-description");
 const grid = document.getElementById("album-grid");
 const storyNav = document.getElementById("album-story-nav");
-let albumPhotoNodes = [];
-let masonryResizeBound = false;
-
-function bindMasonryResize() {
-  if (masonryResizeBound || !grid) {
-    return;
-  }
-
-  masonryResizeBound = true;
-  let rafId = 0;
-
-  window.addEventListener("resize", () => {
-    if (rafId) {
-      window.cancelAnimationFrame(rafId);
-    }
-    rafId = window.requestAnimationFrame(() => {
-      renderOrderedMasonry(grid, albumPhotoNodes);
-    });
-  });
-}
 
 function buildAlbumPhotoAlt(album, index) {
   const title = String(album?.title || "Wedding story").trim();
   return `${title} - wedding photography in Denmark, photo ${index + 1}`;
+}
+
+function formatFrameNumber(index) {
+  return String(index + 1).padStart(2, "0");
+}
+
+function createSpreadItem(photo, album, index) {
+  const item = document.createElement("figure");
+  item.className = "editorial-spread-item reveal-up";
+  const escapedUrl = escapeHTML(getOptimizedImageUrl(photo.url, 1400));
+  const escapedOriginalUrl = escapeHTML(photo.url);
+  const escapedAlt = escapeHTML(buildAlbumPhotoAlt(album, index));
+  const frameNum = formatFrameNumber(index);
+
+  item.innerHTML = `
+    <div class="editorial-frame-media">
+      <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${escapedAlt}" loading="lazy" decoding="async" />
+      <span class="editorial-frame-num" aria-hidden="true">${frameNum}</span>
+    </div>
+  `;
+
+  const img = item.querySelector("img");
+  if (img) {
+    const classifyOrientation = () => {
+      if (!img.naturalWidth || !img.naturalHeight) return;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      if (ratio >= 1.15) {
+        item.classList.add("is-landscape");
+      } else if (ratio <= 0.88) {
+        item.classList.add("is-portrait");
+      } else {
+        item.classList.add("is-square");
+      }
+    };
+    if (img.complete && img.naturalWidth > 0) {
+      classifyOrientation();
+    } else {
+      img.addEventListener("load", classifyOrientation, { once: true });
+    }
+  }
+
+  return item;
+}
+
+function renderEditorialSpread(container, photos, album) {
+  if (!container) return;
+  container.innerHTML = "";
+  container.classList.remove("masonry", "is-ordered-masonry");
+  container.classList.add("editorial-spread-gallery");
+
+  const fragment = document.createDocumentFragment();
+  let cursor = 0;
+  let spreadCycle = 0;
+
+  // Curated magazine spread pattern:
+  // 0: Hero Centerpiece (1 frame)
+  // 1: Editorial Diptych (2 frames)
+  // 2: Narrative Triptych (3 frames)
+  // 3: Asymmetric Spread Left-Heavy (2 frames)
+  // 4: Editorial Diptych Offset (2 frames)
+  // 5: Asymmetric Spread Right-Heavy (2 frames)
+  const PATTERN = [
+    { type: "spread-row-hero", count: 1 },
+    { type: "spread-row-diptych", count: 2 },
+    { type: "spread-row-triptych", count: 3 },
+    { type: "spread-row-asymmetric is-left-lead", count: 2 },
+    { type: "spread-row-diptych is-offset", count: 2 },
+    { type: "spread-row-asymmetric is-right-lead", count: 2 }
+  ];
+
+  while (cursor < photos.length) {
+    const step = PATTERN[spreadCycle % PATTERN.length];
+    const remaining = photos.length - cursor;
+    const take = Math.min(step.count, remaining);
+
+    const row = document.createElement("div");
+    let rowClass = `editorial-spread-row ${step.type}`;
+    if (take === 1 && step.count > 1) {
+      rowClass = "editorial-spread-row spread-row-hero";
+    } else if (take === 2 && step.count === 3) {
+      rowClass = "editorial-spread-row spread-row-diptych";
+    }
+    row.className = rowClass;
+
+    for (let i = 0; i < take; i++) {
+      const photoIndex = cursor + i;
+      const itemNode = createSpreadItem(photos[photoIndex], album, photoIndex);
+      row.appendChild(itemNode);
+    }
+
+    fragment.appendChild(row);
+    cursor += take;
+    spreadCycle += 1;
+  }
+
+  container.appendChild(fragment);
 }
 
 function renderAlbumSchema(album, photos) {
@@ -187,6 +263,8 @@ async function renderAlbum() {
       return;
     }
 
+    metaNode.textContent = `${formatDate(album.date)}  ·  ${photos.length} Editorial Frames`;
+
     let { data: visibleAlbums, error: listError } = await supabase
       .from("albums")
       .select("slug, title, date, display_order, created_at")
@@ -223,28 +301,18 @@ async function renderAlbum() {
       renderStoryNavigation(album.slug, normalized);
     }
 
-    const nodes = [];
-    photos.forEach((photo, index) => {
-      const item = document.createElement("article");
-      item.className = "masonry-item";
-      const escapedUrl = escapeHTML(getOptimizedImageUrl(photo.url, 800));
-      const escapedOriginalUrl = escapeHTML(photo.url);
-      const escapedAlt = escapeHTML(buildAlbumPhotoAlt(album, index));
-      item.innerHTML = `<img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${escapedAlt}" loading="lazy" decoding="async" />`;
-      nodes.push(item);
-    });
-
-    albumPhotoNodes = nodes;
-    renderOrderedMasonry(grid, albumPhotoNodes);
-    bindMasonryResize();
+    renderEditorialSpread(grid, photos, album);
     renderAlbumSchema(album, photos);
     observeLazyImages();
+    initScrollReveals();
   } catch (error) {
     grid.innerHTML = "";
     grid.appendChild(createStateMessage(`Could not load album. ${error.message}`));
   }
 }
 
+initCustomCursor();
+initSmartHeader();
 setupLightbox();
 renderAlbum();
 

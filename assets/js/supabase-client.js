@@ -61,12 +61,14 @@ export function slugify(input) {
 }
 
 export function storagePathFromPublicUrl(url) {
+  if (!url) return null;
   const marker = "/storage/v1/object/public/photos/";
   const index = url.indexOf(marker);
   if (index === -1) {
     return null;
   }
-  return decodeURIComponent(url.slice(index + marker.length));
+  const rawPath = url.slice(index + marker.length).split("?")[0].split("#")[0];
+  return decodeURIComponent(rawPath);
 }
 
 export async function uploadToPhotosBucket(file, path) {

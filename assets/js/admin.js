@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage, getOptimizedImageUrl } from "./ui.js?v=20260820-13";
+import { createStateMessage, getOptimizedImageUrl, parsePortraitFocalPoint, applyPortraitFocalPoint } from "./ui.js?v=20260820-13";
 
 const state = {
   selectedAlbum: null,
@@ -71,8 +71,22 @@ const aboutCmsSection = document.getElementById("about-cms-section");
 const aboutForm = document.getElementById("about-form");
 const saveAboutButton = document.getElementById("save-about-button");
 const aboutPhotoPreview = document.getElementById("about-photo-preview");
+const aboutAvatarCirclePreview = document.getElementById("about-avatar-circle-preview");
+const aboutPhotoFrameWrap = document.getElementById("about-photo-frame-wrap");
+const aboutAvatarCircleWrap = document.getElementById("about-avatar-circle-wrap");
+const portraitFocalControls = document.getElementById("portrait-focal-controls");
+const portraitPosXInput = document.getElementById("portrait-pos-x");
+const portraitPosYInput = document.getElementById("portrait-pos-y");
+const portraitScaleInput = document.getElementById("portrait-scale");
+const portraitPosXVal = document.getElementById("portrait-pos-x-val");
+const portraitPosYVal = document.getElementById("portrait-pos-y-val");
+const portraitScaleVal = document.getElementById("portrait-scale-val");
+const resetPortraitFocalBtn = document.getElementById("reset-portrait-focal-btn");
 const removeAboutPhotoButton = document.getElementById("remove-about-photo-button");
 const aboutPhotoInput = document.getElementById("about-photo");
+const portfolioStoryHelperBar = document.getElementById("portfolio-story-helper-bar");
+const portfolioStoryLinkStats = document.getElementById("portfolio-story-link-stats");
+const autoMatchStoriesBtn = document.getElementById("auto-match-stories-btn");
 const aboutGalleryInput = document.getElementById("about-gallery-input");
 const aboutGalleryAdminGrid = document.getElementById("about-gallery-admin-grid");
 const aboutStoryInput = document.getElementById("about-story");
@@ -619,6 +633,38 @@ function renderAboutGalleryAdminGrid() {
   aboutGalleryAdminGrid.appendChild(fragment);
 }
 
+function syncPortraitFocalPreviews() {
+  const x = portraitPosXInput ? Number(portraitPosXInput.value) : 50;
+  const y = portraitPosYInput ? Number(portraitPosYInput.value) : 28;
+  const scale = portraitScaleInput ? Number(portraitScaleInput.value) : 1;
+
+  if (portraitPosXVal) portraitPosXVal.textContent = `${Math.round(x)}%`;
+  if (portraitPosYVal) portraitPosYVal.textContent = `${Math.round(y)}%`;
+  if (portraitScaleVal) portraitScaleVal.textContent = `${Math.round(scale * 100)}%`;
+
+  [aboutPhotoPreview, aboutAvatarCirclePreview].forEach((img) => {
+    if (!img) return;
+    img.style.objectPosition = `${x}% ${y}%`;
+    img.style.transform = scale !== 1 ? `scale(${scale})` : "";
+  });
+}
+
+function setPortraitFocalSliders(x = 50, y = 28, scale = 1) {
+  if (portraitPosXInput) portraitPosXInput.value = String(Math.round(x));
+  if (portraitPosYInput) portraitPosYInput.value = String(Math.round(y));
+  if (portraitScaleInput) portraitScaleInput.value = String(Number(scale).toFixed(2));
+  syncPortraitFocalPreviews();
+}
+
+function buildUrlWithFocalPoint(rawUrl) {
+  if (!rawUrl) return null;
+  const baseUrl = String(rawUrl).split("?")[0].split("#")[0];
+  const x = portraitPosXInput ? Math.round(Number(portraitPosXInput.value)) : 50;
+  const y = portraitPosYInput ? Math.round(Number(portraitPosYInput.value)) : 28;
+  const scale = portraitScaleInput ? Number(Number(portraitScaleInput.value).toFixed(2)) : 1;
+  return `${baseUrl}?fp=${x},${y},${scale}`;
+}
+
 function fillAboutForm(content) {
   if (!aboutForm) {
     return;
@@ -631,14 +677,30 @@ function fillAboutForm(content) {
   state.portraitRemoved = false;
   if (aboutPhotoPreview) {
     if (content.photo_url) {
+      const { x, y, scale } = parsePortraitFocalPoint(content.photo_url);
       aboutPhotoPreview.src = content.photo_url;
       aboutPhotoPreview.classList.remove("hidden");
+      if (aboutAvatarCirclePreview) {
+        aboutAvatarCirclePreview.src = content.photo_url;
+        aboutAvatarCirclePreview.classList.remove("hidden");
+      }
+      if (portraitFocalControls) {
+        portraitFocalControls.classList.remove("hidden");
+      }
+      setPortraitFocalSliders(x, y, scale);
       if (removeAboutPhotoButton) {
         removeAboutPhotoButton.classList.remove("hidden");
       }
     } else {
       aboutPhotoPreview.src = "";
       aboutPhotoPreview.classList.add("hidden");
+      if (aboutAvatarCirclePreview) {
+        aboutAvatarCirclePreview.src = "";
+        aboutAvatarCirclePreview.classList.add("hidden");
+      }
+      if (portraitFocalControls) {
+        portraitFocalControls.classList.add("hidden");
+      }
       if (removeAboutPhotoButton) {
         removeAboutPhotoButton.classList.add("hidden");
       }
@@ -750,9 +812,12 @@ async function saveAboutContent(event) {
       const path = `about/portrait-${Date.now()}.${extension}`;
       setUploadStatus("Uploading About portrait...", 55);
       setAboutStatus("Uploading About portrait...");
-      nextPhotoUrl = await uploadToPhotosBucket(optimized, path);
+      const uploadedUrl = await uploadToPhotosBucket(optimized, path);
+      nextPhotoUrl = buildUrlWithFocalPoint(uploadedUrl);
     } else if (state.portraitRemoved) {
       nextPhotoUrl = null;
+    } else if (nextPhotoUrl) {
+      nextPhotoUrl = buildUrlWithFocalPoint(nextPhotoUrl);
     }
 
     const payload = {
@@ -810,13 +875,12 @@ async function saveAboutContent(event) {
 
     const data = result.data;
 
-    if (previousPhotoUrl && previousPhotoUrl !== nextPhotoUrl) {
-      const previousPath = storagePathFromPublicUrl(previousPhotoUrl);
-      if (previousPath) {
-        const cleanup = await supabase.storage.from("photos").remove([previousPath]);
-        if (cleanup.error) {
-          console.warn("About portrait cleanup failed", cleanup.error.message);
-        }
+    const previousPath = previousPhotoUrl ? storagePathFromPublicUrl(previousPhotoUrl) : null;
+    const nextPath = nextPhotoUrl ? storagePathFromPublicUrl(nextPhotoUrl) : null;
+    if (previousPath && previousPath !== nextPath) {
+      const cleanup = await supabase.storage.from("photos").remove([previousPath]);
+      if (cleanup.error) {
+        console.warn("About portrait cleanup failed", cleanup.error.message);
       }
     }
 
@@ -2141,6 +2205,7 @@ async function loadPhotos(albumId) {
         }
         photo.linked_album_id = val;
         storySelect.classList.toggle("has-link", Boolean(val));
+        updatePortfolioStoryHelperBar();
         setUploadStatus("Linked wedding story updated!", 100);
       });
 
@@ -2150,6 +2215,130 @@ async function loadPhotos(albumId) {
 
     photosList.appendChild(row);
   });
+
+  updatePortfolioStoryHelperBar();
+}
+
+function updatePortfolioStoryHelperBar() {
+  if (!portfolioStoryHelperBar) return;
+  const isPortfolio = Boolean(
+    state.selectedAlbum &&
+      (state.selectedAlbum.type === "portfolio" || state.selectedAlbum.slug === "portfolio-main")
+  );
+  portfolioStoryHelperBar.classList.toggle("hidden", !isPortfolio);
+  if (!isPortfolio || !portfolioStoryLinkStats) return;
+
+  const total = (state.selectedAlbumPhotos || []).length;
+  const linked = (state.selectedAlbumPhotos || []).filter((p) => Boolean(p.linked_album_id)).length;
+  portfolioStoryLinkStats.textContent = `${linked} of ${total} portfolio photos linked to a Wedding Story. Select a story below any photo card to connect it.`;
+}
+
+async function autoMatchPortfolioStories() {
+  if (!state.selectedAlbum || !state.selectedAlbumPhotos?.length) return;
+  const supabase = getSupabase();
+  const weddingAlbums = (state.albums || []).filter((a) => a.type === "wedding");
+  if (!weddingAlbums.length) {
+    showToast("No wedding albums found to match against.", "error");
+    return;
+  }
+
+  setUploadStatus("Scanning wedding albums for matching photos...", 20);
+  try {
+    const weddingIds = weddingAlbums.map((a) => a.id);
+    const { data: weddingPhotos, error } = await supabase
+      .from("photos")
+      .select("album_id, url")
+      .in("album_id", weddingIds);
+
+    if (error) throw error;
+
+    const getCleanBasename = (url) => {
+      const part = String(url || "").split("/").pop() || "";
+      return part.split("?")[0].toLowerCase();
+    };
+
+    const urlToAlbumMap = new Map();
+    (weddingPhotos || []).forEach((wp) => {
+      if (wp.url && wp.album_id) {
+        urlToAlbumMap.set(wp.url.split("?")[0], wp.album_id);
+        urlToAlbumMap.set(getCleanBasename(wp.url), wp.album_id);
+      }
+    });
+
+    // Also include wedding cover URLs
+    weddingAlbums.forEach((wa) => {
+      if (wa.cover_url && wa.id) {
+        urlToAlbumMap.set(wa.cover_url.split("?")[0], wa.id);
+        urlToAlbumMap.set(getCleanBasename(wa.cover_url), wa.id);
+      }
+    });
+
+    // Also match by ETag / Content-Length via fast parallel HEAD requests
+    const fetchHeadMeta = async (items) => {
+      const meta = new Map();
+      const queue = [...items];
+      await Promise.all(
+        Array.from({ length: 12 }, async () => {
+          while (queue.length) {
+            const item = queue.shift();
+            if (!item?.url) continue;
+            try {
+              const res = await fetch(item.url, { method: "HEAD" });
+              const etag = res.headers.get("etag");
+              const size = res.headers.get("content-length");
+              meta.set(item.url, { etag, size, albumId: item.album_id });
+            } catch (_e) {}
+          }
+        })
+      );
+      return meta;
+    };
+
+    const [wMeta, pMeta] = await Promise.all([
+      fetchHeadMeta(weddingPhotos || []),
+      fetchHeadMeta(state.selectedAlbumPhotos || [])
+    ]);
+
+    const etagToAlbumMap = new Map();
+    wMeta.forEach((val) => {
+      if (val.etag && val.albumId) etagToAlbumMap.set(val.etag, val.albumId);
+      if (val.size && val.albumId) etagToAlbumMap.set(`size:${val.size}`, val.albumId);
+    });
+
+    let matchedCount = 0;
+    for (const p of state.selectedAlbumPhotos) {
+      if (p.linked_album_id) continue;
+      const cleanUrl = String(p.url || "").split("?")[0];
+      const base = getCleanBasename(p.url);
+      const pm = pMeta.get(p.url);
+      const matchedAlbumId =
+        urlToAlbumMap.get(cleanUrl) ||
+        urlToAlbumMap.get(base) ||
+        (pm?.etag && etagToAlbumMap.get(pm.etag)) ||
+        (pm?.size && etagToAlbumMap.get(`size:${pm.size}`)) ||
+        null;
+      if (matchedAlbumId) {
+        const { error: updErr } = await supabase
+          .from("photos")
+          .update({ linked_album_id: matchedAlbumId })
+          .eq("id", p.id);
+        if (!updErr) {
+          p.linked_album_id = matchedAlbumId;
+          matchedCount++;
+        }
+      }
+    }
+
+    if (matchedCount > 0) {
+      await loadPhotos(state.selectedAlbum.id);
+      setUploadStatus(`Auto-matched ${matchedCount} portfolio photo(s) to wedding stories!`, 100);
+    } else {
+      setUploadStatus("No identical filenames found across albums. Use the dropdown below any photo card to link stories.", 100);
+      showToast("Use the '✦ Story' dropdown on each photo card to link it to a wedding.", "default");
+    }
+  } catch (err) {
+    setUploadStatus(`Auto-match error: ${err.message}`, 0, "error");
+  }
 }
 
 async function createAlbum(event) {
@@ -2912,12 +3101,79 @@ if (optimizeAlbumPhotosBtn) {
   optimizeAlbumPhotosBtn.addEventListener("click", optimizeAlbumPhotos);
 }
 
+if (autoMatchStoriesBtn) {
+  autoMatchStoriesBtn.addEventListener("click", autoMatchPortfolioStories);
+}
+
+[portraitPosXInput, portraitPosYInput, portraitScaleInput].forEach((input) => {
+  if (input) {
+    input.addEventListener("input", () => {
+      syncPortraitFocalPreviews();
+    });
+  }
+});
+
+if (resetPortraitFocalBtn) {
+  resetPortraitFocalBtn.addEventListener("click", () => {
+    setPortraitFocalSliders(50, 28, 1);
+    setAboutStatus("Portrait framing reset to center. Click 'Save About Page' to apply.");
+  });
+}
+
+// Interactive drag-to-pan on the About 4:5 and Homepage Circle preview frames
+[aboutPhotoFrameWrap, aboutAvatarCircleWrap].forEach((wrap) => {
+  if (!wrap) return;
+  let dragging = false;
+  let startX = 0;
+  let startY = 0;
+  let origX = 50;
+  let origY = 28;
+
+  wrap.addEventListener("pointerdown", (e) => {
+    if (!portraitPosXInput || !portraitPosYInput) return;
+    dragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    origX = Number(portraitPosXInput.value) || 50;
+    origY = Number(portraitPosYInput.value) || 28;
+    wrap.style.cursor = "grabbing";
+    wrap.setPointerCapture?.(e.pointerId);
+    e.preventDefault();
+  });
+
+  wrap.addEventListener("pointermove", (e) => {
+    if (!dragging || !portraitPosXInput || !portraitPosYInput) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const nextX = Math.max(0, Math.min(100, Math.round(origX - dx * 0.45)));
+    const nextY = Math.max(0, Math.min(100, Math.round(origY - dy * 0.45)));
+    portraitPosXInput.value = String(nextX);
+    portraitPosYInput.value = String(nextY);
+    syncPortraitFocalPreviews();
+  });
+
+  const endDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    wrap.style.cursor = "grab";
+  };
+  wrap.addEventListener("pointerup", endDrag);
+  wrap.addEventListener("pointercancel", endDrag);
+});
+
 if (removeAboutPhotoButton) {
   removeAboutPhotoButton.addEventListener("click", () => {
     state.portraitRemoved = true;
     if (aboutPhotoPreview) {
       aboutPhotoPreview.src = "";
       aboutPhotoPreview.classList.add("hidden");
+    }
+    if (aboutAvatarCirclePreview) {
+      aboutAvatarCirclePreview.src = "";
+      aboutAvatarCirclePreview.classList.add("hidden");
+    }
+    if (portraitFocalControls) {
+      portraitFocalControls.classList.add("hidden");
     }
     removeAboutPhotoButton.classList.add("hidden");
     if (aboutPhotoInput) {
@@ -2939,6 +3195,14 @@ if (aboutPhotoInput) {
           aboutPhotoPreview.src = e.target.result;
           aboutPhotoPreview.classList.remove("hidden");
         }
+        if (aboutAvatarCirclePreview) {
+          aboutAvatarCirclePreview.src = e.target.result;
+          aboutAvatarCirclePreview.classList.remove("hidden");
+        }
+        if (portraitFocalControls) {
+          portraitFocalControls.classList.remove("hidden");
+        }
+        setPortraitFocalSliders(50, 28, 1);
         if (removeAboutPhotoButton) {
           removeAboutPhotoButton.classList.remove("hidden");
         }

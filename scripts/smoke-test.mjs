@@ -50,6 +50,8 @@ if (missing.length > 0) {
 
 const htmlChecks = [
   { file: "index.html", includes: ["assets/css/styles.css", "assets/js/home.js", "assets/js/seo.js", "assets/js/cta.js", "<link rel=\"canonical\" href=\"https://deusflow.dk/\"", "og:title"] },
+  { file: "da/index.html", includes: ["lang=\"da\"", "../assets/css/styles.css", "../config.js", "../assets/js/home.js"] },
+  { file: "uk/index.html", includes: ["lang=\"uk\"", "../assets/css/styles.css", "../config.js", "../assets/js/home.js"] },
   { file: "da/weddings/index.html", includes: ["lang=\"da\"", "Bryllupper", "<link rel=\"canonical\" href=\"https://deusflow.dk/da/weddings/\""] },
   { file: "uk/weddings/index.html", includes: ["lang=\"uk\"", "Весілля", "<link rel=\"canonical\" href=\"https://deusflow.dk/uk/weddings/\""] },
   { file: "about/index.html", includes: ["../assets/js/about.js", "../assets/js/seo.js", "../assets/js/cta.js", "Values", "<link rel=\"canonical\""] },

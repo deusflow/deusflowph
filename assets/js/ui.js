@@ -13,14 +13,82 @@ import { getSupabase } from "./supabase-client.js";
   } catch (_e) {}
 })();
 
+function bindSmoothImageLoad(img) {
+  if (!img || img.dataset.smoothBound === "1") return;
+  img.dataset.smoothBound = "1";
+  img.classList.add("lazy-img-fade");
+
+  const markLoaded = () => {
+    img.classList.add("is-loaded");
+  };
+
+  if (img.complete && img.naturalWidth > 0) {
+    markLoaded();
+  } else {
+    img.addEventListener("load", markLoaded, { once: true });
+    img.addEventListener("error", markLoaded, { once: true });
+  }
+}
+
+export function parsePortraitFocalPoint(rawUrl) {
+  if (!rawUrl) {
+    return { url: "", x: 50, y: 28, scale: 1 };
+  }
+  try {
+    const parsed = new URL(rawUrl, window.location.origin);
+    const fp = parsed.searchParams.get("fp");
+    if (fp) {
+      const parts = fp.split(",").map(Number);
+      const x = Number.isFinite(parts[0]) ? Math.max(0, Math.min(100, parts[0])) : 50;
+      const y = Number.isFinite(parts[1]) ? Math.max(0, Math.min(100, parts[1])) : 28;
+      const scale = Number.isFinite(parts[2]) ? Math.max(1, Math.min(2.2, parts[2])) : 1;
+      return { url: rawUrl, x, y, scale };
+    }
+  } catch (_e) {}
+  return { url: rawUrl, x: 50, y: 28, scale: 1 };
+}
+
+export function applyPortraitFocalPoint(imgEl, rawUrl) {
+  if (!imgEl || !rawUrl) return;
+  const { url, x, y, scale } = parsePortraitFocalPoint(rawUrl);
+  imgEl.src = url;
+  imgEl.style.objectPosition = `${x}% ${y}%`;
+  if (scale && scale !== 1) {
+    imgEl.style.transform = `scale(${scale})`;
+  } else {
+    imgEl.style.transform = "";
+  }
+}
+
 export function observeLazyImages(selector = "img[data-src]") {
   const images = Array.from(document.querySelectorAll(selector));
   if (!images.length) {
     return;
   }
 
+  images.forEach((img) => bindSmoothImageLoad(img));
+
+  // Eagerly hydrate the first 4 above-the-fold images so they start downloading immediately
+  const eagerCount = Math.min(4, images.length);
+  for (let i = 0; i < eagerCount; i++) {
+    const img = images[i];
+    if (img.dataset.src) {
+      img.loading = "eager";
+      if (i < 2 && "fetchPriority" in img) {
+        img.fetchPriority = "high";
+      }
+      img.src = img.dataset.src;
+      img.removeAttribute("data-src");
+    }
+  }
+
+  const remaining = images.slice(eagerCount);
+  if (!remaining.length) {
+    return;
+  }
+
   if (!("IntersectionObserver" in window)) {
-    images.forEach((img) => {
+    remaining.forEach((img) => {
       img.src = img.dataset.src;
       img.removeAttribute("data-src");
     });
@@ -35,17 +103,19 @@ export function observeLazyImages(selector = "img[data-src]") {
         }
 
         const img = entry.target;
-        img.src = img.dataset.src;
-        img.removeAttribute("data-src");
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.removeAttribute("data-src");
+        }
         observer.unobserve(img);
       });
     },
     {
-      rootMargin: "250px 0px"
+      rootMargin: "420px 0px"
     }
   );
 
-  images.forEach((img) => observer.observe(img));
+  remaining.forEach((img) => observer.observe(img));
 }
 
 export function escapeHTML(str) {
@@ -549,50 +619,137 @@ export function initTiltEffect() {
 }
 
 export function initCustomCursor() {
-  // Only initialize on non-touch devices
-  if (window.matchMedia("(pointer: coarse)").matches) return;
+  // Only initialize on non-touch desktop devices with a fine pointer
+  if (
+    window.matchMedia("(pointer: coarse)").matches ||
+    !window.matchMedia("(hover: hover) and (pointer: fine)").matches
+  ) {
+    return;
+  }
 
-  const cursor = document.createElement('div');
-  cursor.className = 'gallery-cursor';
-  cursor.textContent = 'View';
+  // Singleton guard so calling initCustomCursor multiple times never duplicates the node
+  if (document.querySelector(".gallery-cursor")) {
+    return;
+  }
+
+  const cursor = document.createElement("div");
+  cursor.className = "gallery-cursor";
+  cursor.setAttribute("aria-hidden", "true");
+  cursor.innerHTML = `<span class="gallery-cursor-label">View</span>`;
   document.body.appendChild(cursor);
 
-  let mouseX = 0;
-  let mouseY = 0;
-  let cursorX = 0;
-  let cursorY = 0;
+  const CARD_SELECTOR = ".photo-card, .polaroid-luxury, .album-card, .masonry-item, .editorial-spread-item";
+  const EXCLUDE_SELECTOR = ".portfolio-story-badge, button, .lightbox, .site-header, .floating-cta";
 
-  document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
+  let mouseX = -100;
+  let mouseY = -100;
+  let cursorX = -100;
+  let cursorY = -100;
+  let hasMoved = false;
+  let activeCard = null;
+
+  const setActiveCard = (card) => {
+    if (activeCard === card) return;
+    if (activeCard) {
+      activeCard.classList.remove("hide-default-cursor");
+    }
+    activeCard = card;
+    if (activeCard) {
+      activeCard.classList.add("hide-default-cursor");
+      cursor.classList.add("is-active");
+    } else {
+      cursor.classList.remove("is-active");
+    }
+  };
+
+  const evaluateTarget = (target) => {
+    const lightbox = document.getElementById("lightbox");
+    if (!target || !(target instanceof Element) || (lightbox && lightbox.classList.contains("is-open"))) {
+      setActiveCard(null);
+      return;
+    }
+    if (target.closest(EXCLUDE_SELECTOR)) {
+      setActiveCard(null);
+      return;
+    }
+    const card = target.closest(CARD_SELECTOR);
+    setActiveCard(card || null);
+  };
+
+  document.addEventListener(
+    "pointermove",
+    (e) => {
+      if (e.pointerType && e.pointerType !== "mouse" && e.pointerType !== "pen") {
+        setActiveCard(null);
+        return;
+      }
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      if (!hasMoved) {
+        cursorX = mouseX;
+        cursorY = mouseY;
+        hasMoved = true;
+      }
+      evaluateTarget(e.target);
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "mouseover",
+    (e) => {
+      evaluateTarget(e.target);
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "mousedown",
+    () => {
+      cursor.classList.add("is-pressed");
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "mouseup",
+    () => {
+      cursor.classList.remove("is-pressed");
+      // Re-evaluate in case lightbox opened on click
+      setTimeout(() => {
+        const lightbox = document.getElementById("lightbox");
+        if (lightbox && lightbox.classList.contains("is-open")) {
+          setActiveCard(null);
+        }
+      }, 20);
+    },
+    { passive: true }
+  );
+
+  document.addEventListener("mouseleave", () => {
+    setActiveCard(null);
   });
 
-  // Smooth follow animation
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!hasMoved) return;
+      const elUnderPointer = document.elementFromPoint(mouseX, mouseY);
+      evaluateTarget(elUnderPointer);
+    },
+    { passive: true }
+  );
+
   const updateCursor = () => {
-    const dx = mouseX - cursorX;
-    const dy = mouseY - cursorY;
-    cursorX += dx * 0.15;
-    cursorY += dy * 0.15;
-    
-    cursor.style.left = `${cursorX}px`;
-    cursor.style.top = `${cursorY}px`;
-    
+    if (hasMoved) {
+      cursorX += (mouseX - cursorX) * 0.22;
+      cursorY += (mouseY - cursorY) * 0.22;
+      cursor.style.left = `${cursorX}px`;
+      cursor.style.top = `${cursorY}px`;
+    }
     requestAnimationFrame(updateCursor);
   };
   requestAnimationFrame(updateCursor);
-
-  // Attach hover events to all photo cards
-  const cards = document.querySelectorAll('.photo-card, .polaroid-luxury, .album-card');
-  cards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      cursor.classList.add('is-active');
-      card.classList.add('hide-default-cursor');
-    });
-    card.addEventListener('mouseleave', () => {
-      cursor.classList.remove('is-active');
-      card.classList.remove('hide-default-cursor');
-    });
-  });
 }
 
 export function initSmartHeader() {
