@@ -3588,7 +3588,7 @@ const translationSourceMap = {
   contact_heading: "Let's Talk About Your Day",
   contact_desc: "I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:",
   whatsapp_subtitle: "Fastest for Europe & International couples",
-  telegram_subtitle: "Прямий чат / Українська та English",
+  telegram_subtitle: "Direct Chat in Ukrainian & English",
   footer_desc: "Based in Denmark (Aarhus area), available across Europe.",
   floating_cta_note: "Calendar open for 2026-2027 weddings ·",
 
