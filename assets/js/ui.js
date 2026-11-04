@@ -13,6 +13,14 @@ import { getSupabase } from "./supabase-client.js";
   } catch (_e) {}
 })();
 
+function markMediaContainerLoaded(img) {
+  if (!img) return;
+  const container = img.closest(".masonry-item, .photo-media");
+  if (container) {
+    container.classList.add("is-loaded");
+  }
+}
+
 function bindSmoothImageLoad(img) {
   if (!img || img.dataset.smoothBound === "1") return;
   img.dataset.smoothBound = "1";
@@ -20,6 +28,7 @@ function bindSmoothImageLoad(img) {
 
   const markLoaded = () => {
     img.classList.add("is-loaded");
+    markMediaContainerLoaded(img);
   };
 
   if (img.complete && img.naturalWidth > 0) {
@@ -60,6 +69,90 @@ export function applyPortraitFocalPoint(imgEl, rawUrl) {
   }
 }
 
+const MAX_CONCURRENT_IMAGE_LOADS = 3;
+let activeImageLoads = 0;
+const pendingImageQueue = [];
+const inFlightImages = new Set();
+let isLightboxPriorityActive = false;
+
+function startManagedImageLoad(img, isHighPriority = false) {
+  const src = img.dataset.src;
+  if (!src) return;
+
+  activeImageLoads++;
+  inFlightImages.add(img);
+  img.dataset.loadingSrc = src;
+  img.removeAttribute("data-src");
+  img.loading = "eager";
+  if (isHighPriority && "fetchPriority" in img) {
+    img.fetchPriority = "high";
+  }
+
+  const onDone = () => {
+    img.removeEventListener("load", onDone);
+    img.removeEventListener("error", onDone);
+    if (inFlightImages.has(img)) {
+      inFlightImages.delete(img);
+      activeImageLoads = Math.max(0, activeImageLoads - 1);
+    }
+    delete img.dataset.loadingSrc;
+    img.classList.add("is-loaded");
+    markMediaContainerLoaded(img);
+    pumpImageQueue();
+  };
+
+  img.addEventListener("load", onDone, { once: true });
+  img.addEventListener("error", onDone, { once: true });
+  img.src = src;
+}
+
+function pumpImageQueue() {
+  if (isLightboxPriorityActive) {
+    return;
+  }
+
+  while (activeImageLoads < MAX_CONCURRENT_IMAGE_LOADS && pendingImageQueue.length > 0) {
+    const vh = window.innerHeight || 900;
+    let nextIdx = pendingImageQueue.findIndex((img) => {
+      if (!img || !img.isConnected || !img.dataset.src) return false;
+      const rect = img.getBoundingClientRect();
+      return rect.bottom >= -80 && rect.top <= vh + 120;
+    });
+
+    if (nextIdx === -1) {
+      nextIdx = 0;
+    }
+
+    const [img] = pendingImageQueue.splice(nextIdx, 1);
+    if (!img || !img.isConnected || !img.dataset.src) {
+      continue;
+    }
+
+    startManagedImageLoad(img, false);
+  }
+}
+
+function pauseBackgroundLoadsForLightbox(targetUrl) {
+  isLightboxPriorityActive = true;
+  for (const img of Array.from(inFlightImages)) {
+    const loadingSrc = img.dataset.loadingSrc || img.getAttribute("src");
+    if (loadingSrc && loadingSrc !== targetUrl && !img.complete) {
+      inFlightImages.delete(img);
+      activeImageLoads = Math.max(0, activeImageLoads - 1);
+      img.dataset.src = loadingSrc;
+      delete img.dataset.loadingSrc;
+      img.removeAttribute("src");
+      pendingImageQueue.unshift(img);
+    }
+  }
+}
+
+function resumeBackgroundLoadsAfterLightbox() {
+  if (!isLightboxPriorityActive) return;
+  isLightboxPriorityActive = false;
+  pumpImageQueue();
+}
+
 export function observeLazyImages(selector = "img[data-src]") {
   const images = Array.from(document.querySelectorAll(selector));
   if (!images.length) {
@@ -68,17 +161,12 @@ export function observeLazyImages(selector = "img[data-src]") {
 
   images.forEach((img) => bindSmoothImageLoad(img));
 
-  // Eagerly hydrate the first 4 above-the-fold images so they start downloading immediately
-  const eagerCount = Math.min(4, images.length);
+  // Eagerly hydrate the first 3 above-the-fold images (1 first row) so they finish in <0.4s without bandwidth contention
+  const eagerCount = Math.min(3, images.length);
   for (let i = 0; i < eagerCount; i++) {
     const img = images[i];
     if (img.dataset.src) {
-      img.loading = "eager";
-      if (i < 2 && "fetchPriority" in img) {
-        img.fetchPriority = "high";
-      }
-      img.src = img.dataset.src;
-      img.removeAttribute("data-src");
+      startManagedImageLoad(img, true);
     }
   }
 
@@ -89,9 +177,11 @@ export function observeLazyImages(selector = "img[data-src]") {
 
   if (!("IntersectionObserver" in window)) {
     remaining.forEach((img) => {
-      img.src = img.dataset.src;
-      img.removeAttribute("data-src");
+      if (img.dataset.src) {
+        pendingImageQueue.push(img);
+      }
     });
+    pumpImageQueue();
     return;
   }
 
@@ -103,15 +193,15 @@ export function observeLazyImages(selector = "img[data-src]") {
         }
 
         const img = entry.target;
-        if (img.dataset.src) {
-          img.src = img.dataset.src;
-          img.removeAttribute("data-src");
-        }
         observer.unobserve(img);
+        if (img.dataset.src && !pendingImageQueue.includes(img)) {
+          pendingImageQueue.push(img);
+        }
       });
+      pumpImageQueue();
     },
     {
-      rootMargin: "420px 0px"
+      rootMargin: "180px 0px"
     }
   );
 
@@ -228,6 +318,10 @@ export function setupLightbox() {
   }
 
   const image = lightbox.querySelector("img");
+  if (image && image.getAttribute("src") === "") {
+    image.removeAttribute("src");
+  }
+
   const close = lightbox.querySelector("button:not([data-lightbox-prev]):not([data-lightbox-next]):not([data-lightbox-pin])");
   const prevButton = lightbox.querySelector("[data-lightbox-prev]");
   const nextButton = lightbox.querySelector("[data-lightbox-next]");
@@ -239,8 +333,30 @@ export function setupLightbox() {
     storyBtn.className = "lightbox-story-btn";
     lightbox.appendChild(storyBtn);
   }
+  let spinner = lightbox.querySelector(".lightbox-spinner");
+  if (!spinner) {
+    spinner = document.createElement("div");
+    spinner.className = "lightbox-spinner";
+    spinner.setAttribute("aria-hidden", "true");
+    lightbox.appendChild(spinner);
+  }
+
   let currentIndex = -1;
   let touchStartX = 0;
+  let activeLoadToken = 0;
+  const preloadedUrls = new Set();
+
+  function preloadNeighbor(items, idx) {
+    if (!items.length) return;
+    const wrapped = (idx + items.length) % items.length;
+    const neighbor = items[wrapped];
+    const neighborSrc = neighbor?.getAttribute("data-lightbox-src");
+    if (!neighborSrc || preloadedUrls.has(neighborSrc)) return;
+    preloadedUrls.add(neighborSrc);
+    const preloadImg = new Image();
+    preloadImg.decoding = "async";
+    preloadImg.src = neighborSrc;
+  }
 
   if (pinButton) {
     pinButton.addEventListener("click", (e) => {
@@ -269,7 +385,47 @@ export function setupLightbox() {
       return;
     }
 
-    image.src = src;
+    const token = ++activeLoadToken;
+    pauseBackgroundLoadsForLightbox(src);
+
+    if ("fetchPriority" in image) {
+      image.fetchPriority = "high";
+    }
+    image.decoding = "async";
+
+    const isAlreadyDecoded =
+      trigger.tagName === "IMG" &&
+      trigger.complete &&
+      trigger.naturalWidth > 0 &&
+      (trigger.getAttribute("src") === src || trigger.currentSrc === src);
+
+    if (isAlreadyDecoded) {
+      lightbox.classList.remove("is-loading");
+      image.src = trigger.currentSrc || src;
+      preloadNeighbor(items, currentIndex + 1);
+      preloadNeighbor(items, currentIndex - 1);
+    } else {
+      lightbox.classList.add("is-loading");
+      const onFinish = () => {
+        if (token !== activeLoadToken) return;
+        lightbox.classList.remove("is-loading");
+        if (trigger.tagName === "IMG" && trigger.dataset.src) {
+          trigger.src = src;
+          trigger.removeAttribute("data-src");
+          trigger.classList.add("is-loaded");
+          markMediaContainerLoaded(trigger);
+        }
+        preloadNeighbor(items, currentIndex + 1);
+        preloadNeighbor(items, currentIndex - 1);
+      };
+      image.onload = onFinish;
+      image.onerror = onFinish;
+      image.src = src;
+      if (image.complete && image.naturalWidth > 0) {
+        onFinish();
+      }
+    }
+
     if (counter) {
       counter.textContent = `${currentIndex + 1} / ${items.length}`;
     }
@@ -316,9 +472,9 @@ export function setupLightbox() {
     }
 
     currentIndex = index;
-    renderCurrent(items);
     lightbox.classList.add("is-open");
     document.body.style.overflow = "hidden";
+    renderCurrent(items);
     
     // Focus trap
     const focusableElements = lightbox.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
@@ -328,8 +484,13 @@ export function setupLightbox() {
   });
 
   const closeLightbox = () => {
-    lightbox.classList.remove("is-open");
-    image.src = "";
+    activeLoadToken++;
+    lightbox.classList.remove("is-open", "is-loading");
+    if (image) {
+      image.onload = null;
+      image.onerror = null;
+      image.removeAttribute("src");
+    }
     if (counter) {
       counter.textContent = "";
     }
@@ -338,6 +499,7 @@ export function setupLightbox() {
     }
     currentIndex = -1;
     document.body.style.overflow = "";
+    resumeBackgroundLoadsAfterLightbox();
     // Return focus to the body or trigger
     document.body.focus();
   };

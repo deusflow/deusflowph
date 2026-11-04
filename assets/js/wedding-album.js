@@ -1,11 +1,31 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, setupLightbox, initScrollReveals, escapeHTML, getOptimizedImageUrl, initCustomCursor, initSmartHeader } from "./ui.js?v=20260820-13";
+import { observeLazyImages, createStateMessage, setupLightbox, renderOrderedMasonry, initScrollReveals, escapeHTML, getOptimizedImageUrl, initCustomCursor, initSmartHeader } from "./ui.js?v=20261104-1";
 
 const titleNode = document.getElementById("album-title");
 const metaNode = document.getElementById("album-meta");
 const descriptionNode = document.getElementById("album-description");
 const grid = document.getElementById("album-grid");
 const storyNav = document.getElementById("album-story-nav");
+let albumPhotoNodes = [];
+let masonryResizeBound = false;
+
+function bindMasonryResize() {
+  if (masonryResizeBound || !grid) {
+    return;
+  }
+
+  masonryResizeBound = true;
+  let rafId = 0;
+
+  window.addEventListener("resize", () => {
+    if (rafId) {
+      window.cancelAnimationFrame(rafId);
+    }
+    rafId = window.requestAnimationFrame(() => {
+      renderOrderedMasonry(grid, albumPhotoNodes);
+    });
+  });
+}
 
 function buildAlbumPhotoAlt(album, index) {
   const title = String(album?.title || "Wedding story").trim();
@@ -16,96 +36,20 @@ function formatFrameNumber(index) {
   return String(index + 1).padStart(2, "0");
 }
 
-function createSpreadItem(photo, album, index) {
-  const item = document.createElement("figure");
-  item.className = "editorial-spread-item reveal-up";
-  const escapedUrl = escapeHTML(getOptimizedImageUrl(photo.url, 1400));
+function createAlbumMasonryItem(photo, album, index) {
+  const item = document.createElement("article");
+  item.className = "masonry-item reveal-up";
+  const escapedUrl = escapeHTML(getOptimizedImageUrl(photo.url, 1200));
   const escapedOriginalUrl = escapeHTML(photo.url);
   const escapedAlt = escapeHTML(buildAlbumPhotoAlt(album, index));
   const frameNum = formatFrameNumber(index);
 
   item.innerHTML = `
-    <div class="editorial-frame-media">
-      <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${escapedAlt}" loading="lazy" decoding="async" />
-      <span class="editorial-frame-num" aria-hidden="true">${frameNum}</span>
-    </div>
+    <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${escapedAlt}" loading="lazy" decoding="async" />
+    <span class="editorial-frame-num" aria-hidden="true">${frameNum}</span>
   `;
 
-  const img = item.querySelector("img");
-  if (img) {
-    const classifyOrientation = () => {
-      if (!img.naturalWidth || !img.naturalHeight) return;
-      const ratio = img.naturalWidth / img.naturalHeight;
-      if (ratio >= 1.15) {
-        item.classList.add("is-landscape");
-      } else if (ratio <= 0.88) {
-        item.classList.add("is-portrait");
-      } else {
-        item.classList.add("is-square");
-      }
-    };
-    if (img.complete && img.naturalWidth > 0) {
-      classifyOrientation();
-    } else {
-      img.addEventListener("load", classifyOrientation, { once: true });
-    }
-  }
-
   return item;
-}
-
-function renderEditorialSpread(container, photos, album) {
-  if (!container) return;
-  container.innerHTML = "";
-  container.classList.remove("masonry", "is-ordered-masonry");
-  container.classList.add("editorial-spread-gallery");
-
-  const fragment = document.createDocumentFragment();
-  let cursor = 0;
-  let spreadCycle = 0;
-
-  // Curated magazine spread pattern:
-  // 0: Hero Centerpiece (1 frame)
-  // 1: Editorial Diptych (2 frames)
-  // 2: Narrative Triptych (3 frames)
-  // 3: Asymmetric Spread Left-Heavy (2 frames)
-  // 4: Editorial Diptych Offset (2 frames)
-  // 5: Asymmetric Spread Right-Heavy (2 frames)
-  const PATTERN = [
-    { type: "spread-row-hero", count: 1 },
-    { type: "spread-row-diptych", count: 2 },
-    { type: "spread-row-triptych", count: 3 },
-    { type: "spread-row-asymmetric is-left-lead", count: 2 },
-    { type: "spread-row-diptych is-offset", count: 2 },
-    { type: "spread-row-asymmetric is-right-lead", count: 2 }
-  ];
-
-  while (cursor < photos.length) {
-    const step = PATTERN[spreadCycle % PATTERN.length];
-    const remaining = photos.length - cursor;
-    const take = Math.min(step.count, remaining);
-
-    const row = document.createElement("div");
-    let rowClass = `editorial-spread-row ${step.type}`;
-    if (take === 1 && step.count > 1) {
-      rowClass = "editorial-spread-row spread-row-hero";
-    } else if (take === 2 && step.count === 3) {
-      rowClass = "editorial-spread-row spread-row-diptych";
-    }
-    row.className = rowClass;
-
-    for (let i = 0; i < take; i++) {
-      const photoIndex = cursor + i;
-      const itemNode = createSpreadItem(photos[photoIndex], album, photoIndex);
-      row.appendChild(itemNode);
-    }
-
-    fragment.appendChild(row);
-    cursor += take;
-    spreadCycle += 1;
-  }
-
-  container.appendChild(fragment);
 }
 
 function renderAlbumSchema(album, photos) {
@@ -208,63 +152,8 @@ function renderStoryNavigation(currentSlug, albums) {
   }
 }
 
-
-function getSlugFromURL() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("slug");
-}
-
-async function renderAlbum() {
-  const slug = getSlugFromURL();
-  if (!slug) {
-    grid.appendChild(createStateMessage("Album slug is missing."));
-    return;
-  }
-
+async function loadStoryNavigationAsync(supabase, currentSlug) {
   try {
-    const supabase = getSupabase();
-
-    const { data: album, error: albumError } = await supabase
-      .from("albums")
-      .select("id, slug, title, description, date, visible")
-      .eq("slug", slug)
-      .eq("visible", true)
-      .single();
-
-    if (albumError || !album) {
-      throw albumError || new Error("Album not found.");
-    }
-
-    titleNode.textContent = album.title;
-    metaNode.textContent = formatDate(album.date);
-    if (descriptionNode) {
-      if (album.description && album.description.trim()) {
-        descriptionNode.textContent = album.description;
-        descriptionNode.style.display = "block";
-      } else {
-        descriptionNode.textContent = "";
-        descriptionNode.style.display = "none";
-      }
-    }
-
-    const { data: photos, error: photosError } = await supabase
-      .from("photos")
-      .select("url, display_order, created_at")
-      .eq("album_id", album.id)
-      .order("display_order", { ascending: true })
-      .order("created_at", { ascending: true });
-
-    if (photosError) {
-      throw photosError;
-    }
-
-    if (!photos || photos.length === 0) {
-      grid.appendChild(createStateMessage("This album has no photos yet."));
-      return;
-    }
-
-    metaNode.textContent = `${formatDate(album.date)}  ·  ${photos.length} Editorial Frames`;
-
     let { data: visibleAlbums, error: listError } = await supabase
       .from("albums")
       .select("slug, title, date, display_order, created_at")
@@ -298,13 +187,103 @@ async function renderAlbum() {
         }
         return String(b.created_at || "").localeCompare(String(a.created_at || ""));
       });
-      renderStoryNavigation(album.slug, normalized);
+      renderStoryNavigation(currentSlug, normalized);
+    }
+  } catch (_err) {
+    // Non-critical footer story nav
+  }
+}
+
+function getSlugFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("slug");
+}
+
+async function renderAlbum() {
+  const slug = getSlugFromURL();
+  if (!slug) {
+    grid.appendChild(createStateMessage("Album slug is missing."));
+    return;
+  }
+
+  try {
+    const supabase = getSupabase();
+
+    // Fetch album + photos in a single round-trip via foreign key embed
+    let album = null;
+    let photos = null;
+
+    const { data: embeddedAlbum, error: embedError } = await supabase
+      .from("albums")
+      .select("id, slug, title, description, date, visible, photos!photos_album_id_fkey(url, display_order, created_at)")
+      .eq("slug", slug)
+      .eq("visible", true)
+      .single();
+
+    if (!embedError && embeddedAlbum) {
+      album = embeddedAlbum;
+      photos = Array.isArray(embeddedAlbum.photos) ? embeddedAlbum.photos.slice() : [];
+      photos.sort((a, b) => {
+        const orderA = a.display_order != null ? Number(a.display_order) : Number.MAX_SAFE_INTEGER;
+        const orderB = b.display_order != null ? Number(b.display_order) : Number.MAX_SAFE_INTEGER;
+        if (orderA !== orderB) return orderA - orderB;
+        return String(a.created_at || "").localeCompare(String(b.created_at || ""));
+      });
+    } else {
+      const { data: fallbackAlbum, error: albumError } = await supabase
+        .from("albums")
+        .select("id, slug, title, description, date, visible")
+        .eq("slug", slug)
+        .eq("visible", true)
+        .single();
+
+      if (albumError || !fallbackAlbum) {
+        throw albumError || new Error("Album not found.");
+      }
+      album = fallbackAlbum;
+
+      const { data: fallbackPhotos, error: photosError } = await supabase
+        .from("photos")
+        .select("url, display_order, created_at")
+        .eq("album_id", album.id)
+        .order("display_order", { ascending: true })
+        .order("created_at", { ascending: true });
+
+      if (photosError) {
+        throw photosError;
+      }
+      photos = fallbackPhotos || [];
     }
 
-    renderEditorialSpread(grid, photos, album);
-    renderAlbumSchema(album, photos);
+    titleNode.textContent = album.title;
+    metaNode.textContent = formatDate(album.date);
+    if (descriptionNode) {
+      if (album.description && album.description.trim()) {
+        descriptionNode.textContent = album.description;
+        descriptionNode.style.display = "block";
+      } else {
+        descriptionNode.textContent = "";
+        descriptionNode.style.display = "none";
+      }
+    }
+
+    if (!photos || photos.length === 0) {
+      grid.appendChild(createStateMessage("This album has no photos yet."));
+      return;
+    }
+
+    metaNode.textContent = `${formatDate(album.date)}  ·  ${photos.length} Frames`;
+
+    // Render gallery immediately without waiting for footer story navigation
+    albumPhotoNodes = photos.map((photo, index) => createAlbumMasonryItem(photo, album, index));
+    renderOrderedMasonry(grid, albumPhotoNodes);
+    bindMasonryResize();
     observeLazyImages();
     initScrollReveals();
+    renderAlbumSchema(album, photos);
+
+    // Load bottom story navigation in background
+    loadStoryNavigationAsync(supabase, album.slug);
   } catch (error) {
     grid.innerHTML = "";
     grid.appendChild(createStateMessage(`Could not load album. ${error.message}`));

@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { createStateMessage, initScrollReveals, getOptimizedImageUrl, initSmartHeader, setupLightbox, escapeHTML, applyPortraitFocalPoint, parsePortraitFocalPoint } from "./ui.js?v=20260820-13";
+import { createStateMessage, initScrollReveals, getOptimizedImageUrl, initSmartHeader, setupLightbox, escapeHTML, applyPortraitFocalPoint, parsePortraitFocalPoint } from "./ui.js?v=20261104-1";
 
 const photoNode = document.getElementById("about-photo");
 const photoPanel = document.querySelector(".about-photo-panel");

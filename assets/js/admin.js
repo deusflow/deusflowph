@@ -5,7 +5,7 @@ import {
   uploadToPhotosBucket,
   storagePathFromPublicUrl
 } from "./supabase-client.js";
-import { createStateMessage, getOptimizedImageUrl, parsePortraitFocalPoint, applyPortraitFocalPoint } from "./ui.js?v=20260820-13";
+import { createStateMessage, getOptimizedImageUrl, parsePortraitFocalPoint, applyPortraitFocalPoint } from "./ui.js?v=20261104-1";
 
 const state = {
   selectedAlbum: null,

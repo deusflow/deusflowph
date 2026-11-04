@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, renderOrderedMasonry, initScrollReveals, setupLightbox, escapeHTML, getOptimizedImageUrl, initCustomCursor, initSmartHeader } from "./ui.js?v=20260820-13";
+import { observeLazyImages, createStateMessage, renderOrderedMasonry, initScrollReveals, setupLightbox, escapeHTML, getOptimizedImageUrl, initCustomCursor, initSmartHeader } from "./ui.js?v=20261104-1";
 
 const grid = document.getElementById("portfolio-grid");
 let portfolioNodes = [];

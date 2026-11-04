@@ -1,5 +1,5 @@
 import { getSupabase, formatDate } from "./supabase-client.js";
-import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initCustomCursor, initSmartHeader } from "./ui.js?v=20260820-13";
+import { observeLazyImages, createStateMessage, initScrollReveals, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initCustomCursor, initSmartHeader } from "./ui.js?v=20261104-1";
 
 const list = document.getElementById("weddings-grid");
 
