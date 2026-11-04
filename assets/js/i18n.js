@@ -29,6 +29,20 @@ const UADict = {
   "Meet Oleh & Philosophy": "Познайомитись з Олегом і моїм баченням",
   "Read full story": "Познайомитись з Олегом і моїм баченням",
 
+  // Weddings & Portfolio
+  "Selected Weddings": "Обрані весілля",
+  "Wedding Stories.": "Весільні історії.",
+  "Wedding Story": "Весільна історія",
+  "← All Wedding Stories": "← Всі весільні історії",
+  "Honest documentary moments with an editorial finish — from first light to the final dance.": "Щирі документальні миті з вишуканим editorial відтінком — від першого ранкового світла до фінального танцю.",
+  "Every gallery is a complete story — from quiet morning details to the last embrace on the dancefloor.": "Кожна серія — це цілісна історія: від тихих ранкових деталей до останніх обіймів на танцполі.",
+  "Signature Work": "Обрані роботи",
+  "Every Frame. One Feeling.": "Кожен кадр. Одне почуття.",
+  "Editorial moments, genuine connections, and timeless wedding stories.": "Едиторіал моменти, щирі почуття та позачасові весільні історії.",
+  "A curated collection of honest, unscripted moments and timeless portraits from weddings across Denmark and Europe.": "Кураторська добірка щирих, ненадуманих моментів і позачасових портретів із весіль по всій Данії та Європі.",
+  "Planning by location? See Aarhus, Copenhagen, Odense, and Aalborg coverage.": "Обираєте за містом? Перегляньте серії: Aarhus, Copenhagen, Odense та Aalborg.",
+  "Looking for city-specific work? Visit Aarhus, Copenhagen, Odense, and Aalborg pages.": "Шукаєте зйомки в конкретних містах? Перегляньте сторінки: Aarhus, Copenhagen, Odense та Aalborg.",
+
   // Головний екран
   "Not loud.": "Тихо створюю те,",
   "But your photos will be.": "що відчувається гучно.",
@@ -114,6 +128,7 @@ const UADict = {
   "Every wedding is unique. Choose your preferred messenger below to discuss your vision and check availability for your date:": "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
   "I prefer direct, personal connection. Choose your preferred messenger below to discuss your vision, check availability, or say hello:": "Я за живе людське спілкування без зайвої бюрократії. Обирайте зручний месенджер, щоб обговорити ідеї, перевірити вільну дату або просто привітатися:",
   "Fastest for Europe & International couples": "Найшвидше для Європи та міжнародних пар",
+  "Direct Chat in Ukrainian & English": "Прямий чат українською та англійською",
   "Прямий чат / Українська та English": "Прямий чат українською та англійською",
   "Portfolio, reels & live stories": "Портфоліо, reels і live stories",
   "Email Direct": "Email напряму",
@@ -168,6 +183,20 @@ const DADict = {
   "Meet Oleh & Philosophy": "Mød Oleh & Filosofi",
   "Read full story": "Læs hele historien",
 
+  // Weddings & Portfolio
+  "Selected Weddings": "Udvalgte Bryllupper",
+  "Wedding Stories.": "Bryllupshistorier.",
+  "Wedding Story": "Bryllupshistorie",
+  "← All Wedding Stories": "← Alle bryllupshistorier",
+  "Honest documentary moments with an editorial finish — from first light to the final dance.": "Ærlige dokumentariske øjeblikke med en redaktionel elegance — fra morgenens første lys til den sidste dans.",
+  "Every gallery is a complete story — from quiet morning details to the last embrace on the dancefloor.": "Hvert galleri er en komplet fortælling — fra rolige morgendetaljer til den sidste omfavnelse på dansegulvet.",
+  "Signature Work": "Udvalgte Værker",
+  "Every Frame. One Feeling.": "Hvert Billede. Én Følelse.",
+  "Editorial moments, genuine connections, and timeless wedding stories.": "Redaktionelle øjeblikke, ægte nærvær og tidløse bryllupshistorier.",
+  "A curated collection of honest, unscripted moments and timeless portraits from weddings across Denmark and Europe.": "En kurateret samling af ærlige, uiscenesatte øjeblikke og tidløse portrætter fra bryllupper i Danmark og Europa.",
+  "Planning by location? See Aarhus, Copenhagen, Odense, and Aalborg coverage.": "Planlægger I efter lokation? Se dækning i Aarhus, København, Odense og Aalborg.",
+  "Looking for city-specific work? Visit Aarhus, Copenhagen, Odense, and Aalborg pages.": "Leder I efter arbejde i specifikke byer? Besøg Aarhus, København, Odense og Aalborg.",
+
   // Index Hero & Badges
   "Not loud.": "Jeg skaber stille det,",
   "But your photos will be.": "der føles stort.",
@@ -199,7 +228,13 @@ const DADict = {
   "Let's Talk About Your Day": "Lad os tale om jeres dag",
   "Ready to Capture Your Story?": "Klar til at forevige jeres historie?",
   "Fastest for Europe & International couples": "Hurtigst for internationale par & Europa",
+  "Direct Chat in Ukrainian & English": "Hurtig chat på engelsk eller ukrainsk",
+  "Прямий чат / Українська та English": "Hurtig chat på engelsk eller ukrainsk",
+  "Portfolio, reels & live stories": "portfolio, reels og live stories",
   "Email Direct": "Direkte email",
+  "I take a limited number of weddings each year. Choose your preferred messenger below to check availability for your date:": "Jeg tager et begrænset antal bryllupper hvert år. Vælg jeres foretrukne beskedtjeneste nedenfor for at tjekke ledighed:",
+  "Every wedding is unique. Choose your preferred messenger below to discuss your vision and check availability for your date:": "Hvert bryllup er unikt. Vælg jeres foretrukne beskedtjeneste nedenfor for at tale om jeres vision og tjekke ledighed:",
+  "I take a limited number of weddings each year to ensure full dedication. Choose your preferred messenger below to check your date directly with me:": "Jeg tager et begrænset antal bryllupper hvert år for at sikre fuldt engagement. Vælg jeres foretrukne beskedtjeneste nedenfor for at tjekke jeres dato direkte med mig:",
 
   // Pricing
   "Investment": "Investering",
