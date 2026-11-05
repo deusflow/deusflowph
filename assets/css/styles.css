@@ -422,7 +422,7 @@ h3,
 
 .hero-title-part {
   display: inline-block;
-  will-change: transform, opacity;
+  will-change: transform, opacity, filter;
 }
 
 .hero {
@@ -433,19 +433,29 @@ h3,
   align-items: center;
 }
 
+@keyframes hero-media-breath {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .hero-media {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  animation: hero-media-breath 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .hero-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.72;
+  opacity: 0.74;
   will-change: transform;
-  transform: scale(1.05);
+  transform: scale(1.04);
   transform-origin: 50% 52%;
 }
 
@@ -727,25 +737,13 @@ h3,
   border: 1px solid var(--gold);
 }
 
-/* Keep subtle personality: tiny imperfect rhythm without breaking luxury composition */
-.centered-grid> :nth-child(odd) {
-  transform: rotate(-0.35deg);
-}
-
-.centered-grid> :nth-child(even) {
-  transform: rotate(0.35deg);
-}
-
+/* Architectural editorial alignment without crooked card tilt */
 .centered-grid>* {
   transition: transform var(--motion-base) var(--motion-ease);
 }
 
 .centered-grid>.state-box {
   transform: none;
-}
-
-.centered-grid>*:hover {
-  transform: rotate(0deg);
 }
 
 .photo-media {
@@ -2790,8 +2788,8 @@ button.danger {
 /* Modern Scroll Reveals (2026 Editorial Standard) */
 .reveal-up {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(22px);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 
@@ -2800,19 +2798,28 @@ button.danger {
   transform: translateY(0);
 }
 
-/* Staggered cascading reveals for children */
-.reveal-up .photo-card,
-.reveal-up .testimonial-card,
+/* Prevent double-bounce on sections whose children already have dedicated choreography */
+#home-featured.reveal-up,
+.section-quote.reveal-up {
+  transform: none;
+}
+
+/* Staggered cascading reveals for children (excluding .polaroid-luxury and .testimonial-card) */
+.reveal-up .photo-card:not(.polaroid-luxury),
 .reveal-up .contact-pill,
 .reveal-up .dest-tag,
 .reveal-up .awards-grid>* {
   opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(16px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s var(--motion-ease),
+    background 0.35s var(--motion-ease),
+    box-shadow 0.35s var(--motion-ease),
+    filter 0.35s var(--motion-ease);
 }
 
-.reveal-up.is-visible .photo-card,
-.reveal-up.is-visible .testimonial-card,
+.reveal-up.is-visible .photo-card:not(.polaroid-luxury),
 .reveal-up.is-visible .contact-pill,
 .reveal-up.is-visible .dest-tag,
 .reveal-up.is-visible .awards-grid>* {
@@ -2820,92 +2827,90 @@ button.danger {
   transform: translateY(0);
 }
 
-/* Cascading stagger delays */
-.reveal-up.is-visible .photo-grid> :nth-child(1) {
+/* Restore hover lift on children inside .reveal-up */
+.reveal-up.is-visible .contact-pill:hover {
+  transform: translateY(-3px);
+}
+
+.reveal-up.is-visible .awards-grid>a:hover,
+.reveal-up.is-visible .awards-grid>.award-item:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* Cascading stagger delays (only during entrance before .is-settled) */
+.reveal-up.is-visible:not(.is-settled) .photo-grid> :nth-child(1):not(.polaroid-luxury) {
   transition-delay: 0.04s;
 }
 
-.reveal-up.is-visible .photo-grid> :nth-child(2) {
+.reveal-up.is-visible:not(.is-settled) .photo-grid> :nth-child(2):not(.polaroid-luxury) {
   transition-delay: 0.12s;
 }
 
-.reveal-up.is-visible .photo-grid> :nth-child(3) {
+.reveal-up.is-visible:not(.is-settled) .photo-grid> :nth-child(3):not(.polaroid-luxury) {
   transition-delay: 0.20s;
 }
 
-.reveal-up.is-visible .photo-grid> :nth-child(4) {
-  transition-delay: 0.28s;
-}
-
-.reveal-up.is-visible .photo-grid> :nth-child(5) {
-  transition-delay: 0.36s;
-}
-
-.reveal-up.is-visible .photo-grid> :nth-child(6) {
-  transition-delay: 0.44s;
-}
-
-.reveal-up.is-visible .smart-contact-grid> :nth-child(1) {
-  transition-delay: 0.05s;
-}
-
-.reveal-up.is-visible .smart-contact-grid> :nth-child(2) {
-  transition-delay: 0.14s;
-}
-
-.reveal-up.is-visible .smart-contact-grid> :nth-child(3) {
-  transition-delay: 0.23s;
-}
-
-.reveal-up.is-visible .smart-contact-grid> :nth-child(4) {
-  transition-delay: 0.32s;
-}
-
-.reveal-up.is-visible .awards-grid> :nth-child(1) {
+.reveal-up.is-visible:not(.is-settled) .smart-contact-grid> :nth-child(1) {
   transition-delay: 0.04s;
 }
 
-.reveal-up.is-visible .awards-grid> :nth-child(2) {
-  transition-delay: 0.12s;
+.reveal-up.is-visible:not(.is-settled) .smart-contact-grid> :nth-child(2) {
+  transition-delay: 0.11s;
 }
 
-.reveal-up.is-visible .awards-grid> :nth-child(3) {
-  transition-delay: 0.20s;
+.reveal-up.is-visible:not(.is-settled) .smart-contact-grid> :nth-child(3) {
+  transition-delay: 0.18s;
 }
 
-.reveal-up.is-visible .awards-grid> :nth-child(4) {
-  transition-delay: 0.28s;
+.reveal-up.is-visible:not(.is-settled) .smart-contact-grid> :nth-child(4) {
+  transition-delay: 0.25s;
 }
 
-.reveal-up.is-visible .destination-tags> :nth-child(1) {
+.reveal-up.is-visible:not(.is-settled) .awards-grid> :nth-child(1) {
   transition-delay: 0.04s;
 }
 
-.reveal-up.is-visible .destination-tags> :nth-child(2) {
-  transition-delay: 0.08s;
+.reveal-up.is-visible:not(.is-settled) .awards-grid> :nth-child(2) {
+  transition-delay: 0.10s;
 }
 
-.reveal-up.is-visible .destination-tags> :nth-child(3) {
-  transition-delay: 0.12s;
-}
-
-.reveal-up.is-visible .destination-tags> :nth-child(4) {
+.reveal-up.is-visible:not(.is-settled) .awards-grid> :nth-child(3) {
   transition-delay: 0.16s;
 }
 
-.reveal-up.is-visible .destination-tags> :nth-child(5) {
-  transition-delay: 0.20s;
+.reveal-up.is-visible:not(.is-settled) .awards-grid> :nth-child(4) {
+  transition-delay: 0.22s;
 }
 
-.reveal-up.is-visible .destination-tags> :nth-child(6) {
-  transition-delay: 0.24s;
+.reveal-up.is-visible:not(.is-settled) .destination-tags> :nth-child(1) {
+  transition-delay: 0.03s;
+}
+
+.reveal-up.is-visible:not(.is-settled) .destination-tags> :nth-child(2) {
+  transition-delay: 0.07s;
+}
+
+.reveal-up.is-visible:not(.is-settled) .destination-tags> :nth-child(3) {
+  transition-delay: 0.11s;
+}
+
+.reveal-up.is-visible:not(.is-settled) .destination-tags> :nth-child(4) {
+  transition-delay: 0.15s;
+}
+
+.reveal-up.is-visible:not(.is-settled) .destination-tags> :nth-child(5) {
+  transition-delay: 0.19s;
+}
+
+.reveal-up.is-visible:not(.is-settled) .destination-tags> :nth-child(6) {
+  transition-delay: 0.23s;
 }
 
 /* Cinematic Hero Entrance (Pure CSS) */
 @keyframes cinematic-fade-up {
   from {
     opacity: 0;
-    transform: translate3d(0, 40px, 0);
+    transform: translate3d(0, 26px, 0);
   }
 
   to {
@@ -2914,35 +2919,23 @@ button.danger {
   }
 }
 
-@keyframes hero-image-zoom {
-  from {
-    opacity: 0;
-    transform: scale(1.15);
-  }
-
-  to {
-    opacity: 0.72;
-    transform: scale(1.05);
-  }
-}
-
 .animate-entrance {
   opacity: 0;
   /* Hidden before animation starts */
-  animation: cinematic-fade-up 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  animation: cinematic-fade-up 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: opacity, transform;
 }
 
 .delay-1 {
-  animation-delay: 0.1s;
+  animation-delay: 0.08s;
 }
 
 .delay-2 {
-  animation-delay: 0.25s;
+  animation-delay: 0.22s;
 }
 
 .delay-3 {
-  animation-delay: 0.4s;
+  animation-delay: 0.36s;
 }
 
 /* Editorial Magazine Style (Ultra-Premium 2026 - Scaled & High Contrast) */
@@ -3063,20 +3056,6 @@ button.danger {
   transition: color var(--motion-base) var(--motion-ease);
 }
 
-@keyframes luxury-center-glow {
-
-  0%,
-  100% {
-    opacity: 0.5;
-    filter: drop-shadow(0 0 0px transparent);
-  }
-
-  50% {
-    opacity: 1;
-    filter: drop-shadow(0 0 3px rgba(212, 186, 149, 0.65));
-  }
-}
-
 .cta-editorial::after {
   content: "";
   position: absolute;
@@ -3086,14 +3065,15 @@ button.danger {
   height: 1px;
   background: linear-gradient(90deg,
       transparent 0%,
-      transparent 22%,
-      rgba(212, 186, 149, 0.3) 36%,
-      rgba(212, 186, 149, 0.95) 50%,
-      rgba(212, 186, 149, 0.3) 64%,
-      transparent 78%,
+      transparent 18%,
+      rgba(212, 186, 149, 0.38) 35%,
+      rgba(212, 186, 149, 0.92) 50%,
+      rgba(212, 186, 149, 0.38) 65%,
+      transparent 82%,
       transparent 100%);
-  animation: luxury-center-glow 3.6s ease-in-out infinite;
-  transition: all var(--motion-base) var(--motion-ease);
+  opacity: 0.75;
+  transform: scaleX(0.92);
+  transition: opacity 0.38s var(--motion-ease), transform 0.38s var(--motion-ease), filter 0.38s var(--motion-ease);
   pointer-events: none;
 }
 
@@ -3113,8 +3093,8 @@ button.danger {
 .cta-editorial:hover::after,
 .cta-editorial:active::after {
   opacity: 1;
-  filter: drop-shadow(0 0 6px rgba(212, 186, 149, 0.8));
-  animation-play-state: paused;
+  transform: scaleX(1.04);
+  filter: drop-shadow(0 0 6px rgba(212, 186, 149, 0.75));
 }
 
 .cta-editorial:hover .arrow,
@@ -3269,22 +3249,23 @@ button.danger {
   text-decoration: none !important;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.4s var(--motion-ease),
-    box-shadow 0.4s var(--motion-ease),
-    transform 0.4s var(--motion-ease) !important;
+  transition: border-color 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.42s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Initial cinematic rack-focus state for homepage featured stories & weddings directory */
+/* Initial cinematic cascade state for homepage featured stories & weddings directory */
 #featured-grid .polaroid-luxury,
 #weddings-grid .polaroid-luxury {
   opacity: 0;
-  filter: blur(16px);
-  transform: scale(1.06) translateY(32px);
-  transition: opacity 1.25s var(--motion-ease),
-    filter 1.25s var(--motion-ease),
-    transform 1.25s var(--motion-ease),
-    border-color 0.4s var(--motion-ease),
-    box-shadow 0.4s var(--motion-ease) !important;
+  filter: blur(4px);
+  transform: translate3d(0, 22px, 0) scale(1.015);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.42s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition-delay: var(--card-stagger, 0ms) !important;
   will-change: opacity, filter, transform;
 }
 
@@ -3292,24 +3273,16 @@ button.danger {
 #weddings-grid .polaroid-luxury.in-focus {
   opacity: 1;
   filter: blur(0);
-  transform: scale(1) translateY(0);
+  transform: translate3d(0, 0, 0) scale(1);
 }
 
-@media (min-width: 768px) {
-  #featured-grid .polaroid-luxury:nth-child(3n+1),
-  #weddings-grid .polaroid-luxury:nth-child(3n+1) {
-    transition-delay: 0.08s !important;
-  }
-
-  #featured-grid .polaroid-luxury:nth-child(3n+2),
-  #weddings-grid .polaroid-luxury:nth-child(3n+2) {
-    transition-delay: 0.24s !important;
-  }
-
-  #featured-grid .polaroid-luxury:nth-child(3n+3),
-  #weddings-grid .polaroid-luxury:nth-child(3n+3) {
-    transition-delay: 0.4s !important;
-  }
+/* Once entrance finishes (or immediately on hover), remove stagger delay for 0ms instant hover response */
+#featured-grid .polaroid-luxury.is-interactive,
+#weddings-grid .polaroid-luxury.is-interactive,
+#featured-grid .polaroid-luxury:hover,
+#weddings-grid .polaroid-luxury:hover {
+  transition-delay: 0ms !important;
+  transition-duration: 0.42s !important;
 }
 
 .polaroid-inner {
@@ -3331,22 +3304,17 @@ button.danger {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  transition: transform 0.8s var(--motion-ease) !important;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .polaroid-luxury:hover {
-  border-color: var(--gold) !important;
-  box-shadow: 0 20px 45px rgba(212, 186, 149, 0.08) !important;
-  transform: translateY(-8px) rotate(-1deg) !important;
-  /* Playful tilt */
-}
-
-.polaroid-luxury:nth-child(even):hover {
-  transform: translateY(-8px) rotate(1deg) !important;
+  border-color: rgba(212, 186, 149, 0.72) !important;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.45), 0 0 28px rgba(212, 186, 149, 0.08) !important;
+  transform: translate3d(0, -6px, 0) !important;
 }
 
 .polaroid-luxury:hover .photo-media img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .polaroid-footer {
@@ -3373,19 +3341,21 @@ button.danger {
   margin: 0 !important;
 }
 
-/* Quote Word Reveal Animation */
+/* Quote Word Reveal Animation (Clean vertical rise, zero tilt) */
 .reveal-word {
   display: inline-block;
   opacity: 0;
-  transform: translateY(8px) rotate(2deg);
-  filter: blur(4px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: calc(var(--word-index) * 0.04s);
+  transform: translate3d(0, 10px, 0);
+  filter: blur(3px);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--word-index) * 0.045s);
 }
 
 .reveal-word.is-revealed {
   opacity: 1;
-  transform: translateY(0) rotate(0);
+  transform: translate3d(0, 0, 0);
   filter: blur(0);
 }
 
@@ -3814,44 +3784,31 @@ img.lazy-img-fade.is-loaded {
   background: rgba(212, 186, 149, 0.06);
 }
 
-/* Gentle Breathing Pill Button (All Stories CTA) */
-@keyframes gentle-breath {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.85;
-    border-color: rgba(212, 186, 149, 0.3);
-  }
-
-  50% {
-    transform: scale(1.04);
-    opacity: 1;
-    border-color: var(--gold);
-    box-shadow: 0 0 14px rgba(212, 186, 149, 0.25);
-  }
-}
-
+/* Editorial Pill Button (All Stories CTA — Calm at rest, responsive on hover) */
 .animate-breathing-pill {
   display: inline-flex;
   align-items: center;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0.35rem 0.85rem;
+  padding: 0.4rem 0.95rem;
   border-radius: 4px;
-  border: 1px solid rgba(212, 186, 149, 0.3);
+  border: 1px solid rgba(212, 186, 149, 0.34);
   background: rgba(212, 186, 149, 0.04);
   color: var(--gold);
-  animation: gentle-breath 3s ease-in-out infinite;
-  transition: all var(--motion-base) var(--motion-ease);
+  transition: color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .animate-breathing-pill:hover {
   color: #fff;
-  background: rgba(212, 186, 149, 0.15);
+  background: rgba(212, 186, 149, 0.14);
   border-color: var(--gold);
-  animation-play-state: paused;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32), 0 0 14px rgba(212, 186, 149, 0.15);
 }
 
 /* About Page Pillars (Values, Background, Experience) */

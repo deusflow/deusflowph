@@ -547,16 +547,20 @@ export function setupLightbox() {
 
 export function initScrollReveals() {
   if (!('IntersectionObserver' in window)) {
-    document.querySelectorAll('.reveal-up').forEach(el => el.classList.add('is-visible'));
+    document.querySelectorAll('.reveal-up').forEach(el => el.classList.add('is-visible', 'is-settled'));
     return;
   }
   
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
+        const el = entry.target;
+        el.classList.add('is-visible');
+        setTimeout(() => {
+          el.classList.add('is-settled');
+        }, 950);
         // Animate numbers if they exist
-        const counters = entry.target.querySelectorAll('[data-count]');
+        const counters = el.querySelectorAll('[data-count]');
         counters.forEach(counter => {
           const target = +counter.getAttribute('data-count');
           const duration = 1500;
@@ -573,10 +577,10 @@ export function initScrollReveals() {
           requestAnimationFrame(update);
           counter.removeAttribute('data-count'); // ensure it only runs once
         });
-        observer.unobserve(entry.target);
+        observer.unobserve(el);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  }, { threshold: 0.08, rootMargin: '0px 0px -36px 0px' });
 
   document.querySelectorAll('.reveal-up').forEach(el => observer.observe(el));
 }
@@ -692,26 +696,35 @@ export function initRackFocusReveal() {
   const cards = document.querySelectorAll('.polaroid-luxury');
   if (!cards.length) return;
 
+  const activateCard = (card, index) => {
+    if (card.classList.contains('in-focus')) return;
+    const colDelayMs = (index % 3) * 110;
+    card.style.setProperty('--card-stagger', `${colDelayMs}ms`);
+    card.classList.add('in-focus');
+    setTimeout(() => {
+      card.classList.add('is-interactive');
+      card.style.removeProperty('--card-stagger');
+    }, 850 + colDelayMs);
+  };
+
   if (!('IntersectionObserver' in window)) {
-    cards.forEach(card => card.classList.add('in-focus'));
+    cards.forEach((card, index) => activateCard(card, index));
     return;
   }
 
+  const cardList = Array.from(cards);
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        entry.target.classList.add('in-focus');
+        const idx = cardList.indexOf(entry.target);
+        activateCard(entry.target, idx >= 0 ? idx : 0);
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.01, rootMargin: '0px 0px 100px 0px' });
+  }, { threshold: 0.05, rootMargin: '0px 0px 60px 0px' });
 
-  cards.forEach(card => {
+  cardList.forEach((card) => {
     observer.observe(card);
-    // Failsafe: if intersection observer doesn't trigger within 1.5s, force show
-    setTimeout(() => {
-      card.classList.add('in-focus');
-    }, 1500);
   });
 }
 

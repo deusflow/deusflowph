@@ -1,4 +1,4 @@
-import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor, initSmartHeader, applyPortraitFocalPoint } from "./ui.js?v=20261104-1";
+import { observeLazyImages, createStateMessage, initScrollReveals, initMagneticButtons, initParallax, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initWordReveal, initCustomCursor, initSmartHeader, applyPortraitFocalPoint } from "./ui.js?v=20261105-1";
 import { fetchHomeAboutData, fetchFeaturedAlbums, fetchAlbumFallbackCover } from "./services/api.js";
 
 const featuredGrid = document.getElementById("featured-grid");
@@ -182,7 +182,7 @@ function initPortalZoom() {
   const heroTitleLeft = document.querySelector(".hero-title-left");
   const heroTitleRight = document.querySelector(".hero-title-right");
   const heroActions = document.querySelector(".hero-actions");
-  const heroCopy = document.querySelector(".hero-copy");
+  const heroBtns = heroActions ? Array.from(heroActions.querySelectorAll(".cta-editorial")) : [];
   const heroOverlay = document.querySelector(".hero-overlay");
   const ribbon = document.querySelector(".hero-tagline-ribbon");
 
@@ -208,45 +208,89 @@ function initPortalZoom() {
 
   function render() {
     // Smooth inertial lerp
-    currentProgress += (targetProgress - currentProgress) * 0.16;
+    currentProgress += (targetProgress - currentProgress) * 0.14;
 
-    if (Math.abs(targetProgress - currentProgress) < 0.001) {
+    if (Math.abs(targetProgress - currentProgress) < 0.0008) {
       currentProgress = targetProgress;
     }
 
     const isMobile = window.innerWidth <= 759;
-    const maxScale = isMobile ? 2.2 : 2.8;
-    const scale = 1.05 + currentProgress * maxScale;
-    const yOffset = -currentProgress * (isMobile ? 5 : 3.5);
 
+    // 1. Noble cinematic parallax zoom (1.04 -> 1.20 desktop, 1.04 -> 1.15 mobile)
+    const zoomRange = isMobile ? 0.11 : 0.16;
+    const scale = 1.04 + currentProgress * zoomRange;
+    const yOffset = -currentProgress * (isMobile ? 2.5 : 3.5);
     heroImg.style.transform = `translate3d(0, ${yOffset}%, 0) scale(${scale})`;
 
-    const textOpacity = Math.max(0, 1 - currentProgress * 2.5);
-    const splitDistance = isMobile ? 180 : 320;
-    const leftX = -currentProgress * splitDistance;
-    const rightX = currentProgress * splitDistance;
+    // 2. "Parting Doors" choreography for title lines & action buttons
+    if (currentProgress <= 0.001) {
+      if (heroTitleLeft) {
+        heroTitleLeft.style.transform = "";
+        heroTitleLeft.style.opacity = "";
+        heroTitleLeft.style.filter = "";
+      }
+      if (heroTitleRight) {
+        heroTitleRight.style.transform = "";
+        heroTitleRight.style.opacity = "";
+        heroTitleRight.style.filter = "";
+      }
+      heroBtns.forEach((btn) => {
+        btn.style.transform = "";
+        btn.style.opacity = "";
+      });
+      if (heroActions) {
+        heroActions.style.pointerEvents = "auto";
+      }
+    } else {
+      // Gentle ease-out curve for the parting doors
+      const doorEase = 1 - Math.pow(1 - Math.min(1, currentProgress * 1.35), 2);
+      const fadeOpacity = Math.max(0, 1 - currentProgress * 2.05);
+      const opticalBlur = (currentProgress * 3.2).toFixed(2);
 
-    if (heroTitleLeft) {
-      heroTitleLeft.style.transform = `translate3d(${leftX}px, 0, 0)`;
-      heroTitleLeft.style.opacity = textOpacity;
+      const splitDistance = isMobile ? 92 : 168;
+      const liftY = -doorEase * (isMobile ? 8 : 12);
+      const leftX = -doorEase * splitDistance;
+      const rightX = doorEase * splitDistance;
+
+      if (heroTitleLeft) {
+        heroTitleLeft.style.transform = `translate3d(${leftX}px, ${liftY}px, 0)`;
+        heroTitleLeft.style.opacity = String(fadeOpacity);
+        heroTitleLeft.style.filter = currentProgress > 0.04 ? `blur(${opticalBlur}px)` : "none";
+      }
+
+      if (heroTitleRight) {
+        heroTitleRight.style.transform = `translate3d(${rightX}px, ${liftY}px, 0)`;
+        heroTitleRight.style.opacity = String(fadeOpacity);
+        heroTitleRight.style.filter = currentProgress > 0.04 ? `blur(${opticalBlur}px)` : "none";
+      }
+
+      // Action buttons part in sympathy with the title doors and rise gently
+      const btnSplit = isMobile ? 24 : 46;
+      const btnLiftY = -doorEase * (isMobile ? 10 : 14);
+      const btnOpacity = Math.max(0, 1 - currentProgress * 2.15);
+
+      if (heroBtns.length >= 2) {
+        heroBtns[0].style.transform = `translate3d(${-doorEase * btnSplit}px, ${btnLiftY}px, 0)`;
+        heroBtns[0].style.opacity = String(btnOpacity);
+        heroBtns[1].style.transform = `translate3d(${doorEase * btnSplit}px, ${btnLiftY}px, 0)`;
+        heroBtns[1].style.opacity = String(btnOpacity);
+      } else if (heroBtns.length === 1) {
+        heroBtns[0].style.transform = `translate3d(0, ${btnLiftY}px, 0)`;
+        heroBtns[0].style.opacity = String(btnOpacity);
+      }
+
+      if (heroActions) {
+        heroActions.style.pointerEvents = btnOpacity > 0.18 ? "auto" : "none";
+      }
     }
 
-    if (heroTitleRight) {
-      heroTitleRight.style.transform = `translate3d(${rightX}px, 0, 0)`;
-      heroTitleRight.style.opacity = textOpacity;
-    }
-
-    if (heroActions) {
-      heroActions.style.pointerEvents = "auto";
-      heroActions.style.opacity = "1";
-    }
-
+    // 3. Overlay opens softly so the photograph brightens as the doors part
     if (heroOverlay) {
-      heroOverlay.style.opacity = Math.max(0.18, 1 - currentProgress * 1.5);
+      heroOverlay.style.opacity = String(Math.max(0.32, 1 - currentProgress * 0.85));
     }
 
     if (ribbon) {
-      ribbon.style.opacity = Math.max(0, 1 - currentProgress * 4.5);
+      ribbon.style.opacity = String(Math.max(0, 1 - currentProgress * 3.5));
     }
 
     if (currentProgress !== targetProgress) {
