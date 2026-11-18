@@ -305,9 +305,16 @@ function translateHtmlContent(html, lang, routePath) {
     const relLinkRegex = new RegExp(`href="(\\.\\.\\/)*(${r})"`, "g");
     out = out.replace(relLinkRegex, `href="${targetPrefix}${lang}/${r}"`);
   }
-  // Home link
-  out = out.replace(/href="(\.\.\/)*\.\/"/g, `href="${targetPrefix}${lang}/"`);
-  out = out.replace(/href="(\.\.\/)*"/g, `href="${targetPrefix}${lang}/"`);
+  // On weddings/album, href="../" points to weddings/, while href="../../" points to root
+  if (routePath === "weddings/album") {
+    out = out.split(`href="../"`).join(`href="${targetPrefix}${lang}/weddings/"`);
+  }
+  // Home link (exact match to source root prefix)
+  if (srcPrefix === "./") {
+    out = out.split(`href="./"`).join(`href="${targetPrefix}${lang}/"`);
+  } else {
+    out = out.split(`href="${srcPrefix}"`).join(`href="${targetPrefix}${lang}/"`);
+  }
 
   return out;
 }

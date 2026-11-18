@@ -22,6 +22,7 @@ const UADict = {
   "Back to Weddings": "Назад до весіль",
   "Wedding Photographer | Aarhus, Denmark": "Весільний фотограф | Орхус, Данія",
   "View All Weddings →": "Всі весілля →",
+  "All Stories →": "Усі історії →",
   "Explore Stories": "Дивитися серії",
   "View Portfolio": "Дивитися портфоліо",
   "Check Availability": "Перевірити дату",
@@ -42,6 +43,16 @@ const UADict = {
   "A curated collection of honest, unscripted moments and timeless portraits from weddings across Denmark and Europe.": "Кураторська добірка щирих, ненадуманих моментів і позачасових портретів із весіль по всій Данії та Європі.",
   "Planning by location? See Aarhus, Copenhagen, Odense, and Aalborg coverage.": "Обираєте за містом? Перегляньте серії: Aarhus, Copenhagen, Odense та Aalborg.",
   "Looking for city-specific work? Visit Aarhus, Copenhagen, Odense, and Aalborg pages.": "Шукаєте зйомки в конкретних містах? Перегляньте сторінки: Aarhus, Copenhagen, Odense та Aalborg.",
+
+  // Локації
+  "Wedding Photographer in Aarhus": "Весільний фотограф в Орхусі",
+  "Wedding Photographer in Copenhagen": "Весільний фотограф у Копенгагені",
+  "Wedding Photographer in Odense": "Весільний фотограф в Оденсе",
+  "Wedding Photographer in Aalborg": "Весільний фотограф в Ольборзі",
+  "Local knowledge, clean execution.": "Локальний досвід та чиста реалізація.",
+  "Calm direction, true moments.": "Спокійний супровід, справжні моменти.",
+  "Natural light & Funen atmosphere.": "Природне світло та атмосфера Фюна.",
+  "North Jutland & coastal light.": "Північна Ютландія та узбережжя.",
 
   // Головний екран
   "Not loud.": "Тихо створюю те,",
@@ -176,6 +187,7 @@ const DADict = {
   "Back to Weddings": "Tilbage til bryllupper",
   "Wedding Photographer | Aarhus, Denmark": "Bryllupsfotograf | Aarhus, Danmark",
   "View All Weddings →": "Se alle bryllupper →",
+  "All Stories →": "Alle historier →",
   "Explore Stories": "Udforsk historier",
   "View Portfolio": "Se portfolio",
   "Check Availability": "Tjek ledighed",
@@ -196,6 +208,16 @@ const DADict = {
   "A curated collection of honest, unscripted moments and timeless portraits from weddings across Denmark and Europe.": "En kurateret samling af ærlige, uiscenesatte øjeblikke og tidløse portrætter fra bryllupper i Danmark og Europa.",
   "Planning by location? See Aarhus, Copenhagen, Odense, and Aalborg coverage.": "Planlægger I efter lokation? Se dækning i Aarhus, København, Odense og Aalborg.",
   "Looking for city-specific work? Visit Aarhus, Copenhagen, Odense, and Aalborg pages.": "Leder I efter arbejde i specifikke byer? Besøg Aarhus, København, Odense og Aalborg.",
+
+  // Locations
+  "Wedding Photographer in Aarhus": "Bryllupsfotograf i Aarhus",
+  "Wedding Photographer in Copenhagen": "Bryllupsfotograf i København",
+  "Wedding Photographer in Odense": "Bryllupsfotograf i Odense",
+  "Wedding Photographer in Aalborg": "Bryllupsfotograf i Aalborg",
+  "Local knowledge, clean execution.": "Lokalt kendskab, rolig afvikling.",
+  "Calm direction, true moments.": "Rolig guidning, ægte øjeblikke.",
+  "Natural light & Funen atmosphere.": "Naturligt lys og fynsk atmosfære.",
+  "North Jutland & coastal light.": "Nordjylland & kystens lys.",
 
   // Index Hero & Badges
   "Not loud.": "Jeg skaber stille det,",

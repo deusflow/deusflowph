@@ -3974,3 +3974,37 @@ img.lazy-img-fade.is-loaded {
     transform: rotate(360deg);
   }
 }
+
+/* About Page Testimonials Grid */
+.about-testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.4rem;
+}
+
+.about-testimonials-grid .testimonial-card {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform var(--motion-base) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), background var(--motion-fast) var(--motion-ease);
+}
+
+.about-testimonials-grid .testimonial-card::before {
+  content: "“";
+  position: absolute;
+  top: 0.9rem;
+  right: 1.4rem;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 4rem;
+  color: rgba(212, 186, 149, 0.12);
+  line-height: 1;
+}
+
+.about-testimonials-grid .testimonial-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(212, 186, 149, 0.45) !important;
+  background: rgba(20, 20, 20, 0.6) !important;
+}

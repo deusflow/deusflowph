@@ -92,6 +92,24 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://deusflow.dk/da/weddings/album/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/weddings/album/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/weddings/album/" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/weddings/album/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/weddings/album/" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://deusflow.dk/uk/weddings/album/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/weddings/album/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/weddings/album/" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/weddings/album/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/weddings/album/" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://deusflow.dk/pricing/</loc>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/pricing/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/pricing/" />
@@ -209,6 +227,24 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://deusflow.dk/da/locations/odense/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/odense/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/odense/" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/locations/odense/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/locations/odense/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://deusflow.dk/uk/locations/odense/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/odense/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/odense/" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/locations/odense/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/locations/odense/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://deusflow.dk/locations/aalborg/</loc>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/aalborg/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/aalborg/" />
@@ -218,7 +254,43 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://deusflow.dk/da/locations/aalborg/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/aalborg/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/aalborg/" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/locations/aalborg/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/locations/aalborg/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://deusflow.dk/uk/locations/aalborg/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/locations/aalborg/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/locations/aalborg/" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/locations/aalborg/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/locations/aalborg/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://deusflow.dk/legal/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/legal/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/legal/" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/legal/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/legal/" />
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://deusflow.dk/da/legal/</loc>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/legal/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/legal/" />
+    <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/legal/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/legal/" />
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://deusflow.dk/uk/legal/</loc>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://deusflow.dk/legal/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://deusflow.dk/legal/" />
     <xhtml:link rel="alternate" hreflang="da" href="https://deusflow.dk/da/legal/" />
