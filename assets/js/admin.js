@@ -125,6 +125,19 @@ const settingsInstagramDmUrl = document.getElementById("settings-instagram-dm-ur
 const settingsTelegramUrl = document.getElementById("settings-telegram-url");
 const settingsWhatsappUrl = document.getElementById("settings-whatsapp-url");
 
+const healthScanBtn = document.getElementById("health-scan-btn");
+const healthFixAllBtn = document.getElementById("health-fix-all-btn");
+const healthCleanOrphansBtn = document.getElementById("health-clean-orphans-btn");
+const healthStatTotal = document.getElementById("health-stat-total");
+const healthStatMissingDims = document.getElementById("health-stat-missing-dims");
+const healthStatNonWebp = document.getElementById("health-stat-non-webp");
+const healthStatOrphans = document.getElementById("health-stat-orphans");
+const healthProgressWrap = document.getElementById("health-progress-wrap");
+const healthStatusText = document.getElementById("health-status-text");
+const healthProgressBar = document.getElementById("health-progress-bar");
+const healthAlbumsList = document.getElementById("health-albums-list");
+const healthOrphansList = document.getElementById("health-orphans-list");
+
 const testimonialFields = [
   {
     name: document.getElementById("testimonial-1-name"),
@@ -1891,7 +1904,7 @@ async function loadPhotos(albumId) {
 
   let { data: photos, error } = await supabase
     .from("photos")
-    .select("id, url, display_order, linked_album_id")
+    .select("id, url, width, height, display_order, linked_album_id")
     .eq("album_id", albumId)
     .order("display_order", { ascending: true });
 
@@ -1899,7 +1912,7 @@ async function loadPhotos(albumId) {
     console.warn("Retrying admin photos fetch without linked_album_id:", error.message);
     const retryRes = await supabase
       .from("photos")
-      .select("id, url, display_order")
+      .select("id, url, width, height, display_order")
       .eq("album_id", albumId)
       .order("display_order", { ascending: true });
 
@@ -2530,12 +2543,15 @@ function getCompressorWorker() {
     try {
       imageCompressorWorker = new Worker("../assets/js/workers/image-compressor.worker.js");
       imageCompressorWorker.onmessage = function (e) {
-        const { id, success, blob, name, error } = e.data;
+        const { id, success, blob, name, width, height, error } = e.data;
         const cb = pendingWorkerRequests.get(id);
         if (cb) {
           pendingWorkerRequests.delete(id);
           if (success && blob) {
             const compressedFile = new File([blob], name || "photo.webp", { type: "image/webp" });
+            if (Number(width) > 0 && Number(height) > 0) {
+              compressedFile._dimensions = { width: Math.round(width), height: Math.round(height) };
+            }
             cb.resolve(compressedFile);
           } else {
             cb.reject(new Error(error || "Worker compression failed"));
@@ -2612,7 +2628,9 @@ async function compressImageFile(file, maxDimension = 2560, quality = 0.85) {
               return;
             }
             const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-            resolve(new File([blob], cleanName, { type: "image/webp" }));
+            const outFile = new File([blob], cleanName, { type: "image/webp" });
+            outFile._dimensions = { width, height };
+            resolve(outFile);
           },
           "image/webp",
           quality
@@ -2623,6 +2641,36 @@ async function compressImageFile(file, maxDimension = 2560, quality = 0.85) {
     };
     reader.onerror = () => resolve(file);
     reader.readAsDataURL(file);
+  });
+}
+
+async function measureBlobDimensions(blobOrFile) {
+  if (blobOrFile && blobOrFile._dimensions) {
+    return blobOrFile._dimensions;
+  }
+  if (!blobOrFile) {
+    return { width: null, height: null };
+  }
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(blobOrFile);
+      const dims = { width: bitmap.width || null, height: bitmap.height || null };
+      bitmap.close();
+      if (dims.width && dims.height) return dims;
+    } catch (_e) {}
+  }
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blobOrFile);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth || null, height: img.naturalHeight || null });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: null, height: null });
+    };
+    img.src = url;
   });
 }
 
@@ -2677,6 +2725,7 @@ async function uploadPhotos(files) {
 
       try {
         const optimizedFile = await compressImageFile(originalFile, 2560, 0.85);
+        const dims = await measureBlobDimensions(optimizedFile);
         const extension = optimizedFile.name.split(".").pop() || "webp";
         const path = `albums/${state.selectedAlbum.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
 
@@ -2685,8 +2734,8 @@ async function uploadPhotos(files) {
           album_id: state.selectedAlbum.id,
           url: publicUrl,
           display_order: assignedOrder,
-          width: null,
-          height: null
+          width: dims.width,
+          height: dims.height
         });
 
         if (error) {
@@ -2720,6 +2769,76 @@ async function uploadPhotos(files) {
   }
 }
 
+/**
+ * Shared helper: optimizes a photo record to WebP (if needed) and ensures width/height are saved in DB.
+ * Returns { status: 'optimized'|'backfilled'|'skipped', savedBytes: number }.
+ */
+async function fixSinglePhotoRecord(supabase, photo, albumId) {
+  const res = await fetch(photo.url);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} fetching photo`);
+  }
+  const blob = await res.blob();
+  const originalSize = blob.size;
+  const hasDims = Number(photo.width) > 0 && Number(photo.height) > 0;
+  const isSmallWebp = photo.url.toLowerCase().includes(".webp") && originalSize < 450 * 1024;
+
+  if (isSmallWebp) {
+    if (!hasDims) {
+      const dims = await measureBlobDimensions(blob);
+      if (dims.width && dims.height) {
+        const { error: dimErr } = await supabase
+          .from("photos")
+          .update({ width: dims.width, height: dims.height })
+          .eq("id", photo.id);
+        if (dimErr) throw dimErr;
+        return { status: "backfilled", savedBytes: 0 };
+      }
+    }
+    return { status: "skipped", savedBytes: 0 };
+  }
+
+  const file = new File([blob], `photo-${photo.id}.jpg`, { type: blob.type || "image/jpeg" });
+  const optimized = await compressImageFile(file, 2400, 0.85);
+  const dims = await measureBlobDimensions(optimized);
+
+  if (optimized.size >= originalSize && photo.url.toLowerCase().includes(".webp")) {
+    if (!hasDims && dims.width && dims.height) {
+      const { error: dimErr } = await supabase
+        .from("photos")
+        .update({ width: dims.width, height: dims.height })
+        .eq("id", photo.id);
+      if (dimErr) throw dimErr;
+      return { status: "backfilled", savedBytes: 0 };
+    }
+    return { status: "skipped", savedBytes: 0 };
+  }
+
+  const targetAlbumId = albumId || photo.album_id;
+  const path = `albums/${targetAlbumId}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+  const newUrl = await uploadToPhotosBucket(optimized, path);
+
+  const updatePayload = { url: newUrl };
+  if (dims.width && dims.height) {
+    updatePayload.width = dims.width;
+    updatePayload.height = dims.height;
+  }
+
+  const { error: updateErr } = await supabase
+    .from("photos")
+    .update(updatePayload)
+    .eq("id", photo.id);
+
+  if (updateErr) throw updateErr;
+
+  const oldPath = storagePathFromPublicUrl(photo.url);
+  if (oldPath && oldPath !== path) {
+    await supabase.storage.from("photos").remove([oldPath]);
+  }
+
+  return { status: "optimized", savedBytes: Math.max(0, originalSize - optimized.size) };
+}
+
 async function optimizeAlbumPhotos() {
   if (!state.selectedAlbum) {
     setUploadStatus("Open an album first.", 0, "error");
@@ -2738,7 +2857,7 @@ async function optimizeAlbumPhotos() {
   }
 
   const confirmed = confirm(
-    `Optimize ${photos.length} photos in "${state.selectedAlbum.title}"?\n\nThis will convert all uncompressed/heavy images into crisp, modern WebP format (max 2400px, 85% quality), making the album load up to 50x faster.`
+    `Optimize ${photos.length} photos in "${state.selectedAlbum.title}"?\n\nThis will convert heavy images to WebP (max 2400px, 85%) and record width/height dimensions so galleries load with zero layout jump.`
   );
   if (!confirmed) return;
 
@@ -2748,6 +2867,7 @@ async function optimizeAlbumPhotos() {
 
   const supabase = getSupabase();
   let optimizedCount = 0;
+  let backfilledCount = 0;
   let skippedCount = 0;
   let failedCount = 0;
   let totalSavedBytes = 0;
@@ -2758,41 +2878,15 @@ async function optimizeAlbumPhotos() {
     setUploadStatus(`Optimizing photo ${i + 1}/${photos.length}...`, progress);
 
     try {
-      const res = await fetch(photo.url);
-      const blob = await res.blob();
-      const originalSize = blob.size;
-
-      // If already WebP and < 450KB, skip re-encoding
-      if (photo.url.endsWith(".webp") && originalSize < 450 * 1024) {
+      const outcome = await fixSinglePhotoRecord(supabase, photo, state.selectedAlbum.id);
+      if (outcome.status === "optimized") {
+        optimizedCount++;
+        totalSavedBytes += outcome.savedBytes;
+      } else if (outcome.status === "backfilled") {
+        backfilledCount++;
+      } else {
         skippedCount++;
-        continue;
       }
-
-      const file = new File([blob], `photo-${photo.id}.jpg`, { type: blob.type || "image/jpeg" });
-      const optimized = await compressImageFile(file, 2400, 0.85);
-
-      if (optimized.size >= originalSize && photo.url.endsWith(".webp")) {
-        skippedCount++;
-        continue;
-      }
-
-      const path = `albums/${state.selectedAlbum.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-      const newUrl = await uploadToPhotosBucket(optimized, path);
-
-      const { error: updateErr } = await supabase
-        .from("photos")
-        .update({ url: newUrl })
-        .eq("id", photo.id);
-
-      if (updateErr) throw updateErr;
-
-      const oldPath = storagePathFromPublicUrl(photo.url);
-      if (oldPath && oldPath !== path) {
-        await supabase.storage.from("photos").remove([oldPath]);
-      }
-
-      totalSavedBytes += Math.max(0, originalSize - optimized.size);
-      optimizedCount++;
     } catch (err) {
       console.error(`Failed to optimize photo ${photo.id}:`, err);
       failedCount++;
@@ -2804,9 +2898,310 @@ async function optimizeAlbumPhotos() {
   setUploadBusy(false);
 
   const savedMB = (totalSavedBytes / (1024 * 1024)).toFixed(1);
-  const msg = `Optimization complete! ${optimizedCount} optimized (${savedMB} MB saved), ${skippedCount} already optimal${failedCount ? `, ${failedCount} failed` : ""}.`;
+  const msg = `Done! ${optimizedCount} WebP optimized (${savedMB} MB saved), ${backfilledCount} dims saved, ${skippedCount} already optimal${failedCount ? `, ${failedCount} failed` : ""}.`;
   setUploadStatus(msg, 100);
   showToast(msg, "success");
+}
+
+/* ==========================================================================
+   SITE HEALTH & SPEED DASHBOARD (Bulk Optimizer + Dimensions + Orphans)
+   ========================================================================== */
+
+const healthState = {
+  scanning: false,
+  fixing: false,
+  allPhotos: [],
+  albums: [],
+  orphans: [],
+  orphanTotalBytes: 0
+};
+
+function setHealthProgress(visible, message = "", percent = 0) {
+  if (healthProgressWrap) {
+    healthProgressWrap.classList.toggle("hidden", !visible);
+  }
+  if (healthStatusText && message) {
+    healthStatusText.textContent = message;
+  }
+  if (healthProgressBar) {
+    healthProgressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  }
+}
+
+async function listStorageFolderRecursive(supabase, prefix) {
+  const results = [];
+  const { data, error } = await supabase.storage.from("photos").list(prefix, { limit: 1000 });
+  if (error || !Array.isArray(data)) {
+    return results;
+  }
+
+  for (const entry of data) {
+    if (!entry || !entry.name || entry.name === ".emptyFolderPlaceholder") continue;
+    const fullPath = prefix ? `${prefix}/${entry.name}` : entry.name;
+    // Folders in Supabase Storage have id === null and metadata === null
+    if (entry.id === null && !entry.metadata) {
+      const nested = await listStorageFolderRecursive(supabase, fullPath);
+      results.push(...nested);
+    } else {
+      results.push({
+        path: fullPath,
+        size: Number(entry.metadata?.size || 0)
+      });
+    }
+  }
+  return results;
+}
+
+function renderSiteHealthReport() {
+  const photos = healthState.allPhotos;
+  const albums = healthState.albums;
+  const orphans = healthState.orphans;
+
+  const missingDimsTotal = photos.filter((p) => !(Number(p.width) > 0 && Number(p.height) > 0)).length;
+  const nonWebpTotal = photos.filter((p) => !String(p.url || "").toLowerCase().includes(".webp")).length;
+
+  if (healthStatTotal) healthStatTotal.textContent = String(photos.length);
+  if (healthStatMissingDims) healthStatMissingDims.textContent = String(missingDimsTotal);
+  if (healthStatNonWebp) healthStatNonWebp.textContent = String(nonWebpTotal);
+  if (healthStatOrphans) healthStatOrphans.textContent = String(orphans.length);
+
+  const needsFixCount = photos.filter(
+    (p) => !(Number(p.width) > 0 && Number(p.height) > 0) || !String(p.url || "").toLowerCase().includes(".webp")
+  ).length;
+  if (healthFixAllBtn) {
+    healthFixAllBtn.disabled = healthState.fixing || needsFixCount === 0;
+  }
+  if (healthCleanOrphansBtn) {
+    healthCleanOrphansBtn.disabled = healthState.fixing || orphans.length === 0;
+  }
+
+  if (healthAlbumsList) {
+    healthAlbumsList.innerHTML = "";
+    if (!albums.length) {
+      healthAlbumsList.innerHTML = `<p class="section-hint">No albums found.</p>`;
+    } else {
+      albums.forEach((album) => {
+        const albumPhotos = photos.filter((p) => p.album_id === album.id);
+        const missingDims = albumPhotos.filter((p) => !(Number(p.width) > 0 && Number(p.height) > 0)).length;
+        const nonWebp = albumPhotos.filter((p) => !String(p.url || "").toLowerCase().includes(".webp")).length;
+        const missingCover = !album.cover_url;
+        const needsFix = missingDims > 0 || nonWebp > 0;
+
+        const row = document.createElement("div");
+        row.className = "health-row";
+
+        const info = document.createElement("div");
+        info.className = "health-row-info";
+        info.innerHTML = `
+          <span class="health-row-title">${escapeHTML(album.title)} <small style="color:var(--admin-muted); font-weight:400;">(${albumPhotos.length} photos)</small></span>
+          <div class="health-badges">
+            ${missingDims === 0 && nonWebp === 0 ? `<span class="health-badge ok">✓ Optimal &amp; Sized</span>` : ""}
+            ${missingDims > 0 ? `<span class="health-badge warn">${missingDims} missing dims</span>` : ""}
+            ${nonWebp > 0 ? `<span class="health-badge warn">${nonWebp} non-WebP</span>` : ""}
+            ${missingCover ? `<span class="health-badge warn">No cover</span>` : ""}
+          </div>
+        `;
+
+        const actionBtn = document.createElement("button");
+        actionBtn.type = "button";
+        actionBtn.className = needsFix ? "admin-btn ghost micro" : "admin-btn ghost micro";
+        actionBtn.textContent = needsFix ? "⚡ Fix Album" : "Open";
+        actionBtn.addEventListener("click", async () => {
+          if (needsFix) {
+            await runHealthFixForPhotos(albumPhotos, album.title);
+          } else {
+            await selectAlbum(album);
+          }
+        });
+
+        row.appendChild(info);
+        row.appendChild(actionBtn);
+        healthAlbumsList.appendChild(row);
+      });
+    }
+  }
+
+  if (healthOrphansList) {
+    healthOrphansList.innerHTML = "";
+    if (!orphans.length) {
+      healthOrphansList.innerHTML = `<p class="section-hint" style="color:var(--admin-emerald);">✓ Storage is clean — no orphaned files detected.</p>`;
+    } else {
+      const totalMB = (healthState.orphanTotalBytes / (1024 * 1024)).toFixed(2);
+      const summary = document.createElement("p");
+      summary.className = "section-hint";
+      summary.innerHTML = `Found <strong>${orphans.length}</strong> unreferenced file(s) (~<strong>${totalMB} MB</strong>).`;
+      healthOrphansList.appendChild(summary);
+
+      orphans.slice(0, 40).forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "health-row";
+        const kb = Math.max(1, Math.round(item.size / 1024));
+        row.innerHTML = `
+          <div class="health-row-info">
+            <span class="health-row-title" style="font-size:0.78rem;">${escapeHTML(item.path)}</span>
+          </div>
+          <span class="health-badge">${kb} KB</span>
+        `;
+        healthOrphansList.appendChild(row);
+      });
+
+      if (orphans.length > 40) {
+        const more = document.createElement("p");
+        more.className = "section-hint";
+        more.textContent = `...and ${orphans.length - 40} more file(s).`;
+        healthOrphansList.appendChild(more);
+      }
+    }
+  }
+}
+
+async function scanSiteHealth() {
+  if (healthState.scanning || healthState.fixing) return;
+  healthState.scanning = true;
+  if (healthScanBtn) healthScanBtn.disabled = true;
+  setHealthProgress(true, "Scanning albums, photos, and Storage bucket...", 18);
+
+  try {
+    const supabase = getSupabase();
+    const [albumsRes, photosRes, aboutRes] = await Promise.all([
+      supabase.from("albums").select("id, slug, title, cover_url, description, type, visible").order("display_order", { ascending: true }),
+      supabase.from("photos").select("id, album_id, url, width, height"),
+      supabase.from("about_content").select("photo_url, gallery_photos").eq("id", 1).maybeSingle()
+    ]);
+
+    if (albumsRes.error) throw albumsRes.error;
+    if (photosRes.error) throw photosRes.error;
+
+    const albums = albumsRes.data || [];
+    const photos = photosRes.data || [];
+    const about = aboutRes.data || {};
+
+    setHealthProgress(true, "Checking Supabase Storage for orphaned files...", 58);
+
+    const activePaths = new Set();
+    const addActiveUrl = (rawUrl) => {
+      const p = storagePathFromPublicUrl(rawUrl);
+      if (p) activePaths.add(p);
+    };
+
+    albums.forEach((a) => addActiveUrl(a.cover_url));
+    photos.forEach((p) => addActiveUrl(p.url));
+    addActiveUrl(about.photo_url);
+    if (Array.isArray(about.gallery_photos)) {
+      about.gallery_photos.forEach((g) => addActiveUrl(g?.url));
+    }
+    if (window.APP_CONFIG) {
+      addActiveUrl(window.APP_CONFIG.HERO_IMAGE_URL);
+      addActiveUrl(window.APP_CONFIG.FAVICON_URL);
+      addActiveUrl(window.APP_CONFIG.DEFAULT_OG_IMAGE);
+    }
+
+    const [albumsStorage, aboutStorage] = await Promise.all([
+      listStorageFolderRecursive(supabase, "albums"),
+      listStorageFolderRecursive(supabase, "about")
+    ]);
+    const managedFiles = [...albumsStorage, ...aboutStorage];
+    const orphans = managedFiles.filter((f) => !activePaths.has(f.path));
+
+    healthState.albums = albums;
+    healthState.allPhotos = photos;
+    healthState.orphans = orphans;
+    healthState.orphanTotalBytes = orphans.reduce((sum, f) => sum + (f.size || 0), 0);
+
+    renderSiteHealthReport();
+    setHealthProgress(false);
+    showToast("Site health scan complete.", "info");
+  } catch (err) {
+    setHealthProgress(true, `Scan failed: ${err.message}`, 0);
+    showToast(`Health scan failed: ${err.message}`, "error");
+  } finally {
+    healthState.scanning = false;
+    if (healthScanBtn) healthScanBtn.disabled = false;
+  }
+}
+
+async function runHealthFixForPhotos(targetPhotos, label = "Library") {
+  if (healthState.fixing || healthState.scanning) return;
+  const candidates = (targetPhotos || []).filter(
+    (p) => !(Number(p.width) > 0 && Number(p.height) > 0) || !String(p.url || "").toLowerCase().includes(".webp")
+  );
+  if (!candidates.length) {
+    showToast(`${label} is already fully optimized.`, "info");
+    return;
+  }
+
+  const confirmed = confirm(
+    `Optimize & backfill dimensions for ${candidates.length} photo(s) in "${label}"?\n\nHeavy images will be compressed to WebP and exact width/height will be saved in Supabase.`
+  );
+  if (!confirmed) return;
+
+  healthState.fixing = true;
+  if (healthFixAllBtn) healthFixAllBtn.disabled = true;
+  if (healthScanBtn) healthScanBtn.disabled = true;
+
+  const supabase = getSupabase();
+  let optimized = 0;
+  let backfilled = 0;
+  let failed = 0;
+  let savedBytes = 0;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const photo = candidates[i];
+    const pct = Math.round(((i + 1) / candidates.length) * 100);
+    setHealthProgress(true, `Fixing ${label}: ${i + 1}/${candidates.length}...`, pct);
+    try {
+      const outcome = await fixSinglePhotoRecord(supabase, photo, photo.album_id);
+      if (outcome.status === "optimized") {
+        optimized++;
+        savedBytes += outcome.savedBytes;
+      } else if (outcome.status === "backfilled") {
+        backfilled++;
+      }
+    } catch (err) {
+      console.error(`Health fix failed for photo ${photo.id}:`, err);
+      failed++;
+    }
+  }
+
+  healthState.fixing = false;
+  if (healthScanBtn) healthScanBtn.disabled = false;
+
+  const savedMB = (savedBytes / (1024 * 1024)).toFixed(1);
+  const summary = `Finished ${label}: ${optimized} WebP (${savedMB} MB saved), ${backfilled} dims backfilled${failed ? `, ${failed} failed` : ""}.`;
+  setHealthProgress(true, summary, 100);
+  showToast(summary, failed ? "error" : "success");
+  await scanSiteHealth();
+}
+
+async function cleanOrphanedStorageFiles() {
+  if (healthState.fixing || healthState.scanning || !healthState.orphans.length) return;
+  const totalMB = (healthState.orphanTotalBytes / (1024 * 1024)).toFixed(2);
+  const confirmed = confirm(
+    `Permanently delete ${healthState.orphans.length} orphaned file(s) (~${totalMB} MB) from Supabase Storage?\n\nOnly unreferenced files in albums/ and about/ will be removed.`
+  );
+  if (!confirmed) return;
+
+  healthState.fixing = true;
+  if (healthCleanOrphansBtn) healthCleanOrphansBtn.disabled = true;
+  setHealthProgress(true, "Removing orphaned Storage files...", 40);
+
+  try {
+    const supabase = getSupabase();
+    const paths = healthState.orphans.map((o) => o.path);
+    for (let i = 0; i < paths.length; i += 50) {
+      const batch = paths.slice(i, i + 50);
+      const { error } = await supabase.storage.from("photos").remove(batch);
+      if (error) throw error;
+    }
+    showToast(`Cleaned ${paths.length} orphaned file(s) (${totalMB} MB freed).`, "success");
+    healthState.fixing = false;
+    await scanSiteHealth();
+  } catch (err) {
+    healthState.fixing = false;
+    setHealthProgress(true, `Cleanup failed: ${err.message}`, 0);
+    showToast(`Cleanup failed: ${err.message}`, "error");
+    if (healthCleanOrphansBtn) healthCleanOrphansBtn.disabled = false;
+  }
 }
 
 function restoreActiveTab() {
@@ -2869,6 +3264,9 @@ function setupTabSwitching() {
       }
       if (targetId === "tab-settings") {
         fillSettingsForm(state.pricingContent || defaultSiteSettings);
+      }
+      if (targetId === "tab-health" && !healthState.allPhotos.length && !healthState.scanning) {
+        scanSiteHealth();
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -4032,6 +4430,16 @@ function setupTranslationsCMS() {
 
 setupTestimonialReorder();
 setupTranslationsCMS();
+
+if (healthScanBtn) {
+  healthScanBtn.addEventListener("click", scanSiteHealth);
+}
+if (healthFixAllBtn) {
+  healthFixAllBtn.addEventListener("click", () => runHealthFixForPhotos(healthState.allPhotos, "All Albums"));
+}
+if (healthCleanOrphansBtn) {
+  healthCleanOrphansBtn.addEventListener("click", cleanOrphanedStorageFiles);
+}
 
 applyPhotoViewMode();
 updateOrderControlsState();

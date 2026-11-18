@@ -39,13 +39,20 @@ function formatFrameNumber(index) {
 function createAlbumMasonryItem(photo, album, index) {
   const item = document.createElement("article");
   item.className = "masonry-item reveal-up";
+  const hasDims = Number(photo.width) > 0 && Number(photo.height) > 0;
+  if (hasDims) {
+    item.style.aspectRatio = `${Number(photo.width)} / ${Number(photo.height)}`;
+    item.style.minHeight = "0";
+  }
+
   const escapedUrl = escapeHTML(getOptimizedImageUrl(photo.url, 1200));
   const escapedOriginalUrl = escapeHTML(photo.url);
   const escapedAlt = escapeHTML(buildAlbumPhotoAlt(album, index));
   const frameNum = formatFrameNumber(index);
+  const dimAttrs = hasDims ? ` width="${Number(photo.width)}" height="${Number(photo.height)}"` : "";
 
   item.innerHTML = `
-    <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" alt="${escapedAlt}" loading="lazy" decoding="async" />
+    <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}"${dimAttrs} alt="${escapedAlt}" loading="lazy" decoding="async" />
     <span class="editorial-frame-num" aria-hidden="true">${frameNum}</span>
   `;
 
@@ -215,7 +222,7 @@ async function renderAlbum() {
 
     const { data: embeddedAlbum, error: embedError } = await supabase
       .from("albums")
-      .select("id, slug, title, description, date, visible, photos!photos_album_id_fkey(url, display_order, created_at)")
+      .select("id, slug, title, description, date, visible, photos!photos_album_id_fkey(url, width, height, display_order, created_at)")
       .eq("slug", slug)
       .eq("visible", true)
       .single();
@@ -244,7 +251,7 @@ async function renderAlbum() {
 
       const { data: fallbackPhotos, error: photosError } = await supabase
         .from("photos")
-        .select("url, display_order, created_at")
+        .select("url, width, height, display_order, created_at")
         .eq("album_id", album.id)
         .order("display_order", { ascending: true })
         .order("created_at", { ascending: true });

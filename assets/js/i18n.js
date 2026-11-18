@@ -364,7 +364,11 @@ const rawDefaults = {
     pricing_story2_title: "Reportage first, guidance when needed",
     pricing_story2_desc: "My base style is documentary. I quietly direct the couple and watch the day like a hidden agent, while still helping with posing when it is time for frame-worthy portraits.",
     pricing_story3_title: "Clear timeline and delivery",
-    pricing_story3_desc: "Your edited photos are delivered in 4 weeks with no delay, in full resolution via cloud archive plus a private preview link for easy sharing."
+    pricing_story3_desc: "Your edited photos are delivered in 4 weeks with no delay, in full resolution via cloud archive plus a private preview link for easy sharing.",
+    pricing_select_essentials: "Inquire about Essentials →",
+    pricing_select_signature: "Inquire about Signature →",
+    pricing_select_luxury: "Inquire about Luxury →",
+    pricing_select_session: "Inquire about Session →"
   },
   ua: {
     hero_title_1: "Тихо створюю те,",
@@ -453,7 +457,11 @@ const rawDefaults = {
     pricing_story2_title: "Спершу репортаж, підказка — коли потрібно",
     pricing_story2_desc: "Мій базовий стиль — документальний. Я тихо супроводжую пару й спостерігаю, не заважаючи святу, але завжди м'яко скеровую для стильних журнальних портретів.",
     pricing_story3_title: "Чіткі терміни та віддача",
-    pricing_story3_desc: "Готова оброблена серія віддається рівно за 4 тижні без жодних затримок, у повній роздільній здатності через хмару з приватним посиланням."
+    pricing_story3_desc: "Готова оброблена серія віддається рівно за 4 тижні без жодних затримок, у повній роздільній здатності через хмару з приватним посиланням.",
+    pricing_select_essentials: "Забронювати Essentials →",
+    pricing_select_signature: "Забронювати Signature →",
+    pricing_select_luxury: "Забронювати Luxury →",
+    pricing_select_session: "Забронювати фотосесію →"
   },
   da: {
     hero_title_1: "Jeg skaber stille det,",
@@ -542,7 +550,11 @@ const rawDefaults = {
     pricing_story2_title: "Reportage først, vejledning når det behøves",
     pricing_story2_desc: "Min grundstil er dokumentarisk. Jeg holder mig i baggrunden og fanger dagen naturligt, men hjælper altid med posering, når det er tid til portrætter.",
     pricing_story3_title: "Tydelig tidsplan og levering",
-    pricing_story3_desc: "Jeres redigerede billeder leveres inden for 4 uger uden forsinkelse, i fuld opløsning via skyarkiv og privat gallerilink."
+    pricing_story3_desc: "Jeres redigerede billeder leveres inden for 4 uger uden forsinkelse, i fuld opløsning via skyarkiv og privat gallerilink.",
+    pricing_select_essentials: "Forespørg om Essentials →",
+    pricing_select_signature: "Forespørg om Signature →",
+    pricing_select_luxury: "Forespørg om Luxury →",
+    pricing_select_session: "Forespørg om session →"
   }
 };
 
@@ -594,24 +606,49 @@ function getDictionary(lang) {
 }
 
 function updateMessengerLinks(lang) {
+  const contactBlock = document.getElementById("contact-block");
+  if (contactBlock && contactBlock.dataset.pricingSelected === "1") {
+    return;
+  }
+
   if (lang === "uk" || lang === "ua") {
-    const waLink = document.querySelector('a[href*="wa.me"]');
+    const waLink = document.querySelector('#contact-block a[href*="wa.me"], a[href*="wa.me"]');
     if (waLink) {
       waLink.href = "https://wa.me/4550300636?text=" + encodeURIComponent("Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?");
     }
-    const tgLink = document.querySelector('a[href*="t.me/OflowPhotography"]');
+    const tgLink = document.querySelector('#contact-block a[href*="t.me/OflowPhotography"], a[href*="t.me/OflowPhotography"]');
     if (tgLink) {
       tgLink.href = "https://t.me/OflowPhotography?text=" + encodeURIComponent("Привіт, Олеже! Ми плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?");
     }
-    const mailLink = document.querySelector('a[href*="mailto:deuswork@icloud.com"]');
+    const mailLink = document.querySelector('#contact-block a[href*="mailto:deuswork@icloud.com"], a[href*="mailto:deuswork@icloud.com"]');
     if (mailLink) {
       mailLink.href = "mailto:deuswork@icloud.com?subject=" + encodeURIComponent("Запит щодо весільної фотозйомки") + "&body=" + encodeURIComponent("Привіт, Олеже!\n\nМи плануємо весілля [Дата] у [Місто/Локація].\n\nПідкажи, будь ласка, чи вільна ця дата та які є пакети послуг?\n\nЗ повагою,\n[Ваші імена]");
+    }
+  } else if (lang === "da") {
+    const waLink = document.querySelector('#contact-block a[href*="wa.me"], a[href*="wa.me"]');
+    if (waLink) {
+      waLink.href = "https://wa.me/4550300636?text=" + encodeURIComponent("Hej Oleh! Vi planlægger vores bryllup den [Dato] i [By/Sted]. Er denne dato ledig?");
+    }
+    const tgLink = document.querySelector('#contact-block a[href*="t.me/OflowPhotography"], a[href*="t.me/OflowPhotography"]');
+    if (tgLink) {
+      tgLink.href = "https://t.me/OflowPhotography?text=" + encodeURIComponent("Hej Oleh! Vi planlægger vores bryllup den [Dato] i [By/Sted]. Er denne dato ledig?");
+    }
+    const mailLink = document.querySelector('#contact-block a[href*="mailto:deuswork@icloud.com"], a[href*="mailto:deuswork@icloud.com"]');
+    if (mailLink) {
+      mailLink.href = "mailto:deuswork@icloud.com?subject=" + encodeURIComponent("Forespørgsel om bryllupsfotografering") + "&body=" + encodeURIComponent("Hej Oleh,\n\nVi planlægger vores bryllup den [Dato] i [By/Sted].\n\nKunne du fortælle om du er ledig og sende info om pakker?\n\nVenlig hilsen,\n[Jeres navne]");
     }
   }
 }
 
 function getActiveLanguage() {
-  // 1. Explicit ?lang= query parameter (highest priority — user just clicked switcher)
+  // 1. URL pathname: /da/... -> Danish, /uk/... or /ua/... -> Ukrainian
+  try {
+    const pathSegments = window.location.pathname.split("/").filter(Boolean);
+    if (pathSegments.includes("da")) return "da";
+    if (pathSegments.includes("uk") || pathSegments.includes("ua")) return "ua";
+  } catch (_e) {}
+
+  // 2. Explicit ?lang= query parameter (legacy fallback)
   try {
     const params = new URLSearchParams(window.location.search);
     const langParam = params.get("lang");
@@ -623,24 +660,38 @@ function getActiveLanguage() {
     }
   } catch (_e) {}
 
-  // 2. URL pathname: /da/... → Danish, /uk/... → Ukrainian
-  try {
-    const pathLang = window.location.pathname.split("/").filter(Boolean)[0];
-    if (pathLang === "da") return "da";
-    if (pathLang === "uk") return "ua";
-  } catch (_e) {}
-
   // 3. <html lang="..."> attribute (set at build time by static generator)
   try {
     const htmlLang = document.documentElement.lang?.toLowerCase();
     if (htmlLang === "da") return "da";
     if (htmlLang === "uk" || htmlLang === "ua") return "ua";
+    if (htmlLang === "en") return "en";
   } catch (_e) {}
 
-  // 4. localStorage (user's previous explicit choice)
+  // 4. localStorage fallback
   const stored = localStorage.getItem("deusflow_lang");
   if (stored === "uk") return "ua";
   return stored || "en";
+}
+
+function buildLanguageUrl(targetLangCode) {
+  const rootAttr = (document.documentElement.dataset.root || ".").trim();
+  const rootUrl = new URL(rootAttr.endsWith("/") ? rootAttr : `${rootAttr}/`, window.location.href);
+  let relativePath = window.location.pathname;
+  if (relativePath.startsWith(rootUrl.pathname)) {
+    relativePath = relativePath.slice(rootUrl.pathname.length);
+  }
+  relativePath = relativePath
+    .replace(/^(da|uk|ua)\//i, "")
+    .replace(/^\/+/, "")
+    .replace(/index\.html$/, "");
+
+  const urlParams = new URLSearchParams(window.location.search);
+  urlParams.delete("lang");
+  const cleanSearch = urlParams.toString() ? `?${urlParams.toString()}` : "";
+
+  const langPrefix = targetLangCode === "en" ? "" : (targetLangCode === "ua" ? "uk/" : `${targetLangCode}/`);
+  return `${rootUrl.origin}${rootUrl.pathname}${langPrefix}${relativePath}${cleanSearch}${window.location.hash}`;
 }
 
 let isTranslating = false;
@@ -820,15 +871,11 @@ function initLangSwitcher() {
       e.preventDefault();
       if (currentLang === lang.code) return;
       const targetCode = lang.code === "ua" ? "uk" : lang.code;
-      localStorage.setItem("deusflow_lang", targetCode);
       try {
-        const url = new URL(window.location.href);
-        if (targetCode === "en") {
-          url.searchParams.delete("lang");
-        } else {
-          url.searchParams.set("lang", targetCode);
-        }
-        window.location.href = url.toString();
+        localStorage.setItem("deusflow_lang", targetCode);
+      } catch (_e) {}
+      try {
+        window.location.href = buildLanguageUrl(lang.code);
       } catch (_err) {
         location.reload();
       }

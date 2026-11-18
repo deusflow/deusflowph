@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" data-root=".">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>404 — Frame Not Found | Oleh Ro</title>
+  <meta name="robots" content="noindex,follow" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://firnyacuwvxsolxljqxu.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://firnyacuwvxsolxljqxu.supabase.co https://images.unsplash.com https://mywed.com; connect-src 'self' https://firnyacuwvxsolxljqxu.supabase.co https://esm.sh; script-src 'self' 'unsafe-inline' https://esm.sh; font-src 'self' data: https://fonts.gstatic.com;">
+  <script>
+    (function smartRedirect() {
+      try {
+        var path = window.location.pathname || "/";
+        var search = window.location.search || "";
+        var hash = window.location.hash || "";
+
+        // 1. Language prefix normalization (/ua -> /uk, /dk -> /da)
+        if (/^\/ua(\/|$)/i.test(path)) {
+          var nextUk = path.replace(/^\/ua(\/|$)/i, "/uk$1");
+          window.location.replace(nextUk + search + hash);
+          return;
+        }
+        if (/^\/dk(\/|$)/i.test(path)) {
+          var nextDa = path.replace(/^\/dk(\/|$)/i, "/da$1");
+          window.location.replace(nextDa + search + hash);
+          return;
+        }
+
+        // 2. Detect active language prefix (/da or /uk) and remaining slug
+        var langMatch = path.match(/^\/(da|uk)(\/.*)?$/i);
+        var langPrefix = langMatch ? "/" + langMatch[1].toLowerCase() : "";
+        var subPath = (langMatch ? (langMatch[2] || "/") : path)
+          .toLowerCase()
+          .replace(/\/index\.html$/, "")
+          .replace(/^\/+|\/+$/g, "");
+
+        var routeAliases = {
+          "gallery": "/portfolio/",
+          "photos": "/portfolio/",
+          "work": "/portfolio/",
+          "works": "/portfolio/",
+          "selected": "/portfolio/",
+          "price": "/pricing/",
+          "prices": "/pricing/",
+          "packages": "/pricing/",
+          "investment": "/pricing/",
+          "collections": "/pricing/",
+          "stories": "/weddings/",
+          "albums": "/weddings/",
+          "wedding": "/weddings/",
+          "album": "/weddings/",
+          "bio": "/about/",
+          "me": "/about/",
+          "photographer": "/about/",
+          "oleh": "/about/",
+          "oleg": "/about/",
+          "terms": "/legal/",
+          "privacy": "/legal/",
+          "gdpr": "/legal/",
+          "copenhagen": "/locations/copenhagen/",
+          "kobenhavn": "/locations/copenhagen/",
+          "kbh": "/locations/copenhagen/",
+          "aarhus": "/locations/aarhus/",
+          "odense": "/locations/odense/",
+          "aalborg": "/locations/aalborg/",
+          "contact": "/#contact-block",
+          "book": "/#contact-block",
+          "booking": "/#contact-block",
+          "inquire": "/#contact-block"
+        };
+
+        if (subPath && routeAliases[subPath]) {
+          window.location.replace(langPrefix + routeAliases[subPath]);
+          return;
+        }
+      } catch (_e) {}
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/css/styles.css?v=20261118-1" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=20261105-1" />
+  <style>
+    .vf-stage {
+      min-height: 76vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(104px, 15vh, 140px) 1rem 2.5rem;
+    }
+
+    .vf-frame {
+      position: relative;
+      width: min(740px, 100%);
+      padding: clamp(2.4rem, 6vw, 4.2rem) clamp(1.5rem, 5vw, 3.5rem);
+      border: 1px solid rgba(212, 186, 149, 0.22);
+      background:
+        radial-gradient(circle at 50% 25%, rgba(212, 186, 149, 0.08), transparent 68%),
+        rgba(12, 12, 14, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .vf-corner {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-color: var(--gold);
+      border-style: solid;
+      opacity: 0.75;
+      transition: transform 0.25s ease-out;
+      pointer-events: none;
+    }
+
+    .vf-tl { top: 14px; left: 14px; border-width: 1px 0 0 1px; }
+    .vf-tr { top: 14px; right: 14px; border-width: 1px 1px 0 0; }
+    .vf-bl { bottom: 14px; left: 14px; border-width: 0 0 1px 1px; }
+    .vf-br { bottom: 14px; right: 14px; border-width: 0 1px 1px 0; }
+
+    .vf-crosshair {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 1.25rem;
+      position: relative;
+      opacity: 0.55;
+      transition: transform 0.2s ease-out;
+    }
+
+    .vf-crosshair::before,
+    .vf-crosshair::after {
+      content: "";
+      position: absolute;
+      background: var(--gold);
+    }
+
+    .vf-crosshair::before {
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+    }
+
+    .vf-crosshair::after {
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+    }
+
+    .vf-exif {
+      font-size: 10px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      opacity: 0.85;
+    }
+
+    .vf-title {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+      font-weight: 400;
+      line-height: 1.08;
+      margin: 0 0 0.9rem;
+    }
+
+    .vf-desc {
+      max-width: 500px;
+      margin: 0 auto 2rem;
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      line-height: 1.7;
+    }
+
+    .vf-actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem 1.8rem;
+    }
+
+    .vf-meter {
+      margin-top: 2.2rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(232, 226, 217, 0.45);
+      display: flex;
+      justify-content: center;
+      gap: 1.4rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="header-nav-col header-nav-left">
+        <a class="header-about-btn" id="nav-about" href="/about/">About</a>
+        <a class="menu-link" id="nav-weddings" href="/weddings/">Weddings</a>
+      </div>
+      <div class="brand-stack">
+        <p class="brand-topline">Wedding Photographer | Aarhus, Denmark</p>
+        <a class="logo" id="nav-home" href="/">Oleh Ro</a>
+        <div class="hero-tagline-ribbon">
+          <span>Timeless Moments. Timeless Style.</span>
+        </div>
+      </div>
+      <div class="header-nav-col header-nav-right">
+        <a class="menu-link" id="nav-pricing" href="/pricing/">Pricing</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="vf-stage">
+      <div class="vf-frame" id="vf-frame">
+        <span class="vf-corner vf-tl" aria-hidden="true"></span>
+        <span class="vf-corner vf-tr" aria-hidden="true"></span>
+        <span class="vf-corner vf-bl" aria-hidden="true"></span>
+        <span class="vf-corner vf-br" aria-hidden="true"></span>
+
+        <div class="vf-crosshair" id="vf-crosshair" aria-hidden="true"></div>
+        <p class="vf-exif" id="vf-exif">35mm &middot; f/1.4 &middot; Frame 404 Missing</p>
+        <h1 class="vf-title" id="vf-title">Between the Clicks.</h1>
+        <p class="vf-desc" id="vf-desc">
+          This frame wasn't exposed — the page you are looking for may have moved or never existed. Let's step back into the light.
+        </p>
+        <div class="vf-actions">
+          <a class="cta-editorial" id="vf-btn-home" href="/">Return Home <span class="arrow">→</span></a>
+          <a class="cta-editorial" id="vf-btn-weddings" href="/weddings/">Explore Stories <span class="arrow">→</span></a>
+          <a class="cta-editorial" id="vf-btn-portfolio" href="/portfolio/">View Portfolio <span class="arrow">→</span></a>
+        </div>
+        <div class="vf-meter" aria-hidden="true">
+          <span>ISO 400</span>
+          <span>1/250s</span>
+          <span id="vf-path-readout">/404</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container reveal-up" id="notfound-featured" style="padding-top: 0;">
+      <div class="section-head">
+        <div>
+          <h2 id="vf-featured-title">Featured Weddings</h2>
+        </div>
+        <a id="vf-all-stories" href="/weddings/" class="animate-breathing-pill text-hover-gold">All Stories →</a>
+      </div>
+      <div id="notfound-featured-grid" class="photo-grid cols-3 centered-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-logo">Oleh Ro</div>
+      <p>Based in Denmark (Aarhus area), available across Europe.</p>
+      <div class="footer-links">
+        <a href="https://wa.me/4550300636" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a href="https://instagram.com/deusflow" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a href="https://t.me/OflowPhotography" target="_blank" rel="noopener noreferrer">Telegram</a>
+        <a href="mailto:deuswork@icloud.com">Email</a>
+        <a id="foot-about" href="/about/">About</a>
+        <a id="foot-pricing" href="/pricing/">Pricing</a>
+        <a id="foot-legal" href="/legal/">Terms &amp; Privacy</a>
+      </div>
+      <small>&copy; 2026 Oleh Ro Photography. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <script src="/config.js"></script>
+  <script type="module">
+    import { observeLazyImages, escapeHTML, getOptimizedImageUrl, initRackFocusReveal, initScrollReveals, initSmartHeader } from "/assets/js/ui.js?v=20261105-1";
+    import { fetchFeaturedAlbums, fetchAlbumFallbackCover } from "/assets/js/services/api.js";
+
+    const path = window.location.pathname || "/";
+    const isDa = /^\/da(\/|$)/i.test(path);
+    const isUk = /^\/uk(\/|$)/i.test(path);
+    const prefix = isDa ? "/da" : (isUk ? "/uk" : "");
+
+    const readout = document.getElementById("vf-path-readout");
+    if (readout) {
+      readout.textContent = path.length > 32 ? path.slice(0, 32) + "..." : path;
+    }
+
+    // Scope links to current language prefix
+    const scopedLinks = [
+      ["nav-home", "/"],
+      ["nav-about", "/about/"],
+      ["nav-weddings", "/weddings/"],
+      ["nav-pricing", "/pricing/"],
+      ["vf-btn-home", "/"],
+      ["vf-btn-weddings", "/weddings/"],
+      ["vf-btn-portfolio", "/portfolio/"],
+      ["vf-all-stories", "/weddings/"],
+      ["foot-about", "/about/"],
+      ["foot-pricing", "/pricing/"],
+      ["foot-legal", "/legal/"]
+    ];
+    scopedLinks.forEach(([id, route]) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute("href", prefix + route);
+    });
+
+    if (isUk) {
+      document.documentElement.lang = "uk";
+      document.getElementById("vf-exif").textContent = "35mm · f/1.4 · Кадр 404 не знайдено";
+      document.getElementById("vf-title").textContent = "Між двома кадрами.";
+      document.getElementById("vf-desc").textContent = "Цей кадр не знявся — сторінка, яку ви шукаєте, була перенесена або не існує. Повернемося до реальних історій.";
+      document.getElementById("vf-btn-home").innerHTML = "На головну <span class=\"arrow\">→</span>";
+      document.getElementById("vf-btn-weddings").innerHTML = "Дивитися серії <span class=\"arrow\">→</span>";
+      document.getElementById("vf-btn-portfolio").innerHTML = "Портфоліо <span class=\"arrow\">→</span>";
+      document.getElementById("vf-featured-title").textContent = "Вибрані весілля";
+      document.getElementById("vf-all-stories").textContent = "Усі історії →";
+    } else if (isDa) {
+      document.documentElement.lang = "da";
+      document.getElementById("vf-exif").textContent = "35mm · f/1.4 · Billede 404 ikke fundet";
+      document.getElementById("vf-title").textContent = "Mellem to klik.";
+      document.getElementById("vf-desc").textContent = "Dette øjeblik blev ikke eksponeret — siden du leder efter er flyttet eller findes ikke. Lad os vende tilbage til historierne.";
+      document.getElementById("vf-btn-home").innerHTML = "Til forsiden <span class=\"arrow\">→</span>";
+      document.getElementById("vf-btn-weddings").innerHTML = "Udforsk historier <span class=\"arrow\">→</span>";
+      document.getElementById("vf-btn-portfolio").innerHTML = "Se portfolio <span class=\"arrow\">→</span>";
+      document.getElementById("vf-featured-title").textContent = "Udvalgte bryllupper";
+      document.getElementById("vf-all-stories").textContent = "Alle historier →";
+    }
+
+    // Gentle optical viewfinder crosshair tracking
+    const frame = document.getElementById("vf-frame");
+    const crosshair = document.getElementById("vf-crosshair");
+    if (frame && crosshair && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      frame.addEventListener("mousemove", (e) => {
+        const rect = frame.getBoundingClientRect();
+        const dx = ((e.clientX - rect.left) / rect.width - 0.5) * 16;
+        const dy = ((e.clientY - rect.top) / rect.height - 0.5) * 10;
+        crosshair.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+      });
+      frame.addEventListener("mouseleave", () => {
+        crosshair.style.transform = "translate3d(0, 0, 0)";
+      });
+    }
+
+    initSmartHeader();
+
+    // Load 3 real featured wedding stories so lost visitors see photography immediately
+    const grid = document.getElementById("notfound-featured-grid");
+    const section = document.getElementById("notfound-featured");
+    (async () => {
+      try {
+        const albums = await fetchFeaturedAlbums(3);
+        if (!albums || !albums.length) {
+          if (section) section.style.display = "none";
+          return;
+        }
+        for (const album of albums) {
+          let imageUrl = album.cover_url;
+          if (!imageUrl) {
+            imageUrl = await fetchAlbumFallbackCover(album.id);
+            if (!imageUrl) continue;
+          }
+          const card = document.createElement("a");
+          card.className = "photo-card polaroid-luxury";
+          card.href = `${prefix}/weddings/album/?slug=${encodeURIComponent(album.slug)}`;
+          card.innerHTML = `
+            <div class="polaroid-inner">
+              <div class="photo-media">
+                <img data-src="${escapeHTML(getOptimizedImageUrl(imageUrl, 800))}" alt="${escapeHTML(album.title)} - wedding story by Oleh Ro" loading="lazy" />
+              </div>
+              <div class="polaroid-footer">
+                <h3 class="photo-title">${escapeHTML(album.title)}</h3>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        }
+        if (!grid.children.length && section) {
+          section.style.display = "none";
+          return;
+        }
+        observeLazyImages();
+        initRackFocusReveal();
+        initScrollReveals();
+      } catch (_err) {
+        if (section) section.style.display = "none";
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -98,7 +98,7 @@ async function renderPortfolio() {
     const [photosRes, weddingAlbumsRes] = await Promise.all([
       supabase
         .from("photos")
-        .select("id, url, linked_album_id")
+        .select("id, url, width, height, linked_album_id")
         .eq("album_id", albumId)
         .order("display_order", { ascending: true }),
       supabase
@@ -112,7 +112,7 @@ async function renderPortfolio() {
       console.warn("Retrying portfolio photos fetch without linked_album_id:", photosRes.error.message);
       const retryRes = await supabase
         .from("photos")
-        .select("id, url")
+        .select("id, url, width, height")
         .eq("album_id", albumId)
         .order("display_order", { ascending: true });
 
@@ -158,9 +158,13 @@ async function renderPortfolio() {
         `;
       }
 
+      const hasDims = Number(photo.width) > 0 && Number(photo.height) > 0;
+      const ratioStyle = hasDims ? ` style="aspect-ratio: ${Number(photo.width)} / ${Number(photo.height)}; min-height: 0;"` : "";
+      const dimAttrs = hasDims ? ` width="${Number(photo.width)}" height="${Number(photo.height)}"` : "";
+
       item.innerHTML = `
-        <div class="photo-media">
-          <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" ${storyDataAttrs} alt="${buildPortfolioAlt(index)}" loading="lazy" decoding="async" />
+        <div class="photo-media"${ratioStyle}>
+          <img data-src="${escapedUrl}" data-lightbox-src="${escapedOriginalUrl}" ${storyDataAttrs}${dimAttrs} alt="${buildPortfolioAlt(index)}" loading="lazy" decoding="async" />
           ${storyBadgeHtml}
         </div>
       `;

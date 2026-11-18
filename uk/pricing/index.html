@@ -20,7 +20,7 @@
   <meta name="twitter:title" content="Ціни та пакети | Олег Ро" />
   <meta name="twitter:description" content="Прозорі ціни та пакети послуг весільного фотографа в Данії та Європі." />
   <meta name="twitter:image" content="https://firnyacuwvxsolxljqxu.supabase.co/storage/v1/object/public/photos/theone_408654191.jpg" />
-                                      <link rel="canonical" href="https://deusflow.dk/uk/pricing/" />
+                                        <link rel="canonical" href="https://deusflow.dk/uk/pricing/" />
   <link rel="alternate" hreflang="en" href="https://deusflow.dk/pricing/" />
   <link rel="alternate" hreflang="da" href="https://deusflow.dk/da/pricing/" />
   <link rel="alternate" hreflang="uk" href="https://deusflow.dk/uk/pricing/" />
@@ -197,10 +197,10 @@
 
     <section class="container" style="padding: 0 0 1.2rem;">
       <div class="editorial-menu">
-        <article class="editorial-menu-item">
+        <article class="editorial-menu-item" data-package-card="essentials">
           <div class="editorial-menu-header">
             <h2 class="editorial-menu-title">Essentials</h2>
-            <p class="editorial-menu-price" data-package-price="essentials">kr <span data-count="6500">0</span></p>
+            <p class="editorial-menu-price" data-package-price="essentials">kr <span data-count="6500" data-count-format="number">0</span></p>
           </div>
           <ul class="editorial-menu-details">
             <li>4 hours coverage</li>
@@ -208,12 +208,15 @@
             <li>150 signature-edited images</li>
             <li>Digital delivery</li>
           </ul>
+          <div class="editorial-menu-footer">
+            <button type="button" class="cta-editorial package-select-btn" data-select-package="essentials" data-i18n-key="pricing_select_essentials">Забронювати Essentials →</button>
+          </div>
         </article>
 
-        <article class="editorial-menu-item">
+        <article class="editorial-menu-item" data-package-card="signature">
           <div class="editorial-menu-header">
             <h2 class="editorial-menu-title">Signature</h2>
-            <p class="editorial-menu-price" data-package-price="signature">kr <span data-count="12000">0</span></p>
+            <p class="editorial-menu-price" data-package-price="signature">kr <span data-count="12000" data-count-format="number">0</span></p>
           </div>
           <ul class="editorial-menu-details">
             <li>8 hours coverage</li>
@@ -222,12 +225,15 @@
             <li>Second photographer</li>
             <li>Digital delivery</li>
           </ul>
+          <div class="editorial-menu-footer">
+            <button type="button" class="cta-editorial package-select-btn" data-select-package="signature" data-i18n-key="pricing_select_signature">Забронювати Signature →</button>
+          </div>
         </article>
 
-        <article class="editorial-menu-item">
+        <article class="editorial-menu-item" data-package-card="luxury">
           <div class="editorial-menu-header">
             <h2 class="editorial-menu-title">Luxury</h2>
-            <p class="editorial-menu-price" data-package-price="luxury">kr <span data-count="18000">0</span></p>
+            <p class="editorial-menu-price" data-package-price="luxury">kr <span data-count="18000" data-count-format="number">0</span></p>
           </div>
           <ul class="editorial-menu-details">
             <li>Full day coverage (12 hours)</li>
@@ -236,12 +242,15 @@
             <li>Digital delivery</li>
             <li>Second photographer</li>
           </ul>
+          <div class="editorial-menu-footer">
+            <button type="button" class="cta-editorial package-select-btn" data-select-package="luxury" data-i18n-key="pricing_select_luxury">Забронювати Luxury →</button>
+          </div>
         </article>
 
-        <article class="editorial-menu-item" style="border-bottom: none;">
+        <article class="editorial-menu-item" data-package-card="session" style="border-bottom: none;">
           <div class="editorial-menu-header">
             <h2 class="editorial-menu-title">Individual Session</h2>
-            <p class="editorial-menu-price" data-package-price="session">kr <span data-count="2500">0</span></p>
+            <p class="editorial-menu-price" data-package-price="session">kr <span data-count="2500" data-count-format="number">0</span></p>
           </div>
           <ul class="editorial-menu-details">
             <li>1 - 1.5 hours photoshoot</li>
@@ -249,6 +258,9 @@
             <li>40-50 signature-edited images</li>
             <li>Digital delivery</li>
           </ul>
+          <div class="editorial-menu-footer">
+            <button type="button" class="cta-editorial package-select-btn" data-select-package="session" data-i18n-key="pricing_select_session">Забронювати фотосесію →</button>
+          </div>
         </article>
       </div>
 
@@ -383,6 +395,7 @@
         <p style="font-size: 1rem; line-height: 1.65; color: var(--text-muted); max-width: 580px; margin: 0 auto 2rem;">
           I take a limited number of weddings each year to ensure full dedication. Choose your preferred messenger below to check your date directly with me:
         </p>
+        <div id="pricing-selected-banner" class="pricing-selected-banner hidden" aria-live="polite"></div>
         <div class="smart-contact-grid">
           <a class="contact-pill" href="https://wa.me/4550300636?text=Hi%20Oleh!%20We%20are%20planning%20our%20wedding%20on%20[Date]%20in%20[City/Venue].%20Is%20this%20date%20available?" target="_blank" rel="noopener noreferrer">
             <span class="contact-pill-title">WhatsApp</span>

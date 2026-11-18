@@ -4,6 +4,18 @@ import { createStateMessage, initScrollReveals, initSmartHeader } from "./ui.js?
 const contactNode = document.getElementById("pricing-contact");
 const travelNoteNode = document.getElementById("pricing-travel-note");
 const pricingUpdatedAtNode = document.getElementById("pricing-updated-at");
+const selectedBannerNode = document.getElementById("pricing-selected-banner");
+const contactBlockNode = document.getElementById("contact-block");
+
+let currentResolvedPricing = null;
+let activeSelectedPackageKey = null;
+
+const PACKAGE_META = {
+  essentials: { en: "Essentials (4h)", da: "Essentials (4 timer)", ua: "Essentials (4 год)" },
+  signature: { en: "Signature (8h)", da: "Signature (8 timer)", ua: "Signature (8 год)" },
+  luxury: { en: "Luxury (12h)", da: "Luxury (12 timer)", ua: "Luxury (12 год)" },
+  session: { en: "Individual Session", da: "Individuel session", ua: "Індивідуальна зйомка" }
+};
 
 function getServiceSchemaNode() {
   const taggedNode = document.getElementById("pricing-service-jsonld");
@@ -49,6 +61,7 @@ function formatPrice(value, currency = "DKK") {
 }
 
 function applyPackagePrices(content) {
+  currentResolvedPricing = content;
   const map = {
     essentials: content.essentials_price,
     signature: content.signature_price,
@@ -62,10 +75,147 @@ function applyPackagePrices(content) {
       return;
     }
 
+    const numeric = Number(value);
+    const countSpan = node.querySelector("[data-count]");
+    if (countSpan && (content.currency || "DKK") === "DKK" && Number.isFinite(numeric)) {
+      countSpan.setAttribute("data-count", String(Math.round(numeric)));
+      countSpan.setAttribute("data-count-format", "number");
+      return;
+    }
+
     const text = formatPrice(value, content.currency);
     if (text) {
       node.textContent = text;
     }
+  });
+}
+
+function getPricingLang() {
+  if (typeof window.getActiveLanguage === "function") {
+    return window.getActiveLanguage();
+  }
+  const htmlLang = (document.documentElement.lang || "en").toLowerCase();
+  if (htmlLang === "uk" || htmlLang === "ua") return "ua";
+  if (htmlLang === "da") return "da";
+  return "en";
+}
+
+function buildPackageInquiryText(packageKey, formattedPrice) {
+  const lang = getPricingLang();
+  const label = (PACKAGE_META[packageKey] && PACKAGE_META[packageKey][lang]) || packageKey;
+  if (lang === "ua") {
+    return `Привіт, Олеже! Нас цікавить пакет ${label} (${formattedPrice}). Плануємо весілля [Дата] у [Місто/Локація]. Чи вільна ця дата?`;
+  }
+  if (lang === "da") {
+    return `Hej Oleh! Vi er interesserede i ${label} (${formattedPrice}). Vi planlægger bryllup den [Dato] i [By/Sted]. Er denne dato ledig?`;
+  }
+  return `Hi Oleh! We are interested in the ${label} collection (${formattedPrice}). We are planning our day on [Date] in [City/Venue]. Is this date available?`;
+}
+
+function updateSelectedPackageContacts(packageKey) {
+  if (!contactBlockNode) return;
+
+  const lang = getPricingLang();
+  const pricing = currentResolvedPricing || fallbackPricing;
+  const priceMap = {
+    essentials: pricing.essentials_price,
+    signature: pricing.signature_price,
+    luxury: pricing.luxury_price,
+    session: pricing.session_price
+  };
+
+  if (!packageKey) {
+    delete contactBlockNode.dataset.pricingSelected;
+    if (selectedBannerNode) {
+      selectedBannerNode.classList.add("hidden");
+      selectedBannerNode.innerHTML = "";
+    }
+    return;
+  }
+
+  const formattedPrice = formatPrice(priceMap[packageKey], pricing.currency) || "";
+  const message = buildPackageInquiryText(packageKey, formattedPrice);
+  const encodedMsg = encodeURIComponent(message);
+  const label = (PACKAGE_META[packageKey] && PACKAGE_META[packageKey][lang]) || packageKey;
+
+  contactBlockNode.dataset.pricingSelected = "1";
+
+  const waLink = contactBlockNode.querySelector('a[href*="wa.me"]');
+  if (waLink) {
+    waLink.href = `https://wa.me/4550300636?text=${encodedMsg}`;
+  }
+  const tgLink = contactBlockNode.querySelector('a[href*="t.me/"]');
+  if (tgLink) {
+    tgLink.href = `https://t.me/OflowPhotography?text=${encodedMsg}`;
+  }
+  const mailLink = contactBlockNode.querySelector('a[href*="mailto:"]');
+  if (mailLink) {
+    const subj = lang === "ua"
+      ? `Запит: ${label}`
+      : (lang === "da" ? `Forespørgsel: ${label}` : `Wedding Inquiry: ${label}`);
+    mailLink.href = `mailto:deuswork@icloud.com?subject=${encodeURIComponent(subj)}&body=${encodedMsg}`;
+  }
+
+  if (selectedBannerNode) {
+    const prefixText = lang === "ua"
+      ? "Обраний пакет:"
+      : (lang === "da" ? "Valgt pakke:" : "Selected collection:");
+    const clearLabel = lang === "ua" ? "Скинути" : (lang === "da" ? "Ryd" : "Clear");
+    selectedBannerNode.innerHTML = `
+      <span>✦ ${prefixText} <strong>${label}</strong> · ${formattedPrice}</span>
+      <button type="button" class="pricing-selected-clear" aria-label="Clear selected collection">${clearLabel} ×</button>
+    `;
+    selectedBannerNode.classList.remove("hidden");
+    const clearBtn = selectedBannerNode.querySelector(".pricing-selected-clear");
+    clearBtn?.addEventListener("click", () => {
+      activeSelectedPackageKey = null;
+      document.querySelectorAll(".editorial-menu-item.is-selected").forEach((el) => el.classList.remove("is-selected"));
+      updateSelectedPackageContacts(null);
+      if (typeof window.applyTranslations === "function") {
+        window.applyTranslations();
+      }
+    });
+  }
+}
+
+function initPackageSelection() {
+  const buttons = document.querySelectorAll("[data-select-package]");
+  if (!buttons.length) return;
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.getAttribute("data-select-package");
+      if (!key) return;
+      activeSelectedPackageKey = key;
+
+      document.querySelectorAll(".editorial-menu-item").forEach((card) => {
+        card.classList.toggle("is-selected", card.getAttribute("data-package-card") === key);
+      });
+
+      updateSelectedPackageContacts(key);
+
+      if (contactBlockNode) {
+        contactBlockNode.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+  });
+
+  // Copy prefilled message when clicking Instagram DM after selecting a package
+  const igLink = contactBlockNode?.querySelector('a[href*="instagram.com"]');
+  igLink?.addEventListener("click", async () => {
+    if (!activeSelectedPackageKey) return;
+    const pricing = currentResolvedPricing || fallbackPricing;
+    const priceMap = {
+      essentials: pricing.essentials_price,
+      signature: pricing.signature_price,
+      luxury: pricing.luxury_price,
+      session: pricing.session_price
+    };
+    const formattedPrice = formatPrice(priceMap[activeSelectedPackageKey], pricing.currency) || "";
+    const text = buildPackageInquiryText(activeSelectedPackageKey, formattedPrice);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (_e) {}
   });
 }
 
@@ -228,6 +378,7 @@ try {
   }
 }
 
+initPackageSelection();
 loadPricingContent().then(() => {
   initSmartHeader();
   initScrollReveals();
