@@ -778,7 +778,7 @@ export function initWordReveal() {
 if (typeof window !== "undefined" && !document.body?.classList.contains("admin-page")) {
   document.addEventListener("DOMContentLoaded", () => {
     applySiteSettings();
-    if ("serviceWorker" in navigator && window.location.protocol.startsWith("http")) {
+    if ("serviceWorker" in navigator && window.location.protocol.startsWith("http") && document.body?.dataset.noSw !== "1") {
       const rootPrefix = (document.documentElement.dataset.root || ".").replace(/\/$/, "");
       navigator.serviceWorker.register(`${rootPrefix}/sw.js`).catch(() => {});
     }

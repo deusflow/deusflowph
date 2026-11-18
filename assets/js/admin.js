@@ -2938,8 +2938,8 @@ async function listStorageFolderRecursive(supabase, prefix) {
   for (const entry of data) {
     if (!entry || !entry.name || entry.name === ".emptyFolderPlaceholder") continue;
     const fullPath = prefix ? `${prefix}/${entry.name}` : entry.name;
-    // Folders in Supabase Storage have id === null and metadata === null
-    if (entry.id === null && !entry.metadata) {
+    // Folders in Supabase Storage have id === null
+    if (!entry.id) {
       const nested = await listStorageFolderRecursive(supabase, fullPath);
       results.push(...nested);
     } else {
@@ -3004,13 +3004,14 @@ function renderSiteHealthReport() {
 
         const actionBtn = document.createElement("button");
         actionBtn.type = "button";
-        actionBtn.className = needsFix ? "admin-btn ghost micro" : "admin-btn ghost micro";
+        actionBtn.className = "admin-btn ghost micro";
         actionBtn.textContent = needsFix ? "⚡ Fix Album" : "Open";
         actionBtn.addEventListener("click", async () => {
           if (needsFix) {
             await runHealthFixForPhotos(albumPhotos, album.title);
           } else {
-            await selectAlbum(album);
+            showAlbumDetails(album);
+            await loadPhotos(album.id);
           }
         });
 
@@ -3096,11 +3097,12 @@ async function scanSiteHealth() {
       addActiveUrl(window.APP_CONFIG.DEFAULT_OG_IMAGE);
     }
 
-    const [albumsStorage, aboutStorage] = await Promise.all([
+    const [albumsStorage, aboutStorage, coversStorage] = await Promise.all([
       listStorageFolderRecursive(supabase, "albums"),
-      listStorageFolderRecursive(supabase, "about")
+      listStorageFolderRecursive(supabase, "about"),
+      listStorageFolderRecursive(supabase, "covers")
     ]);
-    const managedFiles = [...albumsStorage, ...aboutStorage];
+    const managedFiles = [...albumsStorage, ...aboutStorage, ...coversStorage];
     const orphans = managedFiles.filter((f) => !activePaths.has(f.path));
 
     healthState.albums = albums;
@@ -3222,6 +3224,9 @@ function restoreActiveTab() {
     document.querySelectorAll(".admin-tab-pane").forEach((p) => p.classList.remove("active"));
     matchingBtn.classList.add("active");
     targetPane.classList.add("active");
+    if (savedTabId === "tab-health" && !healthState.allPhotos.length && !healthState.scanning) {
+      scanSiteHealth();
+    }
   }
 }
 

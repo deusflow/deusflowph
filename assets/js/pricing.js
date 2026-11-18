@@ -124,8 +124,23 @@ function updateSelectedPackageContacts(packageKey) {
     session: pricing.session_price
   };
 
+  const waLink = contactBlockNode.querySelector('a[href*="wa.me"]');
+  const tgLink = contactBlockNode.querySelector('a[href*="t.me/"]');
+  const mailLink = contactBlockNode.querySelector('a[href*="mailto:"]');
+
+  [waLink, tgLink, mailLink].forEach((link) => {
+    if (link && !link.dataset.defaultHref) {
+      link.dataset.defaultHref = link.href;
+    }
+  });
+
   if (!packageKey) {
     delete contactBlockNode.dataset.pricingSelected;
+    [waLink, tgLink, mailLink].forEach((link) => {
+      if (link && link.dataset.defaultHref) {
+        link.href = link.dataset.defaultHref;
+      }
+    });
     if (selectedBannerNode) {
       selectedBannerNode.classList.add("hidden");
       selectedBannerNode.innerHTML = "";
@@ -140,15 +155,12 @@ function updateSelectedPackageContacts(packageKey) {
 
   contactBlockNode.dataset.pricingSelected = "1";
 
-  const waLink = contactBlockNode.querySelector('a[href*="wa.me"]');
   if (waLink) {
     waLink.href = `https://wa.me/4550300636?text=${encodedMsg}`;
   }
-  const tgLink = contactBlockNode.querySelector('a[href*="t.me/"]');
   if (tgLink) {
     tgLink.href = `https://t.me/OflowPhotography?text=${encodedMsg}`;
   }
-  const mailLink = contactBlockNode.querySelector('a[href*="mailto:"]');
   if (mailLink) {
     const subj = lang === "ua"
       ? `Запит: ${label}`

@@ -682,7 +682,7 @@ function buildLanguageUrl(targetLangCode) {
     relativePath = relativePath.slice(rootUrl.pathname.length);
   }
   relativePath = relativePath
-    .replace(/^(da|uk|ua)\//i, "")
+    .replace(/^(da|uk|ua)(\/|$)/i, "")
     .replace(/^\/+/, "")
     .replace(/index\.html$/, "");
 
